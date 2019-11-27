@@ -51,7 +51,7 @@ $ make
 tips:  
     1> 需要修改跟目录下的CMakeList.txt 中第三方的路径 根据自己的安装位置修改  
     2> Windows操作系统下需要设置Qt、Cmake的全局系统变量  
-    3> Windows操作系统下需要使用Visual Studio的工具编译( VS 2017/2019 的开发人员命令提示符 )
+    3> Windows操作系统下需要使用Visual Studio的工具编译( VS 2017/2019 的开发人员命令提示符 )  
     4> MacOs版本 cmake 增加参数 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
 
 ### 关于更新
