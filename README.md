@@ -21,21 +21,19 @@ ___
  EventBus |  | https://github.com/greenrobot/EventBus | 项目中包含源码
  cJson | | https://github.com/DaveGamble/cJSON | 项目中包含源码 
  
-1. Windows 操作系统
- ① Visual Studio 2017/2019 
- ② Cmake
- ③ Clion(IDE建议使用Clion, 也可以根据cmakelist 写vs项目, 或者使用记事本)
+1. Windows 操作系统  
+    ① Visual Studio 2017/2019  
+    ② Cmake  
+    ③ Clion(IDE建议使用Clion, 也可以根据cmakelist 写vs项目, 或者使用记事本)  
+2. Linux/MacOS 操作系统  
+    ① Cmake  
+    ② UUID  
+    ③ Clion 或者使用VIM  
+    ④ MacOS操作系统依赖库路径可能与您本地的依赖库路径不一致, 可以自行手动修改( 可以使用 ”install_name_tool“ 命令 )  
  
-2. Linux/MacOS 操作系统
- ① Cmake
- ② UUID
- ③ Clion 或者使用VIM
- 
-Tips: 
-
-1> protobuf、zlib、openssl、curl几个库因为编译比较复杂，我们提供了已经编译成功的版本，位置 ${root_dir}/Depends/${name}，其他平台需要自己build
-
-2> 安装Qt时请选择 QtWebEngine、QtMultimedia、QtMultimedia Widgets、QtQuick、QtQuick Controls2、QtSvg、QtWebChannel、QtPositioning、QtMacExtras(MacOS)、QtX11Extras(Linux)等模块 
+Tips:  
+    1> protobuf、zlib、openssl、curl几个库因为编译比较复杂，我们提供了已经编译成功的版本，位置 ${root_dir}/Depends/${name}，其他平台需要自己build  
+    2> 安装Qt时请选择 QtWebEngine、QtMultimedia、QtMultimedia Widgets、QtQuick、QtQuick Controls2、QtSvg、QtWebChannel、QtPositioning、QtMacExtras(MacOS)、QtX11Extras(Linux)等模块 
 
 ### 源码编译
 
@@ -50,19 +48,16 @@ $ make
 
 可执行文件会生成到 ${root_dir}/build_release/bin 目录下
 
-tips: 
-
-1> 需要修改跟目录下的CMakeList.txt 中第三方的路径 根据自己的安装位置修改
-
-2> Windows操作系统下需要设置Qt、Cmake的全局系统变量
-
-3> Windows操作系统下需要使用Visual Studio的工具编译( VS 2017/2019 的开发人员命令提示符 )
+tips:  
+    1> 需要修改跟目录下的CMakeList.txt 中第三方的路径 根据自己的安装位置修改  
+    2> Windows操作系统下需要设置Qt、Cmake的全局系统变量  
+    3> Windows操作系统下需要使用Visual Studio的工具编译( VS 2017/2019 的开发人员命令提示符 )
+    4> MacOs版本 cmake 增加参数 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12
 
 ### 关于更新
 
 此版本不包含版本升级功能、我们会在功能完善之后放出。
 
 ### 联系我们
-1> issue 
-
+1> issue  
 2> 我们的[官网](https://im.qunar.com/#/) 留言
