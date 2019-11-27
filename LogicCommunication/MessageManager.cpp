@@ -77,7 +77,7 @@ void CommMsgManager::sendSynOfflineSuccees() {
   * @date     2018/09/29
   */
 void CommMsgManager::sendGotUserCard(const std::vector<QTalk::StUserCard> &userCard) {
-    info_log("发送服务器查询名片结果Event 个数:{0}", userCard.size());
+    debug_log("发送服务器查询名片结果Event 个数:{0}", userCard.size());
     UserCardMessgae e;
     e.userCards = userCard;
     EventBus::FireEvent(e);
@@ -150,7 +150,7 @@ void CommMsgManager::sendOnlineUpdate() {
   * @date     2018/10/08
   */
 void CommMsgManager::gotGroupMember(GroupMemberMessage &e) {
-    info_log("发送获取到群成员列表Event 个数:{0} 群id:{1}", e.members.size(), e.groupId);
+    debug_log("发送获取到群成员列表Event 个数:{0} 群id:{1}", e.members.size(), e.groupId);
     EventBus::FireEvent(e);
 }
 
@@ -414,6 +414,7 @@ CommMsgListener::CommMsgListener(Communication *pComm)
 	EventBus::AddHandler<SgUserMedalChanged>(*this);
 	EventBus::AddHandler<GetMedalUserEvt>(*this);
 	EventBus::AddHandler<ModifyUserMedalStatusEvt>(*this);
+	EventBus::AddHandler<NetHistoryMessage>(*this);
 }
 
 CommMsgListener::~CommMsgListener() {
@@ -517,7 +518,7 @@ void CommMsgListener::onEvent(HistoryMessage &e) {
         return;
     }
     if (_pComm) {
-        _pComm->getUserHistoryMessage(e.time, e.chatType, e.userid,e.realJid, e.msgList);
+        _pComm->getUserHistoryMessage(e.time, e.chatType, e.uid, e.msgList);
     }
 }
 
@@ -1303,4 +1304,9 @@ void CommMsgListener::onEvent(GetMedalUserEvt &e) {
 void CommMsgListener::onEvent(ModifyUserMedalStatusEvt &e) {
     if(nullptr != _pComm)
         e.result = _pComm->modifyUserMedalStatus(e.medalId, e.isWear);
+}
+
+void CommMsgListener::onEvent(NetHistoryMessage &e) {
+    if(nullptr != _pComm)
+        _pComm->getNetHistoryMessage(e.time, e.chatType, e.uid, e.direction, e.msgList);
 }

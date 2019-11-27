@@ -44,9 +44,33 @@ QTalkApp::QTalkApp(int argc, char *argv[])
 	// 崩溃处理 获取dump 暂时处理以后用breakpad替代
     initDump();
 
-    QLocale locale;
-    qInfo() << locale.system().language();
-    switch (locale.system().language())
+#ifdef _MACOS
+    MacApp::initApp();
+#endif
+    //设置当前路径
+#if defined(_WINDOWS) || defined(_MACOS)
+    QString curPath = QApplication::applicationDirPath();
+    QDir::setCurrent(curPath);
+#endif
+
+    curl_global_init(CURL_GLOBAL_ALL);
+    // 加载全局单利platform
+    Platform::instance().setMainThreadId();
+    Platform::instance().setExcutePath(strExcutePath.toStdString());
+    Platform::instance().setProcessId(qApp->applicationPid());
+    QString systemStr = QSysInfo::prettyProductName();
+    QString productType = QSysInfo::productType();
+    QString productVersion = QSysInfo::productVersion();
+    Platform::instance().setOSInfo(systemStr.toStdString());
+    Platform::instance().setOSProductType(productType.toStdString());
+    Platform::instance().setOSVersion(productVersion.toStdString());
+
+    // Ui管理单例
+    _pUiManager = UIGolbalManager::GetUIGolbalManager();
+    int language = AppSetting::instance().getLanguage();
+    if(QLocale::AnyLanguage == language)
+        language = QLocale::system().language();
+    switch (language)
     {
 
         case QLocale::English:
@@ -71,30 +95,6 @@ QTalkApp::QTalkApp(int argc, char *argv[])
             break;
         }
     }
-
-#ifdef _MACOS
-    MacApp::initApp();
-#endif
-    //设置当前路径
-#if defined(_WINDOWS) || defined(_MACOS)
-    QString curPath = QApplication::applicationDirPath();
-    QDir::setCurrent(curPath);
-#endif
-
-    curl_global_init(CURL_GLOBAL_ALL);
-    // 加载全局单利platform
-    Platform::instance().setMainThreadId();
-    Platform::instance().setExcutePath(strExcutePath.toStdString());
-    Platform::instance().setProcessId(qApp->applicationPid());
-    QString systemStr = QSysInfo::prettyProductName();
-    QString productType = QSysInfo::productType();
-    QString productVersion = QSysInfo::productVersion();
-    Platform::instance().setOSInfo(systemStr.toStdString());
-    Platform::instance().setOSProductType(productType.toStdString());
-    Platform::instance().setOSVersion(productVersion.toStdString());
-
-    // Ui管理单例
-    _pUiManager = UIGolbalManager::GetUIGolbalManager();
     //
     initTTF();
     // 加载主Qss文件
@@ -119,16 +119,17 @@ QTalkApp::QTalkApp(int argc, char *argv[])
 #endif
     _pMainWnd = new MainWindow;
 #ifdef _MACOS
+    // 窗口调整
     MacApp::AllowMinimizeForFramelessWindow(_pMainWnd);
+    // 获取权限
     MacApp::checkValidToVisitMicroPhone();
+    // 多开
     connect(_pMainWnd, &MainWindow::sgRunNewInstance, [](){
         QStringList params;
-#if defined(_STARTALK)
-        params << "-n" << "/Applications/StarTalk.app";
-#else
-        params << "-n" << QString("/Applications/%1.app").arg(qApp->applicationName());
-#endif
-        QProcess::execute("/usr/bin/open", params);
+        const QString& cmd = qApp->applicationFilePath();
+        QStringList arguments;
+        arguments << "START_BY_STARTER=YES" << "AUTO_LOGIN=OFF";
+        QProcess::startDetached(cmd, arguments);
     });
 #endif
     bool enableAutoLogin = true;
@@ -282,11 +283,29 @@ void LogMsgOutput(QtMsgType type, const QMessageLogContext &context, const QStri
             break;
     }
 #ifdef _DEBUG
-    std::cout
 #ifndef _WINDOWS
-    << "\033[31m"
+    switch (type) {
+
+        case QtInfoMsg:
+            std::cout << "\033[1m\033[34m" << localMsg.toStdString() << "\033[0m" << std::endl;
+            break;
+        case QtWarningMsg:
+            std::cout << "\033[1m\033[33m" << localMsg.toStdString() << "\033[0m" << std::endl;
+            break;
+        case QtCriticalMsg:
+            std::cout << "\033[1m\033[31m" << localMsg.toStdString() << "\033[0m" << std::endl;
+            break;
+        case QtFatalMsg:
+            std::cout << "\033[1m\033[35m" << localMsg.toStdString() << "\033[0m" << std::endl;
+            break;
+        default:
+        case QtDebugMsg:
+            std::cout << "\033[1m\033[36m" << localMsg.toStdString() << "\033[0m" << std::endl;
+            break;
+    }
+#else
+    std::cout << localMsg.toStdString() << std::endl;
 #endif
-    << localMsg.toStdString() << std::endl;
 #endif
     //
     log.append(QString("%2 %1\n").arg(localMsg).arg(context.function));
@@ -326,15 +345,15 @@ void QTalkApp::initLogSys() {
 
     QTalk::logger::initLog(fileName,
 #ifdef _DEBUG
-            QTalk::logger::LEVEL_INFO
+            QTalk::logger::LEVEL_DEBUG
 #else
-            QTalk::logger::LEVEL_WARING
+            QTalk::logger::LEVEL_INFO
 #endif
     );
     //
     qInstallMessageHandler(LogMsgOutput);
     //
-//    info_log("系统启动 当前版本号:{0}", Platform::instance().getClientVersion());
+    info_log("系统启动 当前版本号:{0}", Platform::instance().getClientVersion());
 //    qDebug() << QStringLiteral("系统启动");
 }
 
@@ -370,9 +389,15 @@ bool QTalkApp::notify(QObject *receiver, QEvent *e) {
         t = QDateTime::currentMSecsSinceEpoch() - t;
         if(t > 1000)
         {
-            qWarning() << "hang hang hang!!! use time:" << t
-            << " type:" << e->type()
-            << " class:" << (receiver ? receiver->metaObject()->className() : "");
+            try {
+                qWarning() << "hang hang hang!!! use time:" << t
+                           << " type:" << e->type();
+//                           << " class:" << (receiver ? receiver->metaObject()->className() : "");
+            }
+            catch (const std::exception& e)
+            {
+                error_log(e.what());
+            }
         }
         return ret;
     }

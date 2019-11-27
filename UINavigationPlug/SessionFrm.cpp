@@ -171,7 +171,7 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
     bool notCurItem = true;
     bool unNotice = _mapNotice.find(userId.toStdString()) != _mapNotice.end();
     if (nullptr != item) {
-        ////info_log("会话已存在:{0}", mess.messageId);
+        ////debug_log("会话已存在:{0}", mess.messageId);
         {
             QMutexLocker locker(&_mutex);
             notCurItem = !(UID(userId, realJid) == _curUserId);
@@ -192,7 +192,7 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
             } else {
                 if (_messageManager) {
                     // 发送消息已读
-                    info_log("send read mask u:{0} messageId:{1}", realJid.toStdString(), mess.messageId.toStdString());
+                    debug_log("send read mask u:{0} messageId:{1}", realJid.toStdString(), mess.messageId.toStdString());
                     _messageManager->sendReadedMessage(mess.messageId.toStdString(), realJid.toStdString(),
                                                        mess.chatType);
                 }
@@ -201,7 +201,7 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
 
     } else //新会话需要创建
     {
-        //info_log("创建新会话:{0}", mess.messageId);
+        //debug_log("创建新会话:{0}", mess.messageId);
         item = new QStandardItem;
         item->setData(mess.chatType, ITEM_DATATYPE_CHATTYPE);
         item->setData(userId, ITEM_DATATYPE_USERID);
@@ -249,7 +249,7 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
 
         _sessionMap.insert(uid, item);
         _pSrcModel->appendRow(item);
-        //info_log("显示新回话: {0}", mess.messageId);
+        //debug_log("显示新回话: {0}", mess.messageId);
     }
     item->setData(mess.messageId, ITEM_DATATYPE_LAST_MESSAGE_ID);
     item->setData(mess.messageRecvTime, ITEM_DATATYPE_LASTTIME);
@@ -1004,7 +1004,7 @@ QString SessionFrm::GenerateContent(const QString &content, const QUInt8 &chatTy
             break;
         default: {
             QString tmpContent = content.split("\n").first();
-            ////info_log(tmpContent);
+            ////debug_log(tmpContent);
             QRegExp regExp("\\[obj type=[\\\\]?\"([^\"]*)[\\\\]?\" value=[\\\\]?\"([^\"]*)[\\\\]?\"(.*)\\]");
             regExp.setMinimal(true);
 
@@ -1055,7 +1055,7 @@ void SessionFrm::onUpdateReadedCount(const QTalk::Entity::UID &uid, const int &c
 //             _sessionMap[uid]->setData(atCount, ITEM_DATATYPE_ATCOUNT);
 //         }
         //
-        //info_log("ui更新群未读数 id:{0} 未读数{1}", id.toStdString(), unreadCount);
+        //debug_log("ui更新群未读数 id:{0} 未读数{1}", id.toStdString(), unreadCount);
     }
 }
 
@@ -1279,7 +1279,7 @@ QString SessionFrm::getUserName(const std::string &id, bool isGroup) {
             if (userInfo)
                 return QString::fromStdString(QTalk::getUserName(userInfo));
             else
-                info_log("{0} -> no info", id);
+                warn_log("{0} -> no info", id);
         }
     }
     return QString();

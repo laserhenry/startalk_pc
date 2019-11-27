@@ -205,6 +205,8 @@ void NavManager::initUi()
     connect(_pCloseBtn, &QPushButton::clicked, [this](bool){this->setVisible(false);});
     connect(_pNavView, &NavView::saveConfSignal, this, &NavManager::onSaveConf);
     connect(_pNavView, &NavView::addNavSinal, this, &NavManager::onAddNav);
+    connect(_pNavView, &NavView::sgNavChanged, this, &NavManager::onNavChanged, Qt::QueuedConnection);
+
     connect(_pNavView, &NavView::sgClose, [this](){
         this->setVisible(false);
     });
@@ -324,4 +326,12 @@ QString NavManager::getDefaultDomain()
         return tmp;
     }
     return QString();
+}
+
+// 切换导航
+void NavManager::onNavChanged()
+{
+    //
+    if(_pLoginPanel)
+        _pLoginPanel->loadConf();
 }

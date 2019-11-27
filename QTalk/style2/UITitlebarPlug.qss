@@ -185,7 +185,7 @@ QPushButton#SettingBtn {
     background:rgba(68,73,77,1);
     border-radius:2px;
     font-size:14px;
-    padding: 3px;
+    padding: 5px;
     border:1px solid rgba(0,0,0,0.3);
     color:rgba(225,236,239,1);
 }
@@ -216,17 +216,6 @@ QLineEdit#SettingLineEdit {
     height:28px;
     padding-left:5px;
     padding-right:5px;
-}
-
-QFrame#SettingTitleFrm{
-    background:rgba(59, 63, 68, 1);
-    border-top-left-radius:6px;
-    border-top-right-radius:6px;
-}
-
-QLabel#SettingTitleLabel {
-    color:rgba(191,191,191,1);
-    font-size:16px;
 }
 
 QFrame#SettingContentFrm {
@@ -288,8 +277,9 @@ QFrame#bottomFrm {
 }
 
 QPushButton#ChangeBtn {
-    width:72px;
+    min-width:72px;
     height:32px;
+    padding: 5px;
     background:rgba(0,202,190,0.8);
     border-radius:2px;
     font-size:14px;

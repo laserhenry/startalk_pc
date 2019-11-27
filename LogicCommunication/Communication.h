@@ -44,7 +44,9 @@ public:
     void tryConneteToServerByQVT();
 
 public:
-    void addHttpRequest(const QTalk::HttpRequest &req, const std::function<void(int, const std::string &)>& callback);
+    void addHttpRequest(const QTalk::HttpRequest &req,
+            const std::function<void(int, const std::string &)>& callback,
+            bool = true);
 
 public:
     void dealBindMsg();
@@ -59,9 +61,15 @@ public:
     // 获取用户的状态
     void synUsersUserStatus();
     // 获取某人的历史消息
-    void getUserHistoryMessage(const QInt64 &time, const QUInt8 &chatType, const std::string &userId,
-                               const std::string &realJid,
+    void getUserHistoryMessage(const QInt64 &time, const QUInt8 &chatType,
+                               const QTalk::Entity::UID& uid,
                                std::vector<QTalk::Entity::ImMessageInfo> &msgList);
+    // 获取网络聊天记录(不落地)
+    void getNetHistoryMessage(const QInt64 &time, const QUInt8 &chatType,
+                                const QTalk::Entity::UID& uid,
+                               const std::string &direction,
+                               std::vector<QTalk::Entity::ImMessageInfo> &msgList);
+
     //批量获取头像信息
     void batchUpdateHead(const std::vector<std::string> &arXmppids);
     //创建群组

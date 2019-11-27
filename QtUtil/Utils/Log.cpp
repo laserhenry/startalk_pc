@@ -20,7 +20,6 @@ namespace QTalk {
         void initLog(const std::string &logDir, unsigned char level) {
 
             _level = level;
-
             static const int fileSize = 1024 * 1024 * 20;
 
             time_t t;
@@ -45,7 +44,7 @@ namespace QTalk {
                                                                                         fileSize,
                                                                                         3);
             std::vector<spdlog::sink_ptr> sinks;
-            if(LEVEL_INFO == _level) {
+            if(LEVEL_DEBUG == _level) {
                 auto stdout_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
                 sinks = {stdout_sink, rotating_sink};
             } else {
@@ -63,6 +62,25 @@ namespace QTalk {
         void setLevel(unsigned char level)
         {
             _level = level;
+            spdlog::set_level((spdlog::level::level_enum)level);
+        }
+
+        bool debug(const std::string &msg)
+        {
+            if(LEVEL_DEBUG < _level)
+                return false;
+
+            std::thread::id this_id = std::this_thread::get_id();
+
+            std::stringstream ss;
+            ss << msg;
+            ss << "\nat ThreadID:";
+            ss << this_id;
+
+            spdlog::get("LOG")->debug(ss.str());
+            spdlog::get("LOG")->flush();
+//            std::cout << " --- LOG_INFO --- " << msg << std::endl;
+            return true;
         }
 
         bool info(const std::string &msg) {

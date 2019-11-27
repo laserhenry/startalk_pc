@@ -1289,7 +1289,7 @@ void ChatMainWgt::dealMessage(MessageItemBase *msgItemWgt, QListWidgetItem *pLst
             case QTalk::Entity::MessageTypeCommonTrdInfoV2:
             default: {
                 QSize size = msgItemWgt->itemWdtSize();
-                pLstItem->setSizeHint(size);
+                pLstItem->setSizeHint({this->width(), size.height()});
                 break;
             }
         }
@@ -1299,8 +1299,6 @@ void ChatMainWgt::dealMessage(MessageItemBase *msgItemWgt, QListWidgetItem *pLst
         this->update();
         // 判断是否是首次创建item
         if (_items.contains(msgItemWgt)) {
-//            if ((maximum - scroBarval) < 50)
-//                this->scrollToBottom();
             return;
         }
         //
@@ -1348,7 +1346,7 @@ void ChatMainWgt::dealMessage(MessageItemBase *msgItemWgt, QListWidgetItem *pLst
                 }
             }
         }
-        info_log("show message id:{0}", stMessage.MsgId);
+        debug_log("show message id:{0}", stMessage.MsgId);
         setItemWidget(pLstItem, msgItemWgt);
         this->update();
     }
@@ -1737,7 +1735,7 @@ void ChatMainWgt::onScrollBarChanged(int val) {
                 if (type != QTalk::Entity::MessageTypeTime) {
                     time = this->item(i)->data(EM_DATE_TYPE_TIME).toLongLong();
                     if (time != 0) {
-                        info_log("get history message type: {0} time: {1}", type, QDateTime::fromMSecsSinceEpoch(time).toString("yyyy-MM-dd hh:mm:ss").toStdString());
+                        debug_log("get history message type: {0} time: {1}", type, QDateTime::fromMSecsSinceEpoch(time).toString("yyyy-MM-dd hh:mm:ss").toStdString());
                         break;
                     }
                 }

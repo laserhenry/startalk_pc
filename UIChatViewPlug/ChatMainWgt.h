@@ -81,9 +81,7 @@ private slots:
 	void onCustomContextMenuRequested(const QPoint &pos);
 
 private:
-
 	//
-
     void analysisSendTextMessage(QVector<StTextMessage> &msgs, const std::string &msg);
 
     void analysisTextMessage(QVector<StTextMessage> &msgs, const QString& text);

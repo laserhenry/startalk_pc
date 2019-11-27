@@ -196,25 +196,55 @@ void InputWgt::keyPressEvent(QKeyEvent *e) {
         }
     }
 
-    if (e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter)
     {
         std::string sendMessageKey = AppSetting::instance().getSendMessageKey();
         QKeySequence sendMessageKeySeq(sendMessageKey.data());
 
         int mod(sendMessageKeySeq[0] & Qt::KeyboardModifierMask);
-
-        if((e->modifiers() & 0x0E000000) != (mod & 0x0E000000))
+        int key = (sendMessageKeySeq[0] & ~Qt::KeyboardModifierMask);
+        if(((e->modifiers() & 0x0E000000) == (mod & 0x0E000000)))
         {
-            // 光标移动
-            this->textCursor().insertText("\n");
-            QTextCharFormat f;
-            setCurrentCharFormat(f);
+            bool bSend = key == e->key();
+            // 忽略 Key_Return 和 Key_Enter
+            bSend |= !bSend &&
+                     (key == Qt::Key_Return || key == Qt::Key_Enter)
+                     && (e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter);
+            bSend |= sendMessageKey.empty() && (e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter);
+            //
+            if(bSend)
+            {
+                sendMessage();
+                return;
+            }
         }
-        else
-            sendMessage();
+    }
+
+    if (e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter)
+    {
+        // 光标移动
+        this->textCursor().insertText("\n");
+        QTextCharFormat f;
+        setCurrentCharFormat(f);
 
         return;
-    } else if (e == QKeySequence::Paste ||
+    }
+#ifdef _MACOS
+    else if(e->modifiers() == Qt::MetaModifier && e->key() == Qt::Key_K)
+    {
+        auto cursor = this->textCursor();
+        if(cursor.atEnd())
+        {
+            cursor.movePosition(QTextCursor::NextBlock, QTextCursor::KeepAnchor);
+            cursor.removeSelectedText();
+        }
+        else
+        {
+            cursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
+            cursor.removeSelectedText();
+        }
+    }
+#endif
+    else if (e == QKeySequence::Paste ||
                (e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_V)) {
 
         onPaste();
@@ -239,6 +269,7 @@ void InputWgt::keyPressEvent(QKeyEvent *e) {
             selectAll();
         csor.removeSelectedText();
     }
+
     else {
         if (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down) {
             if (this->toPlainText().isEmpty()) {
@@ -895,7 +926,7 @@ void InputWgt:: onPaste() {
 
     QStringList formats = mimeData->formats();
     for(const auto& f: formats)
-        info_log("----- {0} ----", f.toStdString());
+        debug_log("----- {0} ----", f.toStdString());
 
     // 暂时处理 以后提函数处理
     if (mimeData->hasUrls()) {
@@ -942,7 +973,7 @@ void InputWgt:: onPaste() {
         QStringList formats = mimeData->formats();
         bool bParsed = false;
         for (const QString &format : formats) {
-            info_log(format.toStdString());
+            debug_log(format.toStdString());
 
             if (mimeFormatList.contains(format)) {
                 // todo

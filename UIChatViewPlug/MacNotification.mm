@@ -6,6 +6,8 @@
 #import <NotificationCenter/NotificationCenter.h>
 #import <Foundation/Foundation.h>
 #include "ChatViewMainPanel.h"
+#include <QTimer>
+#import "../UICom/uicom.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
 
@@ -67,6 +69,7 @@ void sendTextMessage(const std::string &text,
     NSUserNotification *notification = [[NSUserNotification alloc] init];
     // title
     [notification setTitle:title];
+    [notification setIdentifier:[NSString stringWithUTF8String:param->loginUser.data()]];
     // subTitle
 //    if(nil != subTitle)
 //        [notification setSubtitle:message];
@@ -120,7 +123,6 @@ void sendTextMessage(const std::string &text,
 //        NSLog(@"NSUserNotificationActivationTypeNone");
 //    }
 //    else
-    info_log(notification);
     NSString *xmppId = [notification.userInfo objectForKey:@"xmppId"];
     NSString *from = [notification.userInfo objectForKey:@"from"];
     NSString *realJid = [notification.userInfo objectForKey:@"realJid"];
@@ -130,8 +132,15 @@ void sendTextMessage(const std::string &text,
     if (notification.activationType == NSUserNotificationActivationTypeContentsClicked)
     {
         NSString *name = [notification.userInfo objectForKey:@"name"];
-        g_pMainPanel->onShowChatWnd(chatType, [xmppId UTF8String], [realJid UTF8String],
-                [name UTF8String], [loginUser UTF8String]);
+
+        if([loginUser UTF8String] == g_pMainPanel->getSelfUserId()) {
+            g_pMainPanel->onShowChatWnd(chatType, [xmppId UTF8String], [realJid UTF8String],
+                                        [name UTF8String]);
+        }
+        else {
+
+        }
+
         [center removeDeliveredNotification:notification];
     }
 //    else if (notification.activationType == NSUserNotificationActivationTypeActionButtonClicked)

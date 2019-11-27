@@ -32,7 +32,7 @@ set(SOURCE_FILES
         LiteMessageBox.cpp
         LiteMessageBox.h
         NavigationItem.cpp
-        NavigationItem.h MedalWgt.cpp MedalWgt.h)
+        NavigationItem.h MedalWgt.cpp MedalWgt.h TitleBar.cpp TitleBar.h)
 
 if (APPLE)
     ADD_DEFINITIONS(-D_MACOS)

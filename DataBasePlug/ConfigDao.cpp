@@ -104,7 +104,7 @@ bool ConfigDao::getConfig(const std::string &key, const std::string &subKey, std
             return true;
         }
 
-        info_log("get config key: {0} subkey: {1} value: {2}", key, subKey, val);
+        debug_log("get config key: {0} subkey: {1} value: {2}", key, subKey, val);
 
         return false;
     }

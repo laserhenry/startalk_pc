@@ -49,6 +49,8 @@ Q_SIGNALS:
     void sgSelectDown();
     void sgSelectItem();
     void sgGotSearchResult(const QString& key, const SearchResult& ret);
+    void sgShowMessageRecordWnd(const QString&, const QString&);
+    void sgShowFileRecordWnd(const QString&);
 
 private:
     SearchView* _pSearchView;

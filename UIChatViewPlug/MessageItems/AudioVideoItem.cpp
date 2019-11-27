@@ -16,6 +16,7 @@
 #include "../../WebService/AudioVideo.h"
 #include "../../QtUtil/Entity/JID.h"
 #include "../CustomUi/QtMessageBox.h"
+#include "../../UICom/qimage/qimage.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
 AudioVideoItem::AudioVideoItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent) :
@@ -235,7 +236,7 @@ void AudioVideoItem::initContentLayout() {
     lay->addWidget(_pIconLabel, 0);
     lay->addWidget(_contentLab, 1);
 
-    QPixmap icon = QPixmap(":/chatview/image1/messageItem/AudioVideo.png");
+    QPixmap icon = QTalk::qimage::instance().loadPixmap(":/chatview/image1/messageItem/AudioVideo.png", true);
     icon = icon.scaled(25, 25, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     _pIconLabel->setPixmap(icon);
     _contentLab->adjustSize();

@@ -5,6 +5,7 @@
 #include "SearchView.h"
 #include "../UICom/qimage/qimage.h"
 #include "../UICom/StyleDefine.h"
+#include "../Platform/AppSetting.h"
 #include <QPainter>
 #include <QEvent>
 #include <QDebug>
@@ -36,6 +37,7 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
     painter->setRenderHints(QPainter::Antialiasing, true);
     painter->setRenderHints(QPainter::SmoothPixmapTransform, true);
     painter->drawPixmap(QRect(rect.x(), rect.y() + (rect.height() - radius * 2) / 2, radius * 2, radius * 2), icon);
+    QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
     painter->setPen(QTalk::StyleDefine::instance().getNavNameFontColor());
     painter->drawText(QRect(rect.x() + radius * 2 + 8, rect.y(),
                             rect.width() - radius * 2 - 2 - 30, rect.height() / 2), Qt::AlignBottom, strText);

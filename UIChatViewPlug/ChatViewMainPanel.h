@@ -9,6 +9,7 @@
 #include <QLabel>
 #include <QRcode/QRcode.h>
 #include <QPointer>
+#include "search/FileRecordWnd.h"
 #include "../UICom/UIEntity.h"
 #include "MessageManager.h"
 #include "NativeChatStruct.h"
@@ -23,6 +24,7 @@
 #include "GIFManager.h"
 #include "../include/STLazyQueue.h"
 #include "../WebService/AudioVideo.h"
+#include "search/MessageRecordManager.h"
 
 class StatusWgt;
 class ChatMainWgt;
@@ -129,6 +131,8 @@ public slots:
 	void onAppActive();
 	void onMsgSoundChanged();
 	void setAutoReplyFlag(bool);
+	void onShowSearchResult(const QString& key, const QString& xmppId);
+	void onShowSearchFileWnd(const QString& key);
 
 Q_SIGNALS:
 	void showUserCardSignal(const QString&);
@@ -210,7 +214,7 @@ public:
     void updateUserConfig(const std::map<std::string, std::string> &deleteData,
                           const std::vector<QTalk::Entity::ImConfig>& arImConfig);
     void updateUserMaskName();
-	void onShowChatWnd(QUInt8, QString,QString, QString, QString);
+	void onShowChatWnd(QUInt8, QString,QString, QString);
     void showShowCodeWnd(const QString& type, const QString& language, const QString& content);
     void showSendCodeWnd(const QTalk::Entity::UID& uid);
     void sendCodeMessage(const QTalk::Entity::UID& uid, const std::string &text,
@@ -350,6 +354,10 @@ private:
 
 private:
     std::map<std::string, std::set<QTalk::StUserMedal>> _user_medals;
+
+private:
+    MessageRecordManager* _pMsgRecordManager{};
+    FileRecordWnd* _pFileRecordWnd{};
 };
 
 #endif // CHATVIEWMIANPANEL_H

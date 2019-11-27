@@ -7,6 +7,9 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QApplication>
+#include <QtConcurrent>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include "InputWgt.h"
 
 #include "../UICom/uicom.h"
@@ -200,6 +203,7 @@ void ToolWgt::initUi()
     auto* actionPrud = new QAction(tr("产品卡片"),this);
     auto* actionSuggest = new QAction(tr("产品推荐"),this);
     auto* actionSendWechat = new QAction(tr("推送微信"),this);
+    auto* actionVideo = new QAction(tr("视频演示"),this);
 
     _pMultiMenu->addAction(scanQRCode);
 #ifndef _STARTALk
@@ -219,13 +223,16 @@ void ToolWgt::initUi()
 
     QMenu* menu = nullptr;
 
-    if(_pChatItem->_chatType == QTalk::Enum::TwoPersonChat)
+    if(_pChatItem->_chatType != QTalk::Enum::GroupChat && _pChatItem->_chatType != QTalk::Enum::System )
     {
         menu = new QMenu(this);
         auto* videoAct = new QAction(tr("视频通话"), menu);
         auto* audioAct = new QAction(tr("音频通话"), menu);
         menu->addAction(videoAct);
         menu->addAction(audioAct);
+#ifdef _QCHAT
+        menu->addAction(actionVideo);
+#endif
 
         connect(videoAct, &QAction::triggered, [this](bool){
 //            g_pMainPanel->sendStartAudioVideoMessage(_pChatItem->_uid, true);
@@ -271,9 +278,8 @@ void ToolWgt::initUi()
         }
     });
 
-    connect(actionSendWechat,&QAction::triggered,[this](){
-        sendWechat();
-    });
+    connect(actionSendWechat,&QAction::triggered,this, &ToolWgt::sendWechat);
+    connect(actionVideo,&QAction::triggered,this, &ToolWgt::onActShowVideoDemo);
 
 	//_pBtnFile
 	connect(_pBtnFile, &QPushButton::clicked, this, &ToolWgt::onFileBtnClicked);
@@ -506,4 +512,9 @@ void ToolWgt::sendWechat() {
         QTalk::Entity::UID uid = _pChatItem->_uid;
         g_pMainPanel->getMessageManager()->sendWechat(uid);
     }
+}
+
+void ToolWgt::onActShowVideoDemo()
+{
+     // todo
 }

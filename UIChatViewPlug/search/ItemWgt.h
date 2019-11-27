@@ -27,7 +27,7 @@ struct StSearchData {
 };
 
 struct StData {
-    int type;
+    int     type;
     QString messageId;
     qint64  time;
     QString userName;
@@ -49,7 +49,7 @@ enum {
 class NameTitleLabel : public QFrame {
 
 public:
-    explicit NameTitleLabel(int dir, QString  name, QString  time, QWidget* parent = nullptr);
+    explicit NameTitleLabel(int dir, QString name, QString time, QWidget* parent = nullptr);
     ~NameTitleLabel() override = default;
 
 protected:

@@ -31,6 +31,10 @@ void SearchManager::GetSearchResult(SearchInfoEvent &e) {
     cJSON_AddStringToObject(gObj, "key", e.key.c_str());
     cJSON_AddStringToObject(gObj, "qtalkId", userId.c_str());
     cJSON_AddNumberToObject(gObj, "action", e.action);
+    if (!e.to_user.empty())
+        cJSON_AddStringToObject(gObj, "to_user", e.to_user.data());
+    else if(!e.to_muc.empty())
+        cJSON_AddStringToObject(gObj, "to_muc", e.to_muc.data());
     std::string postData = QTalk::JSON::cJSON_to_string(gObj);
     cJSON_Delete(gObj);
 
@@ -58,7 +62,7 @@ void SearchManager::GetSearchResult(SearchInfoEvent &e) {
 
                     Search::StSearchResult tmpRet = Search::StSearchResult();
                     tmpRet.resultType = JSON::cJSON_SafeGetIntValue(item, "resultType");
-                    tmpRet.default_portrait = JSON::cJSON_SafeGetStringValue(item, "defaultportrait");
+//                    tmpRet.default_portrait = JSON::cJSON_SafeGetStringValue(item, "defaultportrait");
 //                    tmpRet.groupId = JSON::cJSON_SafeGetStringValue(item, "groupId");
                     tmpRet.groupLabel = JSON::cJSON_SafeGetStringValue(item, "groupLabel");
                     tmpRet.hasMore = JSON::cJSON_SafeGetBoolValue(item, "hasMore");
@@ -112,11 +116,15 @@ void SearchManager::GetSearchResult(SearchInfoEvent &e) {
                             tmpItem.type = JSON::cJSON_SafeGetIntValue(iitem, "todoType");
                             tmpItem.name = JSON::cJSON_SafeGetStringValue(iitem, "label");
                             tmpItem.icon = JSON::cJSON_SafeGetStringValue(iitem, "icon");
-                            tmpItem.count = JSON::cJSON_SafeGetIntValue(iitem, "count");
+                            if (cJSON_HasObjectItem(iitem, "count"))
+                                tmpItem.count = JSON::cJSON_SafeGetIntValue(iitem, "count");
                             tmpItem.body = JSON::cJSON_SafeGetStringValue(iitem, "body");
-                            tmpItem.time = JSON::cJSON_SafeGetLonglongValue(iitem, "time");
+                            tmpItem.time = atoll(JSON::cJSON_SafeGetStringValue(iitem, "time"));
                             tmpItem.from = JSON::cJSON_SafeGetStringValue(iitem, "from");
                             tmpItem.to = JSON::cJSON_SafeGetStringValue(iitem, "to");
+                            tmpItem.msg_type = atoi(JSON::cJSON_SafeGetStringValue(iitem, "mtype"));
+                            tmpItem.msg_id = JSON::cJSON_SafeGetStringValue(iitem, "msgid");
+                            tmpItem.extend_info = JSON::cJSON_SafeGetStringValue(iitem, "extendinfo");
 //                            tmpItem.real_from = JSON::cJSON_SafeGetStringValue(iitem, "realfrom");
 //                            tmpItem.real_to = JSON::cJSON_SafeGetStringValue(iitem, "realto");
 
@@ -130,10 +138,11 @@ void SearchManager::GetSearchResult(SearchInfoEvent &e) {
 
                             tmpItem.key = e.key;
                             tmpItem.source = JSON::cJSON_SafeGetStringValue(iitem, "source");
-                            tmpItem.icon = JSON::cJSON_SafeGetStringValue(iitem, "icon");
+                            tmpItem.msg_id = JSON::cJSON_SafeGetStringValue(iitem, "msgid");
+//                            tmpItem.icon = JSON::cJSON_SafeGetStringValue(iitem, "icon");
                             tmpItem.body = JSON::cJSON_SafeGetStringValue(iitem, "body");
                             tmpItem.extend_info = JSON::cJSON_SafeGetStringValue(iitem, "extendinfo");
-                            tmpItem.time = JSON::cJSON_SafeGetLonglongValue(iitem, "time");
+                            tmpItem.time = atoll(JSON::cJSON_SafeGetStringValue(iitem, "time"));
                             tmpItem.from = JSON::cJSON_SafeGetStringValue(iitem, "from");
                             tmpItem.to = JSON::cJSON_SafeGetStringValue(iitem, "to");
 

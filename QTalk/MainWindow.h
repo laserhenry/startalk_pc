@@ -16,9 +16,12 @@
 #include "../include/CommonStrcut.h"
 #include "../include/STLazyQueue.h"
 #include "NoOperationThread.h"
+#include "LocalServer.h"
+#include <QStackedLayout>
 
 #ifdef _MACOS
 #include <QMacNativeWidget>
+#include <QMenuBar>
 #endif
 
 class IUITitlebarPlug;
@@ -69,7 +72,7 @@ Q_SIGNALS:
 public slots:
 	void InitLogin(bool, const QString& loginMsg);
 	void LoginResult(bool result);
-	void openMainwindow();
+	void openMainWindow();
 	void onCurFunChanged(int index);
 	void systemQuit();
 	void setAutoLogin(bool autoFlag);
@@ -150,6 +153,16 @@ private:
 
 	SystemTray* _pSysTrayIcon;
 
+
+    QStackedLayout* bodyLay;
+
+#ifdef _MACOS
+protected:
+    QMenuBar*   _pWindowMenuBar{};
+    QAction*    _pFeedBackLog{};
+
+#endif
+
 public:
     static bool _sys_run;
 
@@ -185,5 +198,8 @@ private:
     std::vector<QTalk::StActLog> _operators;
 
 	int boundaryWidth = 5;
+
+private:
+    LocalServer* _pLocalServer{};
 };
 #endif // MAINWINDOW_H

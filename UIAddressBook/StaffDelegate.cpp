@@ -10,6 +10,7 @@
 #include "../UICom/qimage/qimage.h"
 
 #include "../UICom/StyleDefine.h"
+#include "../Platform/AppSetting.h"
 
 using namespace QTalk;
 StaffDelegate::StaffDelegate(QWidget *parent)
@@ -34,17 +35,12 @@ void StaffDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
     QStyledItemDelegate::paint(painter, option, index);
     painter->save();
     painter->setRenderHint(QPainter::TextAntialiasing);
-
-    if (option.state & QStyle::State_Selected)
-    {
-        painter->fillRect(option.rect, StyleDefine::instance().getNavSelectColor());
-    }
-    else
-    {
-        painter->fillRect(option.rect, StyleDefine::instance().getNavNormalColor());
-    }
-
     QRect rect = option.rect;
+    if (option.state & QStyle::State_Selected)
+        painter->fillRect(rect, StyleDefine::instance().getNavSelectColor());
+    else
+        painter->fillRect(rect, StyleDefine::instance().getNavNormalColor());
+
     QString strText = index.data(EM_STAFF_DATATYPE_TEXT).toString();
     QString iconPath = index.data(EM_STAFF_DATATYPE_ICONPATH).toString();
     bool hasChild = index.data(EM_STAFF_DATATYPE_HASCHILD).toBool();
@@ -52,6 +48,7 @@ void StaffDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
 
     painter->drawPixmap(QRect(rect.x(), rect.y() + 8, 24, 24), icon);
     painter->setPen(QPen(StyleDefine::instance().getAdrNameFontColor()));
+    QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
     painter->drawText(QRect(rect.x() + 25, rect.y(), rect.width() - 25, rect.height()), Qt::AlignVCenter, strText);
 
     painter->restore();

@@ -39,7 +39,7 @@ void UILoginPlug::setAutoLoginFlag(bool flag)
 void UILoginPlug::initConf()
 {
     if(_mainPanel)
-        _mainPanel->initConf();
+        _mainPanel->loadConf();
 }
 
 void UILoginPlug::init()

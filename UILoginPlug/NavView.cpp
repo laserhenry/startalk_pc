@@ -15,6 +15,7 @@
 
 #include "../qzxing/QZXing.h"
 #include "../UICom/StyleDefine.h"
+#include "../Platform/AppSetting.h"
 
 int w = 0;
 NavItemDelegate::NavItemDelegate()
@@ -44,28 +45,22 @@ void NavItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &optio
     QString link = index.data(ITEM_DATA_Link).toString();
     bool isSelected = index.data(ITEM_DATA_CHECKED).toBool();
     //
-    QFont nameFont;
-    nameFont.setPixelSize(18);
     pen.setColor(QTalk::StyleDefine::instance().getDropNormalFontColor());
     painter->setPen(pen);
-    painter->setFont(nameFont);
+    QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel(), 18);
     QRect nameRect(rect.x() + 50, rect.y() + 20, rect.width() - 100, 30);
     painter->drawText(nameRect, Qt::AlignTop, text);
 
-    QFont textFont;
-    textFont.setPixelSize(15);
     pen.setColor(QColor(153,153,153));
     painter->setPen(pen);
-    painter->setFont(textFont);
-    link = QFontMetricsF(textFont).elidedText(link, Qt::ElideRight, rect.width() - 210);
+    QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel(), 15);
+    link = QFontMetricsF(painter->font()).elidedText(link, Qt::ElideRight, rect.width() - 210);
     QRect textRect(rect.x() + 50, rect.bottom() - 50, rect.width() - 200, 30);
     painter->drawText(textRect, Qt::AlignBottom, link);
     //
-    QFont detailFont;
-    detailFont.setPixelSize(13);
     pen.setColor(QColor(0,202,190));
     painter->setPen(pen);
-    painter->setFont(detailFont);
+    QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel(), 13);
     QRectF detailRect((int)rect.right() - 30 - w, (int)rect.y(), w, (int)rect.height());
     painter->drawText(detailRect, Qt::AlignVCenter, tr("查看详情"));
 
@@ -166,6 +161,7 @@ NavMainView::NavMainView(const StNav& nav, QWidget* parnet)
     QImage qrCode = QZXing::encodeData(nav.url,
             QZXing::EncoderFormat_QR_CODE, {128, 128});
 
+    _pQRCodeLabel->setFixedSize(140, 140);
     _pQRCodeLabel->setPixmap(QPixmap::fromImage(qrCode));
     _pNameEdit->setText(nav.name);
     _pHostEdit->setText(nav.domain);
@@ -316,7 +312,14 @@ void NavView::onItemClicked(const QString& name)
  */
 void NavView::onSelectChange(const QString& name)
 {
+    if(name.isEmpty())
+        return;
+    //
+    bool sgChanged = !_defaultName.isEmpty() && name != _defaultName;
     _defaultName = name;
+    if(sgChanged)
+        emit sgNavChanged();
+    //
     emit saveConfSignal();
     //
     for (QStandardItem* item : _mapListItem.values()) {

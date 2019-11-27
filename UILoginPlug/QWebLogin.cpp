@@ -46,7 +46,7 @@ QWebLogin::QWebLogin(LoginPanel* loginPanel)
 bool QWebLogin::getQvtFromCookie(const QNetworkCookie &cookie){
     std::string name = cookie.name().toStdString();
     std::string value = cookie.value().toStdString();
-    info_log("cookie:" + name + "-" + value);
+    debug_log("cookie:" + name + "-" + value);
     if("_q" == name){
         qcookie = value;
     } else if("_v" == name){

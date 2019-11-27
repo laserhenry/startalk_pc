@@ -30,6 +30,7 @@ public:
 	std::string getLocalHeadPath(const std::string& netHeadPath);
 
 	VectorMessage getUserHistoryMessage(const QInt64& time, const QUInt8& chatType, const QTalk::Entity::UID& uid);
+	static VectorMessage getNetHistoryMessage(const QInt64& time, int chatType, const QTalk::Entity::UID& uid, int direction);
 
 	VectorMessage getUserLocalHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
 	VectorMessage getUserFileHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
@@ -89,6 +90,8 @@ public:
     void sendWebRtcCommand(int msgType, const std::string& json, const std::string& id);
 
     void getUserMedal(const std::string& xmppId, std::set<QTalk::StUserMedal>& medal);
+
+    void sendSearch(SearchInfoEvent &event);
 };
 
 // 消息接收

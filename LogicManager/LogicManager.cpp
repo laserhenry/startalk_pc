@@ -167,7 +167,7 @@ void LogicManager::loadLibrary() {
 //    strLibraryName += ".so";
 //    dll = dlopen (strLibraryName.c_str(), RTLD_NOW);
 //    if (!dll) {
-//        info_log(std::string(" load error ") + dlerror());
+//        debug_log(std::string(" load error ") + dlerror());
 //        std::cout << dlerror();
 //        return;
 //    }

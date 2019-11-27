@@ -31,6 +31,7 @@ protected:
     void saveConfig();
     void onSaveConf();
     void onAddNav(const QString &name, const QString &navAddr, const bool &isDebug);
+    void onNavChanged();
 
 private:
     LoginPanel*          _pLoginPanel;

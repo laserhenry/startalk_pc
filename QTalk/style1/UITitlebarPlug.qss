@@ -186,6 +186,7 @@ QToolButton#macminimizeBtn:hover{
 
 QWidget#SearchResultPanel{
     background:rgba(255,255,255,1);
+    border:1px solid rgba(181,181,181,0.3);
 }
 
 QFrame#AboutMainFrm {
@@ -224,6 +225,7 @@ QToolButton#AboutWndCloseBtn:hover{
 
 QPushButton#SettingBtn {
     background:#fff;
+    padding: 5px;
     border-radius:2px;
     font-size:14px;
     border:1px solid rgba(191,191,191,1);
@@ -281,17 +283,6 @@ QLabel#SettingDescLab{
     color:#333333;
     font-size:13px;
     font-weight:400;
-}
-
-QFrame#SettingTitleFrm{
-    background:#F9F9F8;
-    border-top-left-radius:6px;
-    border-top-right-radius:6px;
-}
-
-QLabel#SettingTitleLabel {
-    color:#212121;
-    font-size:16px;
 }
 
 QFrame#SettingContentFrm {
@@ -352,8 +343,9 @@ QFrame#bottomFrm {
 }
 
 QPushButton#ChangeBtn {
-    width:72px;
+    min-width:72px;
     height:32px;
+    padding: 5px;
     background:rgba(0,202,190,0.8);
     border-radius:2px;
     font-size:14px;
@@ -421,4 +413,9 @@ QTextEdit, QLineEdit{
 
 QTextEdit:focus, QLineEdit:focus {
     border: 1px solid rgba(0, 202, 190, 0.6);
+}
+
+QLabel {
+    font-size:14px;
+    font-weight:400;
 }

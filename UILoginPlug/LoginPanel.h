@@ -30,7 +30,7 @@ public:
     ~LoginPanel();
 
 public:
-    void initConf();
+    void loadConf();
     void onGotLoginstauts(const QString& msg);
     void authFailed();
     void loginSuccess();

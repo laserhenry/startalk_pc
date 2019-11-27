@@ -29,7 +29,10 @@ UShadowDialog::UShadowDialog(QWidget *parent, bool radius, bool hasBorder) :
     _pMoveContentWgt(nullptr)
 {
     Qt::WindowFlags flags = Qt::Window | Qt::WindowContextHelpButtonHint | Qt::FramelessWindowHint
-                           | Qt::WindowFullscreenButtonHint | Qt::WindowCloseButtonHint | Qt::WindowTitleHint;
+#ifdef _WINDOWS
+		| Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint 
+#endif                   
+		| Qt::WindowFullscreenButtonHint | Qt::WindowCloseButtonHint | Qt::WindowTitleHint;
     this->setWindowFlags(flags);
     //setAttribute(Qt::WA_AlwaysShowToolTips, true);
     setAttribute(Qt::WA_TranslucentBackground, true);

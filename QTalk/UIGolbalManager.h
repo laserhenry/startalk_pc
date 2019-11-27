@@ -57,6 +57,7 @@ private:
 
     int _theme = 1;
     std::string _font;
+    int _font_level;
 
 public:
     bool _check_updater = true;

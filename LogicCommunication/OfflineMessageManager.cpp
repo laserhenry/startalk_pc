@@ -121,7 +121,7 @@ void OfflineMessageManager::updateChatMasks()
     std::map<std::string, int> readFlags;
     auto callBack = [this, &_ret, &readFlags](int code, const std::string &responseData) {
 
-        warn_log("{0}  {1}", code, responseData);
+        info_log("{0}  {1}", code, responseData);
         if (code == 200) {
             cJSON *resData = cJSON_Parse(responseData.c_str());
 
@@ -159,13 +159,13 @@ void OfflineMessageManager::updateChatMasks()
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
-        warn_log("{0} \n {1}", strUrl, postData);
+        info_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
         //
         if(_ret) {
             // 更新阅读状态
             LogicManager::instance()->getDatabase()->updateMessageReadFlags(readFlags);
-            warn_log("-- got user message and read flag -> update timestamp");
+            info_log("-- got user message and read flag -> update timestamp");
             // 更新时间戳
             LogicManager::instance()->getDatabase()->insertConfig(DEM_MESSAGE_MAXTIMESTAMP, DEM_TWOPERSONCHAT,
                                                                   std::to_string(0));
@@ -217,7 +217,7 @@ bool OfflineMessageManager::updateGroupOfflineMessage() {
     }
     // 成功才更新时间戳
     if(retryCount >= 0) {
-        warn_log("-- got group message -> update timestamp");
+        info_log("-- got group message -> update timestamp");
         LogicManager::instance()->getDatabase()->insertConfig(DEM_MESSAGE_MAXTIMESTAMP, DEM_GROUPCHAT,
                                                               std::to_string(0));
     }
@@ -268,7 +268,7 @@ bool OfflineMessageManager::updateNoticeOfflineMessage() {
     }
     // 成功才更新时间戳
     if(retryCount >= 0) {
-        warn_log("-- got system message -> update timestamp");
+        info_log("-- got system message -> update timestamp");
         LogicManager::instance()->getDatabase()->insertConfig(DEM_MESSAGE_MAXTIMESTAMP, DEM_SYSTEM, std::to_string(0));
     }
     return retryCount >= 0;
@@ -307,16 +307,16 @@ QInt64 OfflineMessageManager::getTimeStamp(QTalk::Enum::ChatType chatType) {
     if (LogicManager::instance()->getDatabase()->getConfig(DEM_MESSAGE_MAXTIMESTAMP, subKey, strTime)) {
         timeStamp = atoll(strTime.c_str());
     }
-    info_log("getconfig time {0}", timeStamp);
+    debug_log("getconfig time {0}", timeStamp);
 //    if (timeStamp <= 0) {
 //        timeStamp = LogicManager::instance()->GetDatabase()->getMaxTimeStampByChatType(chatType);
 //    }
-//    info_log("getMaxTimeStampByChatType time{0}", timeStamp);
+//    debug_log("getMaxTimeStampByChatType time{0}", timeStamp);
     if (timeStamp <= 0) {
         time_t now = time(0);
         timeStamp = (now - Platform::instance().getServerDiffTime() - 3600 * 48) * 1000;
     }
-    info_log("get now time{0}", timeStamp);
+    debug_log("get now time{0}", timeStamp);
 
     return timeStamp;
 }
@@ -368,7 +368,7 @@ void OfflineMessageManager::getOfflineChatMessageJson(long long chatTimestamp, i
                                                       std::vector<QTalk::Entity::ImMessageInfo> &outMsgList,
                                                       std::vector<QTalk::Entity::ImSessionInfo> &outSessionList) {
 
-    info_log("开始获取单人消息");
+    debug_log("开始获取单人消息");
 
     std::string httpHost = NavigationManager::instance().getJavaHost();
     std::string method = "/qtapi/gethistory.qunar";
@@ -397,7 +397,7 @@ void OfflineMessageManager::getOfflineChatMessageJson(long long chatTimestamp, i
     //
     auto callback = [this, chatTimestamp, count, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
             (int code, std::string responeseData) {
-        warn_log("{0}  {1}", code, responeseData);
+        info_log("{0}  {1}", code, responeseData);
         std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;
         if (code == 200) {
 
@@ -566,7 +566,7 @@ void OfflineMessageManager::getOfflineChatMessageJson(long long chatTimestamp, i
         QTalk::HttpRequest req(url, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
-        warn_log("{0} \n {1}", url, postData);
+        info_log("{0} \n {1}", url, postData);
         _pComm->addHttpRequest(req, callback);
     }
 }
@@ -598,7 +598,7 @@ void OfflineMessageManager::getGroupReadMark(std::map<std::string, QInt64> &read
 
 
     auto callback = [this, httpHost, &readMarkList](int code, string responseData) {
-        warn_log("{0}  {1}", code, responseData);
+        info_log("{0}  {1}", code, responseData);
         if (code == 200) {
             cJSON *requestData = cJSON_Parse(responseData.c_str());
 
@@ -635,7 +635,7 @@ void OfflineMessageManager::getGroupReadMark(std::map<std::string, QInt64> &read
         QTalk::HttpRequest req(url, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
-        warn_log("{0} \n {1}", url, postData);
+        info_log("{0} \n {1}", url, postData);
         _pComm->addHttpRequest(req, callback);
     }
 }
@@ -674,7 +674,7 @@ void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, 
 
         auto callback = [this, chatTimestamp, count, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
                 (int code, string responseData) {
-            warn_log("{0}  {1}", code, responseData);
+            info_log("{0}  {1}", code, responseData);
             std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;
             if (code == 200) {
 
@@ -789,7 +789,7 @@ void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, 
             QTalk::HttpRequest req(httpUrl, QTalk::RequestMethod::POST);
             req.header["Content-Type"] = "application/json;";
             req.body = postData;
-            warn_log("{0} \n {1}", httpUrl, postData);
+            info_log("{0} \n {1}", httpUrl, postData);
             _pComm->addHttpRequest(req, callback);
         }
 
@@ -833,7 +833,7 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
 
     auto callback = [this, noticeTimestamp, count, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
             (int code, string responseData) {
-        warn_log("{0}  {1}", code, responseData);
+        info_log("{0}  {1}", code, responseData);
         std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;
         if (code == 200) {
             cJSON *data = cJSON_Parse(responseData.c_str());
@@ -926,7 +926,7 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
         QTalk::HttpRequest req(url, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
-        warn_log("{0} \n {1}", url, postData);
+        info_log("{0} \n {1}", url, postData);
         _pComm->addHttpRequest(req, callback);
     }
 }
@@ -938,7 +938,8 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
   * @author   cc
   * @date     2018/12/13
   */
-void OfflineMessageManager::getUserMessage(const QInt64 &time, const std::string &userId) {
+VectorMessage OfflineMessageManager::getUserMessage(const QInt64 &time, const std::string &userId,
+        const std::string& direction, bool saveDb) {
     //
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
@@ -954,24 +955,15 @@ void OfflineMessageManager::getUserMessage(const QInt64 &time, const std::string
     QTalk::Entity::JID jid(&userId);
     cJSON *jsonObject = cJSON_CreateObject();
 
-    cJSON *from = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
-    cJSON_AddItemToObject(jsonObject, "from", from);
-    cJSON *fhost = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "fhost", fhost);
-    cJSON *to = cJSON_CreateString(jid.username().c_str());
-    cJSON_AddItemToObject(jsonObject, "to", to);
-    cJSON *thost = cJSON_CreateString(jid.domainname().c_str());
-    cJSON_AddItemToObject(jsonObject, "thost", thost);
-    cJSON *direction = cJSON_CreateString("0");
-    cJSON_AddItemToObject(jsonObject, "direction", direction);
-    cJSON *timet = cJSON_CreateNumber(time);
-    cJSON_AddItemToObject(jsonObject, "time", timet);
-    cJSON *domain = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "domain", domain);
-    cJSON *num = cJSON_CreateNumber(20);
-    cJSON_AddItemToObject(jsonObject, "num", num);
-    cJSON *f = cJSON_CreateString("t");
-    cJSON_AddItemToObject(jsonObject, "f", f);
+    cJSON_AddStringToObject(jsonObject, "from", Platform::instance().getSelfUserId().c_str());
+    cJSON_AddStringToObject(jsonObject, "fhost", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddStringToObject(jsonObject, "to", jid.username().c_str());
+    cJSON_AddStringToObject(jsonObject, "thost", jid.domainname().c_str());
+    cJSON_AddStringToObject(jsonObject, "direction", direction.data());
+    cJSON_AddNumberToObject(jsonObject, "time", time);
+    cJSON_AddStringToObject(jsonObject, "domain", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddNumberToObject(jsonObject, "num", 20);
+    cJSON_AddStringToObject(jsonObject, "f", "t");
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
     cJSON_Delete(jsonObject);
 
@@ -1105,12 +1097,14 @@ void OfflineMessageManager::getUserMessage(const QInt64 &time, const std::string
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
-        warn_log("{0} \n {1}", strUrl, postData);
+        info_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
-        if (msgList.size() > 0) {
+        if (saveDb && !msgList.empty()) {
             LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
         }
     }
+
+    return msgList;
 }
 
 /**
@@ -1119,10 +1113,11 @@ void OfflineMessageManager::getUserMessage(const QInt64 &time, const std::string
  * @param userId
  * @param realJid
  */
-void OfflineMessageManager::getConsultServerMessage(const QInt64 &time, const std::string &userId,
-                                                    const std::string &realJid) {
+VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time, const std::string &userId,
+                                                    const std::string &realJid, const std::string& direction,
+                                                    bool saveDb) {
     if(realJid.empty()){
-        return;
+        return VectorMessage();
     }
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
@@ -1139,26 +1134,16 @@ void OfflineMessageManager::getConsultServerMessage(const QInt64 &time, const st
     QTalk::Entity::JID relId(&realJid);
     cJSON *jsonObject = cJSON_CreateObject();
 
-    cJSON *from = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
-    cJSON_AddItemToObject(jsonObject, "from", from);
-    cJSON *fhost = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "fhost", fhost);
-    cJSON *to = cJSON_CreateString(relId.username().c_str());
-    cJSON_AddItemToObject(jsonObject, "to", to);
-    cJSON *virtualid = cJSON_CreateString(jid.username().c_str());
-    cJSON_AddItemToObject(jsonObject, "virtual", virtualid);
-    cJSON *thost = cJSON_CreateString(jid.domainname().c_str());
-    cJSON_AddItemToObject(jsonObject, "thost", thost);
-    cJSON *direction = cJSON_CreateString("0");
-    cJSON_AddItemToObject(jsonObject, "direction", direction);
-    cJSON *timet = cJSON_CreateNumber(time);
-    cJSON_AddItemToObject(jsonObject, "time", timet);
-    cJSON *domain = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "domain", domain);
-    cJSON *num = cJSON_CreateNumber(20);
-    cJSON_AddItemToObject(jsonObject, "num", num);
-    cJSON *f = cJSON_CreateString("t");
-    cJSON_AddItemToObject(jsonObject, "f", f);
+    cJSON_AddStringToObject(jsonObject, "from", Platform::instance().getSelfUserId().c_str());
+    cJSON_AddStringToObject(jsonObject, "fhost", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddStringToObject(jsonObject, "to", relId.username().c_str());
+    cJSON_AddStringToObject(jsonObject, "virtual", jid.username().c_str());
+    cJSON_AddStringToObject(jsonObject, "thost", jid.domainname().c_str());
+    cJSON_AddStringToObject(jsonObject, "direction", direction.data());
+    cJSON_AddNumberToObject(jsonObject, "time", time);
+    cJSON_AddStringToObject(jsonObject, "domain", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddNumberToObject(jsonObject, "num", 20);
+    cJSON_AddStringToObject(jsonObject, "f", "t");
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
     cJSON_Delete(jsonObject);
 
@@ -1270,10 +1255,11 @@ void OfflineMessageManager::getConsultServerMessage(const QInt64 &time, const st
         req.body = postData;
         warn_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
-        if (msgList.size() > 0) {
+        if (saveDb && !msgList.empty()) {
             LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
         }
     }
+    return msgList;
 }
 
 /**
@@ -1283,7 +1269,11 @@ void OfflineMessageManager::getConsultServerMessage(const QInt64 &time, const st
   * @author   cc
   * @date     2018/12/13
   */
-void OfflineMessageManager::getGroupMessage(const QInt64 &time, const std::string &userId) {
+VectorMessage OfflineMessageManager::getGroupMessage(const QInt64 &time,
+        const std::string &userId,
+        const std::string& direction,
+        bool saveDb) {
+
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
         << "/qtapi/getmucmsgs.qunar"
@@ -1298,16 +1288,11 @@ void OfflineMessageManager::getGroupMessage(const QInt64 &time, const std::strin
     QTalk::Entity::JID jid(&userId);
     cJSON *jsonObject = cJSON_CreateObject();
 
-    cJSON *muc = cJSON_CreateString(jid.username().c_str());
-    cJSON_AddItemToObject(jsonObject, "muc", muc);
-    cJSON *direction = cJSON_CreateString("0");
-    cJSON_AddItemToObject(jsonObject, "direction", direction);
-    cJSON *num = cJSON_CreateNumber(20);
-    cJSON_AddItemToObject(jsonObject, "num", num);
-    cJSON *timet = cJSON_CreateNumber(time);
-    cJSON_AddItemToObject(jsonObject, "time", timet);
-    cJSON *domain = cJSON_CreateString(jid.domainname().c_str());
-    cJSON_AddItemToObject(jsonObject, "domain", domain);
+    cJSON_AddStringToObject(jsonObject, "muc", jid.username().c_str());
+    cJSON_AddStringToObject(jsonObject, "direction", direction.data());
+    cJSON_AddNumberToObject(jsonObject, "num", 20);
+    cJSON_AddNumberToObject(jsonObject, "time", time);
+    cJSON_AddStringToObject(jsonObject, "domain", jid.domainname().c_str());
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
     cJSON_Delete(jsonObject);
     //
@@ -1392,10 +1377,12 @@ void OfflineMessageManager::getGroupMessage(const QInt64 &time, const std::strin
         req.body = postData;
         warn_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
-        if (msgList.size() > 0) {
+        if (saveDb && !msgList.empty()) {
             LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
         }
     }
+
+    return msgList;
 }
 
 /**
@@ -1405,7 +1392,9 @@ void OfflineMessageManager::getGroupMessage(const QInt64 &time, const std::strin
   * @author   cc
   * @date     2018/12/13
   */
-void OfflineMessageManager::getSystemMessage(const QInt64 &time, const std::string &userId) {
+VectorMessage OfflineMessageManager::getSystemMessage(const QInt64 &time, const std::string &userId,
+        const std::string& direction, bool saveDb) {
+
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
         << "/qtapi/get_system_msgs.qunar"
@@ -1420,24 +1409,15 @@ void OfflineMessageManager::getSystemMessage(const QInt64 &time, const std::stri
     QTalk::Entity::JID jid(&userId);
     cJSON *jsonObject = cJSON_CreateObject();
 
-    cJSON *from = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
-    cJSON_AddItemToObject(jsonObject, "from", from);
-    cJSON *fhost = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "fhost", fhost);
-    cJSON *to = cJSON_CreateString(jid.username().c_str());
-    cJSON_AddItemToObject(jsonObject, "to", to);
-    cJSON *thost = cJSON_CreateString(jid.domainname().c_str());
-    cJSON_AddItemToObject(jsonObject, "thost", thost);
-    cJSON *direction = cJSON_CreateString("0");
-    cJSON_AddItemToObject(jsonObject, "direction", direction);
-    cJSON *timet = cJSON_CreateNumber(time);
-    cJSON_AddItemToObject(jsonObject, "time", timet);
-    cJSON *domain = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "domain", domain);
-    cJSON *num = cJSON_CreateNumber(20);
-    cJSON_AddItemToObject(jsonObject, "num", num);
-    cJSON *f = cJSON_CreateString("t");
-    cJSON_AddItemToObject(jsonObject, "f", f);
+    cJSON_AddStringToObject(jsonObject, "from", Platform::instance().getSelfUserId().c_str());
+    cJSON_AddStringToObject(jsonObject, "fhost", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddStringToObject(jsonObject, "to", jid.username().c_str());
+    cJSON_AddStringToObject(jsonObject, "thost", jid.domainname().c_str());
+    cJSON_AddStringToObject(jsonObject, "direction", direction.data());
+    cJSON_AddNumberToObject(jsonObject, "time", time);
+    cJSON_AddStringToObject(jsonObject, "domain", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddNumberToObject(jsonObject, "num", 20);
+    cJSON_AddStringToObject(jsonObject, "f", "t");
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
     cJSON_Delete(jsonObject);
 
@@ -1507,8 +1487,10 @@ void OfflineMessageManager::getSystemMessage(const QInt64 &time, const std::stri
         req.body = postData;
         warn_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
-        if (msgList.size() > 0) {
+        if (saveDb && !msgList.empty()) {
             LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
         }
     }
+
+    return msgList;
 }

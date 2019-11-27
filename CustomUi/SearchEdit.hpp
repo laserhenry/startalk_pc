@@ -51,6 +51,19 @@ public:
             _pEdit->clear();
     }
 
+    void setText(const QString& text)
+    {
+        if(_pEdit)
+            _pEdit->setText(text);
+    }
+
+    QString text() {
+        if(nullptr != _pEdit)
+            return _pEdit->text();
+        else
+            return QString();
+    }
+
 Q_SIGNALS:
     void textChanged(const QString &);
     void textEdited(const QString &);

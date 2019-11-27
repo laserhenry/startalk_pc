@@ -276,6 +276,10 @@
         <source>发送</source>
         <translation>Send</translation>
     </message>
+    <message>
+        <source>发送消息 %1 </source>
+        <translation>Send %1 </translation>
+    </message>
 </context>
 <context>
     <name>ChatViewMainPanel</name>
@@ -514,7 +518,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>驼圈助手</source>
-        <translation>Camel circle assistant</translation>
+        <translation type="vanished">Camel circle assistant</translation>
     </message>
     <message>
         <source>系统设置</source>
@@ -550,12 +554,16 @@ the current number:%1</translation>
         <source>服务器表情</source>
         <translation>Server</translation>
     </message>
+    <message>
+        <source>管理表情</source>
+        <translation>Manage stickers</translation>
+    </message>
 </context>
 <context>
     <name>EmoticonTitleBar</name>
     <message>
         <source>管理表情</source>
-        <translation>Manage stickers</translation>
+        <translation type="vanished">Manage stickers</translation>
     </message>
 </context>
 <context>
@@ -575,6 +583,40 @@ the current number:%1</translation>
     <message>
         <source>选择文件下载路径</source>
         <translation>select file download path</translation>
+    </message>
+</context>
+<context>
+    <name>FileRecordItemWgt</name>
+    <message>
+        <source>下载</source>
+        <translation>Download</translation>
+    </message>
+    <message>
+        <source>打开文件夹</source>
+        <translation>Open floder</translation>
+    </message>
+    <message>
+        <source>来着: %1</source>
+        <translation type="vanished">From: %1</translation>
+    </message>
+    <message>
+        <source>提醒</source>
+        <translation>Warning</translation>
+    </message>
+    <message>
+        <source>未找到本地文件, 是否下载?</source>
+        <translation>The local file was not found. Do you want to download it?</translation>
+    </message>
+    <message>
+        <source>来自: %1</source>
+        <translation>From: %1</translation>
+    </message>
+</context>
+<context>
+    <name>FileRecordWnd</name>
+    <message>
+        <source>文件管理器</source>
+        <translation>File Manager</translation>
     </message>
 </context>
 <context>
@@ -891,11 +933,11 @@ the current number:%1</translation>
     </message>
     <message>
         <source>磁盘空间不足</source>
-        <translation>Insufficient disk space</translation>
+        <translation type="vanished">Insufficient disk space</translation>
     </message>
     <message>
         <source>磁盘不足, 可能会导致程序异常退出, 是否立即退出?</source>
-        <translation>Insufficient disk may lead to abnormal program exit. Do you exit immediately?</translation>
+        <translation type="vanished">Insufficient disk may lead to abnormal program exit. Do you exit immediately?</translation>
     </message>
     <message>
         <source>请输入账号</source>
@@ -1005,7 +1047,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>新建窗口</source>
-        <translation>New window</translation>
+        <translation type="vanished">New window</translation>
     </message>
     <message>
         <source>更新提示</source>
@@ -1018,6 +1060,42 @@ the current number:%1</translation>
     <message>
         <source>获取历史记录失败, 请重新登录!</source>
         <translation>get history message error. please re-login!</translation>
+    </message>
+    <message>
+        <source>工具</source>
+        <translation>Tool</translation>
+    </message>
+    <message>
+        <source>程序多开</source>
+        <translation>New Instance</translation>
+    </message>
+    <message>
+        <source>快速反馈日志</source>
+        <translation>Fast Feedback Log</translation>
+    </message>
+    <message>
+        <source>最小化</source>
+        <translation>minimize</translation>
+    </message>
+    <message>
+        <source>缩放</source>
+        <translation>Zoom</translation>
+    </message>
+    <message>
+        <source>显示面板</source>
+        <translation>Display panel</translation>
+    </message>
+    <message>
+        <source>系统</source>
+        <translation>System</translation>
+    </message>
+    <message>
+        <source>系统设置</source>
+        <translation>System Setting</translation>
+    </message>
+    <message>
+        <source>关于</source>
+        <translation>About</translation>
     </message>
 </context>
 <context>
@@ -1200,6 +1278,17 @@ the current number:%1</translation>
     <message>
         <source>[未知类型]</source>
         <translation>[Unknown]</translation>
+    </message>
+</context>
+<context>
+    <name>MessageRecordManager</name>
+    <message>
+        <source>消息管理器</source>
+        <translation>Message Manager</translation>
+    </message>
+    <message>
+        <source>&lt; 返回</source>
+        <translation>&lt; Back</translation>
     </message>
 </context>
 <context>
@@ -1447,6 +1536,26 @@ the current number:%1</translation>
         <source>[未知类型]</source>
         <translation>[Unknown]</translation>
     </message>
+    <message>
+        <source>%1条与“%2”相关聊天记录</source>
+        <translation>%1 record related to “%2”</translation>
+    </message>
+    <message>
+        <source>你</source>
+        <translation>You</translation>
+    </message>
+    <message>
+        <source>抖了他一下</source>
+        <translation>Give him a shake</translation>
+    </message>
+    <message>
+        <source>收到一个窗口抖动</source>
+        <translation> Receive Shake Screen</translation>
+    </message>
+    <message>
+        <source>来自：%1</source>
+        <translation>From: %1</translation>
+    </message>
 </context>
 <context>
     <name>QR code</name>
@@ -1579,6 +1688,48 @@ the current number:%1</translation>
     </message>
 </context>
 <context>
+    <name>SearchAudioVideoItem</name>
+    <message>
+        <source>视频通话</source>
+        <translation>Video call</translation>
+    </message>
+    <message>
+        <source>已取消</source>
+        <translation>Canceled</translation>
+    </message>
+    <message>
+        <source>对方已取消</source>
+        <translation>Canceled</translation>
+    </message>
+    <message>
+        <source>通话时长 </source>
+        <translation>Video call</translation>
+    </message>
+    <message>
+        <source>对方已拒绝</source>
+        <translation>Refused</translation>
+    </message>
+    <message>
+        <source>已拒绝</source>
+        <translation>Refused</translation>
+    </message>
+    <message>
+        <source>对方暂时无人接听</source>
+        <translation>Unanswered</translation>
+    </message>
+    <message>
+        <source>发送端版本过低，视频无法接通</source>
+        <translation>The sender version is too low to connect the video</translation>
+    </message>
+</context>
+<context>
+    <name>SearchCodeItem</name>
+    <message>
+        <source>代码片段</source>
+        <translation>Code</translation>
+    </message>
+</context>
+<context>
     <name>SearchItemDelegate</name>
     <message>
         <source>展开更多</source>
@@ -1588,6 +1739,13 @@ the current number:%1</translation>
         <source>收起</source>
         <translation>Pick up</translation>
     </message>
+    <message>
+        <source>查看更多</source>
+        <translation>Show More</translation>
+    </message>
+</context>
+<context>
+    <name>SearchListDelegate</name>
     <message>
         <source>查看更多</source>
         <translation>Show More</translation>
@@ -1617,6 +1775,10 @@ the current number:%1</translation>
         <translation>Search Contacts Group Chats
 Allows Searching by Keywords
 or ID</translation>
+    </message>
+    <message>
+        <source>文件</source>
+        <translation>File</translation>
     </message>
 </context>
 <context>
@@ -1652,7 +1814,7 @@ or ID</translation>
     </message>
     <message>
         <source>关闭</source>
-        <translation>Close</translation>
+        <translation type="vanished">Close</translation>
     </message>
     <message>
         <source>最近</source>
@@ -1973,7 +2135,7 @@ or ID</translation>
     </message>
     <message>
         <source>皮肤设置</source>
-        <translation>Skin setting</translation>
+        <translation type="vanished">Skin setting</translation>
     </message>
     <message>
         <source>其他设置</source>
@@ -2203,6 +2365,54 @@ or ID</translation>
         <source>勿扰模式 (在线也不接收咨询)</source>
         <translation>No Disturbance Mode (Online and No Consultation)</translation>
     </message>
+    <message>
+        <source>外观设置</source>
+        <translation>Appearance</translation>
+    </message>
+    <message>
+        <source>高分屏适配(重启客户端生效)</source>
+        <translation type="vanished">High screen adaptation (effective after restarting the client)</translation>
+    </message>
+    <message>
+        <source>字体大小</source>
+        <translation>Font Size</translation>
+    </message>
+    <message>
+        <source>默认大小</source>
+        <translation>Default Size</translation>
+    </message>
+    <message>
+        <source>大字体</source>
+        <translation>Big Font</translation>
+    </message>
+    <message>
+        <source>小字体</source>
+        <translation>Small Font</translation>
+    </message>
+    <message>
+        <source>高分屏适配</source>
+        <translation>High screen adaptation</translation>
+    </message>
+    <message>
+        <source>提示</source>
+        <translation>information</translation>
+    </message>
+    <message>
+        <source>外观设置重启后生效</source>
+        <translation>effective after restarting the client</translation>
+    </message>
+    <message>
+        <source>语言</source>
+        <translation>Language</translation>
+    </message>
+    <message>
+        <source>中文</source>
+        <translation>Chinese</translation>
+    </message>
+    <message>
+        <source>英文</source>
+        <translation>English</translation>
+    </message>
 </context>
 <context>
     <name>SystemTray</name>
@@ -2401,6 +2611,10 @@ or ID</translation>
     <message>
         <source>选择需要发送的文件</source>
         <translation>Select files to send</translation>
+    </message>
+    <message>
+        <source>视频演示</source>
+        <translation>Video Demonstration</translation>
     </message>
 </context>
 <context>
@@ -2639,55 +2853,15 @@ or ID</translation>
     <name>quan</name>
     <message>
         <source>提交</source>
-        <translation>Ok</translation>
+        <translation type="vanished">Ok</translation>
     </message>
     <message>
         <source>发送成功</source>
-        <translation>Success</translation>
+        <translation type="vanished">Success</translation>
     </message>
     <message>
         <source>发送失败</source>
-        <translation>Failed</translation>
-    </message>
-    <message>
-        <source>是否匿名</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>清除</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>添加图片</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>匿名名称</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>提醒</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>最多上传9张图片</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>选择图片</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>此图片已存在是否继续</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>请输入文本或者选择图片!</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>获取匿名信息失败, 请重试</source>
-        <translation></translation>
+        <translation type="vanished">Failed</translation>
     </message>
 </context>
 <context>

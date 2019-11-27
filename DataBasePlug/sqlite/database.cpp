@@ -150,7 +150,7 @@ namespace qtalk {
                 mColumnCount(0),
                 mbHasRow(false),
                 mbDone(false) {
-            info_log(query);
+            debug_log(query);
             mColumnCount = sqlite3_column_count(stmt);
         }
 

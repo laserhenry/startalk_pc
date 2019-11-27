@@ -46,7 +46,7 @@ namespace QTalk {
 //                    struct tm *local_start = gmtime(&start_time);
 //                    struct tm *local_end = gmtime(&end_time);
 
-                    info_log("PERF Counter: {0}\nDuration:{1}ms", //, start at:{2}, end at:{3}
+                    debug_log("PERF Counter: {0}\nDuration:{1}ms", //, start at:{2}, end at:{3}
                              name,
                              duration);
 //                             asctime(local_start),

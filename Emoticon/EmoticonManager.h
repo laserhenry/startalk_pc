@@ -11,18 +11,6 @@
 class LocalEmoticon;
 class NetEmoticon;
 class EmoticonManager;
-class EmoticonTitleBar : public QFrame
-{
-    Q_OBJECT
-public:
-	explicit EmoticonTitleBar(EmoticonManager* parent);
-	~EmoticonTitleBar() override;
-
-protected:
-
-private:
-	EmoticonManager* _pManager;
-};
 
 class EmoticonManager : public UShadowDialog
 {

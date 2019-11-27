@@ -5,6 +5,7 @@
 #include "UserListWnd.h"
 #include "../../Platform/Platform.h"
 #include "../../UICom/qimage/qimage.h"
+#include "../../UICom/StyleDefine.h"
 #include <QVBoxLayout>
 #include <QPainter>
 #include <QToolButton>
@@ -33,6 +34,7 @@ void UserItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
 
     QString strText = index.data(em_user_name).toString();
     painter->setPen(QColor(51,51,51));
+    QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
     painter->drawText(QRect(rect.x() + 65, rect.y(), rect.width() - 40, rect.height()), Qt::AlignVCenter, strText);
 
     painter->restore();

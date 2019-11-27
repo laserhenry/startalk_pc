@@ -9,6 +9,7 @@
 #include "../CustomUi/HeadPhotoLab.h"
 #include "../UICom/qimage/qimage.h"
 #include "../UICom/StyleDefine.h"
+#include "../Platform/AppSetting.h"
 
 #define HEAD_WIDTH 24
 
@@ -38,6 +39,7 @@ void GroupItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
     if(strText.isEmpty())
         strText = index.data(EM_ITEMDATA_TYPE_USERNAME).toString();
     painter->setPen(QPen(StyleDefine::instance().getChatGroupFontColor()));
+    QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
     painter->drawText(QRect(rect.x() + 30, rect.y(), rect.width() - 30 - 30, rect.height()), Qt::AlignVCenter, strText);
     QString headPath = index.data(EM_ITEMDATA_TYPE_HEADPATH).toString();
     bool isOnline = index.data(EM_ITEMDATA_TYPE_ISONLINE).toBool();

@@ -1,0 +1,46 @@
+//
+// Created by QITMAC000260 on 2019/11/05.
+//
+
+#ifndef QTALK_V2_MESSAGEDELEGATE_H
+#define QTALK_V2_MESSAGEDELEGATE_H
+
+#include <QStyledItemDelegate>
+#include <QListView>
+
+enum {
+    SEARCH_USER_TYPE = Qt::UserRole + 1,
+    SEARCH_USER_MSG_TYPE,
+    SEARCH_USER_MSG_TIME,
+    SEARCH_USER_INFO
+};
+
+/**
+* @description: SearchUserDelegate
+* @author: cc
+* @create: 2019-11-05 20:48
+**/
+class SearchItemBase;
+class MessageDelegate : public QStyledItemDelegate
+{
+    Q_OBJECT
+public:
+    explicit MessageDelegate(QListView* parent);
+
+protected:
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+
+private:
+    void dealWidget(const QStyleOptionViewItem &option, const QModelIndex &index);
+    SearchItemBase* creatWgt(const QStyleOptionViewItem &option, const QModelIndex &index);
+
+Q_SIGNALS:
+    void sgGetMessageDetail(qint64, const QString&, int);
+
+private:
+    QListView* _parentWgt = nullptr;
+};
+
+
+#endif //QTALK_V2_MESSAGEDELEGATE_H

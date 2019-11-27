@@ -25,6 +25,8 @@ namespace QTalk {
         //
         inline QColor getNavNormalColor() { return _nav_normal_color; };
         inline QColor getNavSelectColor() { return _nav_select_color; };
+        inline QColor getSearchNormalColor() { return _search_normal_color; };
+        inline QColor getSearchSelectColor() { return _search_select_color; };
         inline QColor getNavTopColor() { return _nav_top_color; };
         inline QColor getNavTipColor() { return _nav_tip_color; };
         //
@@ -78,6 +80,8 @@ namespace QTalk {
     public:
         inline void setNavNormalColor(const QColor& color) {  _nav_normal_color = color; };
         inline void setNavSelectColor(const QColor& color) {  _nav_select_color = color; };
+        inline void setSearchNormalColor(const QColor& color) {  _search_normal_color = color; };
+        inline void setSearchSelectColor(const QColor& color) {  _search_select_color = color; };
         inline void setNavTopColor(const QColor& color) {  _nav_top_color = color; };
         inline void setNavTipColor(const QColor& color) {  _nav_tip_color = color; };
         inline void setNavNameFontColor(const QColor& color) {  _nav_name_font_color = color; };
@@ -133,6 +137,8 @@ namespace QTalk {
         // 会话列表
         QColor _nav_normal_color = {255, 255, 255};
         QColor _nav_select_color = {213, 242, 240};
+        QColor _search_normal_color = {255, 255, 255};
+        QColor _search_select_color = {242, 242, 242};
         QColor _nav_top_color    = {242, 242, 242};
         QColor _nav_tip_color    = {176, 228, 225};
         QColor _nav_name_font_color     = {51, 51, 51};
@@ -185,5 +191,8 @@ namespace QTalk {
     };
 }
 
-
+class QPainter;
+namespace QTalk {
+    void UICOMSHARED_EXPORT setPainterFont(QPainter* painter, int level, int defaultSize = 13);
+}
 #endif //QTALK_V2_STYLEDEFINE_H

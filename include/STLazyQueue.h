@@ -72,7 +72,7 @@ public:
                     if (!this->empty()) {
 
                         int count = this->size();
-                        info_log("LAZY QUEUE: will process items count: {0}", count);
+                        debug_log("LAZY QUEUE: will process items count: {0}", count);
 
                         try {
                             int oked = func(this);

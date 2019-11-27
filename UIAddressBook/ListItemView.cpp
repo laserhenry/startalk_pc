@@ -11,6 +11,7 @@
 #include "AddressBookPanel.h"
 #include "../UICom/qimage/qimage.h"
 #include "../UICom/StyleDefine.h"
+#include "../Platform/AppSetting.h"
 
 #define HEAD_WIDTH 22
 
@@ -35,20 +36,14 @@ void ListItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
 
     painter->save();
     painter->setRenderHint(QPainter::TextAntialiasing);
-
-    if (option.state & QStyle::State_Selected)
-    {
-        painter->fillRect(option.rect, StyleDefine::instance().getNavSelectColor());
-    }
-    else
-    {
-        painter->fillRect(option.rect, StyleDefine::instance().getNavNormalColor());
-    }
-
     QRect rect = option.rect;
-
+    if (option.state & QStyle::State_Selected)
+        painter->fillRect(rect, StyleDefine::instance().getNavSelectColor());
+    else
+        painter->fillRect(rect, StyleDefine::instance().getNavNormalColor());
     QString strText = index.data(EM_DATA_TYPE_TEXT).toString();
     painter->setPen(StyleDefine::instance().getAdrNameFontColor());
+    QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
     painter->drawText(QRect(rect.x() + 65, rect.y(), rect.width() - 65, rect.height()), Qt::AlignVCenter, strText);
     QString headPath = index.data(EM_DATA_TYPE_ICON).toString();
     painter->setRenderHints(QPainter::Antialiasing, true);

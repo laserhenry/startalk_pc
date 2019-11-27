@@ -44,10 +44,8 @@ UIGroupManager::UIGroupManager()
         , _pItemDelegate(nullptr)
         , _pRecentItem(nullptr){
 
+    setWindowFlags(this->windowFlags() | Qt::Tool);
     initUi();
-#ifdef _MACOS
-    macAdjustWindows();
-#endif
     //
     _pMsgManager = new GroupManagerMsgManager;
     _pMsgListener = new GroupMsgListener(this);
@@ -81,8 +79,9 @@ void UIGroupManager::onCreatGroup(const QString &memberId) {
         }
         addGroupMember(memberId, headrSrc);
         //
-        QWidget *wgt = UICom::getInstance()->getAcltiveMainWnd();
-        showCenter(true, wgt);
+//        QWidget *wgt = UICom::getInstance()->getAcltiveMainWnd();
+        this->setVisible(false);
+        this->setVisible(true);
     }
 }
 
@@ -95,8 +94,10 @@ void UIGroupManager::onAddGroupMember(const QString &groupId) {
     _pGroupNaemFrm->setVisible(false);
     _pTreeWgt->setVisible(true);
     _batchAddMemberBtn->setVisible(true);
-    QWidget *wgt = UICom::getInstance()->getAcltiveMainWnd();
-    showCenter(true, wgt);
+//    QWidget *wgt = UICom::getInstance()->getAcltiveMainWnd();
+//    showCenter(true, wgt);
+    this->setVisible(false);
+    this->setVisible(true);
 }
 
 //
@@ -604,16 +605,16 @@ QStandardItem* UIGroupManager::creatItem(QStandardItem *item, const std::string 
     std::shared_ptr<QTalk::Entity::ImUserInfo> userinfo;
     if(_structure.find(xmppId) == _structure.end() || nullptr == _structure[xmppId])
     {
-        userinfo = std::make_shared<QTalk::Entity::ImUserInfo>();
-        userinfo->XmppId = xmppId;
-        if(_pMsgManager)
-            _pMsgManager->getUserInfo(userinfo);
-
-        if(userinfo)
-        {
-            _mapUserName[xmppId.data()] = QTalk::getUserName(userinfo).data();
-            _structure[xmppId] = userinfo;
-        }
+//        userinfo = std::make_shared<QTalk::Entity::ImUserInfo>();
+//        userinfo->XmppId = xmppId;
+//        if(_pMsgManager)
+//            _pMsgManager->getUserInfo(userinfo);
+//
+//        if(userinfo)
+//        {
+//            _mapUserName[xmppId.data()] = QTalk::getUserName(userinfo).data();
+//            _structure[xmppId] = userinfo;
+//        }
     }
     else
         userinfo = _structure[xmppId];

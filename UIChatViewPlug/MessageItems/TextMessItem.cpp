@@ -250,13 +250,6 @@ void TextMessItem::setMessageContent() {
                     QFileInfo imageInfo(imagePath);
                     if(imageInfo.suffix().toUpper() == "GIF" && _mapMovies.find(msg.content) == _mapMovies.end())
                     {
-//                        auto* mov = new QMovie;
-//                        mov->setFileName(msg.content);
-//                        mov->setCacheMode(QMovie::CacheNone);
-//                        connect(mov, SIGNAL(frameChanged(int)), this, SLOT(onMovieChanged(int)));
-//                        mov->start();
-
-
                         _mapMovies[msg.content] = nullptr;
                     }
                     //
@@ -264,13 +257,6 @@ void TextMessItem::setMessageContent() {
                 }
                 case StTextMessage::EM_LINK: {
                     QString content = msg.content;
-//                    content.replace("<",  "&lt;");
-//                    content.replace(">",  "&gt;");
-//                    content.replace("&",  "&amp;");
-//                    content.replace("\"", "&quot;");
-//                    content.replace("'", "&apos;");
-//                    content = QString(DEM_LINK_HTML).arg(content).arg(QTalk::StyleDefine::instance().getLinkUrl());
-
                     QTextCharFormat linkFormat = _textBrowser->textCursor().charFormat();
                     linkFormat.setForeground(QBrush(QTalk::StyleDefine::instance().getLinkUrl()));
                     linkFormat.setAnchor(true);
@@ -278,7 +264,6 @@ void TextMessItem::setMessageContent() {
                     linkFormat.setAnchorName(msg.content);
                     _textBrowser->textCursor().insertText(msg.content, linkFormat);
 
-//                    _textBrowser->insertHtml(content);
                     _textBrowser->setCurrentCharFormat(f);
                     break;
                 }

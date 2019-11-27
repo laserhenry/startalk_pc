@@ -31,6 +31,7 @@ private:
 	void sendJsonPrud(const QString &products);
 	void sendQuickReply(const std::string& text);
 	void sessionTransfer(const std::string& newJid,const std::string& reason);
+	void onActShowVideoDemo();
 
 public:
 	void showSeats(std::vector<QTalk::Entity::ImTransfer> transfers);
@@ -40,30 +41,30 @@ Q_SIGNALS:
     void showSearchWnd();
 
 private:
-	InputWgt*     _pInputWgt;
-	ChatViewItem* _pChatItem;
-	QPushButton* _pBtnEmoticon;
-	QPushButton* _pBtnScreenshot;
-	QPushButton* _pBtnScreenshotSet;
-    QPushButton* _pBtnCode;
-	QPushButton* _pBtnShock;
-	QPushButton* _pBtnFile;
-	QPushButton* _pBtnVideo;
-	QPushButton* _pBtnHistory;
-	QPushButton* _pBtnShare;
-	QPushButton* _pBtnMultifunction;
-	QPushButton* _pBtnCloseService;
-	QPushButton* _pBtnTransfer;
-	QPushButton* _pBtnQuickReply;
-	QMenu*       _pMenu;
-	QAction*     _pScreenShotHideWnd;
+	InputWgt*     _pInputWgt{};
+	ChatViewItem* _pChatItem{};
+	QPushButton* _pBtnEmoticon{};
+	QPushButton* _pBtnScreenshot{};
+	QPushButton* _pBtnScreenshotSet{};
+    QPushButton* _pBtnCode{};
+	QPushButton* _pBtnShock{};
+	QPushButton* _pBtnFile{};
+	QPushButton* _pBtnVideo{};
+	QPushButton* _pBtnHistory{};
+	QPushButton* _pBtnShare{};
+	QPushButton* _pBtnMultifunction{};
+	QPushButton* _pBtnCloseService{};
+	QPushButton* _pBtnTransfer{};
+	QPushButton* _pBtnQuickReply{};
+	QMenu*       _pMenu{};
+	QAction*     _pScreenShotHideWnd{};
 
-	SendProductWnd* _pSendProductWnd;
-	QuickReplyWnd* _pQuickReplyWnd;
-	SessionTransferWnd* _pSessionTransferWnd;
-	QchatMoreFun* qchatMoreFun;
+	SendProductWnd* _pSendProductWnd{};
+	QuickReplyWnd* _pQuickReplyWnd{};
+	SessionTransferWnd* _pSessionTransferWnd{};
+	QchatMoreFun* qchatMoreFun{};
 
-	QMenu* _pMultiMenu;
+	QMenu* _pMultiMenu{};
 
 
 };

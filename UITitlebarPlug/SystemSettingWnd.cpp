@@ -31,6 +31,7 @@
 #include "../CustomUi/QtMessageBox.h"
 #include "SKRecorder.h"
 #include "../QtUtil/Utils/Log.h"
+#include "../CustomUi/TitleBar.h"
 
 #include <QProcess>
 #include <QFontDatabase>
@@ -53,33 +54,9 @@ void SystemSettingWnd::initUi()
     mainLay->setMargin(0);
     mainLay->setSpacing(0);
     //
-    //
-    QFrame* titleFrm = new QFrame(this);
-    titleFrm->setObjectName("SettingTitleFrm");
+    auto* titleFrm = new TitleBar(tr("系统设置"), this, this);
     mainLay->addWidget(titleFrm);
     setMoverAble(true, titleFrm);
-
-    auto * titleLay = new QHBoxLayout(titleFrm);
-    titleLay->setMargin(10);
-    auto * closeBtn = new QToolButton();
-    QLabel *titleLbl = new QLabel(tr("系统设置"));
-    titleLbl->setObjectName("SettingTitleLabel");
-    titleLbl->setAlignment(Qt::AlignmentFlag::AlignCenter);
-
-#ifdef _MACOS
-    closeBtn->setFixedSize(10, 10);
-    titleLay->addWidget(closeBtn);
-    closeBtn->setObjectName("gmCloseBtn");
-    titleLay->addWidget(titleLbl);
-    titleLay->addItem(new QSpacerItem(12, 12));
-#else
-    titleLay->addWidget(titleLbl);
-    closeBtn->setFixedSize(20, 20);
-    titleLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
-    closeBtn->setObjectName("gwCloseBtn");
-    titleLay->addWidget(closeBtn);
-#endif
-    connect(closeBtn, &QToolButton::clicked, [this](){this->setVisible(false);});
 
     auto contentFrm = new QFrame(this);
     contentFrm->setObjectName("SettingContentFrm");
@@ -115,7 +92,7 @@ void SystemSettingWnd::initUi()
     _settingListWidget->setObjectName("SettingListWidget");
     _settingListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     _settingListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    _settingListWidget->installEventFilter(this);
+//    _settingListWidget->installEventFilter(this);
     Settinglayout->addWidget(_settingListWidget);
     //
     for(int index = EM_SETTING_MESSAGE;
@@ -134,6 +111,7 @@ void SystemSettingWnd::initSetting(int type)
     QString text, objName;
     auto itemFrm = new QFrame(this);
     itemFrm->setObjectName("fileDirectoryFrm");
+    itemFrm->installEventFilter(this);
 
     auto *vlayout = new QVBoxLayout(itemFrm);
     vlayout->setSpacing(10);
@@ -245,14 +223,13 @@ void SystemSettingWnd::initSetting(int type)
     _settingListWidget->addItem(settingItem);
     _settingListWidget->setItemWidget(settingItem, itemFrm);
 
+    _mapSettingWgt[itemFrm] = actLabel;
     _mapSettingItems[settingItem] = actLabel;
     actLabel->setCheckState(_mapSettingItems.size() == 1);
     connect(actLabel, &ActionLabel::clicked, [this,  actLabel, settingItem](){
         _settingListWidget->scrollToItem(settingItem, QAbstractItemView::PositionAtTop);
         for(const auto lab : _mapSettingItems.values())
-        {
             lab->setCheckState(lab == actLabel);
-        }
     });
 }
 
@@ -264,14 +241,18 @@ void SystemSettingWnd::initSetting(int type)
  */
 bool SystemSettingWnd::eventFilter(QObject *o, QEvent *e)
 {
-    if(o == _settingListWidget)
+    if (e->type() == QEvent::Enter)
     {
-        if (e->type() == QEvent::Wheel)
+        auto *wgt = qobject_cast<QFrame*>(o);
+        if(wgt && _mapSettingWgt.contains(wgt))
         {
-            QListWidgetItem *currentItem = _settingListWidget->itemAt(_settingListWidget->contentsRect().topLeft());
-            if(_mapSettingItems.contains(currentItem))
+            static QFrame *curWgt = nullptr;
+            if(wgt != curWgt)
             {
-                emit _mapSettingItems[currentItem]->clicked();
+                if(nullptr != curWgt)
+                    _mapSettingWgt[curWgt]->setCheckState(false);
+                _mapSettingWgt[wgt]->setCheckState(true);
+                curWgt = wgt;
             }
         }
     }
@@ -424,6 +405,7 @@ void SystemSettingWnd::initSession(QVBoxLayout* vlayout) {
     sendMessageBox->addItem(QKeySequence(Qt::Key_Enter | Qt::ShiftModifier).toString(QKeySequence::NativeText));
     sendMessageBox->addItem(QKeySequence(Qt::Key_Enter | Qt::AltModifier).toString(QKeySequence::NativeText));
     sendMessageBox->addItem(QKeySequence(Qt::Key_Enter | Qt::ControlModifier).toString(QKeySequence::NativeText));
+    sendMessageBox->addItem(QKeySequence(Qt::Key_S | Qt::AltModifier).toString(QKeySequence::NativeText));
 
     auto* sendMessageLay = new QHBoxLayout;
     sendMessageLay->addWidget(sendMessageLabel);
@@ -612,13 +594,13 @@ void SystemSettingWnd::initFolder(QVBoxLayout* vlayout) {
         auto *userDirBtnLay = new QHBoxLayout;
         vlayout->addLayout(userDirBtnLay);
 
-        auto *changeSaveFileBtn = new QPushButton;
-        changeSaveFileBtn->setFixedHeight(24);
+        auto *changeSaveFileBtn = new QPushButton(this);
+        changeSaveFileBtn->setFixedHeight(28);
         changeSaveFileBtn->setText(tr("变更文件夹"));
         changeSaveFileBtn->setObjectName("SettingBtn");
 
         auto *openFileDirBtn = new QPushButton(tr("打开文件夹"), this);
-        openFileDirBtn->setFixedHeight(24);
+        openFileDirBtn->setFixedHeight(28);
         openFileDirBtn->setObjectName("SettingBtn");
 
         userDirBtnLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
@@ -759,7 +741,7 @@ void SystemSettingWnd::initFriendAuthority(QVBoxLayout* vlayout) {
         questionLay->addWidget(titleLbl);
 
         auto *questionEdit = new QLineEdit;
-        questionEdit->setFixedHeight(30);
+        questionEdit->setFixedHeight(28);
         questionEdit->setText("C:\\Users\\suuiduofud");
         questionEdit->setObjectName("SettingLineEdit");
         questionLay->addWidget(questionEdit);
@@ -779,7 +761,7 @@ void SystemSettingWnd::initFriendAuthority(QVBoxLayout* vlayout) {
         anwserLay->addWidget(titleLbl);
 
         auto *anwserEdit = new QLineEdit;
-        anwserEdit->setFixedHeight(30);
+        anwserEdit->setFixedHeight(28);
         anwserEdit->setPlaceholderText(tr("请输入问题"));
         anwserEdit->setObjectName("SettingLineEdit");
         anwserLay->addWidget(anwserEdit);
@@ -797,6 +779,35 @@ void SystemSettingWnd::initFontSetting(QVBoxLayout* vlayout) {
     int mode = AppSetting::instance().getThemeMode();
     blackTheme->setChecked(2 == mode);
     vlayout->addWidget(blackTheme);
+    //
+    auto* scaleEnable = new SettingCheckBox(tr("高分屏适配"), false, this);
+    vlayout->addWidget(scaleEnable);
+    //
+    {
+        auto* languageLabel = new QLabel(tr("语言"), this);
+        auto* languageCombox = new NoSlidingHandoverComboBox(this);
+        languageCombox->addItem(tr("中文"));
+        languageCombox->addItem(tr("英文"));
+        //
+        int language = AppSetting::instance().getLanguage();
+        if(language == QLocale::English)
+            languageCombox->setCurrentText(tr("英文"));
+        else
+            languageCombox->setCurrentText(tr("中文"));
+        auto* languageLay = new QHBoxLayout();
+        languageLay->addWidget(languageLabel);
+        languageLay->addWidget(languageCombox);
+        vlayout->addLayout(languageLay);
+        vlayout->setAlignment(languageCombox, Qt::AlignRight);
+
+        connect(languageCombox, &QComboBox::currentTextChanged, [this, languageCombox](const QString& text){
+            QtMessageBox::information(this, tr("提示"), tr("外观设置重启后生效"));
+            if(languageCombox->currentIndex() == 1)
+                AppSetting::instance().setLanguage(QLocale::English);
+            else
+                AppSetting::instance().setLanguage(QLocale::Chinese);
+        });
+    }
     //
     QFontDatabase fontDatabase;
     QStringList families = fontDatabase.families();
@@ -818,25 +829,22 @@ void SystemSettingWnd::initFontSetting(QVBoxLayout* vlayout) {
     auto* fontLay = new QHBoxLayout();
     fontLay->addWidget(fontLabel);
     fontLay->addWidget(fontCombox);
-    fontLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
     vlayout->addLayout(fontLay);
+    vlayout->setAlignment(fontCombox, Qt::AlignRight);
     //
-    auto* scaleEnable = new SettingCheckBox(tr("高分屏适配(重启客户端生效)"), false, this);
-//    auto *scaleEdit = new QSpinBox(this);
-//    scaleEdit->setMinimum(50);
-//    scaleEdit->setMaximum(200);
-//    scaleEdit->setSingleStep(10);
-//    scaleEdit->setSuffix(" %");
-//    scaleEdit->setValue(100);
-//    auto* scaleLabel = new QLabel(tr("画面缩放"), this);
-//    auto* scaleLay = new QHBoxLayout();
-//    scaleLay->addWidget(scaleLabel);
-//    scaleLay->addWidget(scaleEdit);
-//    scaleLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
-//    vlayout->addWidget(new Line);
-    vlayout->addWidget(scaleEnable);
-//    vlayout->addLayout(scaleLay);
-
+    auto* fontLevelLabel = new QLabel(tr("字体大小"), this);
+    auto* fontLevelCombox = new NoSlidingHandoverComboBox(this);
+    fontLevelCombox->addItem(tr("默认大小"), AppSetting::FONT_LEVEL_NORMAL);
+    fontLevelCombox->addItem(tr("大字体"), AppSetting::FONT_LEVEL_BIG);
+    fontLevelCombox->addItem(tr("小字体"), AppSetting::FONT_LEVEL_SMALL);
+    //
+    int fontLevel = AppSetting::instance().getFontLevel();
+    fontLevelCombox->setCurrentIndex(fontLevel);
+    auto* fontLevelLay = new QHBoxLayout();
+    fontLevelLay->addWidget(fontLevelLabel);
+    fontLevelLay->addWidget(fontLevelCombox);
+    vlayout->addLayout(fontLevelLay);
+    vlayout->setAlignment(fontLevelCombox, Qt::AlignRight);
     // 缩放因子
     QSettings settings(QSettings::NativeFormat, QSettings::UserScope,
 #ifdef _STARTALK
@@ -872,15 +880,18 @@ void SystemSettingWnd::initFontSetting(QVBoxLayout* vlayout) {
     vlayout->addWidget(new Line(Qt::Horizontal, this));
 
     connect(blackTheme, &QCheckBox::stateChanged, [this](int state) {
+        QtMessageBox::information(this, tr("提示"), tr("外观设置重启后生效"));
         bool check = state == Qt::Checked;
         AppSetting::instance().setThemeMode(check ? 2 : 1);
     });
 
-    connect(fontCombox, &QComboBox::currentTextChanged, [](const QString& text){
+    connect(fontCombox, &QComboBox::currentTextChanged, [this](const QString& text){
+        QtMessageBox::information(this, tr("提示"), tr("外观设置重启后生效"));
         if(!text.isEmpty())
             AppSetting::instance().setFont(text.toStdString());
     });
 
+    connect(fontLevelCombox, SIGNAL(currentIndexChanged(int)), this, SLOT(onFontLevelChanged(int)));
 }
 
 void SystemSettingWnd::onScaleFactorChanged(int value) {
@@ -1050,7 +1061,7 @@ void SystemSettingWnd::initVersionInfo(QVBoxLayout* vlayout) {
         build_time_label->setText(QString("build at: %1").arg(build_time.data()));
 
         auto *checkUpdateBtn = new QPushButton(tr("检查更新"));
-        checkUpdateBtn->setFixedSize(80,24);
+        checkUpdateBtn->setFixedSize(80,30);
         checkUpdateBtn->setObjectName("SettingBtn");
         versionLay->addWidget(checkUpdateBtn);
 
@@ -1070,13 +1081,13 @@ void SystemSettingWnd::initVersionInfo(QVBoxLayout* vlayout) {
         vlayout->addLayout(repairLay);
 
         auto *repairBtn = new QPushButton(this);
-        repairBtn->setFixedHeight(24);
+        repairBtn->setFixedHeight(28);
         repairBtn->setText(tr("清除缓存"));
         repairBtn->setObjectName("SettingBtn");
         repairLay->addWidget(repairBtn);
 
         auto *clearLogs = new QPushButton(this);
-        clearLogs->setFixedHeight(24);
+        clearLogs->setFixedHeight(28);
         clearLogs->setText(tr("清除日志"));
         clearLogs->setObjectName("SettingBtn");
         repairLay->addWidget(clearLogs);
@@ -1192,4 +1203,11 @@ void SystemSettingWnd::operatingModeButtonsToggled(int id, bool status)
             _pMessageManager->setServiceSeat(sid,seat);
         }
     }
+}
+
+//
+void SystemSettingWnd::onFontLevelChanged(int level)
+{
+    QtMessageBox::information(this, tr("提示"), tr("外观设置重启后生效"));
+    AppSetting::instance().setFontLevel(level);
 }

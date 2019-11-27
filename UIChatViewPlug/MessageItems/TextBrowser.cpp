@@ -4,6 +4,7 @@
 #include <blocks/LinkBlock.h>
 #include "../blocks/ImageBlock.h"
 #include "../blocks/block_define.h"
+#include "../../Platform/Platform.h"
 
 TextBrowser::TextBrowser(QWidget *parent) :
     QTextBrowser(parent)
@@ -18,8 +19,8 @@ TextBrowser::TextBrowser(QWidget *parent) :
     setStyleSheet(QString("background-color:rgba(0,0,0,0)"));
     setContextMenuPolicy(Qt::NoContextMenu);
 
-    ImageBlock *imageBlock = new ImageBlock;
-    LinkBlock* linkBlock = new LinkBlock;
+    auto *imageBlock = new ImageBlock;
+    auto* linkBlock = new LinkBlock;
     document()->documentLayout()->registerHandler(imageObjectType, imageBlock);
     document()->documentLayout()->registerHandler(linkObjectType, linkBlock);
 
@@ -86,6 +87,7 @@ void TextBrowser::mousePressEvent(QMouseEvent *e)
 {
 //    _pressed = true;
 //    _scrollVal = this->textCursor().blockNumber();
+    emit sgClicked();
     QTextBrowser::mousePressEvent(e);
     if(e->button() == Qt::LeftButton)
     {
@@ -99,7 +101,7 @@ void TextBrowser::mousePressEvent(QMouseEvent *e)
 //        // charFormat is for the object BEFORE the
 //        // cursor postion
         QPoint eventPos = e->pos();
-        QTextCursor cursor =cursorForPosition(eventPos);
+        QTextCursor cursor = cursorForPosition(eventPos);
         QRect rect = cursorRect(cursor);
         if(rect.x() < eventPos.x())
             cursor.movePosition(QTextCursor::Right);
@@ -110,6 +112,12 @@ void TextBrowser::mousePressEvent(QMouseEvent *e)
         {
             QString imageLink = fmt.property(imagePropertyLink).toString();
             QString imagePath = fmt.property(imagePropertyPath).toString();
+            if(imagePath.isEmpty())
+            {
+                imagePath = fmt.toImageFormat().name();
+                if(imagePath == imageLink)
+                    imagePath = QTalk::GetImagePathByUrl(imagePath.toStdString()).data();
+            }
             int index = fmt.property(imagePropertyIndex).toInt();
             emit imageClicked(index);
             emit sgImageClicked(imagePath, imageLink);

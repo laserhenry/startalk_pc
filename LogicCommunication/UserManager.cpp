@@ -255,7 +255,7 @@ bool UserManager::getUserCard(const UserCardParam &param, std::vector<StUserCard
     cJSON_Delete(objs);
 
     std::string strUrl = url.str();
-    info_log("向服务器请求用户数据 url:{0} Json:{1}", strUrl.c_str(), postData);
+    debug_log("向服务器请求用户数据 url:{0} Json:{1}", strUrl.c_str(), postData);
 
     bool retSts = false;
     auto callback = [postData, strUrl, &retSts, &arUserInfo](int code, const std::string &responseData) {
@@ -306,7 +306,7 @@ bool UserManager::getUserCard(const UserCardParam &param, std::vector<StUserCard
                         arUserInfo.push_back(stUserCard);
                     }
                 }
-                info_log("从服务器请求到用户数据 个数:{0}", arUserInfo.size());
+                debug_log("从服务器请求到用户数据 个数:{0}", arUserInfo.size());
                 retSts = true;
             }
             cJSON_Delete(data);
@@ -335,7 +335,7 @@ bool UserManager::getUserCard(const UserCardParam &param, std::vector<StUserCard
 void UserManager::getUserFullInfo(std::shared_ptr<QTalk::Entity::ImUserSupplement> &imUserSup,
                                   std::shared_ptr<QTalk::Entity::ImUserInfo>& userInfo) {
     //
-    info_log("请求名片 userId:{0}", imUserSup->XmppId);
+    debug_log("请求名片 userId:{0}", imUserSup->XmppId);
     // 强制从服务器获取最新卡片
     QTalk::Entity::JID jid(userInfo->XmppId.c_str());
     UserCardParam param;
@@ -387,7 +387,7 @@ void UserManager::getUserFullInfo(std::shared_ptr<QTalk::Entity::ImUserSupplemen
 // get user mood
 bool UserManager::getUserMood(QTalk::Entity::JID *jid, std::string &mood, int &version) {
 
-    info_log("请求mood userId:{0}", jid->username());
+    debug_log("请求mood userId:{0}", jid->username());
 
     std::ostringstream url;
     url << NavigationManager::instance().getApiUrl()
@@ -433,12 +433,12 @@ bool UserManager::getUserMood(QTalk::Entity::JID *jid, std::string &mood, int &v
 
                 }
                 retSts = true;
-                info_log("请求mood success userId:{0} mood:{1}", jid->username(), mood);
+                debug_log("请求mood success userId:{0} mood:{1}", jid->username(), mood);
             }
 
             cJSON_Delete(data);
         } else {
-            info_log("请求mood error userId:{0} msg: {1}", jid->username(), responsData);
+            debug_log("请求mood error userId:{0} msg: {1}", jid->username(), responsData);
         }
     };
 
@@ -460,7 +460,7 @@ bool UserManager::getUserMood(QTalk::Entity::JID *jid, std::string &mood, int &v
 bool
 UserManager::getUserSupplement(QTalk::Entity::JID *jid, std::shared_ptr<QTalk::Entity::ImUserSupplement> &imUserSup) {
 
-    info_log("请求leader userId: {0}", jid->username());
+    debug_log("请求leader userId: {0}", jid->username());
 
     std::ostringstream url;
     url << NavigationManager::instance().getLeaderUrl();
@@ -497,12 +497,12 @@ UserManager::getUserSupplement(QTalk::Entity::JID *jid, std::shared_ptr<QTalk::E
                 imUserSup->MailAddr = jid->username() + "@" + NavigationManager::instance().getMailSuffix();
                 imUserSup->UserNo = JSON::cJSON_SafeGetStringValue(msg, "sn");
 
-                info_log("请求mood success userId:{0}", jid->username());
+                debug_log("请求mood success userId:{0}", jid->username());
                 retSts = true;
 
             } else {
                 std::string errMsg = JSON::cJSON_SafeGetStringValue(data, "msg");
-                info_log("请求leader error userId:{0} msg: {1}", jid->username().c_str(), errMsg);
+                debug_log("请求leader error userId:{0} msg: {1}", jid->username().c_str(), errMsg);
             }
 
             cJSON_Delete(data);
@@ -529,7 +529,7 @@ UserManager::getUserSupplement(QTalk::Entity::JID *jid, std::shared_ptr<QTalk::E
 // get phoneno
 bool UserManager::getPhoneNo(const std::string &userId, std::string &phoneNo) {
 
-    info_log("请求PhoneNo userId: {0}", userId);
+    debug_log("请求PhoneNo userId: {0}", userId);
 
     QTalk::Entity::JID *jid = new QTalk::Entity::JID(userId.c_str());
 
@@ -566,7 +566,7 @@ bool UserManager::getPhoneNo(const std::string &userId, std::string &phoneNo) {
                 ret = true;
             } else {
                 errMsg = JSON::cJSON_SafeGetStringValue(data, "msg");
-                info_log("getPhoneNo error userId:{0} msg: {1}", jid->username(), errMsg);
+                debug_log("getPhoneNo error userId:{0} msg: {1}", jid->username(), errMsg);
             }
 
             cJSON_Delete(data);
@@ -670,7 +670,7 @@ bool UserManager::changeUserHead(const std::string &headurl)
 //                userCard.version = atoi(QTalk::JSON::cJSON_SafeGetStringValue(item, "version"));
 //                userCard.headerSrc = headurl;
 //                retSts = true;
-//                info_log("changeUserHead success head:{0} ", userCard.headerSrc);
+//                debug_log("changeUserHead success head:{0} ", userCard.headerSrc);
 //            }
         }
     };

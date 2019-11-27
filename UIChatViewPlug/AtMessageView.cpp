@@ -71,19 +71,15 @@ void AtItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option
 
     painter->save();
     painter->setRenderHint(QPainter::TextAntialiasing);
-
+    QRect rect = option.rect;
     if (option.state & QStyle::State_Selected)
-    {
-        painter->fillRect(option.rect, QTalk::StyleDefine::instance().getNavSelectColor());
-    }
+        painter->fillRect(rect, QTalk::StyleDefine::instance().getNavSelectColor());
     else
-    {
-        painter->fillRect(option.rect, QTalk::StyleDefine::instance().getNavNormalColor());
-    }
+        painter->fillRect(rect, QTalk::StyleDefine::instance().getNavNormalColor());
 
 	QString headPath = index.data(ITEM_DATA_ICON).toString();
-	QRect rect = option.rect;
 	painter->setPen(QTalk::StyleDefine::instance().getNavNameFontColor());
+	QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
     painter->drawText(QRect(rect.x() + 35, rect.y(), rect.width() - 35, rect.height()), Qt::AlignLeft | Qt::AlignVCenter,
             index.data(ITEM_DATE_NAME).toString());
 

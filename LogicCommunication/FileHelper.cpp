@@ -262,7 +262,7 @@ std::string FileHelper::getFileSuffix(const std::string *fileData) {
   */
 void FileHelper::batchDownloadHead(const std::vector<std::string> &urls) {
 
-    info_log("批量从服务器请求用户头像 开始 {0}", urls.size());
+    debug_log("批量从服务器请求用户头像 开始 {0}", urls.size());
 
     if (urls.empty())
         return;
@@ -310,7 +310,7 @@ void FileHelper::batchDownloadHead(const std::vector<std::string> &urls) {
         writeFile(itr.first, &itr.second);
     }
 
-    info_log("批量从服务器请求用户头像 结束 {0}", workerUrls.size());
+    debug_log("批量从服务器请求用户头像 结束 {0}", workerUrls.size());
 }
 
 /**
@@ -457,7 +457,7 @@ void FileHelper::downloadFile(const std::string &uri, const std::string &localPa
             if (code == 200) {
                 data = responseData;
             } else {
-                info_log("请求失败  url: {0}", netPath);
+                debug_log("请求失败  url: {0}", netPath);
             }
         };
 
@@ -520,7 +520,7 @@ std::string FileHelper::downloadEmoticonIcon(const std::string &uri, const std::
             localPath += "/" + pkgId + "." + getFileSuffix(&data);
             ret = true;
         } else {
-            info_log("请求失败  url: {0}", uri);
+            debug_log("请求失败  url: {0}", uri);
         }
     };
 
@@ -680,7 +680,7 @@ string FileHelper::checkImgFileKey(const std::string &key, QInt64 fileSize, cons
             }
             cJSON_Delete(data);
         } else {
-            info_log("请求失败  url: {0}", strUrl);
+            debug_log("请求失败  url: {0}", strUrl);
         }
     };
 
@@ -737,7 +737,7 @@ std::string FileHelper::checkFileKey(const std::string &key, QInt64 fileSize, co
             }
             cJSON_Delete(data);
         } else {
-            info_log("请求失败  url: {0}", strUrl);
+            debug_log("请求失败  url: {0}", strUrl);
         }
     };
 
@@ -776,7 +776,7 @@ FileHelper::uploadImg(const std::string &filePath, const std::string &key, QInt6
     std::string strUrl = url.str();
     string strNetUrl;
     auto callback = [this, strUrl, &strNetUrl](int code, const std::string &responseData) {
-        info_log("请求结果: data: {0}", responseData);
+        debug_log("请求结果: data: {0}", responseData);
         if (code == 200) {
             cJSON *data = cJSON_Parse(responseData.c_str());
 
@@ -794,7 +794,7 @@ FileHelper::uploadImg(const std::string &filePath, const std::string &key, QInt6
             }
             cJSON_Delete(data);
         } else {
-            info_log("请求失败  url: {0}", strUrl);
+            debug_log("请求失败  url: {0}", strUrl);
         }
     };
 
@@ -834,7 +834,7 @@ FileHelper::uploadFile(const std::string &filePath, const std::string &key,
     std::string strUrl = url.str();
     std::string strNetUrl;
     auto callback = [strUrl, &strNetUrl](int code, const std::string &responseData) {
-        info_log("请求结果: data: {0}", responseData);
+        debug_log("请求结果: data: {0}", responseData);
         if (code == 200) {
             cJSON *data = cJSON_Parse(responseData.c_str());
 

@@ -396,7 +396,11 @@ inline bool is_color_terminal() SPDLOG_NOEXCEPT
     const char *env_p = std::getenv("TERM");
     if (env_p == nullptr)
     {
+#ifdef _DEBUG
+        return true;
+#else
         return false;
+#endif
     }
 
     static const bool result =

@@ -1,8 +1,35 @@
 ﻿#include "stylesheetmanager.h"
 #include <QFile>
 #include <QApplication>
+#include <set>
+#include <QDebug>
 #include "UIGolbalManager.h"
 #include "../interface/view/UIPluginInterface.h"
+
+//
+void adjustFontSize(QString& qss)
+{
+    auto fontLevel = AppSetting::instance().getFontLevel();
+    if(AppSetting::FONT_LEVEL_NORMAL == fontLevel)
+        return;
+
+    QRegExp exp("font-size[\\ ]*:[\\ ]*(\\d+)px[;]{0,1}");
+    int pos = 0;
+    while ((pos = exp.indexIn(qss, pos)) != -1) {
+        auto item = exp.cap(0); // 符合条件的整个字符串
+        auto size = exp.cap(1);
+
+        if(AppSetting::FONT_LEVEL_BIG == fontLevel)
+            item.replace(size, QString::number(size.toInt() + 2));
+        else if(AppSetting::FONT_LEVEL_SMALL == fontLevel)
+            item.replace(size, QString::number(size.toInt() - 1));
+        else
+            return;
+
+        qss.replace(pos, item.size(), item);
+        pos += item.size();
+    }
+}
 
 StyleSheetManager::StyleSheetManager(QObject *parent)
 {
@@ -35,6 +62,7 @@ void StyleSheetManager::setStyleSheets(int theme, const std::string& font)
                     if (file.open(QFile::ReadOnly))
                     {
                         QString qss = QString::fromUtf8(file.readAll()); //以utf-8形式读取文件
+                        adjustFontSize(qss);
                         plug->setStyleSheet(qss.toUtf8());
                     }
                 }
@@ -80,6 +108,7 @@ void StyleSheetManager::setStylesForApp(int theme, const std::string& font)
         if (fileapp.open(QFile::ReadOnly))
         {
             qss.append(fileapp.readAll().data());
+            adjustFontSize(qss);
             qApp->setStyleSheet(qss.toUtf8());
         }
     }

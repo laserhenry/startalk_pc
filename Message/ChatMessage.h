@@ -48,9 +48,14 @@ class HistoryMessage : public Event
 public:
 	QInt64         time;
 	QUInt8         chatType;
-	std::string    userid;
-	std::string    realJid;
+	QTalk::Entity::UID uid;
 	VectorMessage  msgList;
+};
+
+class NetHistoryMessage : public HistoryMessage
+{
+public:
+    std::string direction;
 };
 
 class LocalHistoryMessage : public Event
@@ -222,6 +227,8 @@ public:
     int length = 0;
     std::string key;
     int action;
+    std::string to_user;
+    std::string to_muc;
     //
     SearchResult searchRet;
 };

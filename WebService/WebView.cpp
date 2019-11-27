@@ -115,7 +115,7 @@ void WebView::excuteJs(const QString &js)
 {
     _pWebPage->runJavaScript(js);
     qInfo() << js;
-    info_log(js.toStdString());
+    debug_log(js.toStdString());
 }
 
 void WebView::onDownLoadFile(QWebEngineDownloadItem *download)

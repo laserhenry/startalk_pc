@@ -11,6 +11,7 @@
 #include <QEvent>
 #include <QKeyEvent>
 #include <QAction>
+#include <QDebug>
 #include <QScrollBar>
 #include "../CustomUi/HeadPhotoLab.h"
 #include "CardManager.h"
@@ -26,12 +27,14 @@ GroupCard::GroupCard(CardManager* cardManager)
     , _pCardManager(cardManager)
     , _moded(false)
 {
+    this->setAttribute(Qt::WA_DeleteOnClose, true);
+    //
     initUi();
 }
 
 GroupCard::~GroupCard()
 {
-
+    qInfo() << "delete GroupCard";
 }
 
 void GroupCard::initUi()

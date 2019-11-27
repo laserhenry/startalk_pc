@@ -250,7 +250,7 @@ std::shared_ptr<QTalk::Entity::ImUserInfo> UserDao::getUserInfoByXmppId(const st
         }
         else
         {
-            info_log("no user info {0}", xmppid);
+            warn_log("no user info {0}", xmppid);
             return nullptr;
         }
     }

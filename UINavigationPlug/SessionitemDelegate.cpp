@@ -52,10 +52,6 @@ bool SessionSortModel::lessThan(const QModelIndex &source_left, const QModelInde
 SessionitemDelegate::SessionitemDelegate(QWidget* parent)
     :QStyledItemDelegate(parent), _pParentWgt(parent)
 {
-    _nameFont.setPixelSize(14);
-    _contentFont.setPixelSize(12);
-    _timeFont.setPixelSize(11);
-    _unreadFont.setPixelSize(10);
 }
 
 SessionitemDelegate::~SessionitemDelegate()
@@ -134,18 +130,17 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     if(unreadCount > 99) strUnreadCount = "99+";
     //
     int atCount = index.data(ITEM_DATATYPE_ATCOUNT).toInt();
+    int fontLevel = AppSetting::instance().getFontLevel();
     //
-    QFontMetricsF timeF(_timeFont);
-    QFontMetricsF nameF(_nameFont);
-    QFontMetricsF contentF(_contentFont);
 
+    QTalk::setPainterFont(painter, fontLevel, 14);
+    QFontMetricsF nameF(painter->font());
     double maxNameWidth = rect.width() - 80 - nameF.width(time);
     strName = nameF.elidedText(strName, Qt::ElideRight, maxNameWidth);
     painter->restore();
     painter->save();
     // 名称
     painter->setPen(QPen(select ? StyleDefine::instance().getNavNameSelectFontColor() : StyleDefine::instance().getNavNameFontColor()));
-    painter->setFont(_nameFont);
     QRectF textRect(rect.x() + 70, rect.y(), (int)maxNameWidth, rect.height()/2);
 
     painter->drawText(textRect, Qt::AlignBottom, strName);
@@ -170,9 +165,10 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     }
 
     // 最近消息内容
+    QTalk::setPainterFont(painter, fontLevel, 12);
+    QFontMetricsF contentF(painter->font());
     if(!draft.isEmpty()) {
 
-        painter->setFont(_contentFont);
         painter->setPen(QPen(StyleDefine::instance().getNavAtFontColor()));
         qreal draftTipWidth = contentF.width(DRAFT_TIP) + 1;
         QRectF tipRect(rect.x() + 65, rect.y() + rect.height() / 2 + 7, draftTipWidth, contentF.height() + 5);
@@ -180,7 +176,7 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 
         painter->setPen(QPen(StyleDefine::instance().getNavContentFontColor()));
         qreal contentWidth = rect.width() - 80 - draftTipWidth - 20;
-        content = QFontMetricsF(_contentFont).elidedText(content, Qt::ElideRight, contentWidth);
+        content = contentF.elidedText(content, Qt::ElideRight, contentWidth);
         QRectF contentRect(rect.x() + 65 + draftTipWidth, rect.y() + rect.height()/2 + 7,
                            contentWidth + 5 , contentF.height() + 5);
         painter->drawText(contentRect, Qt::AlignTop, QString("%1").arg(draft));
@@ -195,15 +191,13 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 
             atMsgWidth = contentF.width(strAtCount) + 2;
             painter->setPen(QPen(StyleDefine::instance().getNavAtFontColor()));
-            painter->setFont(_contentFont);
             QRectF atRect(rect.x() + 65, rect.y() + rect.height() / 2 + 7, atMsgWidth, contentF.height() + 5);
             painter->drawText(atRect, Qt::AlignTop, strAtCount);
         }
 
         painter->setPen(QPen(select ? StyleDefine::instance().getNavContentSelectFontColor() : StyleDefine::instance().getNavContentFontColor()));
-        painter->setFont(_contentFont);
         qreal contentWidth = rect.width() - 80 - atMsgWidth - 20;
-        content = QFontMetricsF(_contentFont).elidedText(content, Qt::ElideRight, contentWidth);
+        content = contentF.elidedText(content, Qt::ElideRight, contentWidth);
         QRectF contentRect(rect.x() + 70 + atMsgWidth, rect.y() + rect.height()/2 + 7,
                            contentWidth + 5 , contentF.height() + 5);
         painter->drawText(contentRect, Qt::AlignTop, content);
@@ -213,7 +207,7 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 
     // 时间戳
     painter->setPen(QPen(select ? StyleDefine::instance().getNavTimeSelectFontColor() : StyleDefine::instance().getNavTimeFontColor()));
-    painter->setFont(_timeFont);
+    QTalk::setPainterFont(painter, fontLevel, 11);
     painter->drawText(QRect(rect.x() + 65, rect.y() + 20, rect.width() - 70, rect.height())
             , Qt::AlignRight, time);
     painter->restore();
@@ -280,7 +274,7 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
             QRect unreadRect(rect.right() - 32, rect.y() + rect.height()/2 + 6, 20, 13);
             painter->drawRoundRect(unreadRect, 80, 90);
             painter->setPen(QPen(StyleDefine::instance().getNavUnReadFontColor()));
-            painter->setFont(_unreadFont);
+            QTalk::setPainterFont(painter, fontLevel, 10);
             painter->drawText(unreadRect,  Qt::AlignCenter, strUnreadCount);
         }
     }

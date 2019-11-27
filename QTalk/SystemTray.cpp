@@ -7,6 +7,7 @@
 #include <QAction>
 #include <QApplication>
 #include <QFile>
+#include <QtConcurrent>
 #include "../interface/view/IUILoginPlug.h"
 #include "MainWindow.h"
 #include "../Platform/AppSetting.h"
@@ -185,7 +186,7 @@ void SystemTray::onWndActived()
  */
 void SystemTray::onSendLog()
 {
-    std::thread([this]() {
+    QtConcurrent::run([this]() {
 #ifdef _MACOS
         pthread_setname_np("ChatViewMainPanel::packAndSendLog");
 #endif
@@ -203,7 +204,7 @@ void SystemTray::onSendLog()
                 _pMainWindow->_pMessageManager->sendLogReport("quick report", logZip.toStdString());
             }
         }
-    }).detach();
+    });
 }
 
 void SystemTray::onMessageClicked() {

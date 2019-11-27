@@ -321,7 +321,7 @@ void HotLinesConfig::sendProduct(const std::string username, const std::string v
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
     cJSON_Delete(jsonObject);
 
-    info_log("sendProduct:" + postData);
+    debug_log("sendProduct:" + postData);
 
     auto callback = [this](int code, const std::string &responseData) {
         if (code == 200) {

@@ -25,10 +25,10 @@ public slots:
 
 public:
     void onWndActived();
+    void onSendLog();
 
 protected:
     void activeTray(QSystemTrayIcon::ActivationReason reason);
-    void onSendLog();
     void onMessageClicked();
 
 private:

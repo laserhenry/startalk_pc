@@ -23,7 +23,7 @@ void UserConfig::getUserConfigFromServer(bool sendEvt) {
     //
     int configVersion = 0;
     LogicManager::instance()->getDatabase()->getConfigVersion(configVersion);
-    info_log("get userconfig version:{0}", configVersion);
+    debug_log("get userconfig version:{0}", configVersion);
     // url
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
@@ -74,7 +74,7 @@ void UserConfig::updateUserSetting(QUInt8 operatorType, const std::string &key, 
     //
     int configVersion = 0;
     LogicManager::instance()->getDatabase()->getConfigVersion(configVersion);
-    info_log("get userconfig version:{0}", configVersion);
+    debug_log("get userconfig version:{0}", configVersion);
     //
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
@@ -168,7 +168,7 @@ void UserConfig::updateDbByJson(cJSON *jsObj, bool sendEvt) {
         if (ret)
 		{
             //
-			info_log("update db config-> delete:{0}, insert{1}", deleteData.size(), arImConfig.size());
+			debug_log("update db config-> delete:{0}, insert{1}", deleteData.size(), arImConfig.size());
 
             if (!deleteData.empty()) {
                 LogicManager::instance()->getDatabase()->bulkRemoveConfig(deleteData);

@@ -187,7 +187,7 @@ bool QtHttpRequest::startSynchronous() {
                 now);
     } else {
 
-        info_log("CURL: perform a url request , coast ({0})s, begin at: {1} end at: {2}",
+        debug_log("CURL: perform a url request , coast ({0})s, begin at: {1} end at: {2}",
                  elapsed_seconds.count(),
                  asctime(local_start),
                  asctime(local_end));

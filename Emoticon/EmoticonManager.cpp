@@ -1,39 +1,14 @@
 ﻿#include "EmoticonManager.h"
 #include <QFrame>
 #include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QLabel>
-#include <QToolButton>
 #include <QPushButton>
 #include <QMouseEvent>
 #include "LocalEmoticon.h"
 #include "NetEmoticon.h"
+#include "../CustomUi/TitleBar.h"
 
 #define DEM_FIXED_WIDTH 630
 #define DEM_FIXED_HEIGHT 560
-
-//
-EmoticonTitleBar::EmoticonTitleBar(EmoticonManager* parent)
-	:QFrame(parent), _pManager(parent)
-{
-	setFixedHeight(50);
-	setObjectName("EmoticonManagerTopFrame");
-    auto * topLayout = new QHBoxLayout;
-	QLabel* titleLabel = new QLabel(tr("管理表情"));
-	titleLabel->setObjectName("EmoticonManagerTitle");
-    auto * closeBtn = new QToolButton();
-	closeBtn->setObjectName("EmoticonManagerClose");
-	topLayout->addWidget(titleLabel);
-	topLayout->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
-	topLayout->addWidget(closeBtn);
-	setLayout(topLayout);
-
-	connect(closeBtn, &QToolButton::clicked, _pManager, &EmoticonManager::setVisible);
-}
-
-
-EmoticonTitleBar::~EmoticonTitleBar()
-= default;
 
 //
 EmoticonManager::EmoticonManager(QMap<QString, StEmoticon>& mapEmo, QWidget* parent)
@@ -54,10 +29,10 @@ void EmoticonManager::initUi()
 {
 	setFixedSize(DEM_FIXED_WIDTH, DEM_FIXED_HEIGHT);
 	// top
-    auto * topFrame = new EmoticonTitleBar(this);
+    auto * topFrame = new TitleBar(tr("管理表情"), this,this);
 	setMoverAble(true, topFrame);
 	//
-	QFrame* midFrame = new QFrame(this);
+	auto* midFrame = new QFrame(this);
 	midFrame->setObjectName("EmoticonManagerMidFrame");
     auto * midLayout = new QHBoxLayout(midFrame);
 	_pBtnLocalEmo = new QPushButton(tr("本地表情"));
@@ -74,7 +49,7 @@ void EmoticonManager::initUi()
 	midLayout->addWidget(_pBtnNetEmo);
 	midLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
 	//
-    QFrame* bottomFrame = new QFrame(this);
+    auto* bottomFrame = new QFrame(this);
     bottomFrame->setObjectName("EmoticonManagerbottomFrame");
     auto * bottomLayout = new QHBoxLayout(bottomFrame);
 	_pLocalEmoManager = new LocalEmoticon(_mapEmos, this);

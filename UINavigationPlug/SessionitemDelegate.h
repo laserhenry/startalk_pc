@@ -57,12 +57,6 @@ protected:
 
 private:
     QWidget* _pParentWgt;
-
-private:
-    QFont _nameFont;
-    QFont _contentFont;
-    QFont _timeFont;
-    QFont _unreadFont;
 };
 
 

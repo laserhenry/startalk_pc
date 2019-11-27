@@ -10,17 +10,19 @@
 enum SearchItemRoles
 {
     EM_TYPE_TYPE        = Qt::UserRole + 1, //item类型 对应存 SearchItemType
-    EM_ITEMROLE_ITEM_TYPE, // QTalk::Search::Action
-    EM_ITEMROLE_ICON,
-    EM_ITEMROLE_NAME,
-    EM_ITEMROLE_SUB_MESSAGE,
-    EM_ITEMROLE_XMPPID,
+    EM_ITEM_ROLE_ITEM_TYPE, // QTalk::Search::Action
+    EM_ITEM_ROLE_ICON,
+    EM_ITEM_ROLE_NAME,
+    EM_ITEM_ROLE_SUB_MESSAGE,
+    EM_ITEM_ROLE_XMPPID,
 
-    EM_TITLEROLE_TYPE,
-    EM_TITLEROLE_NAME,
-    EM_TITLEROLE_HASMORE,
-    EM_TITLEROLE_REQ_TYPE,
-    EM_TITLEROLE_HOVER,
+    EM_TITLE_ROLE_TYPE,
+    EM_TITLE_ROLE_NAME,
+    EM_TITLE_ROLE_HAS_MORE,
+    EM_TITLE_ROLE_REQ_TYPE,
+    EM_TITLE_ROLE_HOVER,
+
+    EM_ITEM_ROLE_KEY,
 };
 
 enum SearchItemType
@@ -55,15 +57,8 @@ Q_SIGNALS:
     void sgOpenNewSession(int, const QString&, const QString&, const QString&);
     void sgGetMore(int);
     void sgSwitchFun(int);
-
-private:
-    QFont titleNameFont;
-    QFont titleBtnFont;
-
-    QFont itemNameFont;
-    QFont itemSubFont;
-
-    QFont moreFont;
+    void sgShowMessageRecordWnd(const QString&, const QString&);
+    void sgShowFileRecordWnd(const QString&);
 
 private:
     int hover_index_row = 0;

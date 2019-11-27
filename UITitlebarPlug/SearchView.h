@@ -29,6 +29,8 @@ Q_SIGNALS:
     void sgOpenNewSession(const StSessionInfo &into);
     void sgGetMore(int );
     void sgSwitchFun(int );
+    void sgShowMessageRecordWnd(const QString&, const QString&);
+    void sgShowFileRecordWnd(const QString&);
 
 public:
     void selectUp();

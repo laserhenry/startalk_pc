@@ -47,6 +47,7 @@ AppSetting::AppSetting()
 , _supportNativeMessagePrompt(false)
 , _useNativeMessagePrompt(false)
 , _autoDeleteSession(true)
+, _fontLevel(FONT_LEVEL_NORMAL)
 {
 
 }
@@ -393,6 +394,26 @@ void AppSetting::setFont(const std::string& font) {
     _font = font;
 }
 
+int AppSetting::getFontLevel() {
+    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+    return _fontLevel;
+}
+
+void AppSetting::setFontLevel(int level) {
+    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+    _fontLevel = level;
+}
+
+int AppSetting::getLanguage() {
+    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+    return _language;
+}
+
+void AppSetting::setLanguage(int language) {
+    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+    _language = language;
+}
+
 // 其他设置
 bool AppSetting::getSelfStart() {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
@@ -560,16 +581,6 @@ bool AppSetting::getAutoDeleteSession()
 {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
     return _autoDeleteSession;
-}
-
-void AppSetting::setShowQuanTool(bool show) {
-    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    _showQuanWnd = show;
-}
-
-bool AppSetting::getShowQuanTool() {
-    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    return _showQuanWnd;
 }
 
 std::string AppSetting::getCoEdit() {

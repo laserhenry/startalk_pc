@@ -6,6 +6,7 @@
 #include "../CustomUi/HeadPhotoLab.h"
 #include "../UICom/qimage/qimage.h"
 #include "../UICom/StyleDefine.h"
+#include "../Platform/AppSetting.h"
 #include <QTreeView>
 #include <iostream>
 #include <QApplication>
@@ -45,6 +46,8 @@ void TreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     painter->setRenderHints(QPainter::Antialiasing, true);
     painter->setRenderHints(QPainter::SmoothPixmapTransform, true);
     painter->drawPixmap(QRect(rect.x(), rect.y() + (rect.height() - radius * 2) / 2, radius * 2, radius * 2), icon);
+    //
+    QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
     painter->setPen(QTalk::StyleDefine::instance().getGroupManagerNormalFontColor());
     painter->drawText(QRect(rect.x() + radius * 2 + 2, rect.y(),
             rect.width() - radius * 2 - 2 - 40, rect.height()), Qt::AlignVCenter, strText);

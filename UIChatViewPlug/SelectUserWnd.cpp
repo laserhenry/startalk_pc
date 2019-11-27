@@ -15,6 +15,7 @@
 #include "../UICom/qimage/qimage.h"
 #include "../Platform/dbPlatForm.h"
 #include "../UICom/StyleDefine.h"
+#include "../CustomUi/TitleBar.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
 #define HEAD_WIDTH 22
@@ -52,7 +53,6 @@ bool SelectUserWndSort::filterAcceptsRow(int source_row, const QModelIndex &sour
 SelectUserWndDelegate::SelectUserWndDelegate(QWidget *parent)
     : QStyledItemDelegate(parent)
 {
-    _nameFont.setPixelSize(13);
     _nameFont.setWeight(400);
 }
 
@@ -62,17 +62,11 @@ SelectUserWndDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
 
     painter->save();
     painter->setRenderHint(QPainter::TextAntialiasing);
-
-    if (option.state & QStyle::State_Selected)
-    {
-        painter->fillRect(option.rect, QTalk::StyleDefine::instance().getNavSelectColor());
-    }
-    else
-    {
-        painter->fillRect(option.rect, QTalk::StyleDefine::instance().getNavNormalColor());
-    }
-
     QRect rect = option.rect;
+    if (option.state & QStyle::State_Selected)
+        painter->fillRect(rect, QTalk::StyleDefine::instance().getNavSelectColor());
+    else
+        painter->fillRect(rect, QTalk::StyleDefine::instance().getNavNormalColor());
 
     QString name = index.data(EM_DATATYPE_NAME).toString();
     QString headPath = index.data(EM_DATATYPE_HEAD).toString();
@@ -89,6 +83,7 @@ SelectUserWndDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
 
     painter->setPen(QTalk::StyleDefine::instance().getNavNameFontColor());
     painter->setFont(_nameFont);
+    QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
     painter->drawText(QRect(rect.x() + 43, rect.y(), rect.width() - 43 - 30, rect.height()), Qt::AlignVCenter, name);
     painter->setRenderHints(QPainter::Antialiasing,true);
 
@@ -183,28 +178,8 @@ void SelectUserWnd::initUi()
     //
     setFixedSize(330, 500);
     // title
-    QFrame *titleFrm = new QFrame(this);
-    titleFrm->setObjectName("titleFrm");
-    QLabel *titleLabel = new QLabel(tr("选择会话"), this);
-    titleLabel->setObjectName("titleLabel");
-    auto titleLay = new QHBoxLayout(titleFrm);
-    auto * closeBtn = new QPushButton(this);
-    closeBtn->setToolTip(tr("关闭"));
-#ifdef _MACOS
-    closeBtn->setFixedSize(12, 12);
-    closeBtn->setObjectName("gmCloseBtn");
-    titleLay->addWidget(closeBtn);
-    titleLay->addWidget(titleLabel);
-    titleLay->setContentsMargins(8, 0, 20, 0);
-#else
-    closeBtn->setFixedSize(30, 30);
-    closeBtn->setObjectName("gwCloseBtn");
-    titleLay->addWidget(titleLabel);
-    titleLay->setMargin(0);
-    titleLay->addWidget(closeBtn);
-#endif
+    auto *titleFrm = new TitleBar(tr("选择会话"), nullptr, this);
     titleFrm->setFixedHeight(40);
-    titleLabel->setAlignment(Qt::AlignCenter);
     // search
     QFrame* searchFrm = new QFrame(this);
     searchFrm->setFixedHeight(50);
@@ -276,7 +251,7 @@ void SelectUserWnd::initUi()
     //
     setMoverAble(true);
     //
-    connect(closeBtn, &QPushButton::clicked, [this](){this->close();});
+    connect(titleFrm->getCloseBtn(), &QToolButton::clicked, [this](){this->close();});
     connect(cancelBtn, &QPushButton::clicked, [this](){this->close();});
     connect(okBtn, &QPushButton::clicked, [this](){
         _evtRet = 1;

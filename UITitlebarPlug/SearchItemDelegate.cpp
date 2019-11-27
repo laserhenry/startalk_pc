@@ -17,20 +17,6 @@
 SearchItemDelegate::SearchItemDelegate(QAbstractItemView *parent) :
         QStyledItemDelegate(parent)
 {
-    titleNameFont.setWeight(400);
-    titleNameFont.setPixelSize(14);
-
-    titleBtnFont.setWeight(400);
-    titleBtnFont.setPixelSize(12);
-
-    itemNameFont.setWeight(400);
-    itemNameFont.setPixelSize(14);
-
-    itemSubFont.setWeight(400);
-    itemSubFont.setPixelSize(12);
-
-    moreFont.setWeight(400);
-    moreFont.setPixelSize(14);
 
 }
 
@@ -77,28 +63,28 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 
     QRect rect = option.rect;
     if (option.state & QStyle::State_Selected)
-        painter->fillRect(rect, QTalk::StyleDefine::instance().getNavSelectColor());
+        painter->fillRect(rect, QTalk::StyleDefine::instance().getSearchSelectColor());
     else
-        painter->fillRect(rect, QTalk::StyleDefine::instance().getNavNormalColor());
+        painter->fillRect(rect, QTalk::StyleDefine::instance().getSearchNormalColor());
 
     switch (itemType)
     {
         case EM_ITEM_TYPE_TITLE:
         {
-            QString name = index.data(EM_TITLEROLE_NAME).toString();
-            bool hasMore = index.data(EM_TITLEROLE_HASMORE).toBool();
-            int req = index.data(EM_TITLEROLE_REQ_TYPE).toInt();
-            bool hover = index.data(EM_TITLEROLE_HOVER).toBool();
+            QString name = index.data(EM_TITLE_ROLE_NAME).toString();
+            bool hasMore = index.data(EM_TITLE_ROLE_HAS_MORE).toBool();
+            int req = index.data(EM_TITLE_ROLE_REQ_TYPE).toInt();
+            bool hover = index.data(EM_TITLE_ROLE_HOVER).toBool();
             //
-            painter->setFont(titleNameFont);
-            QFontMetricsF titleNameF(titleNameFont);
+            QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel(), 14);
+            QFontMetricsF titleNameF(painter->font());
             painter->setPen(QTalk::StyleDefine::instance().getNavNameFontColor());
             QRect nameRect(rect.x() + 14, (int)(rect.height() - titleNameF.height()) / 2 + rect.y(),
                            rect.width() - 15, (int)titleNameF.height() + 5);
             painter->drawText(nameRect, Qt::AlignLeft | Qt::AlignVCenter, name);
             //
             QString btnName;
-            if(REQ_TYPE_ALL == req || REQ_TYPE_HISTORY == req)
+            if(REQ_TYPE_ALL == req /**|| REQ_TYPE_HISTORY == req || REQ_TYPE_FILE == req**/)
             {
                 if(hasMore)
                     btnName = tr("展开更多");
@@ -108,8 +94,8 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
             else
                 btnName = tr("收起");
 
-            painter->setFont(titleBtnFont);
-            QFontMetricsF titleBtnF(titleBtnFont);
+            QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel(), 12);
+            QFontMetricsF titleBtnF(painter->font());
             if (hover)
                 painter->setPen(QColor(0, 202, 190));
             else
@@ -124,9 +110,9 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
         }
         case EM_ITEM_TYPE_ITEM:
         {
-            QString name = index.data(EM_ITEMROLE_NAME).toString();
-            QString subMessage = index.data(EM_ITEMROLE_SUB_MESSAGE).toString();
-            int retType = index.data(EM_ITEMROLE_ITEM_TYPE).toInt();
+            QString name = index.data(EM_ITEM_ROLE_NAME).toString();
+            QString subMessage = index.data(EM_ITEM_ROLE_SUB_MESSAGE).toString();
+            int retType = index.data(EM_ITEM_ROLE_ITEM_TYPE).toInt();
             bool showCenter = subMessage.isEmpty();
             // icon
             painter->setRenderHints(QPainter::Antialiasing, true);
@@ -167,7 +153,7 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
             }
             else
             {
-                QString icon = index.data(EM_ITEMROLE_ICON).toString();
+                QString icon = index.data(EM_ITEM_ROLE_ICON).toString();
                 QFileInfo iconInfo(icon);
                 if(!iconInfo.exists() || iconInfo.isDir() )
                 {
@@ -193,8 +179,8 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
             painter->save();
             // name
             painter->setPen(QTalk::StyleDefine::instance().getNavNameFontColor());
-            painter->setFont(itemNameFont);
-            QFontMetricsF itemNameF(itemNameFont);
+            QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel(), 14);
+            QFontMetricsF itemNameF(painter->font());
             QRect nameRect;
             int x = rect.x() + 16 + HEAD_WIDTH + 8;
             int h = rect.height() / 2;
@@ -213,8 +199,8 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
             if(!showCenter)
             {
                 painter->setPen(QTalk::StyleDefine::instance().getNavContentFontColor());
-                painter->setFont(itemSubFont);
-                QFontMetricsF itemSubF(itemSubFont);
+                QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel(), 12);
+                QFontMetricsF itemSubF(painter->font());
                 QRect subRect = QRect(x, h + rect.y(), maxW, h);
                 painter->drawText(subRect, Qt::AlignVCenter | Qt::AlignTop,
                         itemSubF.elidedText(subMessage, Qt::ElideRight, maxW));
@@ -223,8 +209,8 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
         }
         case EM_ITEM_TYPE_SHOW_MORE:
         {
-            painter->setFont(moreFont);
-            QFontMetricsF moreF(moreFont);
+            QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel(), 14);
+            QFontMetricsF moreF(painter->font());
             painter->setPen(QTalk::StyleDefine::instance().getNavContentFontColor());
             painter->drawText(rect, Qt::AlignCenter, tr("查看更多"));
             break;
@@ -255,12 +241,17 @@ bool SearchItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
                 auto* evt = (QMouseEvent*)event;
                 if(btnRect.contains(evt->pos()))
                 {
-                    model->setData(index, true, EM_TITLEROLE_HOVER);
+                    model->setData(index, true, EM_TITLE_ROLE_HOVER);
                     //
-                    int retType = index.data(EM_TITLEROLE_TYPE).toInt();
-                    int req = index.data(EM_TITLEROLE_REQ_TYPE).toInt();
-                    if(REQ_TYPE_USER == req || REQ_TYPE_GROUP == req)
+                    int retType = index.data(EM_TITLE_ROLE_TYPE).toInt();
+                    int req = index.data(EM_TITLE_ROLE_REQ_TYPE).toInt();
+                    if(REQ_TYPE_USER == req ||
+                        REQ_TYPE_GROUP == req ||
+                        REQ_TYPE_HISTORY == req ||
+                        REQ_TYPE_FILE == req)
+                    {
                         emit sgSwitchFun(REQ_TYPE_ALL);
+                    }
                     else if(REQ_TYPE_ALL == req)
                     {
                         switch (retType)
@@ -271,8 +262,20 @@ bool SearchItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
                             case QTalk::Search::EM_ACTION_MUC:
                             case QTalk::Search::EM_ACTION_COMMON_MUC:
                             case (QTalk::Search::EM_ACTION_COMMON_MUC | QTalk::Search::EM_ACTION_MUC):
-                                emit sgSwitchFun(REQ_TYPE_GROUP);
+
                                 break;
+                            case QTalk::Search::EM_ACTION_HS_SINGLE:
+                            case QTalk::Search::EM_ACTION_HS_MUC:
+                            case QTalk::Search::EM_ACTION_HS_SINGLE | QTalk::Search::EM_ACTION_HS_MUC:
+                            {
+                                emit sgSwitchFun(REQ_TYPE_HISTORY);
+                                break;
+                            }
+                            case QTalk::Search::EM_ACTION_HS_FILE:
+                            {
+                                emit sgSwitchFun(REQ_TYPE_FILE);
+                                break;
+                            }
                             default:
                                 break;
                         }
@@ -283,14 +286,14 @@ bool SearchItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
             case EM_ITEM_TYPE_ITEM:
             {
                 //
-                int type = model->data(index, EM_ITEMROLE_ITEM_TYPE).toInt();
+                int type = model->data(index, EM_ITEM_ROLE_ITEM_TYPE).toInt();
 
                 if(QTalk::Search::EM_ACTION_USER == type)
                 {
                     int chatType = QTalk::Enum::TwoPersonChat;
-                    QString xmppId = index.data(EM_ITEMROLE_XMPPID).toString();
-                    QString icon = index.data(EM_ITEMROLE_ICON).toString();
-                    QString name = index.data(EM_ITEMROLE_NAME).toString();
+                    QString xmppId = index.data(EM_ITEM_ROLE_XMPPID).toString();
+                    QString icon = index.data(EM_ITEM_ROLE_ICON).toString();
+                    QString name = index.data(EM_ITEM_ROLE_NAME).toString();
                     emit sgOpenNewSession(chatType, xmppId, name, icon);
                 }
                 else if(QTalk::Search::EM_ACTION_MUC == type ||
@@ -298,20 +301,29 @@ bool SearchItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
                         (QTalk::Search::EM_ACTION_MUC | QTalk::Search::EM_ACTION_COMMON_MUC) == type)
                 {
                     int chatType = QTalk::Enum::GroupChat;
-                    QString xmppId = index.data(EM_ITEMROLE_XMPPID).toString();
-                    QString icon = index.data(EM_ITEMROLE_ICON).toString();
-                    QString name = index.data(EM_ITEMROLE_NAME).toString();
+                    QString xmppId = index.data(EM_ITEM_ROLE_XMPPID).toString();
+                    QString icon = index.data(EM_ITEM_ROLE_ICON).toString();
+                    QString name = index.data(EM_ITEM_ROLE_NAME).toString();
                     emit sgOpenNewSession(chatType, xmppId, name, icon);
                 }
-                else
+                else if(QTalk::Search::EM_ACTION_HS_SINGLE == type ||
+                        QTalk::Search::EM_ACTION_HS_MUC == type ||
+                        (QTalk::Search::EM_ACTION_HS_SINGLE | QTalk::Search::EM_ACTION_HS_MUC) == type)
                 {
-
+                    QString key = index.data(EM_ITEM_ROLE_KEY).toString();
+                    QString xmppId = index.data(EM_ITEM_ROLE_XMPPID).toString();
+                    emit sgShowMessageRecordWnd(key, xmppId);
+                }
+                else if(QTalk::Search::EM_ACTION_HS_FILE == type)
+                {
+                    QString key = index.data(EM_ITEM_ROLE_KEY).toString();
+                    emit sgShowFileRecordWnd(key);
                 }
                 break;
             }
             case EM_ITEM_TYPE_SHOW_MORE:
             {
-                int req = index.data(EM_TITLEROLE_REQ_TYPE).toInt();
+                int req = index.data(EM_TITLE_ROLE_REQ_TYPE).toInt();
                 emit sgGetMore(req);
                 break;
             }
@@ -325,7 +337,7 @@ bool SearchItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
         if(press || hover_index_row == index.row())
         {
             press = false;
-            model->setData(index, false, EM_TITLEROLE_HOVER);
+            model->setData(index, false, EM_TITLE_ROLE_HOVER);
         }
     }
     else if(event->type() == QEvent::MouseMove)
@@ -334,7 +346,7 @@ bool SearchItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
         {
             if(EM_ITEM_TYPE_TITLE == itemType)
             {
-                model->setData(model->index(hover_index_row, 0), false, EM_TITLEROLE_HOVER);
+                model->setData(model->index(hover_index_row, 0), false, EM_TITLE_ROLE_HOVER);
             }
 
             press = false;

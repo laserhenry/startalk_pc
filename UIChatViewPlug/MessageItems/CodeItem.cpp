@@ -195,10 +195,17 @@ void CodeItem::initContentLayout() {
 
     _contentFrm->installEventFilter(this);
     QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.ExtendedInfo.data());
-    QJsonObject jsonObject = jsonDocument.object();
-    _codeStyle = jsonObject.value("CodeStyle").toString();
-    _codeLanguage = jsonObject.value("CodeType").toString();
-    _code = jsonObject.value("Code").toString();
+    if(jsonDocument.isNull())
+    {
+        _code = msgInfo().Content.data();
+    }
+    else
+    {
+        QJsonObject jsonObject = jsonDocument.object();
+        _codeStyle = jsonObject.value("CodeStyle").toString();
+        _codeLanguage = jsonObject.value("CodeType").toString();
+        _code = jsonObject.value("Code").toString();
+    }
 
     auto * lay = new QHBoxLayout(_contentFrm);
     lay->setMargin(12);

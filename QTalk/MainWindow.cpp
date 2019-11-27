@@ -111,10 +111,14 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     //
 #ifdef _MACOS
-    auto *menuBar = new QMenuBar(nullptr);
-    QMenu *menu = menuBar->addMenu(tr("窗口"));
-    QAction* addNew = new QAction(tr("新建窗口"), menu);
-    menu->addAction(addNew);
+    _pWindowMenuBar = new QMenuBar(nullptr);
+    //
+    QMenu *toolMenu = _pWindowMenuBar->addMenu(tr("工具"));
+    auto* addNew = new QAction(tr("程序多开"), toolMenu);
+    _pFeedBackLog = new QAction(tr("快速反馈日志"), toolMenu);
+    toolMenu->addAction(addNew);
+    toolMenu->addAction(_pFeedBackLog);
+    //
     connect(addNew, &QAction::triggered, this, &MainWindow::sgRunNewInstance);
 #endif
 }
@@ -122,13 +126,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
- //   UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UILoginPlug");
-    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UICardManager");
-	UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UIGroupManager");
-    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UIPictureBrowser");
+    if(_pLocalServer)
+        delete _pLocalServer;
+
+//   UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UILoginPlug");
+//    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UICardManager");
+//	UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UIGroupManager");
+//    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UIPictureBrowser");
 //    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UITitlebarPlug");
 //    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UINavigationPlug");
-    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UIChatViewPlug");
+//    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UIChatViewPlug");
 }
 
 
@@ -245,14 +252,15 @@ void MainWindow::initLayouts()
     }
     _bottomFrm = new QFrame(this);
     _mainLayout->addWidget(_bottomFrm);
-    auto *hbox = new QHBoxLayout(_bottomFrm);
-    hbox->setMargin(0);
-    hbox->setSpacing(0);
+    bodyLay = new QStackedLayout(_bottomFrm);
+    bodyLay->setMargin(0);
+    bodyLay->setSpacing(0);
 
 	// 聊天窗口区域
     _bottomSplt = new QSplitter;
     _bottomSplt->setHandleWidth(1);
-    hbox->addWidget(_bottomSplt);
+    bodyLay->addWidget(_bottomSplt);
+    bodyLay->setCurrentWidget(_bottomSplt);
     if (_navigationPanel)
     {
         _bottomSplt->addWidget(_navigationPanel);
@@ -269,16 +277,14 @@ void MainWindow::initLayouts()
 	if (_pAddressBook)
 	{
 		_pAddressBook->setVisible(false);
-		hbox->addWidget(_pAddressBook);
+        bodyLay->addWidget(_pAddressBook);
 	}
 	// OA相关
 	if (_pOAManager)
 	{
 		_pOAManager->setVisible(false);
-		hbox->addWidget(_pOAManager);
+        bodyLay->addWidget(_pOAManager);
 	}
-
-
 }
 
 /**
@@ -454,15 +460,16 @@ void MainWindow::connectPlugs()
 	connect(_titleBar, SIGNAL(sgSaveSysConfig()), this, SLOT(onSaveSysConfig()));
 	connect(_titleBar, SIGNAL(msgSoundChanged()), _chatViewPanel, SLOT(onMsgSoundChanged()));
 
+	//
+	connect(_titleBar, SIGNAL(sgShowMessageRecordWnd(const QString&, const QString&)),
+	        _chatViewPanel, SLOT(onShowSearchResult(const QString&, const QString&)));
+	connect(_titleBar, SIGNAL(sgShowFileRecordWnd(const QString&)),
+	        _chatViewPanel, SLOT(onShowSearchFileWnd(const QString&)));
+
     connect(_chatViewPanel, SIGNAL(sgWakeUpWindow()), this, SLOT(wakeUpWindow()));
     connect(this, SIGNAL(sgAppActive()), _chatViewPanel, SLOT(onAppActive()));
     connect(this, SIGNAL(sgAppActive()), _navigationPanel, SLOT(onAppActive()));
     connect(_titleBar, SIGNAL(sgActiveWnd()), this, SLOT(wakeUpWindow()));
-#ifdef _MACOS
-    connect(this, SIGNAL(sgAppActive()), this, SLOT(wakeUpWindow()));
-//    connect(_titleBar, SIGNAL(sgShowMinWnd()), this, SLOT(onShowMinWnd()));
-#endif
-
     //
     connect(_chatViewPanel, SIGNAL(sgShockWnd()), this, SLOT(onShockWnd()));
     connect(_chatViewPanel, SIGNAL(sgUserSendMessage()),
@@ -527,7 +534,9 @@ void MainWindow::setAutoLogin(bool autoFlag)
 void MainWindow::initSystemTray()
 {
 	_pSysTrayIcon = new SystemTray(this);
-
+#ifdef _MACOS
+    connect(_pFeedBackLog, &QAction::triggered, _pSysTrayIcon, &SystemTray::onSendLog);
+#endif
 }
 
 /**
@@ -572,7 +581,7 @@ void MainWindow::InitLogin(bool _enable, const QString& loginMsg)
         if (_logindlg)
         {
             UIGolbalManager::GetUIGolbalManager()->setStyleSheetForPlugin("UILoginPlug");
-            connect(_logindlg, SIGNAL(sgSynDataSuccess()), this, SLOT(openMainwindow()));
+            connect(_logindlg, SIGNAL(sgSynDataSuccess()), this, SLOT(openMainWindow()));
             _logindlg->show();
         }
     }
@@ -592,7 +601,7 @@ void MainWindow::OnLoginSuccess(const std::string& strSessionId)
     emit LoginSuccess(true);
 }
 
-void MainWindow::openMainwindow()
+void MainWindow::openMainWindow()
 {
 	if (_initUi)
 	{
@@ -603,6 +612,9 @@ void MainWindow::openMainwindow()
         _pOfflineTimer->setInterval(1000 * 60 * 60);
         _pLogTimer->setInterval(1000 * 60 * 60);
         _pLogTimer->start();
+        //
+        _pLocalServer = new LocalServer;
+        _pLocalServer->runServer(qApp->applicationName());
 	    //
 		_initUi = false;
 		init();
@@ -662,6 +674,7 @@ void MainWindow::openMainwindow()
         onUpdateHotKey();
 		connect(_pScreentShot, &QHotkey::activated, this, &MainWindow::onScreentShot);
 		connect(_pWakeWnd, &QHotkey::activated, this, &MainWindow::wakeUpWindow);
+		connect(_pLocalServer, &LocalServer::sgWakeupWindow, this, &MainWindow::wakeUpWindow);
         //
 		if (_logindlg)
         {
@@ -690,7 +703,39 @@ void MainWindow::openMainwindow()
         connect(_noOperatorThread, SIGNAL(sgUserLeave(bool)), _chatViewPanel, SLOT(setAutoReplyFlag(bool)));
         connect(_noOperatorThread, SIGNAL(sgUserLeave(bool)), this, SLOT(setUserStatus(bool)));
         connect(_titleBar, SIGNAL(sgAutoReply(bool)), _noOperatorThread, SLOT(setAutoReplyFlag(bool)));
+        //
+#ifdef _MACOS
+        QMenu *wndMenu = _pWindowMenuBar->addMenu(tr("窗口"));
+        auto* minSize = new QAction(tr("最小化"), wndMenu);
+        auto* maxSize = new QAction(tr("缩放"), wndMenu);
+        auto* showWnd = new QAction(tr("显示面板"), wndMenu);
+        wndMenu->addAction(minSize);
+        wndMenu->addAction(maxSize);
+        wndMenu->addSeparator();
+        wndMenu->addAction(showWnd);
 
+        QMenu *systemMenu = _pWindowMenuBar->addMenu(tr("系统"));
+        auto* setting = new QAction(tr("系统设置"), wndMenu);
+        auto* about = new QAction(tr("关于"), wndMenu);
+        systemMenu->addAction(setting);
+        systemMenu->addAction(about);
+
+        connect(minSize, &QAction::triggered, [this](){
+            MacApp::showMinWnd(this);
+        });
+        connect(maxSize, &QAction::triggered, [this](){
+            if(this->isMaximized())
+                this->showNormal();
+            else
+                this->showMaximized();
+        });
+        connect(showWnd, &QAction::triggered, [this](){
+            this->wakeUpWindow();
+        });
+
+        connect(setting, SIGNAL(triggered()), _titleBar, SLOT(onShowSystemWnd()));
+        connect(about, SIGNAL(triggered()), _titleBar, SLOT(onShowAboutWnd()));
+#endif
         //
         checkUpdater();
 	}
@@ -708,23 +753,23 @@ void MainWindow::openMainwindow()
 void MainWindow::onCurFunChanged(int index)
 {
     // 先隐藏再显示
-    if (_bottomSplt->isVisible())
-        _bottomSplt->setVisible(false);
-    else if(_pAddressBook->isVisible())
-        _pAddressBook->setVisible(false);
-    else if(_pOAManager->isVisible())
-        _pOAManager->setVisible(false);
+//    if (_bottomSplt->isVisible())
+//        _bottomSplt->setVisible(false);
+//    else if(_pAddressBook->isVisible())
+//        _pAddressBook->setVisible(false);
+//    else if(_pOAManager->isVisible())
+//        _pOAManager->setVisible(false);
     //
     switch (index)
     {
         case 0:
-            _bottomSplt->setVisible(true);
+            bodyLay->setCurrentWidget(_bottomSplt);
             break;
         case 1:
-            _pAddressBook->setVisible(true);
+            bodyLay->setCurrentWidget(_pAddressBook);
             break;
         case 2:
-            _pOAManager->setVisible(true);
+            bodyLay->setCurrentWidget(_pOAManager);
             break;
         default:break;
     }
@@ -753,6 +798,10 @@ void MainWindow::onAppActive()
         }
 
         _pSysTrayIcon->onWndActived();
+#ifdef _MACOS
+        if(!this->isVisible())
+            MacApp::wakeUpWnd(this);
+#endif
         emit sgAppActive();
         setVisible(true);
     }

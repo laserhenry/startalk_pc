@@ -210,7 +210,7 @@ bool Communication::OnLogin(const std::string& userName, const std::string& pass
 //
 void Communication::AsyncConnect(const std::string &userName, const std::string &password, const std::string &host,
                                  int port) {
-    info_log("start login: user:{0}, password length:{1}, host:{2}, port:{3}", userName, password.length(), host, port);
+    debug_log("start login: user:{0}, password length:{1}, host:{2}, port:{3}", userName, password.length(), host, port);
     _userName = userName;
     _password = password;
     _host = host;
@@ -246,6 +246,10 @@ bool Communication::getNavInfo(const std::string &navAddr, QTalk::StNav &nav) {
         url += "?p=pc";
     else
         url += "&p=pc";
+
+    if (navAddr.find("nauth=") == std::string::npos){
+        url += "&nauth=true";
+    }
 
     bool ret = false;
     auto func = [url, &ret, &nav](int code, const std::string &resData) {
@@ -372,7 +376,7 @@ void Communication::synSeverData() {
         LogicManager::instance()->getLogicBase()->sendHeartbeat();
 //        sendHeartbeat();
         // 获取组织架构
-        info_log("获取组织架构");
+        debug_log("获取组织架构");
         _pMsgManager->sendLoginProcessMessage("getting user information");
         if (_pUserManager && _pMsgManager) {
             bool ret = _pUserManager->getNewStructure();
@@ -381,7 +385,7 @@ void Communication::synSeverData() {
         // 获取群信息
         _pMsgManager->sendLoginProcessMessage("getting group information");
         if (_pUserGroupManager && _pMsgManager) {
-            info_log("获取群信息");
+            debug_log("获取群信息");
             MapGroupCard groups;
             if (_pUserGroupManager->getUserGroupInfo(groups)) {
 //                _pUserGroupManager->getGroupCard(groups);
@@ -390,20 +394,20 @@ void Communication::synSeverData() {
             }
         }
         // 获取单人配置
-        info_log("获取单人配置");
+        debug_log("获取单人配置");
         _pMsgManager->sendLoginProcessMessage("initializing configuration");
         _pUserConfig->getUserConfigFromServer(false);
         // 初始化配置
-        info_log("初始化配置");
+        debug_log("初始化配置");
         std::string strPlatform = Platform::instance().getPlatformStr();
         std::string userConfig;
         LogicManager::instance()->getDatabase()->getConfig(QTALK_2_0_CONFIG, strPlatform, userConfig);
         AppSetting::instance().initAppSetting(userConfig);
         // 获取好友列表
-        info_log("获取好友列表");
+        debug_log("获取好友列表");
         getFriendList();
         // 获取单人离线消息
-        info_log("获取单人消息");
+        debug_log("获取单人消息");
         _pMsgManager->sendLoginProcessMessage("getting user message");
         bool isok = _pOfflineMessageManager->updateChatOfflineMessage();
         //
@@ -416,7 +420,7 @@ void Communication::synSeverData() {
         _pOfflineMessageManager->updateChatMasks();
 
         // 获取群离线消息
-        info_log("获取群离线消息");
+        debug_log("获取群离线消息");
         _pMsgManager->sendLoginProcessMessage("getting group message");
         isok = _pOfflineMessageManager->updateGroupOfflineMessage();
         if(!isok)
@@ -425,10 +429,10 @@ void Communication::synSeverData() {
             return;
         }
         //
-        info_log("更新群阅读状态");
+        debug_log("更新群阅读状态");
         _pOfflineMessageManager->updateGroupMasks();
         // 获取通知消息
-        info_log("获取通知消息");
+        debug_log("获取通知消息");
         _pMsgManager->sendLoginProcessMessage("getting notice message");
         isok = _pOfflineMessageManager->updateNoticeOfflineMessage();
         if(!isok)
@@ -437,12 +441,12 @@ void Communication::synSeverData() {
             return;
         }
         //获取热线账号
-        info_log("获取热线账号信息");
+        debug_log("获取热线账号信息");
         _pHotLinesConfig->getVirtualUserRole();
 #ifdef _QCHAT
-        info_log("获取坐席状态");
+        debug_log("获取坐席状态");
         _pHotLinesConfig->getServiceSeat();
-        info_log("获取快捷回复");
+        debug_log("获取快捷回复");
         _pHotLinesConfig->updateQuickReply();
 #endif
         // 根据离线消息生成sessionList
@@ -477,12 +481,10 @@ void Communication::synUsersUserStatus() {
 #ifdef _MACOS
             pthread_setname_np("synUsersUserStatus thread");
 #endif
-            perf_counter("syn users status");
-
             std::set<std::string> users;
             LogicManager::instance()->getDatabase()->getCareUsers(users);
 
-            info_log("will get user states count:{0}", users.size());
+            debug_log("will get user states count:{0}", users.size());
 
             std::set<std::string> tmpUsers;
             for(const auto& u : users)
@@ -516,35 +518,53 @@ void Communication::synUsersUserStatus() {
   * @author   cc
   * @date     2018/09/28
   */
-void Communication::getUserHistoryMessage(const QInt64 &time, const QUInt8 &chatType, const std::string &userId,
-                                          const std::string &realJid,
+void Communication::getUserHistoryMessage(const QInt64 &time, const QUInt8 &chatType, const QTalk::Entity::UID& uid,
                                           std::vector<QTalk::Entity::ImMessageInfo> &msgList) {
-    bool ret = LogicManager::instance()->getDatabase()->getUserMessage(time, userId, realJid, msgList);
+    bool ret = LogicManager::instance()->getDatabase()->getUserMessage(time, uid.usrId(), uid.realId(), msgList);
     if (!ret || msgList.empty()) {
         switch (chatType) {
             case QTalk::Enum::TwoPersonChat:
             case QTalk::Enum::Consult:
-                _pOfflineMessageManager->getUserMessage(time, userId);
+                _pOfflineMessageManager->getUserMessage(time, uid.usrId());
                 break;
             case QTalk::Enum::GroupChat:
-                _pOfflineMessageManager->getGroupMessage(time, userId);
-                // 群消息需要更新一下群阅读状态
-                //_pOfflineMessageManager->updateGroupMasks();
+                _pOfflineMessageManager->getGroupMessage(time, uid.usrId());
                 break;
             case QTalk::Enum::System:
-                _pOfflineMessageManager->getSystemMessage(time, userId);
+                _pOfflineMessageManager->getSystemMessage(time, uid.usrId());
                 break;
             case QTalk::Enum::ConsultServer:
-                _pOfflineMessageManager->getConsultServerMessage(time,userId,realJid);
+                _pOfflineMessageManager->getConsultServerMessage(time,uid.usrId(), uid.realId());
                 break;
             default:
                 break;
         }
-        LogicManager::instance()->getDatabase()->getUserMessage(time, userId, realJid, msgList);
+        LogicManager::instance()->getDatabase()->getUserMessage(time, uid.usrId(), uid.realId(), msgList);
     }
 }
 
-
+void Communication::getNetHistoryMessage(const QInt64 &time, const QUInt8 &chatType,
+                                         const QTalk::Entity::UID& uid,
+                                         const std::string &direction,
+                                         std::vector<QTalk::Entity::ImMessageInfo> &msgList) {
+    switch (chatType) {
+        case QTalk::Enum::TwoPersonChat:
+        case QTalk::Enum::Consult:
+            msgList = _pOfflineMessageManager->getUserMessage(time, uid.usrId(), direction);
+            break;
+        case QTalk::Enum::GroupChat:
+            msgList = _pOfflineMessageManager->getGroupMessage(time, uid.usrId(), direction);
+            break;
+        case QTalk::Enum::System:
+            msgList = _pOfflineMessageManager->getSystemMessage(time, uid.usrId(), direction);
+            break;
+        case QTalk::Enum::ConsultServer:
+            msgList = _pOfflineMessageManager->getConsultServerMessage(time, uid.usrId(), uid.realId(), direction);
+            break;
+        default:
+            break;
+    }
+}
 
 /**
   * @函数名   onCreateGroupCompleted
@@ -699,12 +719,12 @@ void Communication::getGroupMemberById(const std::string &groupId) {
     // 获取群公告
     std::string groupTopic;
     LogicManager::instance()->getDatabase()->getGroupTopic(groupId, groupTopic);
-    info_log("群公告 群Id:{0} 群公告:{1}", groupId, groupTopic);
+    debug_log("群公告 群Id:{0} 群公告:{1}", groupId, groupTopic);
     if (_pMsgManager && !groupTopic.empty()) {
         _pMsgManager->gotGroupTopic(groupId, groupTopic);
     }
 
-    info_log("请求群成员 群Id:{0}", groupId);
+    debug_log("请求群成员 群Id:{0}", groupId);
     //
     // 获取本地群成员
 //    std::vector<QTalk::StUserCard> arGroupMembers;
@@ -852,7 +872,9 @@ void Communication::onInviteGroupMembers(const std::string &groupId) {
 
 // 发送http 请求
 void
-Communication::addHttpRequest(const QTalk::HttpRequest &req, const std::function<void(int, const std::string &)>& callback) {
+Communication::addHttpRequest(const QTalk::HttpRequest &req,
+        const std::function<void(int, const std::string &)>& callback,
+        bool showCastWarn) {
 
     try {
 
@@ -865,10 +887,8 @@ Communication::addHttpRequest(const QTalk::HttpRequest &req, const std::function
             std::size_t hash = std::hash<std::string>{}(url);
             currentThread = static_cast<int>(hash % _threadPoolCount);
 
-            auto http = _httpPool[currentThread]->enqueue([this, req, callback, currentThread]() {
-                info_log("在第{1}个http坑 开始请求: {0}", req.url, currentThread);
-
-                perf_counter("addHttpRequest {0}", req.url);
+            auto http = _httpPool[currentThread]->enqueue([this, req, callback, currentThread, showCastWarn]() {
+                debug_log("在第{1}个http坑 开始请求: {0}", req.url, currentThread);
 
                 QTalk::QtHttpRequest request(req.url.c_str());
                 //method
@@ -876,14 +896,14 @@ Communication::addHttpRequest(const QTalk::HttpRequest &req, const std::function
                 // header
                 auto itr = req.header.begin();
                 for (; itr != req.header.end(); itr++) {
-                    info_log("请求header:{0} = {1}", itr->first, itr->second);
+                    debug_log("请求header:{0} = {1}", itr->first, itr->second);
                     request.addRequestHeader(itr->first.c_str(), itr->second.c_str());
                 }
                 std::string requestHeaders = std::string("q_ckey=") + Platform::instance().getClientAuthKey();
                 request.addRequestHeader("Cookie", requestHeaders.c_str());
                 // body
                 if ((RequestMethod)req.method == QTalk::RequestMethod::POST) {
-                    info_log("请求body:{0}", req.body);
+                    debug_log("请求body:{0}", req.body);
                     request.appendPostData(req.body.c_str(), req.body.length());
                 }
                 // form
@@ -894,7 +914,7 @@ Communication::addHttpRequest(const QTalk::HttpRequest &req, const std::function
                 if (req.addProcessCallback) {
                     // 参数 总下载量 当前下载量 总上传量 当前上传量 速度 剩余时间
                     std::function<void(StProcessParam)> processCallback;
-                    processCallback = [this, req](StProcessParam param) {
+                    processCallback = [this, req](const StProcessParam& param) {
                         if (_pMsgManager) {
                             _pMsgManager->updateFileProcess(param.key, param.dt, param.dn,
                                                             param.ut, param.un, param.speed, param.leftTime);
@@ -904,27 +924,34 @@ Communication::addHttpRequest(const QTalk::HttpRequest &req, const std::function
                 }
 
                 // start
-                request.startSynchronous();
+                {
+                    if(showCastWarn)
+                    {
+                        perf_counter("addHttpRequest {0}\n {1}", req.url, req.body);
+                        request.startSynchronous();
+                    }
+                    else
+                        request.startSynchronous();
+                }
 
-                info_log("请求结果: code: {0}", request.getResponseCode());
-
+                debug_log("请求结果: code: {0}", request.getResponseCode());
 
                 if ((RequestMethod)req.method == QTalk::RequestMethod::POST) {
-                    info_log("请求结果: data: {0}", *request.getResponseData());
+                    debug_log("请求结果: data: {0}", *request.getResponseData());
                 }
 
                 // callback
                 callback(request.getResponseCode(), *request.getResponseData());
 
                 if (request.getResponseCode() != 200) {
-                    error_log("请求失败:{3} -> {0} \n params{2} \n {1}", req.url, *request.getResponseData(), req.body, request.getResponseCode());
+                    error_log("请求失败:{3} -> {0} \n params:{2} \n {1}", req.url, *request.getResponseData(), req.body, request.getResponseCode());
                 }
             });
 
             // 等待http请求结果
             http.get();
             //
-            info_log("请求返回: {0}", req.url);
+            debug_log("请求返回: {0}", req.url);
         } else {
             error_log("invalid url {0}", req.url);
             callback(-1, "");
@@ -1342,7 +1369,7 @@ void Communication::reportLog(const std::string &desc, const std::string &logPat
                     std::string error;
                     bool isSuccess = LogicManager::instance()->getLogicBase()->sendReportMessage(msgCont.str(), error);
 #if !defined(_STARTALK) and !defined(_QCHAT)
-                    info_log("send message :{0}", isSuccess);
+                    debug_log("send message :{0}", isSuccess);
 #endif
                 }
                 {
@@ -1459,7 +1486,7 @@ void Communication::sendUserOnlineState(const QInt64 &loginTime, const QInt64 &l
         auto callback = [](int code, std::string responsData) {
 
             if (code == 200) {
-                info_log("sendUserOnlineState success {0}", responsData);
+                debug_log("sendUserOnlineState success {0}", responsData);
             } else {
                 error_log("sendUserOnlineState error {0}", responsData);
             }
@@ -1538,7 +1565,7 @@ void Communication::sendOperatorStatistics(const std::string &ip, const std::vec
             auto callback = [](int code, std::string responsData) {
 
                 if (code == 200) {
-                    info_log("sendOperatorStatistics success {0}", responsData);
+                    debug_log("sendOperatorStatistics success {0}", responsData);
                 } else {
                     error_log("sendOperatorStatistics error {0}", responsData);
                 }
@@ -1629,10 +1656,10 @@ void Communication::updateTimeStamp()
             timeStamp = LogicManager::instance()->getDatabase()->getMaxTimeStampByChatType(QTalk::Enum::TwoPersonChat);
             LogicManager::instance()->getDatabase()->insertConfig(DEM_MESSAGE_MAXTIMESTAMP, DEM_TWOPERSONCHAT,
                                                                   std::to_string(timeStamp));
-            warn_log("{0} insert new timestamp {1} str:{2}", DEM_TWOPERSONCHAT, timeStamp, configTimeStamp);
+            info_log("{0} insert new timestamp {1} str:{2}", DEM_TWOPERSONCHAT, timeStamp, configTimeStamp);
         }
         else
-            warn_log("{0} has old timestamp {1} str:{2}", DEM_TWOPERSONCHAT, timeStamp, configTimeStamp);
+            info_log("{0} has old timestamp {1} str:{2}", DEM_TWOPERSONCHAT, timeStamp, configTimeStamp);
 
         //
         configTimeStamp = "";
@@ -1665,10 +1692,10 @@ void Communication::updateTimeStamp()
             timeStamp = LogicManager::instance()->getDatabase()->getMaxTimeStampByChatType(QTalk::Enum::System);
             LogicManager::instance()->getDatabase()->insertConfig(DEM_MESSAGE_MAXTIMESTAMP, DEM_SYSTEM,
                                                                   std::to_string(timeStamp));
-            warn_log("{0} insert new timestamp {1} str:{2}", DEM_SYSTEM, timeStamp, configTimeStamp);
+            info_log("{0} insert new timestamp {1} str:{2}", DEM_SYSTEM, timeStamp, configTimeStamp);
         }
         else
-            warn_log("{0} has old timestamp {1} str:{2}", DEM_SYSTEM, timeStamp, configTimeStamp);
+            info_log("{0} has old timestamp {1} str:{2}", DEM_SYSTEM, timeStamp, configTimeStamp);
 
     }
     catch (const std::exception &e) {

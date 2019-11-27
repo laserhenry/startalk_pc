@@ -161,11 +161,15 @@ public:
     void setUseNativeMessagePrompt(bool flag) { _useNativeMessagePrompt = flag; };
     bool getUseNativeMessagePrompt() { return _supportNativeMessagePrompt && _useNativeMessagePrompt; };
 
-    void setShowQuanTool(bool show);
-    bool getShowQuanTool();
-
     void setCoEdit(const std::string& coEdit);
     std::string getCoEdit();
+
+    enum {FONT_LEVEL_NORMAL = 0, FONT_LEVEL_BIG, FONT_LEVEL_SMALL};
+    void setFontLevel(int level);
+    int getFontLevel();
+    //
+    void setLanguage(int language);
+    int getLanguage();
 
 private:
 
@@ -219,6 +223,8 @@ private:
     // 皮肤设置
     int _themeMode;
     std::string _font;
+    int _fontLevel;
+    int _language{};
 
     // 其他设置
     bool _autoStartUp;            // 开机自启动

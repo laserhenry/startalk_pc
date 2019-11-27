@@ -1,4 +1,8 @@
-﻿QMenu{
+﻿* {
+    font-size: 14px;
+}
+
+QMenu{
 	background: rgba(255, 255, 255, 1);
     border-radius: 6px;
     border-width: 1px;
@@ -256,6 +260,7 @@ QLineEdit#searchEdt{
 	border-style:outset;
 	font-weight:400;
 	font-size: 13px;
+	color:rgba(153,153,153,1);
 }
 
 QToolButton#searchBtn {
@@ -447,4 +452,19 @@ QTextEdit {
     font-weight:400;
     line-height:14px;
     border-radius:4px;
+}
+
+QFrame#TitleBar{
+    background:#F9F9F8;
+    border-top-left-radius:6px;
+    border-top-right-radius:6px;
+}
+
+QLabel#TitleBarLabel {
+    color:#212121;
+    font-size:16px;
+}
+
+QComboBox#NoSlidingHandoverComboBox {
+    width:200px;
 }

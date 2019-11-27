@@ -509,7 +509,7 @@ bool DataBasePlug::updateReadMask(const std::map<std::string, QInt32> &readMasks
         ret = dao.updateReadMask(readMasks);
         auto end = std::chrono::system_clock::now();
         std::chrono::duration<double, std::milli> elapsed_milliseconds = end - start;
-        info_log("updateReadMask count :{0}", elapsed_milliseconds.count());
+        debug_log("updateReadMask count :{0}", elapsed_milliseconds.count());
     });
     func.get();
     return ret;
@@ -579,6 +579,7 @@ bool DataBasePlug::bulkInsertUserInfo(const std::vector<QTalk::Entity::ImUserInf
 }
 
 std::shared_ptr<QTalk::Entity::ImUserInfo> DataBasePlug::getUserInfoByXmppId(const std::string &xmppid) {
+    //assert(xmppid.size() <= 45);
     std::shared_ptr<QTalk::Entity::ImUserInfo> ret = nullptr;
     auto func = _dbPool.enqueue([this, &ret, xmppid]() {
         UserDao dao(_dataBass);

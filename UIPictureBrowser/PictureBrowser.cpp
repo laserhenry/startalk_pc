@@ -17,8 +17,8 @@ PictureBrowser::PictureBrowser(QWidget *parent)
         : UShadowDialog(nullptr, true)
         , _curIndex(0)
         , _hasBefore(false)
-        , _hasNext(false) {
-
+        , _hasNext(false)
+{
     _msgManager = new PictureMsgManager;
     setWindowFlags(windowFlags() | Qt::Widget);
     initUi();
@@ -175,7 +175,7 @@ void PictureBrowser::gotSourceImg(const QString &link, const QString &srcImg, bo
 void PictureBrowser::turnBefore()
 {
     QMutexLocker locker(&_mutex);
-    if(_curIndex > 0)
+    if(!_images.empty() && _curIndex > 0)
     {
         _curIndex--;
         loadImage(false);
@@ -196,7 +196,7 @@ void PictureBrowser::turnBefore()
 void PictureBrowser::turnNext()
 {
     QMutexLocker locker(&_mutex);
-    if(_curIndex < _images.size() - 1)
+    if(!_images.empty() && _curIndex < _images.size() - 1)
     {
         _curIndex++;
         loadImage(false);
@@ -249,6 +249,7 @@ void PictureBrowser::loadImage(bool isFirst)
                 this->setWindowFlags(this->windowFlags() | Qt::Tool);
 #endif
             this->showNormal();
+            this->raise();
         }
     }
 }

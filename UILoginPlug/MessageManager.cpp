@@ -147,7 +147,7 @@ void UILoginMsgListener::onEvent(DataBaseOpenMessage &e)
 	}
 //	if (nullptr != _pLoginPanel)
 //	{
-//		info_log("--------------正在获取组织架构--------------");
+//		debug_log("--------------正在获取组织架构--------------");
 //		_pLoginPanel->onGotLoginstauts("正在获取组织架构");
 //	}
 }
@@ -161,7 +161,7 @@ void UILoginMsgListener::onEvent(GotStructureMessage &e)
 	}
 //	if (nullptr != _pLoginPanel)
 //	{
-//		info_log("--------------GotStructureMessage--------------");
+//		debug_log("--------------GotStructureMessage--------------");
 //		_pLoginPanel->onGotLoginstauts("正在获取群信息");
 //	}
 }
@@ -174,7 +174,7 @@ void UILoginMsgListener::onEvent(GotUserGroup &e)
 	}
 //	if (nullptr != _pLoginPanel)
 //	{
-//		info_log("--------------GotUserGroup--------------");
+//		debug_log("--------------GotUserGroup--------------");
 //		_pLoginPanel->onGotLoginstauts("正在拉取离线消息");
 //	}
 }
@@ -191,7 +191,7 @@ void UILoginMsgListener::onEvent(LoginErrMessage &e)
     }
     if (nullptr != _pLoginPanel)
     {
-        info_log(e.errorMessage);
+        debug_log(e.errorMessage);
         _pLoginPanel->loginError(e.errorMessage);
     }
 }
@@ -213,7 +213,7 @@ void UILoginMsgListener::onEvent(LoginProcessMessage& e)
 
     if(nullptr != _pLoginPanel)
     {
-        info_log("-------------- {0} --------------", e.message);
+        debug_log("-------------- {0} --------------", e.message);
         _pLoginPanel->onGotLoginstauts(e.message.data());
     }
 }

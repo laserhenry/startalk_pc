@@ -24,6 +24,7 @@ Q_SIGNALS:
     void imageClicked(int index);
     void sgImageClicked(const QString&, const QString&);
     void linkClicked(const QString& link);
+    void sgClicked();
 
 protected:
     void wheelEvent(QWheelEvent *event) override {};

@@ -35,6 +35,7 @@ class NoSlidingHandoverComboBox : public QComboBox {
 public:
     explicit NoSlidingHandoverComboBox(QWidget* parent = nullptr)
             :QComboBox(parent) {
+        setObjectName("NoSlidingHandoverComboBox");
     }
 
 protected:
@@ -91,11 +92,13 @@ private slots:
     void onAutoReplyClicked(int);
     void onLeveMinuteChanged(int);
     void onScaleFactorChanged(int);
+    void onFontLevelChanged(int);
 
 private:
     QListWidget *_settingListWidget;
     QVBoxLayout * _pNavlayout;
     QMap<QListWidgetItem*, ActionLabel*> _mapSettingItems;
+    QMap<QFrame*, ActionLabel*> _mapSettingWgt;
 
 private:
     QTextEdit* _pAutoReplyEdit;

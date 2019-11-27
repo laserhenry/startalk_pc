@@ -70,10 +70,44 @@ struct StTextMessage
     QString content;
     Type    type;
     QString imageLink;
+    QString pkgid;
+    QString shortCut;
     double  imageWidth{};
     double  imageHeight{};
 
     explicit StTextMessage(Type t = EM_TINVALID) : type(t){}
+};
+
+struct StFileMessage {
+
+    QString fileName;
+    QString fileSize;
+    QString fileMd5;
+    QString fileLink;
+    QString fileIcon;
+
+};
+
+struct StCommonTrdMessage {
+    QString title;
+    QString desc;
+    QString img;
+    bool    showAll{};
+    QString link;
+};
+
+struct StCodeMessage {
+    QString code;
+    QString language;
+    QString codeStyle;
+};
+
+struct StVideoMessage {
+    QString thumbUrl;
+    QString videoUrl;
+    qreal width {};
+    qreal height {};
+    bool newVideo{};
 };
 
 #endif//_NATIVECHATSTRUCT_H_

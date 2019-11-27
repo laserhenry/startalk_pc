@@ -76,6 +76,8 @@ public slots:
     void onShowHeadWnd(const QString& headPath, bool isSelf);
     void onMousePressGolbalPos(const QPoint &gpos);
     void onSwitchUserStatus(const QString&);
+    void onShowAboutWnd();
+    void onShowSystemWnd();
 
 protected:
     void mousePressEvent(QMouseEvent *me) override;
@@ -98,6 +100,7 @@ private slots:
     void onOpenNewSession(const StSessionInfo &into);
     void setNewHead(const QString& userName, const QString& newHeadPath);
     void onTabGroupClicked(int tab);
+    void onClearSearch();
 
 Q_SIGNALS:
     void sgCurFunChanged(const int &index);
@@ -120,6 +123,8 @@ Q_SIGNALS:
 #ifdef _MACOS
     void sgShowMinWnd();
 #endif
+    void sgShowMessageRecordWnd(const QString&, const QString&);
+    void sgShowFileRecordWnd(const QString&);
 
 private:
     QFrame * _leftCorFrm;

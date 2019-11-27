@@ -1,4 +1,8 @@
-﻿/**
+﻿* {
+    font-size: 14px;
+}
+
+/**
  * QMenu
  */
 QMenu{
@@ -457,4 +461,19 @@ QFrame#MainWindowMainBottomFrm{
     border-top-right-radius:0px;
     border-bottom-right-radius:6px;
     border-bottom-left-radius:6px;
+}
+
+QFrame#TitleBar{
+    background:rgba(59, 63, 68, 1);
+    border-top-left-radius:6px;
+    border-top-right-radius:6px;
+}
+
+QLabel#TitleBarLabel {
+    color:rgba(191,191,191,1);
+    font-size:16px;
+}
+
+QComboBox#NoSlidingHandoverComboBox {
+    width:200px;
 }

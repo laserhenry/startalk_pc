@@ -45,7 +45,7 @@ SearchResultPanel::~SearchResultPanel() {
   * @date 2018.11.06
   */
 void SearchResultPanel::initPanel() {
-    this->setFixedWidth(270);
+    this->setFixedWidth(310);
     auto *gLay = new QVBoxLayout(_pCenternWgt);
     gLay->setMargin(0);
     auto *mainFrm = new QFrame(this);
@@ -63,8 +63,7 @@ void SearchResultPanel::initPanel() {
     _groupChatBtn = new UCButton(tr("群聊"), this);
     _chatRecordBtn = new UCButton(tr("聊天记录"), this);
     _fileBtn = new UCButton(tr("文件"), this);
-    _chatRecordBtn->setVisible(false);
-    _fileBtn->setVisible(false);
+
     _chatRecordBtn->setMinimumWidth(60);
     //
     _tabGroup->addButton(_allBtn, REQ_TYPE_ALL);
@@ -100,6 +99,9 @@ void SearchResultPanel::initPanel() {
     connect(_pSearchView, SIGNAL(sgSwitchFun(int)), this, SLOT(onFunSelect(int)));
     connect(_pSearchView, SIGNAL(sgOpenNewSession(StSessionInfo)),
             this, SIGNAL(sgOpenNewSession(StSessionInfo)));
+    connect(_pSearchView, &SearchView::sgShowMessageRecordWnd, this, &SearchResultPanel::sgShowMessageRecordWnd);
+    connect(_pSearchView, &SearchView::sgShowFileRecordWnd, this, &SearchResultPanel::sgShowFileRecordWnd);
+
     _searchThread = new SearchThread(this);
     connect(_searchThread, &SearchThread::sgSearchStart, this, &SearchResultPanel::onSearchStart);
 
@@ -369,8 +371,8 @@ void SearchResultPanel::onGetMore(int req)
             case REQ_TYPE_GROUP:
             case REQ_TYPE_HISTORY:
             case REQ_TYPE_FILE:
-                _searchStart = _searchLength;
-                _searchLength += 10;
+                _searchStart += _searchLength;
+                _searchLength = 10;
                 break;
             case REQ_TYPE_ALL:
             default:

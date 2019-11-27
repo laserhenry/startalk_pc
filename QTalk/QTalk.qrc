@@ -46,6 +46,7 @@
         <file>image1/file_type/video.png</file>
         <file>image1/file_type/word.png</file>
         <file>image1/file_type/zip.png</file>
+        <file>image1/loading.gif</file>
         <file>ttf/FZLTHJW.TTF</file>
         <file>ttf/FZLTZHJW.TTF</file>
     </qresource>

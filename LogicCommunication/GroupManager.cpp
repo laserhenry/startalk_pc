@@ -314,14 +314,14 @@ void GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupIn
             } else {
                 if (cJSON_HasObjectItem(resData, "errmsg")) {
                     char *msg = cJSON_GetObjectItem(resData, "errmsg")->valuestring;
-                    info_log(msg);
+                    debug_log(msg);
                 }
             }
             cJSON_Delete(resData);
-            info_log("update group info success {0}", data);
+            debug_log("update group info success {0}", data);
         } else {
-            info_log("请求失败  url:{0}", strUrl);
-            info_log("update group info error");
+            debug_log("请求失败  url:{0}", strUrl);
+            debug_log("update group info error");
         }
     };
 
@@ -418,7 +418,7 @@ void GroupManager::getUserIncrementMucVcard()
                 }
                 cJSON_Delete(data);
             } else {
-                info_log("请求失败  url:{0}", strUrl);
+                debug_log("请求失败  url:{0}", strUrl);
             }
 
         };

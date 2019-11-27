@@ -357,7 +357,7 @@ void NavigationMianPanel::retryToConnect() {
 void NavigationMianPanel::onNewSession(const StSessionInfo &into) {
     if (_pSessionFrm) {
         if (!Platform::instance().isMainThread()) {
-            ////info_log("NavigationMianPanel::onNewSession");
+            ////debug_log("NavigationMianPanel::onNewSession");
             throw std::runtime_error("not main thread");
         }
         _pSessionFrm->onNewSession(into);
@@ -425,7 +425,7 @@ void NavigationMianPanel::onUpdateUserConfig(const std::vector<QTalk::Entity::Im
     std::vector<std::string> arBlackList;
     auto it = arConfigs.begin();
     for (; it != arConfigs.end(); it++) {
-        //info_log("onUpdateUserConfig {0} {1} {2}", it->ConfigKey, it->ConfigSubKey, it->ConfigValue);
+        //debug_log("onUpdateUserConfig {0} {1} {2}", it->ConfigKey, it->ConfigSubKey, it->ConfigValue);
         if (it->ConfigKey == "kStickJidDic") {
             QString xmppId = QString::fromStdString(it->ConfigSubKey);
             tmpStick[xmppId.toStdString()] = it->ConfigValue;

@@ -16,6 +16,8 @@
 #define DEM_GROUPCHAT            "GroupChat"
 #define DEM_SYSTEM               "System"
 
+typedef std::vector<QTalk::Entity::ImMessageInfo> VectorMessage;
+
 class Communication;
 class OfflineMessageManager
 {
@@ -31,10 +33,14 @@ public:
     void updateChatMasks();
 
 public:
-	void getUserMessage(const QInt64 &time, const std::string &userId);
-	void getGroupMessage(const QInt64 &time, const std::string &userId);
-	void getSystemMessage(const QInt64 &time, const std::string &userId);
-	void getConsultServerMessage(const QInt64 &time, const std::string &userId, const std::string &realJid);
+    VectorMessage getUserMessage(const QInt64 &time, const std::string &userId,
+	        const std::string& direction = "0", bool saveDb = true);
+    VectorMessage getGroupMessage(const QInt64 &time, const std::string &userId,
+	        const std::string& direction = "0", bool saveDb = true);
+    VectorMessage getSystemMessage(const QInt64 &time, const std::string &userId,
+	        const std::string& direction = "0", bool saveDb = true);
+    VectorMessage getConsultServerMessage(const QInt64 &time, const std::string &userId,
+	        const std::string &realJid, const std::string& direction = "0", bool saveDb = true);
 
 private:
     //

@@ -36,6 +36,7 @@
 #define CONFIG_KEY_USERNAME    "config_key_username"
 #define CONFIG_KEY_PASSWORD    "config_key_password"
 #define CONFIG_KEY_HEADPATH    "config_key_head"
+#define CONFIG_KEY_DOMAIN      "config_key_domain"
 #ifdef _QCHAT
 #define DEM_DEFAULT_NAV ""
 #else
@@ -74,7 +75,10 @@ LoginPanel::~LoginPanel() {
 void LoginPanel::onGotLoginstauts(const QString &msg) {
 
     QString newMsg (msg);
-    if(QLocale::system().language() == QLocale::Chinese)
+    int language = AppSetting::instance().getLanguage();
+    if(QLocale::AnyLanguage == language)
+        language = QLocale::system().language();
+    if(language != QLocale::English)
     {
         if(msg == "opening database")
             newMsg = "正在打开数据库";
@@ -275,10 +279,12 @@ void LoginPanel::connects() {
 
         QString strName = name;
         strName = strName.replace(QRegExp("\\s{1,}"), "").toLower();
-
+        QByteArray navName = _pNavManager->getNavName().toLocal8Bit();
         auto itFind = std::find_if(_pStLoginConfig->children.begin(), _pStLoginConfig->children.end(),
-                                   [ strName](QTalk::StConfig *tmpConf) {
-                                       return tmpConf->attribute(CONFIG_KEY_USERNAME) == strName;
+                                   [ strName, navName](QTalk::StConfig *tmpConf) {
+                                       return tmpConf->attribute(CONFIG_KEY_USERNAME) == strName &&
+                                               (!tmpConf->hasAttribute(CONFIG_KEY_DOMAIN) ||
+                                               tmpConf->attribute(CONFIG_KEY_DOMAIN) == QString(navName));
                                    });
         if (itFind != _pStLoginConfig->children.end()) {
             _pDefaultConfig = *itFind;
@@ -373,7 +379,7 @@ bool LoginPanel::eventFilter(QObject *o, QEvent *e) {
 }
 
 //
-void LoginPanel::initConf() {
+void LoginPanel::loadConf() {
 
     //std::thread([this](){
 
@@ -407,35 +413,7 @@ void LoginPanel::initConf() {
     //}).detach();
 	//
 	std::string usrDir = AppSetting::instance().getUserDirectory();
-#if defined(_WINDOWS)
-	std::wstring dir(usrDir.begin(), usrDir.end());
-	unsigned _int64 i64FreeBytesToCaller;
-	unsigned _int64 i64TotalBytes;
-	unsigned _int64 i64FreeBytes;
 
-	BOOL fResult = GetDiskFreeSpaceEx(
-		(LPCSTR)dir.data(),
-		(PULARGE_INTEGER)&i64FreeBytesToCaller,
-		(PULARGE_INTEGER)&i64TotalBytes,
-		(PULARGE_INTEGER)&i64FreeBytes);
-	//GetDiskFreeSpaceEx函数，可以获取驱动器磁盘的空间状态,函数返回的是个BOOL类型数据
-	if (fResult)//通过返回的BOOL数据判断驱动器是否在工作状态
-	{
-		float leftSpace = (float)i64FreeBytesToCaller / 1024 / 1024;
-		if (leftSpace < 1024)
-		{
-			int ret = QtMessageBox::question(this, tr("磁盘空间不足"), tr("磁盘不足, 可能会导致程序异常退出, 是否立即退出?"));
-			if (ret == QtMessageBox::EM_BUTTON_YES)
-			{
-				exit(0);
-			}
-		}
-	}
-	else
-	{
-		error_log("get hard disk space error");
-	}
-#endif
     //
     _strConfPath = QString("%1/login.data").arg(Platform::instance().getConfigPath().c_str());
     _pStLoginConfig = new QTalk::StConfig;
@@ -451,10 +429,17 @@ void LoginPanel::initConf() {
             return;
         }
 
+        QString navName = "";
+        if(nullptr != _pNavManager)
+            navName = _pNavManager->getNavName();
         //
         _pDefaultConfig = nullptr;
         QStringList users;
         for (QTalk::StConfig *tmpConf : _pStLoginConfig->children) {
+            // 非此域
+            if(tmpConf->hasAttribute(CONFIG_KEY_DOMAIN) && tmpConf->attribute(CONFIG_KEY_DOMAIN) != navName)
+                continue;
+
             if (tmpConf->hasAttribute(CONFIG_KEY_DEFAULT) &&
                 tmpConf->attribute(CONFIG_KEY_DEFAULT).toInt()) {
                 _pDefaultConfig = tmpConf;
@@ -490,6 +475,12 @@ void LoginPanel::initConf() {
 #endif
                 }
             }
+        }
+        else
+        {
+            _userNameEdt->clear();
+            _userNameEdt->setFocus();
+            setHead("");
         }
     } else {
         _pStLoginConfig->tagName = "loginConf";
@@ -665,6 +656,10 @@ void LoginPanel::setAutoLoginFlag(bool flag) {
         _pDefaultConfig->setAttribute(CONFIG_KEY_AUTOLOGIN, QString::number(flag));
         QTalk::qConfig::saveConfig(_strConfPath, true, _pStLoginConfig);
     }
+    else
+    {
+        error_log("set auto login failed, no default config");
+    }
 }
 
 void LoginPanel::onLoginBtnClicked()
@@ -687,6 +682,7 @@ void LoginPanel::onLoginBtnClicked()
     QString strName = _userNameEdt->text();
     QString strPassword = _passworldEdt->text();
     QString domain = _pNavManager->getDefaultDomain();
+    QByteArray navName = _pNavManager->getNavName().toLocal8Bit();
     if (strName.isEmpty() || strPassword.isEmpty()) {
         emit AuthFailedSignal(tr("账户或密码不能为空!"));
         return;
@@ -725,6 +721,7 @@ void LoginPanel::onLoginBtnClicked()
         _pStLoginConfig->addChild(_pDefaultConfig);
     }
     _pDefaultConfig->setAttribute(CONFIG_KEY_USERNAME, strName);
+    _pDefaultConfig->setAttribute(CONFIG_KEY_DOMAIN, QString(navName.data()));
     if (_rememberPassBtn->isChecked()) {
         _pDefaultConfig->setAttribute(CONFIG_KEY_PASSWORD, strPassword);
 //        _pDefaultConfig->setAttribute(CONFIG_KEY_SAVEPASSWORD, true);
@@ -735,6 +732,8 @@ void LoginPanel::onLoginBtnClicked()
     }
     // 设置默认账户
     for (QTalk::StConfig *tmpConf : _pStLoginConfig->children) {
+        if(tmpConf->hasAttribute(CONFIG_KEY_DOMAIN) && tmpConf->attribute(CONFIG_KEY_DOMAIN) != navName.data())
+            continue;
         QString tmpName = tmpConf->attribute(CONFIG_KEY_USERNAME);
         tmpConf->setAttribute(CONFIG_KEY_DEFAULT, tmpName == strName);
     }
@@ -752,7 +751,6 @@ void LoginPanel::onLoginBtnClicked()
         //
         Platform::instance().setLoginNav(nav);
         //
-        QByteArray navName = _pNavManager->getNavName().toLocal8Bit();
         Platform::instance().setNavName(navName.toStdString());
         //
         _pStsLabel->setText(tr("正在获取导航信息"));

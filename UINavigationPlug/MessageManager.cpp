@@ -77,7 +77,7 @@ void NavigationMsgManager::removeSession(std::string &peerId) {
 void NavigationMsgManager::setUserSetting(bool isSetting, const std::string &key, const std::string &subKey,
                                           const std::string &val) {
 
-    info_log("setting userconfig -> issetting:{0}, key:{1}, subKey:{2}, val:{3}", isSetting, key, subKey, val);
+    debug_log("setting userconfig -> issetting:{0}, key:{1}, subKey:{2}, val:{3}", isSetting, key, subKey, val);
 
     UserSettingMsg e;
     e.operatorType = isSetting ? UserSettingMsg::EM_OPERATOR_CANCEL : UserSettingMsg::EM_OPERATOR_SET;

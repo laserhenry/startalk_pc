@@ -77,7 +77,7 @@ bool OnLineManager::OnGetOnLineUser(const std::set<std::string> &users, bool sen
                     }
                 }
                 cJSON_Delete(data);
-                info_log("got user states, count:{0}", userStatus.size());
+                debug_log("got user states, count:{0}", userStatus.size());
                 retSts = true;
                 return;
             }
@@ -90,7 +90,7 @@ bool OnLineManager::OnGetOnLineUser(const std::set<std::string> &users, bool sen
         QTalk::HttpRequest req(url.str(), RequestMethod::POST);
         req.body = postData;
         req.header["Content-Type"] = "application/json;";
-        _pComm->addHttpRequest(req, callback);
+        _pComm->addHttpRequest(req, callback, false);
         if (retSts && _pComm && _pComm->_pMsgManager) {
 
             if (sendRet && !userStatus.empty())

@@ -25,7 +25,6 @@ find_package(Qt5Network)
 find_package(Qt5Concurrent)
 #
 set(SOURCE_FILES
-        ../qzxing/QZXing.h
         MessageItems/CustomMenu.cpp
         MessageItems/CustomMenu.h
         MessageItems/EmojiMessItem.cpp
@@ -125,8 +124,8 @@ set(SOURCE_FILES
         MessageItems/NoticeMessageItem.h MessageItems/NoticeMessageItem.cpp
         MessageItems/SystemMessageItem.h MessageItems/SystemMessageItem.cpp
         MessageItems/MeetingRemindItem.h MessageItems/MeetingRemindItem.cpp
-        SessionTransferWnd.h SessionTransferWnd.cpp search/LocalSearchMainWgt.cpp
-        search/LocalSearchMainWgt.h search/SearchItemDelegate.cpp search/SearchItemDelegate.h search/ItemWgt.cpp search/ItemWgt.h
+        SessionTransferWnd.h
+        SessionTransferWnd.cpp
         SendProductWnd.h SendProductWnd.cpp
         QuickReplyWnd.h QuickReplyWnd.cpp
         GIFManager.cpp GIFManager.h
@@ -135,7 +134,26 @@ set(SOURCE_FILES
         MessageItems/HotLineTipItem.cpp
         MessageItems/HotLineTipItem.h
         MessageItems/HotLineAnswerItem.cpp
-        MessageItems/HotLineAnswerItem.h)
+        MessageItems/HotLineAnswerItem.h
+        search/LocalSearchMainWgt.cpp
+        search/LocalSearchMainWgt.h
+        search/SearchItemDelegate.cpp
+        search/SearchItemDelegate.h
+        search/ItemWgt.cpp
+        search/ItemWgt.h
+        search/MessageRecordManager.cpp
+        search/MessageRecordManager.h
+        search/MessageDelegate.cpp
+        search/MessageDelegate.h
+        search/SearchItemWgt.cpp
+        search/SearchItemWgt.h
+        search/MessageAnalysis.cpp
+        search/MessageAnalysis.h
+        search/FileRecordWnd.cpp
+        search/FileRecordWnd.h
+        NetImageLabel.cpp NetImageLabel.h
+        search/SearchListDelegate.cpp
+        search/SearchListDelegate.h)
 
 
 set(LIBRARY_OUTPUT_PATH ../bin)
@@ -146,7 +164,7 @@ if (APPLE)
             sound/PlayAudioSound.mm
             sound/PlayAudioSound.h
             MacNotification.mm
-            MacNotification.h MessageItems/HotLineAnswerItem.cpp MessageItems/HotLineAnswerItem.h)
+            MacNotification.h )
     #    set_property(SOURCE lib/http/asihttprequest/ASIDataCompressor.m APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-objc-arc")
     FIND_LIBRARY(AudioToolbox_Library AudioToolbox)
     if (NOT AudioToolbox_Library)

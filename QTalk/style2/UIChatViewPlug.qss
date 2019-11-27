@@ -216,7 +216,7 @@ QLineEdit {
     font-weight: 400;
 }
 
-QTextEdit#TopicEdit {
+QTextEdit#TopicEdit, #searchEdt {
     background-color: rgba(53, 57, 61, 1);
     font-size: 12px;
     color: rgba(177, 191, 199, 1);
@@ -501,7 +501,7 @@ QFrame#AtViewMainFrm {
 
 QFrame#MainFrm
 {
-    background:rgba(255,255,255,1);
+    background:rgba(39, 43, 48,1);
     border-bottom-right-radius:6px;
     border-bottom-left-radius:6px;
 }
@@ -833,7 +833,7 @@ QPushButton#SearchWgtBtn:checked, #SearchWgtBtn:pressed {
     background:rgba(0,202,190,1);
 }
 
-QFrame#FileItemWgtLeftFrm {
+QFrame#FileItemWgtLeftFrm, #borderFrm {
     background:rgba(57,61,65,1);
     border-radius:2px;
     border:1px solid rgba(237,238,237,1);
@@ -858,6 +858,11 @@ QLabel#FileItemWgtFileSizeLabel, #FileItemWgtTimeLabel, #FileItemWgtNameLabel {
     font-weight:400;
     color:rgba(177,191,199,1);
     line-height:12px;
+}
+
+QLabel#RecordFileTip {
+    font-size:14px;
+    color:rgba(153,153,153,1);
 }
 
 QToolButton#openMessageBtn {
@@ -896,7 +901,11 @@ QLabel#CommonTrdInfoItemTitleLabel {
     font-size:14px;
     font-weight:400;
     color:rgba(255,255,255,1);
-    line-height:14px;
+}
+
+QLabel#CommonTrdInfoItemContentLabel {
+    font-size:12px;
+    color:rgba(255,255,255,1);
 }
 
 QFrame#BtnBgFrame {
@@ -978,4 +987,23 @@ QListWidget::item {
 QLabel#MessageItemTipLabel {
     font-size:13px;
     color:rgba(0,202,190,1);
+}
+
+QPushButton#SearchBackButton {
+    border-width:0px;
+    border-style: outset;
+    margin-left: 10px;
+    background:rgba(53, 57, 61, 1);
+    font-size:14px;
+    font-weight:400;
+    color:rgba(102,102,102,1);
+    line-height:14px;
+}
+
+QPushButton#SearchBackButton:hover {
+    color:rgba(0, 202, 190, 1);
+}
+
+QFrame#searchFrm  {
+    background:rgba(39, 43, 48,1);
 }

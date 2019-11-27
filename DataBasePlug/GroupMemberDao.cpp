@@ -117,7 +117,7 @@ bool GroupMemberDao::bulkInsertGroupMember(const std::string &groupId, const std
         return false;
     }
 
-    info_log("向数据库插入群成员 群:{0} 人数:{1}", groupId, std::to_string(members.size()));
+    debug_log("向数据库插入群成员 群:{0} 人数:{1}", groupId, std::to_string(members.size()));
 
     // 获取所有用户
     std::string sql = "INSERT OR REPLACE INTO IM_Group_Member (`GroupId`, `MemberId`, `Affiliation`) values (?, ?, ?);";

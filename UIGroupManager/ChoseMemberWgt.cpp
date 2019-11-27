@@ -12,6 +12,7 @@
 #include "../CustomUi/HeadPhotoLab.h"
 #include "../UICom/qimage/qimage.h"
 #include "../UICom/StyleDefine.h"
+#include "../Platform/AppSetting.h"
 
 ChoseItemDelegate::ChoseItemDelegate(QWidget *parent)
     : QStyledItemDelegate(parent)
@@ -50,11 +51,8 @@ void ChoseItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
         painter->setRenderHints(QPainter::SmoothPixmapTransform, true);
         painter->drawPixmap(rect.x() + 9, rect.y() + 9, 22, 22, headPix);
 
-        QFont font;
-        font.setPixelSize(13);
-        font.setWeight(400);
+        QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
         painter->setPen(QPen(QColor(51,51,51)));
-        painter->setFont(font);
         painter->setPen(QTalk::StyleDefine::instance().getGroupManagerNormalFontColor());
         painter->drawText(rect.x() + 40, rect.y(), rect.width() - 40, rect.height(), Qt::AlignVCenter, text);
     }

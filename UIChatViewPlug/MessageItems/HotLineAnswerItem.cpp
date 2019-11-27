@@ -66,7 +66,7 @@ void HotLineTipDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
     painter->drawRoundedRect(rect.x(), rect.y() + (rect.height() - 4) / 2, 4, 4, 1, 1);
 
     painter->setPen(QTalk::StyleDefine::instance().getHotLineTipItemFontColor());
-    painter->setFont(_font);
+    QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel(), 14);
     painter->drawText(rect.x() + 12, rect.y(), rect.width() - 12, rect.height(), Qt::AlignVCenter, text);
     painter->restore();
 }

@@ -32,12 +32,14 @@
 user_card::user_card(CardManager* cardManager)
     :UShadowDialog(cardManager, true), _pMainPanel(cardManager)
 {
+    this->setAttribute(Qt::WA_DeleteOnClose, true);
+    //
     initUi();
 }
 
 user_card::~user_card()
 {
-
+    qInfo() << "delete user_card";
 }
 
 void user_card::initUi()
@@ -436,6 +438,8 @@ bool user_card::showUserCard(std::shared_ptr<QTalk::Entity::ImUserSupplement> im
         _pQunarIdEdit->setText(id);
 
         _pDepartmentEdit->setText(QString::fromStdString(info->DescInfo));
+        _pDepartmentEdit->adjustSize();
+        _pDepartmentEdit->setMinimumHeight(_pDepartmentEdit->height() + 4);
         if(!imuserSup->LeaderName.empty())
             _pLeaderEdit->setLinkText(QString("%1 (%2)").arg(imuserSup->LeaderName.c_str()).arg(imuserSup->LeaderId.c_str()));
         _pPhoneNoEdit->setLinkText(tr("点击查看"));

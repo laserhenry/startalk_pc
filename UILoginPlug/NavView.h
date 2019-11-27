@@ -103,6 +103,7 @@ Q_SIGNALS:
     void saveConfSignal();
     void addNavSinal(const QString &name, const QString &navAddr, const bool &isDebug);
     void sgClose();
+    void sgNavChanged();
 
 private:
     void addItem(const StNav& stNav);

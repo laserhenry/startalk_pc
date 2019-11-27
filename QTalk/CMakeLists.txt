@@ -88,7 +88,10 @@ set(SOURCE_FILES
         stylesheetmanager.h
         UIGolbalManager.cpp
         UIGolbalManager.h
-        NoOperationThread.cpp NoOperationThread.h)
+        NoOperationThread.cpp
+        NoOperationThread.h
+        LocalServer.cpp
+        LocalServer.h)
 
 set(EXECUTABLE_OUTPUT_PATH ../bin)
 set(CMAKE_DEBUG_POSTFIX "d")
@@ -145,6 +148,12 @@ if (APPLE)
         if (STARTALK STREQUAL "ON")
             message("startalk")
             set_property(TARGET ${PROJECT_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/startalk.info.plist)
+        elseif(QCHAT STREQUAL "ON")
+            message("qchat")
+            set_property(TARGET ${PROJECT_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/qchat.info.plist)
+        else()
+            message("qtalk")
+            set_property(TARGET ${PROJECT_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in)
         endif ()
         install(TARGETS ${PROJECT_NAME} DESTINATION ${PROJECT_NAME}.app)
     endif ()

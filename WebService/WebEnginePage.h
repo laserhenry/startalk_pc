@@ -42,7 +42,7 @@ private :
 protected:
     bool certificateError(const QWebEngineCertificateError &certificateError) override;
     QWebEnginePage * createWindow(QWebEnginePage :: WebWindowType ) override ;
-
+    QStringList chooseFiles(FileSelectionMode mode, const QStringList &oldFiles, const QStringList &acceptedMimeTypes) override ;
 };
 
 

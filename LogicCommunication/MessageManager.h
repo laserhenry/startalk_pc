@@ -168,6 +168,7 @@ class CommMsgListener :
 		, public EventHandler<SgUserMedalChanged>
 		, public EventHandler<GetMedalUserEvt>
 		, public EventHandler<ModifyUserMedalStatusEvt>
+		, public EventHandler<NetHistoryMessage>
 
 {
 public:
@@ -281,6 +282,8 @@ public:
     void onEvent(SgUserMedalChanged& e) override;
     void onEvent(GetMedalUserEvt& e) override;
     void onEvent(ModifyUserMedalStatusEvt& e) override;
+    //
+    void onEvent(NetHistoryMessage &e) override ;
 
 private:
 	Communication*       _pComm;

@@ -18,6 +18,11 @@
 
 #ifndef _WINDOWS
 
+#define debug_log(fmt, ...) \
+do {   \
+    QTalk::logger::debug(SFormat(SFormat("{3}\n{0}({1}):{2}", __FILE__, __LINE__, __PRETTY_FUNCTION__, fmt).c_str(), ##__VA_ARGS__)); \
+} while (0)
+
 #define info_log(fmt, ...) \
 do {   \
     QTalk::logger::info(SFormat(SFormat("{3}\n{0}({1}):{2}", __FILE__, __LINE__, __PRETTY_FUNCTION__, fmt).c_str(), ##__VA_ARGS__)); \
@@ -40,6 +45,11 @@ do {   \
 
 
 #else
+#define debug_log(fmt, ...) \
+do {   \
+    QTalk::logger::debug(SFormat(SFormat("{3}\n{0}({1}):{2}", __FILE__, __LINE__, __FUNCTION__, fmt).c_str(), ##__VA_ARGS__)); \
+} while (0)
+
 #define info_log(fmt, ...) \
 do {   \
     QTalk::logger::info(SFormat(SFormat("{3}\n{0}({1}):{2}", __FILE__, __LINE__, __FUNCTION__, fmt).c_str(), ##__VA_ARGS__)); \
@@ -115,11 +125,14 @@ namespace QTalk {
 
 
         enum {
-            LEVEL_INVALID, LEVEL_INFO, LEVEL_WARING, LEVEL_ERROR
+            LEVEL_INVALID, LEVEL_DEBUG, LEVEL_INFO, LEVEL_WARING, LEVEL_ERROR
         };
 
         // 初始化log
         void QTALK_UTIL_EXPORT initLog(const std::string &logDir, unsigned char level);
+
+        //
+        bool QTALK_UTIL_EXPORT debug(const std::string &msg);
 
         // 提示类消息
         bool QTALK_UTIL_EXPORT info(const std::string &msg);

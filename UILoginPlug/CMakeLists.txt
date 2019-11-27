@@ -27,7 +27,6 @@ find_package(Qt5WebEngineWidgets)
 find_package(Qt5Concurrent)
 #
 set(SOURCE_FILES
-        ../qzxing/QZXing.h
         image1.qrc
         login.json
         LoginPanel.cpp

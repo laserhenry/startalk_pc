@@ -40,14 +40,12 @@ extern ChatViewMainPanel *g_pMainPanel;
 NameTitleLabel::NameTitleLabel(int dir, QString name, QString time, QWidget *parent)
     : QFrame(parent), _dir(dir), _name(std::move(name)), _time(std::move(time))
 {
-    setFixedHeight(15);
+    setFixedHeight(20);
 }
 
 void NameTitleLabel::paintEvent(QPaintEvent* e)
 {
     QPainter painter(this);
-
-    QString content = QString("%1  %2").arg(_name, _time);
     QRect rect = this->contentsRect();
 
     if(QTalk::Entity::MessageDirectionSent == _dir)
@@ -55,7 +53,8 @@ void NameTitleLabel::paintEvent(QPaintEvent* e)
     else
         painter.setPen(QColor(155,155,155));
 
-    painter.drawText(rect, Qt::AlignLeft | Qt::AlignVCenter, content);
+    painter.drawText(rect, Qt::AlignLeft | Qt::AlignVCenter,
+            _name.isEmpty() ? _time : QString("%1  %2").arg(_name, _time));
 
     return QFrame::paintEvent(e);
 }
@@ -99,7 +98,7 @@ SearchTextItemWgt::SearchTextItemWgt(StData data, QWidget* parent)
     QString strTime = QDateTime::fromMSecsSinceEpoch(_data.time).toString("yyyy-MM-dd hh:mm:ss");
     auto* title = new NameTitleLabel(_data.direction, _data.userName, strTime, this);
 
-    QLabel* contentLabel = new QLabel(this);
+    auto* contentLabel = new QLabel(this);
     contentLabel->setObjectName("SearchTextContent");
     contentLabel->setText(_data.content);
 
@@ -147,7 +146,7 @@ FileItemWgt::FileItemWgt(StData data, bool showTitle, QWidget *parent)
     moreBtn->setFixedSize(26, 26);
     _processBar->setFixedSize(26, 26);
 
-    QLabel* iconLabel = new QLabel(this);
+    auto* iconLabel = new QLabel(this);
     iconLabel->setFixedSize(36, 36);
     QPixmap pixmap = QTalk::qimage::instance().loadPixmap(_data.fileData.iconPath, true, true, 36);
     iconLabel->setPixmap(pixmap);

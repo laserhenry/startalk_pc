@@ -22,7 +22,8 @@ UIGolbalManager *UIGolbalManager::_pInstance = nullptr;
 #define LOG_LEVEL "LOG_LEVEL"
 #define THEME "THEME"
 #define FONT "FONT"
-#define QUAN "QUAN_TOOL"
+#define FONT_LEVEL "FONT_LEVEL"
+#define LANGUAGE "LANGUAGE"
 #define CHECK_UPDATER "CHECK_UPDATER"
 #define CO_EDIT "CO_EDIT"
 #define UPDATER_VERSION "UPDATER_VERSION"
@@ -152,6 +153,8 @@ void UIGolbalManager::Init() {
     _ConfigDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     std::string userPath, fileSavePath, historyPath, coEdit;
     int logLevel = QTalk::logger::LEVEL_INVALID;
+    int language = 0;
+    _font_level = AppSetting::FONT_LEVEL_NORMAL;
     _pSystemConfig = new QTalk::ConfigLoader(_ConfigDataDir.toLocal8Bit() + "/sysconfig");
     if (_pSystemConfig->reload()) {
         userPath = _pSystemConfig->getString(USER_FOLDER);
@@ -160,6 +163,8 @@ void UIGolbalManager::Init() {
         logLevel = _pSystemConfig->getInteger(LOG_LEVEL);
         _theme = _pSystemConfig->getInteger(THEME);
         _font = _pSystemConfig->getString(FONT);
+        _font_level = _pSystemConfig->getInteger(FONT_LEVEL);
+        language = _pSystemConfig->getInteger(LANGUAGE);
         coEdit = _pSystemConfig->getString(CO_EDIT);
         if(logLevel == QTalk::logger::LEVEL_INVALID)
             _pSystemConfig->setInteger(LOG_LEVEL, QTalk::logger::LEVEL_WARING);
@@ -170,13 +175,12 @@ void UIGolbalManager::Init() {
             _check_updater = true;
 
         _updater_version = _pSystemConfig->getInteger(UPDATER_VERSION);
-        bool showTool = _pSystemConfig->hasKey(QUAN) && _pSystemConfig->getBool(QUAN);
-        AppSetting::instance().setShowQuanTool(showTool);
     }
 
     if(logLevel == QTalk::logger::LEVEL_INVALID)
         logLevel = QTalk::logger::LEVEL_WARING;
     QTalk::logger::setLevel(logLevel);
+    AppSetting::instance().setLanguage(language);
     //
     if(_theme == 0)
         _theme = 1;
@@ -185,6 +189,7 @@ void UIGolbalManager::Init() {
     AppSetting::instance().setFont(_font);
 
     AppSetting::instance().setLogLevel(logLevel);
+    AppSetting::instance().setFontLevel(_font_level);
 
     if(!coEdit.empty())
         AppSetting::instance().setCoEdit(coEdit);
@@ -233,8 +238,9 @@ void UIGolbalManager::saveSysConfig() {
     std::string userpath = Platform::instance().getAppdataRoamingPath();
     std::string filepath = AppSetting::instance().getFileSaveDirectory();
 
-    int theme = AppSetting::instance().getThemeMode();
+//    int theme = AppSetting::instance().getThemeMode();
     std::string font = AppSetting::instance().getFont();
+//    int font_level = AppSetting::instance().getFontLevel();
     if (_pSystemConfig) {
         _pSystemConfig->setString(FILE_FOLDER, filepath);
         _pSystemConfig->setString(USER_FOLDER, userpath);
@@ -242,19 +248,28 @@ void UIGolbalManager::saveSysConfig() {
         _pSystemConfig->setInteger("CHANNEL", AppSetting::instance().getTestchannel());
         _pSystemConfig->setInteger(LOG_LEVEL, AppSetting::instance().getLogLevel());
         _pSystemConfig->setInteger(THEME, AppSetting::instance().getThemeMode());
+        _pSystemConfig->setInteger(LANGUAGE, AppSetting::instance().getLanguage());
+        _pSystemConfig->setInteger(FONT_LEVEL, AppSetting::instance().getFontLevel());
         _pSystemConfig->setString(FONT, font);
         _pSystemConfig->setBool(CHECK_UPDATER, _check_updater);
         _pSystemConfig->saveConfig();
     }
 
-    if(_theme != theme || _font != font)
-    {
-        _theme = theme;
-        _font = font;
-        //
-        setStyleSheetAll();
-        initThemeConfig();
-    }
+//    if(_theme != theme || _font != font)
+//    {
+//        _theme = theme;
+//        _font = font;
+//        //
+//        setStyleSheetAll();
+//        initThemeConfig();
+//        return;
+//    }
+//
+//    if(_font_level != font_level)
+//    {
+//        _font_level = font_level;
+//        setStyleSheetAll();
+//    }
 }
 
 /**
@@ -375,6 +390,10 @@ void UIGolbalManager::initThemeConfig()
                 QTalk::StyleDefine::instance().setNavNormalColor(QColor(r, g, b, a));
             else if ("_nav_select_color" == tagName)
                 QTalk::StyleDefine::instance().setNavSelectColor(QColor(r, g, b, a));
+            else if ("_search_normal_color" == tagName)
+                QTalk::StyleDefine::instance().setSearchNormalColor(QColor(r, g, b, a));
+            else if ("_search_select_color" == tagName)
+                QTalk::StyleDefine::instance().setSearchSelectColor(QColor(r, g, b, a));
             else if ("_nav_top_color" == tagName)
                 QTalk::StyleDefine::instance().setNavTopColor(QColor(r, g, b, a));
             else if ("_nav_tip_color" == tagName)

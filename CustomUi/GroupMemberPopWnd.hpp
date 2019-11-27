@@ -25,6 +25,7 @@
 #include "../QtUtil/Utils/Log.h"
 #include "../UICom/qimage/qimage.h"
 #include "../UICom/StyleDefine.h"
+#include "../Platform/AppSetting.h"
 
 enum {
     EM_DATA_XMPPID = Qt::UserRole + 1,
@@ -95,8 +96,9 @@ protected:
         if (index.column() == EM_COLUMN_NAME) {
             QString strText = index.data(EM_DATA_USERNAME).toString();
             painter->setPen(QTalk::StyleDefine::instance().getNavNameFontColor());
-            painter->drawText(QRect(rect.x() + 30, rect.y(), rect.width() - 30, rect.height()), Qt::AlignVCenter,
-                              strText);
+            QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
+            painter->drawText(QRect(rect.x() + 30, rect.y(), rect.width() - 30, rect.height()),
+                    Qt::AlignVCenter, strText);
             QString headPath = index.data(EM_DATA_USERHEAD).toString();
             bool isOnline = index.data(EM_DATA_ISONLINE).toBool();
             painter->setRenderHints(QPainter::Antialiasing, true);

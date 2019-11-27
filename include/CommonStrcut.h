@@ -230,16 +230,18 @@ namespace QTalk
 
         struct StHistory
         {
-            int         type;
+            int         type{};
             std::string key;
             std::string name;
             std::string icon;
-            int         count;       // 匹配消息数
+            int         count{};       // 匹配消息数
             std::string msg_id;
+            int         msg_type{};
             std::string body;
             QInt64      time;
             std::string from;
             std::string to;
+            std::string extend_info;
 //            std::string real_from;
 //            std::string real_to;
         };

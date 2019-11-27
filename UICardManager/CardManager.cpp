@@ -3,6 +3,8 @@
 #include "UserCard.h"
 #include "GroupCard.h"
 #include <QFile>
+#include <QtConcurrent>
+#include <QApplication>
 #include "UserCardMsgManager.h"
 #include "../UICom/uicom.h"
 #include "../Platform/Platform.h"
@@ -21,15 +23,20 @@ CardManager::CardManager()
 CardManager::~CardManager() = default;
 
 void CardManager::shwoUserCard(const QString &userId) {
+
+    static bool flag = false;
+    if(flag) return;
+    else flag = true;
+
     _pUserCard = new user_card(this);
     connect(_pUserCard, &user_card::sgJumpToStructre, [this](const QString &structreName) {
         emit sgSwitchCurFun(1);
         emit sgJumpToStructre(structreName);
         _pUserCard->setVisible(false);
     });
-    std::thread([this, userId]() {
+    auto ret = QtConcurrent::run([this, userId]() {
 #ifdef _MACOS
-        pthread_setname_np("CardManager::shwoUserCard");
+        pthread_setname_np("CardManager::showUserCard");
 #endif
         {
             std::lock_guard<QTalk::util::spin_mutex> lock(sm);
@@ -40,17 +47,27 @@ void CardManager::shwoUserCard(const QString &userId) {
                 _imuserSup->XmppId = userId.toStdString();
                 _pMsgManager->getUserCard(_imuserSup, _userInfo);
             }
-        }
-        //
-        _user_medal.clear();
-        if(_pMsgManager)
-            _pMsgManager->getUserMedal(userId.toStdString(), _user_medal);
 
-        if (nullptr != _imuserSup && _pMsgManager) {
-            emit showUserCardSignal();
+            //
+            _user_medal.clear();
+            if(_pMsgManager)
+                _pMsgManager->getUserMedal(userId.toStdString(), _user_medal);
         }
 
-    }).detach();
+//        if (nullptr != _imuserSup && _pMsgManager) {
+//            emit showUserCardSignal();
+//        }
+    });
+
+    // wait data
+    while (!ret.isFinished())
+    {
+        QApplication::processEvents(QEventLoop::AllEvents, 100);
+    }
+    // show user card
+    showUserCardSlot();
+    //
+    flag = false;
 }
 
 /**
@@ -58,17 +75,29 @@ void CardManager::shwoUserCard(const QString &userId) {
  * @param groupId
  */
 void CardManager::showGroupCard(const QString &groupId) {
+    static bool flag = false;
+    if(flag) return;
+    else flag = true;
+
     _groupCard = new GroupCard(this);
-    if (_pMsgManager) {
-        //
-        _imGroupSup = std::make_shared<QTalk::Entity::ImGroupInfo>();
-        _imGroupSup->GroupId = groupId.toStdString();
-        _pMsgManager->getGroupMembers(groupId.toStdString());
-        _pMsgManager->getGroupCard(_imGroupSup);
-        if (_imGroupSup) {
-            emit showGroupCardSignal();
+    auto ret = QtConcurrent::run([this, groupId](){
+        if (_pMsgManager) {
+            //
+            _imGroupSup = std::make_shared<QTalk::Entity::ImGroupInfo>();
+            _imGroupSup->GroupId = groupId.toStdString();
+            _pMsgManager->getGroupMembers(groupId.toStdString());
+            _pMsgManager->getGroupCard(_imGroupSup);
+//            if (_imGroupSup) {
+//                emit showGroupCardSignal();
+//            }
         }
-    }
+    });
+    // wait data
+    while (!ret.isFinished())
+        QApplication::processEvents(QEventLoop::AllEvents, 100);
+    // show group card
+    showGroupCardSlot();
+    flag = false;
 }
 
 /**
@@ -79,7 +108,7 @@ void CardManager::showUserCardSlot() {
     if (nullptr != _pUserCard) {
         std::string usrId = _imuserSup->XmppId;
 
-        std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+//        std::lock_guard<QTalk::util::spin_mutex> lock(sm);
         int flags = _arStarContact.contains(usrId);
         flags |= _arBlackList.contains(usrId) << 1;
         flags |= _arFriends.contains(usrId) << 2;

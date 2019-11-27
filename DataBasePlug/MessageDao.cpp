@@ -649,8 +649,6 @@ bool MessageDao::getUnreadCountById(const std::string &id,const std::string& rea
         return false;
     }
 
-    info_log("getUnreadCountById: {0}", id);
-
     std::string sql = "SELECT COUNT(`MsgId`) FROM IM_Message WHERE (ReadedTag&2) <> 2  and Direction = 0 and XmppId = ? and RealJid = ?; ";
     qtalk::sqlite::statement query(*_pSqlDb, sql);
     try {
@@ -659,7 +657,7 @@ bool MessageDao::getUnreadCountById(const std::string &id,const std::string& rea
         if (query.executeNext()) {
             count = query.getColumn(0).getInt();
         }
-        info_log("gotUnreadCount id:{0} count:{1}", id, count);
+        debug_log("gotUnreadCount id:{0} count:{1}", id, count);
         return true;
     }
     catch (std::exception &e) {
@@ -991,7 +989,7 @@ void MessageDao::getFileMessage(const long long &time, const std::string &userId
     query.bind(4, QTalk::Entity::MessageTypeFile);
 
     dealMessage(query, msgList);
-    info_log("got file message {0}", msgList.size());
+    debug_log("got file message {0}", msgList.size());
 }
 
 void MessageDao::getImageMessage(const long long &time, const std::string &userId, const std::string &realJid,

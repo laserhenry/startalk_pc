@@ -259,11 +259,15 @@ void MainPanel::init() {
     connect(tabGroup, SIGNAL(buttonClicked(int)), this, SLOT(onTabGroupClicked(int)));
     connect(_pSearchResultPanel, SIGNAL(sgOpenNewSession(StSessionInfo)), this, SLOT(onOpenNewSession(StSessionInfo)));
     connect(this, &MainPanel::setHeadSignal, this, &MainPanel::setNewHead);
+    connect(_pSearchResultPanel, &SearchResultPanel::sgShowMessageRecordWnd, this, &MainPanel::sgShowMessageRecordWnd);
+    connect(_pSearchResultPanel, &SearchResultPanel::sgShowFileRecordWnd, this, &MainPanel::sgShowFileRecordWnd);
+    connect(_pSearchResultPanel, &SearchResultPanel::sgShowMessageRecordWnd,
+            this, &MainPanel::onClearSearch, Qt::QueuedConnection);
+    connect(_pSearchResultPanel, &SearchResultPanel::sgShowFileRecordWnd,
+            this, &MainPanel::onClearSearch, Qt::QueuedConnection);
     connect(_dropMenu, &DropMenu::sgShowAboutWnd, [this](){
         if(nullptr!= _pAboutWnd)
-        {
             _pAboutWnd->showCenter(true, _pCtrlWdt);
-        }
     });
     connect(_dropMenu, &DropMenu::sgShowSystemSetting, [this](){
         if (nullptr != _pSystemSettingWnd) {
@@ -679,4 +683,23 @@ void MainPanel::recvSwitchUserStatus(const std::string& sts)
 {
     emit sgAutoReply(sts == "away");
     emit sgSwitchUserStatusRet(QString::fromStdString(sts));
+}
+
+void MainPanel::onClearSearch() {
+    this->setFocus();
+    _searchFrm->closeSearch();
+    _pSearchResultPanel->closeSearch();
+    _pSearchResultPanel->hide();
+}
+
+void MainPanel::onShowAboutWnd() {
+    if(nullptr!= _pAboutWnd)
+        _pAboutWnd->showCenter(true, _pCtrlWdt);
+}
+
+void MainPanel::onShowSystemWnd() {
+    if (nullptr != _pSystemSettingWnd) {
+        _pSystemSettingWnd->setVisible(false);
+        _pSystemSettingWnd->setVisible(true);
+    }
 }

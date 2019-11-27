@@ -1,0 +1,464 @@
+﻿//
+// Created by QITMAC000260 on 2019/11/14.
+//
+
+#include "FileRecordWnd.h"
+#include <QScrollBar>
+#include <QtConcurrent>
+#include <QPainter>
+#include <QGridLayout>
+#include <QToolButton>
+#include <QFileInfo>
+
+#include "../MessageItems/FileRoundProgressBar.h"
+#include "../ChatViewMainPanel.h"
+#include "../../CustomUi/TitleBar.h"
+#include "../../UICom/StyleDefine.h"
+#include "../NetImageLabel.h"
+#include "../../CustomUi/QtMessageBox.h"
+
+extern ChatViewMainPanel *g_pMainPanel;
+
+QString getIconByFileName (const QString& fileName)
+{
+    QFileInfo iconInfo(fileName);
+    QString iconPath;
+    QString suffix = iconInfo.suffix().toLower();
+    if(suffix == "mp3")
+        iconPath = ":/QTalk/image1/file_type/audio.png";
+    else if(suffix == "mp4")
+        iconPath = ":/QTalk/image1/file_type/video.png";
+    else if(suffix == "txt" || suffix == "json")
+        iconPath = ":/QTalk/image1/file_type/text.png";
+    else if(suffix == "pdf")
+        iconPath = ":/QTalk/image1/file_type/pdf.png";
+    else if(suffix == "ppt" || suffix == "pptx")
+        iconPath = ":/QTalk/image1/file_type/ppt.png";
+    else if(suffix == "doc" || suffix == "docx")
+        iconPath = ":/QTalk/image1/file_type/word.png";
+    else if(suffix == "xls" || suffix == "xlsx")
+        iconPath = ":/QTalk/image1/file_type/excel.png";
+    else if(suffix == "rar" || suffix == "zip" || suffix == "7z")
+        iconPath = ":/QTalk/image1/file_type/zip.png";
+    else
+        iconPath = ":/QTalk/image1/file_type/unknown.png";
+
+    return iconPath;
+}
+
+/** FileRecordItemWgt **/
+QString getRealFilePath(const std::string& msgId, const std::string& md5);
+FileRecordItemWgt::FileRecordItemWgt(const StFileRecord &record, QWidget *parent)
+    :QFrame(parent)
+    , _msg_id(record.msg_id.toStdString())
+    , _md5(record.file_md5.toStdString())
+    , _file_link(record.file_link)
+{
+
+    // left main
+    auto* contentFrm = new QFrame(this);
+    contentFrm->setFixedSize(350, 55);
+    contentFrm->setObjectName("borderFrm");
+
+    auto* iconLabel = new NetImageLabel("", this);
+    iconLabel->setLocalImage(getIconByFileName(record.file_name));
+    iconLabel->setFixedSize(36, 36);
+
+    auto* nameLabel = new QLabel(record.file_name, this);
+    nameLabel->setMaximumWidth(300);
+    auto* sizeLabel = new QLabel(record.file_size, this);
+    nameLabel->setObjectName("FileItemWgtFileNameLabel");
+    sizeLabel->setObjectName("FileItemWgtFileSizeLabel");
+    auto* contentLay = new QGridLayout(contentFrm);
+    contentLay->addWidget(iconLabel, 0, 0, 2, 1);
+    contentLay->addWidget(nameLabel, 0, 1, 1, 2);
+    contentLay->addWidget(sizeLabel, 1, 1, 1, 1);
+    contentLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding)
+            , 1, 2, 1, 1);
+
+    // button
+    auto* downloadBtn = new QToolButton(this);
+    downloadBtn->setObjectName("FileItemWgt_downloadBtn");
+    downloadBtn->setToolTip(tr("下载"));
+    auto* openPathBtn = new QToolButton(this);
+    openPathBtn->setObjectName("FileItemWgt_openPathBtn");
+    openPathBtn->setToolTip(tr("打开文件夹"));
+    auto *processBar = new FileRoundProgressBar(this);
+//    auto* moreBtn = new QToolButton(this);
+//    moreBtn->setObjectName("FileItemWgt_moreBtn");
+//    moreBtn->setFixedSize(26, 26);
+    openPathBtn->setFixedSize(26, 26);
+    downloadBtn->setFixedSize(26, 26);
+    processBar->setFixedSize(26, 26);
+
+    auto* mainLay = new QHBoxLayout;
+    mainLay->addWidget(contentFrm);
+    mainLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
+    mainLay->addWidget(processBar);
+    mainLay->addWidget(downloadBtn);
+    mainLay->addWidget(openPathBtn);
+//    mainLay->addWidget(moreBtn);
+
+    //
+    auto* sourceLabel = new QLabel(this);
+    sourceLabel->setMaximumWidth(300);
+    sourceLabel->setObjectName("RecordFileTip");
+    sourceLabel->setText(tr("来自: %1").arg(record.source));
+
+    auto* lay = new QVBoxLayout(this);
+    lay->setContentsMargins(20, 10, 20, 10);
+    lay->addLayout(mainLay);
+    lay->addWidget(sourceLabel);
+
+    //
+//    auto* _menu = new QMenu(this);
+//    _menu->setAttribute(Qt::WA_TranslucentBackground, true);
+//
+//    auto* forwardAct = new QAction(tr("转发"), _menu);
+//    _menu->addAction(forwardAct);
+//
+//    connect(moreBtn, &QToolButton::clicked, [this, _menu](){
+//        _menu->exec(QCursor::pos());
+//    });
+//    connect(forwardAct, &QAction::triggered, [this](){
+//        g_pMainPanel->forwardMessage(_msg_id);
+//    });
+    //
+    auto localPath = getRealFilePath(record.msg_id.toStdString(), record.file_md5.toStdString());
+    bool downloaded = !localPath.isEmpty();
+    processBar->setVisible(false);
+    downloadBtn->setVisible(!downloaded);
+    openPathBtn->setVisible(downloaded);
+
+    connect(openPathBtn, &QToolButton::clicked, this, &FileRecordItemWgt::onOpenFilePath);
+    connect(downloadBtn, &QToolButton::clicked, [this](){
+        QDesktopServices::openUrl(QUrl(_file_link));
+    });
+}
+
+//
+QString getRealFilePath(const std::string& msgId, const std::string& md5)
+{
+    QString fullFileName = QString::fromStdString(g_pMainPanel->getFileMsgLocalPath(msgId));
+    if(fullFileName.isEmpty() || !QFile::exists(fullFileName))
+    {
+        QString linkFile = g_pMainPanel->getFileLink(md5.data());
+#ifdef _WINDOWS
+        linkFile.append(".lnk");
+#endif
+        QFileInfo linkFileInfo(linkFile);
+        if (linkFileInfo.exists() && !linkFileInfo.canonicalFilePath().isEmpty())
+#ifdef _WINDOWS
+            return linkFileInfo.symLinkTarget();
+#else
+            return linkFileInfo.canonicalFilePath();
+#endif // _WINDOWS
+        else
+            return QString();
+    }
+    else
+    {
+        return fullFileName;
+    }
+}
+
+void FileRecordItemWgt::onOpenFilePath() {
+    QString fileName = getRealFilePath(_msg_id, _md5);
+    QFileInfo info(fileName);
+    if (fileName.isEmpty() || !info.exists()) {
+        int ret = QtMessageBox::question(this, tr("提醒"), tr("未找到本地文件, 是否下载?"));
+        if (ret == QtMessageBox::EM_BUTTON_NO) {
+            return;
+        } else {
+            QDesktopServices::openUrl(QUrl(_file_link));
+//            g_pMainPanel->pool().enqueue(std::bind(&FileSendReceiveMessItem::downLoadFile, this));
+        }
+    } else {
+
+        QtConcurrent::run([info](){
+
+#if defined(_WINDOWS)
+        QStringList params;
+        QString path = info.absoluteFilePath();
+        if (!QFileInfo(path).isDir()) {
+            params << QLatin1String("/select,");
+            params << QDir::toNativeSeparators(path);
+            QProcess::startDetached(QLatin1String("explorer.exe"), params);
+        }
+#elif defined(_MACOS)
+            QStringList scriptArgs;
+            QDesktopServices::openUrl(QUrl::fromLocalFile(info.absolutePath()));
+            scriptArgs << QLatin1String("-e")
+                       << QString::fromLatin1(R"(tell application "Finder" to reveal POSIX file "%1")")
+                               .arg(info.absoluteFilePath());
+            QProcess::execute(QLatin1String("/usr/bin/osascript"), scriptArgs);
+#else
+            QDesktopServices::openUrl(QUrl::fromLocalFile(info.absolutePath()));
+#endif
+        });
+    }
+}
+
+/** FileRecordDelegate **/
+FileRecordDelegate::FileRecordDelegate(QListView *parent)
+    :QStyledItemDelegate(parent), _pParentView(parent)
+{
+
+}
+
+void FileRecordDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+    painter->save();
+    painter->setRenderHint(QPainter::TextAntialiasing);
+
+    QRect rect = option.rect;
+    if (option.state & QStyle::State_Selected)
+        painter->fillRect(rect, QTalk::StyleDefine::instance().getSearchSelectColor());
+    else
+        painter->fillRect(rect, QTalk::StyleDefine::instance().getSearchNormalColor());
+
+    auto* pThis = const_cast<FileRecordDelegate*>(this);
+    if (pThis)
+    {
+        pThis->dealWidget(option, index);
+    }
+    painter->restore();
+}
+
+QSize FileRecordDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const {
+    auto size = QStyledItemDelegate::sizeHint(option, index);
+    return {_pParentView->width(), 100};
+}
+
+void FileRecordDelegate::dealWidget(const QStyleOptionViewItem &option, const QModelIndex &index) {
+    QWidget* indexWgt = _pParentView->indexWidget(index);
+    if (indexWgt)
+    {
+
+    }
+    else
+    {
+        auto* itemBase = creatWgt(option, index);
+        _pParentView->setIndexWidget(index, itemBase);
+    }
+}
+
+QWidget* FileRecordDelegate::creatWgt(const QStyleOptionViewItem &option, const QModelIndex &index) {
+
+    StFileRecord record = index.data(EM_FILE_RECORD_INFO).value<StFileRecord>();
+    auto* wgt = new FileRecordItemWgt(record);
+    return wgt;
+}
+
+/** FileRecordWnd **/
+FileRecordWnd::FileRecordWnd(QWidget * parent)
+    :UShadowDialog(parent, true)
+{
+    initUI();
+    setFixedWidth(500);
+    setMinimumHeight(720);
+
+    std::function<int(STLazyQueue<QString>*)> searchFun = [this](STLazyQueue<QString> *q) ->int {
+        int runningCount = 0;
+        if (!q->empty()) {
+            QString key = q->tail();
+
+            while (!q->empty()) {
+                q->pop();
+                runningCount++;
+            }
+            emit sgGoSearch(key);
+        }
+        return runningCount;
+    };
+    _searchQueue = new STLazyQueue<QString>(300, searchFun);
+}
+
+void FileRecordWnd::initUI() {
+#ifdef _MACOS
+    setWindowFlags(this->windowFlags() | Qt::Tool);
+#endif
+//
+    auto makeLoadingLabel = [this](bool scale = false, QSize size = {0, 0}) -> QLabel* {
+        auto* label = new QLabel(this);
+        auto* mov = new QMovie(":/QTalk/image1/loading.gif");
+        if (scale)
+        {
+            mov->setScaledSize(size);
+            label->setFixedHeight(size.height());
+        }
+
+        label->setMovie(mov);
+        label->setAlignment(Qt::AlignCenter);
+        return label;
+    };
+
+    auto* titleBar = new TitleBar(tr("文件管理器"), this, this);
+    titleBar->setFixedHeight(50);
+    setMoverAble(true, titleBar);
+    //
+    auto* searchFrm = new QFrame(this);
+    searchFrm->setObjectName("searchFrm");
+    auto* searchLay = new QHBoxLayout(searchFrm);
+    {
+        searchLay->setMargin(16);
+        _pSearchEdit = new Search_Edit(this);
+        _pSearchEdit->setFixedHeight(30);
+        searchLay->addWidget(_pSearchEdit);
+    }
+
+    _pView = new QListView(this);
+    _pView->setFrameShape(QFrame::NoFrame);
+    _pModel = new QStandardItemModel(this);
+    _pView->setModel(_pModel);
+    _pView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    _pView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    _pView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    _pView->verticalScrollBar()->setSingleStep(12);
+
+    auto* itemDelegate = new FileRecordDelegate(_pView);
+    _pView->setItemDelegate(itemDelegate);
+
+    _pLoading = makeLoadingLabel();
+    _pLoadingBottom = makeLoadingLabel(true, {50, 50});
+    _pLoadingBottom->setVisible(false);
+
+    _pStackWgt = new QStackedWidget(this);
+    _pStackWgt->addWidget(_pView);
+    _pStackWgt->setCurrentWidget(_pView);
+    _pStackWgt->addWidget(_pLoading);
+
+    auto* mainFrm = new QFrame(this);
+    mainFrm->setObjectName("MainFrm");
+    auto* mainLay = new QVBoxLayout(mainFrm);
+    mainLay->setContentsMargins(0, 0, 0, 6);
+    mainLay->setSpacing(0);
+    mainLay->addWidget(searchFrm);
+    mainLay->addWidget(_pStackWgt);
+    mainLay->addWidget(_pLoadingBottom);
+
+    auto* lay = new QVBoxLayout(_pCenternWgt);
+    lay->setMargin(0);
+    lay->setSpacing(0);
+    lay->addWidget(titleBar);
+    lay->addWidget(mainFrm);
+
+    connect(_pSearchEdit, &Search_Edit::textChanged, [this](const QString& text){
+        _searchQueue->push(text);
+    });
+    connect(this, &FileRecordWnd::sgGoSearch, this, &FileRecordWnd::searchFile);
+    connect(this, &FileRecordWnd::sgGotResult, this, &FileRecordWnd::updateUi);
+    connect(_pView->verticalScrollBar(), &QScrollBar::valueChanged,
+            this, &FileRecordWnd::onScrollChanged);
+}
+
+void FileRecordWnd::setSearch(const QString &key) {
+    if (_pSearchEdit)
+    {
+        if(_pSearchEdit->text() != key)
+            _pSearchEdit->setText(key);
+        else
+            searchFile(key);
+    }
+}
+
+void FileRecordWnd::searchFile(const QString& key) {
+
+    _hasMore = false;
+    _pModel->clear();
+    _key = key.toStdString();
+    _pStackWgt->setCurrentWidget(_pView);
+    _pos = 0;
+    _scroll_value = 0;
+    //
+    _pLoading->movie()->start();
+    _pStackWgt->setCurrentWidget(_pLoading);
+    //
+    goSearch();
+}
+
+//
+void FileRecordWnd::goSearch() {
+    using namespace QTalk::Search;
+    _hasMore = false;
+    if (g_pMainPanel)
+    {
+        QtConcurrent::run([this](){
+            SearchInfoEvent searchInfo;
+            searchInfo.start = _pos;
+            searchInfo.length = 15;
+            _pos += 15;
+            searchInfo.key = _key;
+            searchInfo.action = EM_ACTION_HS_FILE;
+            g_pMainPanel->getMessageManager()->sendSearch(searchInfo);
+            _fileRecords.clear();
+            for(const auto& it : searchInfo.searchRet)
+            {
+                _hasMore |= it.second.hasMore;
+                const auto history = it.second._files;
+                _fileRecords.insert(_fileRecords.end(), history.begin(), history.end());
+            }
+
+            emit sgGotResult( searchInfo.key.data());
+        });
+    }
+}
+
+void FileRecordWnd::updateUi(const QString &key) {
+    if(_key.data() != key)
+        return;
+
+    for(const auto& it : _fileRecords)
+    {
+        auto* item = new QStandardItem;
+
+        StFileRecord record;
+//        record.from_name = it.;
+        record.msg_id = it.msg_id.data();
+        record.source = it.source.data();
+        record.file_name = it.file_name.data();
+        record.file_md5 = it.file_md5.data();
+        record.file_size = it.file_size.data();
+        record.file_link = it.file_url.data();
+
+        item->setData(QVariant::fromValue(record), EM_FILE_RECORD_INFO);
+        item->setText(it.file_name.data());
+        item->setToolTip(it.file_name.data());
+
+        _pModel->appendRow(item);
+    }
+
+    _pStackWgt->setCurrentWidget(_pView);
+    _pLoading->movie()->stop();
+
+    _pLoadingBottom->movie()->stop();
+    _pLoadingBottom->setVisible(false);
+}
+
+//
+void FileRecordWnd::onScrollChanged(int value) {
+
+    // no more -> return
+    if(!_hasMore)
+        return;
+    // scroll bar direction
+    if (value <= _scroll_value)
+        return;
+
+    //
+    _scroll_value = value;
+    auto max = _pView->verticalScrollBar()->maximum();
+    if(max - value <= 5)
+    {
+        // less then 500 ms -> return
+        static qint64 req_time = 0;
+        auto now = QDateTime::currentMSecsSinceEpoch();
+        if(now - req_time < 500)
+            return;
+        req_time = now;
+        // show loading movie
+        _pLoadingBottom->movie()->start();
+        _pLoadingBottom->setVisible(true);
+        // request
+        goSearch();
+    }
+}

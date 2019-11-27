@@ -229,7 +229,7 @@ void CommonTrdInfoItem::initContentLayout() {
         vBox->setSpacing(5);
         _contentFrm->setLayout(vBox);
 
-        _titleLab = new QLabel;
+        _titleLab = new QLabel(this);
         _titleLab->setObjectName("titleLab");
         _titleLab->setWordWrap(true);
         _titleLab->setFixedWidth(_contentSize.width() - 20);

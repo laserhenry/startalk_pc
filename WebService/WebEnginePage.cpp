@@ -4,6 +4,7 @@
 
 #include "WebEnginePage.h"
 #include <QMessageBox>
+#include <QFileDialog>
 #include "../QtUtil/Utils/Log.h"
 
 WebEnginePage::WebEnginePage(QObject *parent)
@@ -65,7 +66,7 @@ void WebEnginePage::onFeaturePermissionRequested(const QUrl &securityOrigin, QWe
 
 //void WebEnginePage::onQuotaRequested(QWebEngineQuotaRequest quotaRequest) {
 //
-//    info_log("onQuotaRequested");
+//    debug_log("onQuotaRequested");
 //
 //}
 
@@ -76,7 +77,7 @@ void WebEnginePage::onFeaturePermissionRequested(const QUrl &securityOrigin, QWe
 void WebEnginePage::onFullScreenRequested(QWebEngineFullScreenRequest fullScreenRequest) {
     fullScreenRequest.accept();
     emit sgFullScreen();
-    info_log("onFullScreenRequested");
+    debug_log("onFullScreenRequested");
 }
 
 bool WebEnginePage::certificateError(const QWebEngineCertificateError &certificateError) {
@@ -88,9 +89,28 @@ QWebEnginePage *WebEnginePage::createWindow(QWebEnginePage::WebWindowType type) 
     return QWebEnginePage::createWindow( type);
 }
 
+QStringList WebEnginePage::chooseFiles(QWebEnginePage::FileSelectionMode mode, const QStringList &oldFiles,
+                                       const QStringList &acceptedMimeTypes) {
+
+    QString filter;
+    for(const auto& it : acceptedMimeTypes)
+    {
+        if(it.contains("image"))
+            filter += "image(*.png *.PNG *.jpg *.JPG *.jpeg *.JPEG *.gif *.GIF);;";
+        else if(it.contains("pdf"))
+            filter += "pdf(*.pdf *.PDF);;";
+    }
+    filter += "All Files(*.*)";
+
+    auto list = QFileDialog::getOpenFileNames((QWidget*)parent(), tr("打开"),
+            QStandardPaths::writableLocation(QStandardPaths::DownloadLocation),
+                                              filter);
+    return list;
+}
+
 
 //void WebEnginePage::onAuthenticationRequired(const QUrl &requestUrl, QAuthenticator *authenticator) {
-//    info_log("onAuthenticationRequired");
+//    debug_log("onAuthenticationRequired");
 //}
 
 //void WebEnginePage::proxyAuthenticationRequired(const QUrl &requestUrl, QAuthenticator *authenticator,

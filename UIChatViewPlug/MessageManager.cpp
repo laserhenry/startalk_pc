@@ -78,8 +78,7 @@ VectorMessage ChatMsgManager::getUserHistoryMessage(const QInt64& time, const QU
 {
 	HistoryMessage e;
 	e.time = time;
-	e.userid = uid.usrId();
-	e.realJid = uid.realId();
+	e.uid = uid;
 	e.chatType = chatType;
 	EventBus::FireEvent(e, false);
 
@@ -130,7 +129,7 @@ void ChatMsgManager::sendMessage(S_Message& e) {
 #ifdef _MACOS
         pthread_setname_np("ChatMsgManager::sendMessage");
 #endif
-        info_log("send message type:{0} id:{1}", e.message.Type, e.message.Content);
+        debug_log("send message type:{0} id:{1}", e.message.Type, e.message.Content);
 
         S_Message ne(e);
         EventBus::FireEvent(ne);
@@ -400,6 +399,27 @@ void ChatMsgManager::sendWebRtcCommand(int msgType, const std::string& json, con
 void ChatMsgManager::getUserMedal(const std::string &xmppId, std::set<QTalk::StUserMedal> &medal) {
     UserMedalEvt e(xmppId, medal);
     EventBus::FireEvent(e);
+}
+
+void ChatMsgManager::sendSearch(SearchInfoEvent & event)
+{
+    EventBus::FireEvent(event);
+}
+
+VectorMessage
+ChatMsgManager::getNetHistoryMessage(const QInt64 &time,
+        int chatType,
+        const QTalk::Entity::UID& uid,
+        int direction) {
+
+    NetHistoryMessage e;
+    e.time = time;
+    e.uid = uid;
+    e.chatType = chatType;
+    e.direction = std::to_string(direction);
+    EventBus::FireEvent(e);
+
+    return e.msgList;
 }
 
 /*******************************/

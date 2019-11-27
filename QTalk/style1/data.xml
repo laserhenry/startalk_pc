@@ -1,6 +1,8 @@
 <Style>
     <_nav_normal_color>255, 255, 255, 255</_nav_normal_color>
     <_nav_select_color>213, 242, 240, 255</_nav_select_color>
+    <_search_normal_color>255, 255, 255, 255</_search_normal_color>
+    <_search_select_color>242, 242, 242, 255</_search_select_color>
     <_nav_top_color >242, 242, 242, 255</_nav_top_color>
     <_nav_tip_color >176, 228, 225, 255</_nav_tip_color>
     <_nav_name_font_color >51, 51, 51, 255</_nav_name_font_color>

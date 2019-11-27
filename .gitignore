@@ -35,3 +35,37 @@ Thumbs.db
 
 # pods ignore
 Pods/
+
+*.lib
+*.dll
+*.exe
+*.user
+*.exp
+*.ilk
+*.pdb
+*.sdf
+*.suo
+*.opensdf
+*.stash
+*.xml
+*.DS_Store
+Makefile*
+
+/*/GeneratedFiles/*
+/Debug/*
+/Release/*
+/debug/*
+/release/*
+/*/Debug/*
+/*/Release/*
+/*/debug/*
+/*/release/*
+/.vs/*
+/*/x64/*
+/*/x86/*
+/*/Win32/*
+/vsproject/*
+/TestApp/*
+.idea
+
+cmake-build*
