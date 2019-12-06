@@ -33,7 +33,8 @@ ___
  
 Tips:  
     1> protobuf、zlib、openssl、curl几个库因为编译比较复杂，我们提供了已经编译成功的版本，位置 ${root_dir}/Depends/${name}，其他平台需要自己build  
-    2> 安装Qt时请选择 QtWebEngine、QtMultimedia、QtMultimedia Widgets、QtQuick、QtQuick Controls2、QtSvg、QtWebChannel、QtPositioning、QtMacExtras(MacOS)、QtX11Extras(Linux)等模块 
+    2> 安装Qt时请注意需要额外安装 "Qt WebEngine"、和 "Qt Network Authorization"模块。  
+     QtMacExtras(MacOS)、QtX11Extras(Linux) 可能也需要额外安装，和安装的版本有关。
 
 ### 源码编译
 
