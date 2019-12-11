@@ -3,14 +3,14 @@
 StarTalk Pc 2.0 是基于StarTalk开源服务的Pc客户端, 支持Windows、Linux、Mac三个平台，除了部分平台性质的差别外，UI和功能都一致。
 与1.0相比，除了支持更多平台外，UI、性能等各个方面都得到了有效提升。
 
-Release版本下载地址: [StarTalk官网](https://im.qunar.com/#/download)
+Release版本下载地址: [StarTalk官网](https://i.startalk.im/home/#/download)
 
 ### 开发环境搭建 
 ___
 依赖的第三方库
 
-名称  | 版本要求  | 下载地址 | 备注
- ---- | ----- | ------ | ---
+名称  | 版本要求 | 下载地址 | 备注
+ ---- | ---- | ------ | ---
  Qt  | 5.9.6及以上 | https://download.qt.io/archive/qt/ | 建议保持新版本 (ubuntu可以使用apt-get方式下载、MacOS可以使用brew方式下载)
  protobuf  | 2.6.1 | | 建议使用此版本
  zlib | 1211 | | 
