@@ -59,8 +59,8 @@ $ cmake -DCMAKE_BUILD_TYPE=Release -DSTARTALK=ON -G "CodeBlocks - NMake Makefile
 $ cmake --build ${root_dir}/build --target all --
 ```
 
-可执行文件会生成到 ${root_dir}/build/bin 目录下
-可以参考 build_script 下的脚本
+可执行文件会生成到 ${root_dir}/build/bin 目录下  
+也可以参考 build_script 下的脚本
 
 tips:  
     1> 需要修改跟目录下的CMakeList.txt 中第三方的路径 根据自己的安装位置修改  
