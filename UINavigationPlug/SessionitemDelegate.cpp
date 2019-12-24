@@ -1,11 +1,12 @@
 ﻿//
-// Created by QITMAC000260 on 2018/11/20.
+// Created by cc on 2018/11/20.
 //
 
 #include "SessionitemDelegate.h"
 #include "../QtUtil/Utils/Log.h"
 #include "../CustomUi/HeadPhotoLab.h"
 #include <QPainter>
+#include <QDateTime>
 #include <iostream>
 #include <QEvent>
 #include <QStandardItemModel>
@@ -22,6 +23,35 @@
 #define DRAFT_TIP "[草稿]:"
 
 using namespace QTalk;
+
+/**
+  * @函数名
+  * @功能描述
+  * @参数
+  * @author cc
+  * @date 2018.9.27
+  */
+QString GenerateTimeText(const QInt64 &time) {
+
+    if(0 == time)
+        return "";
+
+    QDateTime curTime = QDateTime::currentDateTimeUtc();
+    QDateTime msgTime = QDateTime::fromMSecsSinceEpoch(time);
+    int curYear = curTime.date().year();
+    int msgYear = msgTime.date().year();
+    if (curYear > msgYear)
+        return msgTime.date().toString("yyyy-MM-dd");
+
+    QInt64 curDays = curTime.date().toJulianDay();
+    QInt64 msgDays = msgTime.date().toJulianDay();
+    if (curDays - msgDays > 10 * 24) {
+        return "";
+    }
+    QString t = curDays > msgDays ? msgTime.date().toString("MM-dd") : msgTime.time().toString("hh:mm");
+    std::string tt = t.toStdString();
+    return t;
+}
 
 SessionSortModel::SessionSortModel(QObject *parent)
     : QSortFilterProxyModel(parent)
@@ -100,7 +130,8 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     QString headPath = index.data(ITEM_DATATYPE_HEADPATH).toString();
     QString strName = index.data(ITEM_DATATYPE_USERNAME).toString();
     QString content = index.data(ITEM_DATATYPE_MESSAGECONTENT).toString();
-    QString time = index.data(ITEM_DATATYPE_LASTSTRTIME).toString();
+    qint64 time = index.data(ITEM_DATATYPE_LASTTIME).toLongLong();
+    QString strTime = GenerateTimeText(time);
     QString realJid = index.data(ITEM_DATATYPE_REALJID).toString();
     QString draft = index.data(ITEM_DATATYPE_DRAFT).toString();
 
@@ -135,7 +166,7 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 
     QTalk::setPainterFont(painter, fontLevel, 14);
     QFontMetricsF nameF(painter->font());
-    double maxNameWidth = rect.width() - 80 - nameF.width(time);
+    double maxNameWidth = rect.width() - 80 - nameF.width(strTime);
     strName = nameF.elidedText(strName, Qt::ElideRight, maxNameWidth);
     painter->restore();
     painter->save();
@@ -209,7 +240,7 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     painter->setPen(QPen(select ? StyleDefine::instance().getNavTimeSelectFontColor() : StyleDefine::instance().getNavTimeFontColor()));
     QTalk::setPainterFont(painter, fontLevel, 11);
     painter->drawText(QRect(rect.x() + 65, rect.y() + 20, rect.width() - 70, rect.height())
-            , Qt::AlignRight, time);
+            , Qt::AlignRight, strTime);
     painter->restore();
     painter->save();
     // 头像

@@ -1,8 +1,14 @@
 ﻿//
-// Created by QITMAC000260 on 2019/11/01.
+// Created by cc on 2019/11/01.
 //
 
 #include "MessageRecordManager.h"
+#include <QVBoxLayout>
+#include <QSplitter>
+#include <QScrollBar>
+#include <QDebug>
+#include <QMovie>
+#include <QtConcurrent>
 #include "../../CustomUi/TitleBar.h"
 #include "../../CustomUi/SearchEdit.hpp"
 #include "../ChatViewMainPanel.h"
@@ -13,56 +19,9 @@
 #include "MessageDelegate.h"
 #include "../../Platform/dbPlatForm.h"
 #include "../../UICom/uicom.h"
-#include <QVBoxLayout>
-#include <QSplitter>
-#include <QScrollBar>
-#include <QDebug>
-#include <QMovie>
-#include <QtConcurrent>
+#include "../ChatUtil.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
-
-/** SearchUserView **/
-SearchUserView::SearchUserView(QWidget *parent)
-    : QListView(parent) {
-    this->setFrameShape(QFrame::NoFrame);
-    this->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    this->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    this->verticalScrollBar()->setSingleStep(12);
-    this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    this->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
-}
-
-//
-void SearchUserView::currentChanged(const QModelIndex &current, const QModelIndex &previous) {
-
-    auto* current_wgt = qobject_cast<SearchItemBase*>(this->indexWidget(current));
-    auto* previous_wgt = qobject_cast<SearchItemBase*>(this->indexWidget(previous));
-    if(current_wgt)
-        current_wgt->setDetailButtonVisible(true);
-    if(previous_wgt)
-        previous_wgt->setDetailButtonVisible(false);
-}
-
-/** message  **/
-MessageSortModel::MessageSortModel(QObject *parent)
-    : QSortFilterProxyModel(parent)
-{
-
-}
-
-//
-bool MessageSortModel::lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const {
-
-    if (!source_left.isValid() || !source_right.isValid())
-        return false;
-
-    qint64 leftTime = source_left.data(SEARCH_USER_MSG_TIME).toLongLong();
-    qint64 rightTime = source_right.data(SEARCH_USER_MSG_TIME).toLongLong();
-
-    return leftTime < rightTime;
-}
-
 /** MessageRecordManager **/
 MessageRecordManager::MessageRecordManager(QWidget *parent)
     :UShadowDialog(parent, true)
@@ -97,20 +56,6 @@ void MessageRecordManager::initUI() {
         this->setWindowFlags(this->windowFlags() | Qt::Tool);
 #endif
 //
-    auto makeLoadingLabel = [this](bool scale = false, QSize size = {0, 0}) -> QLabel* {
-        auto* label = new QLabel(this);
-        auto* mov = new QMovie(":/QTalk/image1/loading.gif");
-        if (scale)
-        {
-            mov->setScaledSize(size);
-            label->setFixedHeight(size.height());
-        }
-
-        label->setMovie(mov);
-        label->setAlignment(Qt::AlignCenter);
-        return label;
-    };
-
     auto* titleBar = new TitleBar(tr("消息管理器"), this, this);
     titleBar->setFixedHeight(50);
     setMoverAble(true, titleBar);
@@ -139,13 +84,13 @@ void MessageRecordManager::initUI() {
     leftLay->addLayout(searchLay);
     leftLay->addWidget(_pSearchView);
 
-    _pLoadingMoreL = makeLoadingLabel(true, {50, 50});
+    _pLoadingMoreL = QTalk::makeLoadingLabel(true, {50, 50}, this);
     _pLoadingMoreL->setVisible(false);
     leftLay->addWidget(_pLoadingMoreL);
 
-    _pLoadingContent = makeLoadingLabel();
-    _pLoadingMoreR_T = makeLoadingLabel(true, {50, 50});
-    _pLoadingMoreR_B = makeLoadingLabel(true, {50, 50});
+    _pLoadingContent = QTalk::makeLoadingLabel(false, {0, 0}, this);
+    _pLoadingMoreR_T = QTalk::makeLoadingLabel(true, {50, 50}, this);
+    _pLoadingMoreR_B = QTalk::makeLoadingLabel(true, {50, 50}, this);
     _pLoadingMoreR_T->setVisible(false);
     _pLoadingMoreR_B->setVisible(false);
     _pStackWgt = new QStackedWidget(this);
@@ -370,65 +315,6 @@ void MessageRecordManager::updateSearchList() {
     }
 }
 
-void analysisMessage(StNetSearchResult &info)
-{
-    switch (info.msg_type)
-    {
-        case QTalk::Entity::MessageTypeGroupNotify:
-        case QTalk::Entity::MessageTypeRevoke:
-        {
-            break;
-        }
-        case QTalk::Entity::MessageTypeFile:
-        {
-            QTalk::analysisFileMessage(info.body, info.extend_info, info);
-            break;
-        }
-        case QTalk::Entity::MessageTypeCommonTrdInfo:
-        case QTalk::Entity::MessageTypeCommonTrdInfoV2:
-        {
-            QTalk::analysisCommonTrdMessage(info.body, info.extend_info, info);
-            break;
-        }
-        case QTalk::Entity::MessageTypeSourceCode:
-        {
-            QTalk::analysisCodeMessage(info.body, info.extend_info, info);
-            break;
-        }
-        case QTalk::Entity::MessageTypeSmallVideo:
-        {
-            QTalk::analysisVideoMessage(info.body, info.extend_info, info);
-            break;
-        }
-        case QTalk::Entity::WebRTC_MsgType_VideoCall:
-        case QTalk::Entity::WebRTC_MsgType_AudioCall:
-        case QTalk::Entity::WebRTC_MsgType_Video:
-        case QTalk::Entity::WebRTC_MsgType_Video_Group:
-            break;
-        case QTalk::Entity::MessageTypeShock:
-        {
-            QString msgFrom = info.from;
-            info.body = QObject::tr("你");
-            if (Platform::instance().getSelfXmppId() == msgFrom.toStdString())
-                info.body.append(QObject::tr("抖了他一下"));
-            else
-                info.body.append(QObject::tr("收到一个窗口抖动"));
-            break;
-        }
-        default:
-        {
-            qWarning() << "------ default message type " << info.msg_type;
-        }
-        case QTalk::Entity::MessageTypeText:
-        case QTalk::Entity::MessageTypePhoto:
-        case QTalk::Entity::MessageTypeGroupAt:
-        case QTalk::Entity::MessageTypeImageNew:
-        case QTalk::Entity::MessageTypeRobotAnswer:
-            QTalk::analysisTextMessage(info.body, info.extend_info, info.text_messages);
-            break;
-    }
-}
-
 //
 void MessageRecordManager::goSearchUser() {
     using namespace QTalk::Search;
@@ -474,7 +360,7 @@ void MessageRecordManager::goSearchUser() {
                     info.extend_info = his.extend_info.data();
                     info.xmpp_id = _user_id;
 
-                    analysisMessage(info);
+                    QTalk::analysisMessage(info);
                     _search_user_search.push_back(info);
                 }
             }
@@ -504,7 +390,7 @@ void MessageRecordManager::messageRequest(const QInt64 &time, int type, const QS
             info.body = message.Content.data();
             info.extend_info = message.ExtendedInfo.data();
             info.xmpp_id = message.XmppId.data();
-            analysisMessage(info);
+            QTalk::analysisMessage(info);
             _messages.push_back(info);
         }
         //

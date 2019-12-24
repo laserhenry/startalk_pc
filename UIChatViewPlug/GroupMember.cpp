@@ -131,7 +131,7 @@ void GroupMember::updateGroupMember(const std::string& memberJid, const std::str
 #ifdef _MACOS
             pthread_setname_np("GroupMember::updateMemberInfo");
 #endif
-            std::string userId = Entity::JID(memberJid.c_str()).barename();
+            std::string userId = Entity::JID(memberJid.c_str()).basename();
             std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(memberJid);
             bool isOnline = Platform::instance().isOnline(userId);
             if(!pThis) return;

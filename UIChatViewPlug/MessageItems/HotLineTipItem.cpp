@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019/08/29.
+// Created by cc on 2019/08/29.
 //
 
 #include "HotLineTipItem.h"

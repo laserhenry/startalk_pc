@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019-07-12.
+// Created by cc on 2019-07-12.
 //
 
 #include "GIFManager.h"

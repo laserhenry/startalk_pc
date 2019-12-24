@@ -27,6 +27,7 @@ UIGolbalManager *UIGolbalManager::_pInstance = nullptr;
 #define CHECK_UPDATER "CHECK_UPDATER"
 #define CO_EDIT "CO_EDIT"
 #define UPDATER_VERSION "UPDATER_VERSION"
+#define SSL "SSL"
 
 UIGolbalManager::~UIGolbalManager() {
     if (_pluginManager) {
@@ -154,6 +155,7 @@ void UIGolbalManager::Init() {
     std::string userPath, fileSavePath, historyPath, coEdit;
     int logLevel = QTalk::logger::LEVEL_INVALID;
     int language = 0;
+    bool ssl = true;
     _font_level = AppSetting::FONT_LEVEL_NORMAL;
     _pSystemConfig = new QTalk::ConfigLoader(_ConfigDataDir.toLocal8Bit() + "/sysconfig");
     if (_pSystemConfig->reload()) {
@@ -173,12 +175,13 @@ void UIGolbalManager::Init() {
             _check_updater = _pSystemConfig->getBool(CHECK_UPDATER);
         else
             _check_updater = true;
-
         _updater_version = _pSystemConfig->getInteger(UPDATER_VERSION);
+        if(_pSystemConfig->hasKey(SSL))
+            ssl = _pSystemConfig->getBool(SSL);
     }
 
-    if(logLevel == QTalk::logger::LEVEL_INVALID)
-        logLevel = QTalk::logger::LEVEL_WARING;
+    if(logLevel == QTalk::logger::LEVEL_INVALID || logLevel >= QTalk::logger::LEVEL_WARING)
+        logLevel = QTalk::logger::LEVEL_INFO;
     QTalk::logger::setLevel(logLevel);
     AppSetting::instance().setLanguage(language);
     //
@@ -190,6 +193,7 @@ void UIGolbalManager::Init() {
 
     AppSetting::instance().setLogLevel(logLevel);
     AppSetting::instance().setFontLevel(_font_level);
+    AppSetting::instance().with_ssl = ssl;
 
     if(!coEdit.empty())
         AppSetting::instance().setCoEdit(coEdit);
@@ -394,6 +398,8 @@ void UIGolbalManager::initThemeConfig()
                 QTalk::StyleDefine::instance().setSearchNormalColor(QColor(r, g, b, a));
             else if ("_search_select_color" == tagName)
                 QTalk::StyleDefine::instance().setSearchSelectColor(QColor(r, g, b, a));
+            else if ("_image_select_border_color" == tagName)
+                QTalk::StyleDefine::instance().setImageSelectBorderColor(QColor(r, g, b, a));
             else if ("_nav_top_color" == tagName)
                 QTalk::StyleDefine::instance().setNavTopColor(QColor(r, g, b, a));
             else if ("_nav_tip_color" == tagName)

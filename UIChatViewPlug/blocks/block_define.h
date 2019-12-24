@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019-02-19.
+// Created by cc on 2019-02-19.
 //
 
 #ifndef QTALK_V2_BLOCK_DEFINE_H

@@ -237,30 +237,30 @@ void ToolWgt::initUi()
         connect(videoAct, &QAction::triggered, [this](bool){
 //            g_pMainPanel->sendStartAudioVideoMessage(_pChatItem->_uid, true);
 //            std::string selfId = Platform::instance().getSelfUserId();
-            std::string peerId = QTalk::Entity::JID(_pChatItem->getPeerId().usrId().data()).barename();
+            std::string peerId = QTalk::Entity::JID(_pChatItem->getPeerId().usrId().data()).basename();
             g_pMainPanel->start2Talk_old(peerId, true, true);
         });
 
         connect(audioAct, &QAction::triggered, [this](bool){
 //            g_pMainPanel->sendStartAudioVideoMessage(_pChatItem->_uid, false);
 //            std::string selfId = Platform::instance().getSelfUserId();
-            std::string peerId = QTalk::Entity::JID(_pChatItem->getPeerId().usrId().data()).barename();
+            std::string peerId = QTalk::Entity::JID(_pChatItem->getPeerId().usrId().data()).basename();
             g_pMainPanel->start2Talk_old(peerId, false, true);
         });
     }
 
     connect(actionVote, &QAction::triggered, [this](){
-//        QString linkUrl = QString("%5username=%1&company=%2&group_id=%3&rk=%4").arg(Platform::instance().getSelfUserId().data())
-//                .arg("qunar").arg(_pChatItem->_uid.qUsrId()).arg(Platform::instance().getServerAuthKey().data()).arg("vote/vote_list.php?");
-//
-//        WebService::loadUrl(QUrl(linkUrl), false);
+        QString linkUrl = QString("%5username=%1&company=%2&group_id=%3&rk=%4").arg(Platform::instance().getSelfUserId().data())
+                .arg("qunar").arg(_pChatItem->_uid.qUsrId()).arg(Platform::instance().getServerAuthKey().data()).arg("http://tu.qunar.com/vote/vote_list.php?");
+
+        WebService::loadUrl(QUrl(linkUrl), false);
     });
     connect(actionTask, &QAction::triggered, [this](){
 
-//        QString linkUrl = QString("%5username=%1&company=%2&group_id=%3&rk=%4").arg(Platform::instance().getSelfUserId().data())
-//                .arg("qunar").arg(_pChatItem->_uid.qUsrId()).arg(Platform::instance().getServerAuthKey().data()).arg("task/task_list.php?");
-//
-//        WebService::loadUrl(QUrl(linkUrl), false);
+        QString linkUrl = QString("%5username=%1&company=%2&group_id=%3&rk=%4").arg(Platform::instance().getSelfUserId().data())
+                .arg("qunar").arg(_pChatItem->_uid.qUsrId()).arg(Platform::instance().getServerAuthKey().data()).arg("https://tu.qunar.com/task/task_list.php?");
+
+        WebService::loadUrl(QUrl(linkUrl), false);
     });
 
     connect(scanQRCode, &QAction::triggered, [this](bool){
@@ -374,18 +374,6 @@ void ToolWgt::initUi()
 
     });
 
-    connect(_pBtnCloseService, &QPushButton::clicked, [this](){
-        int ret = QtMessageBox::warning(this, tr("提示"), tr("您确认结束本次服务吗?"),
-                                        QtMessageBox::EM_BUTTON_YES | QtMessageBox::EM_BUTTON_NO);
-        if(ret == QtMessageBox::EM_BUTTON_YES)
-        {
-            if(g_pMainPanel && _pChatItem){
-                QTalk::Entity::UID uid = _pChatItem->_uid;
-                g_pMainPanel->getMessageManager()->serverCloseSession(uid.realId(),Platform::instance().getSelfXmppId(),uid.usrId());
-            }
-        }
-    });
-
     connect(_pBtnTransfer,&QPushButton::clicked,[this](){
         _pSessionTransferWnd->showModel();
         if(g_pMainPanel && _pChatItem && !_pSessionTransferWnd->isHaveShow){
@@ -491,12 +479,6 @@ void ToolWgt::sendJsonPrud(const QString &products) {
 void ToolWgt::sendQuickReply(const std::string &text) {
     if(g_pMainPanel && _pChatItem){
         g_pMainPanel->sendTextMessage(_pChatItem->_uid, _pChatItem->_chatType, text);
-    }
-}
-
-void ToolWgt::showSeats(std::vector<QTalk::Entity::ImTransfer> transfers) {
-    if(_pSessionTransferWnd){
-        _pSessionTransferWnd->showSeats(transfers);
     }
 }
 

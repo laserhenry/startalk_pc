@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-04-11.
+// Created by cc on 2019-04-11.
 //
 
 #ifndef QTALK_V2_SHAREMESSAGEFRM_H

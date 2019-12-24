@@ -245,9 +245,8 @@ void ChatMsgManager::addGroupMember(const std::vector<std::string>& members, con
     EventBus::FireEvent(e);
 }
 
-void ChatMsgManager::serverCloseSession(const std::string &username, const std::string &seatname,
-										const std::string &virtualname) {
-	ServerCloseSessionEvt e(username,seatname,virtualname);
+void ChatMsgManager::serverCloseSession(const std::string &username, const std::string &virtualname) {
+	ServerCloseSessionEvt e(username, virtualname);
 	EventBus::FireEvent(e);
 }
 
@@ -298,6 +297,17 @@ VectorMessage ChatMsgManager::getUserFileHistoryMessage(const QInt64 &time, cons
 VectorMessage ChatMsgManager::getUserImageHistoryMessage(const QInt64 &time, const QTalk::Entity::UID &uid) {
 
     ImageHistoryMessage e;
+    e.time = time;
+    e.userid = uid.usrId();
+    e.realJid = uid.realId();
+    EventBus::FireEvent(e, false);
+
+    return e.msgList;
+}
+
+VectorMessage ChatMsgManager::getUserLinkHistoryMessage(const QInt64 &time, const QTalk::Entity::UID &uid) {
+
+    LinkHistoryMessage e;
     e.time = time;
     e.userid = uid.usrId();
     e.realJid = uid.realId();

@@ -20,11 +20,6 @@ namespace QTalk {
 
 	public:
 		static qimage& instance();
-
-    public:
-        qimage();
-        ~qimage();
-
     public:
         QPixmap loadPixmap(const QString& srcPath, bool save, bool scaled = false, int width = 0, int height = 0);
         QPixmap loadCirclePixmap(const QString &srcPath, const int& radius, bool isGrey = false);

@@ -35,8 +35,8 @@ Q_SIGNALS:
     void setWgtStatusSignal(bool);
 
 public:
-    bool showUserCard(std::shared_ptr<QTalk::Entity::ImUserSupplement> imuserSup,
-                      std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo);
+    bool showUserCard(const std::shared_ptr<QTalk::Entity::ImUserSupplement>& imuserSup,
+                      const std::shared_ptr<QTalk::Entity::ImUserInfo>& userInfo);
     void setMaskName(const QString& maskName);
     void setFlags(int flags);
 

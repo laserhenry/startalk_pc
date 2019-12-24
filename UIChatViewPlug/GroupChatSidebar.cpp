@@ -60,7 +60,7 @@ void GroupChatSidebar::updateGroupMember(const GroupMemberMessage& e)
 	for (; it != members.cend(); it++)
 	{
 		//
-		bool isOnline = Platform::instance().isOnline(Entity::JID(it->first.c_str()).barename());
+		bool isOnline = Platform::instance().isOnline(Entity::JID(it->first.c_str()).basename());
 		if (isOnline)
 		{
 			onlineUserSize++;

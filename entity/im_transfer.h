@@ -11,14 +11,8 @@ namespace QTalk {
     namespace Entity {
         struct ImTransfer
         {
-            ImTransfer()
-            {
-                newCsrName = "";
-                nickName = "";
-            }
-
-            std::string nickName;
-            std::string newCsrName;
+            std::string userId{};
+            std::string userName{};
         };
     }
 }

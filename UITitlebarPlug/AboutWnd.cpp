@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019-02-13.
+// Created by cc on 2019-02-13.
 //
 
 #include "AboutWnd.h"
@@ -46,9 +46,7 @@ void AboutWnd::initUi()
     //
     QFrame* mainFrm = new QFrame(this);
 
-#if defined(_ATALK)
-    mainFrm->setObjectName("ATalkAboutMainFrm");
-#elif defined(_STARTALK)
+#if defined(_STARTALK)
     mainFrm->setObjectName("AboutMainFrm");
     this->setStyleSheet("background:url(:/title/image1/aboutStarTalk.png);");
 #elif defined(_QCHAT)

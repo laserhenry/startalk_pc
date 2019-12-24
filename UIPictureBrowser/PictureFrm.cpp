@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2018/11/16.
+// Created by cc on 2018/11/16.
 //
 
 #include "PictureFrm.h"
@@ -176,28 +176,91 @@ void PictureFrm::connects() {
 
 bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
 
-    if (e->type() == QEvent::GraphicsSceneMousePress) {
-        _startPos = QCursor::pos();
-        _pressed = true;
-        e->accept();
-    } else if (e->type() == QEvent::GraphicsSceneMouseRelease) {
-        _pressed = false;
-        e->accept();
-    } else if (e->type() == QEvent::GraphicsSceneMouseMove) {
-        if (_pressed) {
-            QPoint p = QCursor::pos();
+    static bool touch = false;
+    switch (e->type())
+    {
+        case QEvent::TouchBegin:
+        case QEvent::TouchUpdate:
+        case QEvent::TouchEnd:
+        case QEvent::TouchCancel:
+        {
+            auto *touchEvent = dynamic_cast<QTouchEvent *>(e);
+            const QList<QTouchEvent::TouchPoint>& touchPoints = touchEvent->touchPoints();
+            if (touchPoints.count() == 2) {
+                switch (e->type()) {
+                    case QEvent::TouchBegin:
+                        break;
+                    case QEvent::TouchUpdate:
+                    {
+                        touch = true;
 
-            _pPicItem->moveBy((p.x() - _startPos.x()), (p.y() - _startPos.y()));
-            _startPos = p;
-            e->accept();
+                        const QTouchEvent::TouchPoint &pos0 = touchPoints.first();
+                        const QTouchEvent::TouchPoint &pos1 = touchPoints.last();
+                        qreal currentScaleFactor =
+                                QLineF(pos0.pos(), pos1.pos()).length()
+                                / QLineF(pos0.startPos(), pos1.startPos()).length();
+                        _pPicItem->onScaleChange(currentScaleFactor > 1 ? ++_scaleVal : --_scaleVal,
+                                {0, 0});
+                        break;
+                    }
+                    case QEvent::TouchEnd:
+                    case QEvent::TouchCancel:
+                        touch = false;
+                        break;
+                    default:
+                        break;
+                }
+
+                break;
+            }
         }
-    } else if (e->type() == QEvent::GraphicsSceneWheel) {
-        e->accept();
-    } else if (e->type() == QEvent::Resize) {
-        if(_pPicItem)
-            _pPicItem->setPos(0, 0);
-    } else {
-        return QObject::eventFilter(o, e);
+        case QEvent::GraphicsSceneMousePress:
+        {
+            _startPos = QCursor::pos();
+            _pressed = true;
+            e->accept();
+            break;
+        }
+        case QEvent::GraphicsSceneMouseRelease:
+        {
+            _pressed = false;
+            e->accept();
+            break;
+        }
+        case QEvent::GraphicsSceneMouseMove:
+        {
+            if (_pressed) {
+                QPoint p = QCursor::pos();
+
+                _pPicItem->moveBy((p.x() - _startPos.x()), (p.y() - _startPos.y()));
+                _startPos = p;
+                e->accept();
+            }
+            break;
+        }
+        case QEvent::GraphicsSceneWheel:
+        {
+            if(!touch)
+            {
+                auto* evt = dynamic_cast<QGraphicsSceneWheelEvent *>(e);
+                if (evt->delta() > 0)
+                    _scaleVal++;
+                else
+                    _scaleVal--;
+                //
+                _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
+                e->accept();
+            }
+            break;
+        }
+        case QEvent::Resize:
+        {
+            if(_pPicItem)
+                _pPicItem->setPos(0, 0);
+            break;
+        }
+        default:
+            break;
     }
-    return false;
+    return QObject::eventFilter(o, e);
 }

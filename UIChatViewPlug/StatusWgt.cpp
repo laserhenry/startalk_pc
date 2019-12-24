@@ -127,10 +127,12 @@ void StatusWgt::switchUser(QUInt8 t, const QTalk::Entity::UID &uid, const QStrin
 
         std::string coEdit = AppSetting::instance().getCoEdit();
         _pEdit->setVisible(true);
+        _pBtnAddGroup->setToolTip(tr("邀请群成员"));
 	}
 	else
     {
 	    this->setMinimumHeight(70);
+        _pBtnAddGroup->setToolTip(tr("创建群组"));
     }
 
     QFontMetricsF uf(_pLabelChatUser->font());
@@ -285,10 +287,7 @@ void StatusWgt::initUi() {
     _pmood->setTextFormat(Qt::PlainText);
     //
     _pBtnStructure->setToolTip(tr("组织架构"));
-    if (_isGroupChat)
-        _pBtnAddGroup->setToolTip(tr("邀请群成员"));
-    else
-        _pBtnAddGroup->setToolTip(tr("创建群组"));
+
     //
     _pBtnStructure->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
     _pEdit->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);

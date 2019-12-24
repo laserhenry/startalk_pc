@@ -87,9 +87,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // 系统设置
     AppSetting::instance();
     //
-#if defined(_ATalk)
-    setWindowTitle("ATalk");
-#elif defined(_STARTALK)
+#if defined(_STARTALK)
     setWindowTitle("StarTalk");
 #elif defined(_QCHAT)
     setWindowTitle("QChat");
@@ -107,7 +105,11 @@ MainWindow::MainWindow(QWidget *parent) :
     for(const QHostAddress &address : info.addresses())
     {
         if(address.protocol() == QAbstractSocket::IPv4Protocol)
-            _ipv4Address = address.toString();
+        {
+            auto addr = address.toString();
+            if(addr != "127.0.0.1")
+                _ipv4Address += QString("%1; ").arg(addr);
+        }
     }
     //
 #ifdef _MACOS
@@ -143,14 +145,14 @@ bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *r
 {
 #ifdef _WINDOWS
 	MSG* msg = (MSG*)message;
-	auto pixelRatio = this->devicePixelRatio();
+	int pixelRatio = this->devicePixelRatio();
 	pixelRatio = qMax(pixelRatio, 1);
-	int tempBorderWidth = boundaryWidth * pixelRatio;
+	int tempBorderWidth = boundaryWidth;
 	switch (msg->message)
 	{
 	case WM_NCHITTEST:
-		int xPos = (GET_X_LPARAM(msg->lParam) - this->frameGeometry().x()) / pixelRatio;
-		int yPos = (GET_Y_LPARAM(msg->lParam) - this->frameGeometry().y()) / pixelRatio;
+		qreal xPos = GET_X_LPARAM(msg->lParam) / pixelRatio - this->frameGeometry().x();
+		qreal yPos = GET_Y_LPARAM(msg->lParam) / pixelRatio - this->frameGeometry().y();
 
 		if (xPos < tempBorderWidth && yPos < tempBorderWidth)
 			*result = HTTOPLEFT;
@@ -737,6 +739,7 @@ void MainWindow::openMainWindow()
         connect(about, SIGNAL(triggered()), _titleBar, SLOT(onShowAboutWnd()));
 #endif
         //
+        dealDumpFile();
         checkUpdater();
 	}
 
@@ -752,13 +755,6 @@ void MainWindow::openMainWindow()
   */
 void MainWindow::onCurFunChanged(int index)
 {
-    // 先隐藏再显示
-//    if (_bottomSplt->isVisible())
-//        _bottomSplt->setVisible(false);
-//    else if(_pAddressBook->isVisible())
-//        _pAddressBook->setVisible(false);
-//    else if(_pOAManager->isVisible())
-//        _pOAManager->setVisible(false);
     //
     switch (index)
     {
@@ -1099,6 +1095,7 @@ void MainWindow::checkUpdater() {
 
     auto version = UIGolbalManager::GetUIGolbalManager()->_updater_version;
     QFuture<std::string> future = QtConcurrent::run(_pMessageManager, &QTalkMsgManager::checkUpdater, version);
+//    future.waitForFinished();
     while(!future.isFinished())
         QApplication::processEvents(QEventLoop::AllEvents, 100);
 
@@ -1178,18 +1175,59 @@ void MainWindow::onGetHistoryError() {
 
 void MainWindow::restartWithMessage(const QString &msg) {
 
-//    if (!_initUi) {
-        QString program = QApplication::applicationFilePath();
-        QStringList arguments;
-        arguments << "AUTO_LOGIN=OFF"
-                  << QString("MSG=%1").arg(msg);
-        QProcess::startDetached(program, arguments);
-        exit(0);
-//    }
-//    else
-//    {
-//        if(_logindlg)
-//            qInfo() << QMetaObject::invokeMethod(_logindlg, "AuthFailedSignal",
-//                    Qt::QueuedConnection, Q_ARG(QString, msg));
-//    }
+    QString program = QApplication::applicationFilePath();
+    QStringList arguments;
+    arguments << "AUTO_LOGIN=OFF"
+              << QString("MSG=%1").arg(msg);
+    QProcess::startDetached(program, arguments);
+    exit(0);
+}
+
+void delDmpFun(const QString& path, const std::string& ip)
+{
+    QDir dir(path);
+    QFileInfoList infoList = dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    for (const auto& tmpInfo : infoList)
+    {
+        if(tmpInfo.isSymLink()) continue;
+
+        if (tmpInfo.isFile())
+        {
+            if (tmpInfo.suffix().toLower() == "dmp")
+            {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+                auto birth = tmpInfo.birthTime().toMSecsSinceEpoch();
+#else
+                auto birth = tmpInfo.lastModified().toMSecsSinceEpoch();
+#endif
+                auto now = QDateTime::currentMSecsSinceEpoch();
+                if(tmpInfo.size() > 0 && tmpInfo.size() <= 50 * 1024 * 1024 && now - birth < 1000 * 60 * 60 * 24 * 7)
+                {
+                    std::string dumpFilePath = std::string(tmpInfo.absoluteFilePath().toLocal8Bit());
+                    QTalkMsgManager::reportDump(ip, dir.dirName().toStdString(), dumpFilePath, birth);
+                }
+                QFile::remove(tmpInfo.absoluteFilePath());
+            }
+        }
+        else if(tmpInfo.isDir())
+        {
+            auto infoPath = tmpInfo.absoluteFilePath();
+            delDmpFun(infoPath, ip);
+            if(QDir(infoPath).isEmpty())
+                dir.rmpath(infoPath);
+        }
+    }
+}
+
+//
+void MainWindow::dealDumpFile()
+{
+    QTimer::singleShot(60 * 1000, [this](){
+        // deal dump
+        QDateTime curDateTime = QDateTime::currentDateTime();
+        auto appdata = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation).toLocal8Bit();
+        QString logDirPath = QString("%1/logs/").arg(appdata.data());
+        //
+        QtConcurrent::run(delDmpFun, logDirPath, _ipv4Address.toStdString());
+    });
 }

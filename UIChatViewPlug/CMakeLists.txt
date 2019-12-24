@@ -153,7 +153,13 @@ set(SOURCE_FILES
         search/FileRecordWnd.h
         NetImageLabel.cpp NetImageLabel.h
         search/SearchListDelegate.cpp
-        search/SearchListDelegate.h)
+        search/SearchListDelegate.h
+        search/MessageSortModel.cpp
+        search/MessageSortModel.h
+        search/SearchUserView.cpp
+        search/SearchUserView.h
+        search/ImageDelegate.cpp
+        search/ImageDelegate.h)
 
 
 set(LIBRARY_OUTPUT_PATH ../bin)

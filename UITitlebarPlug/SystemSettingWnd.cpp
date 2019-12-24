@@ -938,8 +938,8 @@ void SystemSettingWnd::initOtherSetting(QVBoxLayout* vlayout) {
     });
 #endif
 
-    auto *openLink = new SettingCheckBox(tr("使用内置浏览器打开对话中的链接"), AppSetting::instance().getOpenLinkWithAppBrowser(), this);
-    vlayout->addWidget(openLink);
+//    auto *openLink = new SettingCheckBox(tr("使用内置浏览器打开对话中的链接"), AppSetting::instance().getOpenLinkWithAppBrowser(), this);
+//    vlayout->addWidget(openLink);
 
     auto *openOaLink = new SettingCheckBox(tr("使用内置浏览器打开OA链接"), AppSetting::instance().getOpenOaLinkWithAppBrowser(), this);
     vlayout->addWidget(openOaLink);
@@ -962,9 +962,9 @@ void SystemSettingWnd::initOtherSetting(QVBoxLayout* vlayout) {
     connect(autoLoginCK, &QCheckBox::stateChanged, [this](int state){
         emit sgSetAutoLogin(state == Qt::Checked);
     });
-    connect(openLink, &QCheckBox::stateChanged, [](int state){
-        AppSetting::instance().setOpenLinkWithAppBrowser(state == Qt::Checked);
-    });
+//    connect(openLink, &QCheckBox::stateChanged, [](int state){
+//        AppSetting::instance().setOpenLinkWithAppBrowser(state == Qt::Checked);
+//    });
     connect(openOaLink, &QCheckBox::stateChanged, [](int state){
         AppSetting::instance().setOpenOaLinkWithAppBrowser(state == Qt::Checked);
     });

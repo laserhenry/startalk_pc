@@ -10,13 +10,23 @@
 #include <QLabel>
 #include <QTextEdit>
 
+class CommonTrdInfoEdit : public QTextEdit {
+    Q_OBJECT
+public:
+    explicit CommonTrdInfoEdit(QWidget* parent = nullptr)
+        : QTextEdit(parent) {
+    }
+
+protected:
+    void wheelEvent(QWheelEvent *event) override {};
+
+};
 
 class CommonTrdInfoItem : public MessageItemBase {
 
 Q_OBJECT
 public:
     explicit CommonTrdInfoItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent = Q_NULLPTR);
-    ~CommonTrdInfoItem() override {};
 
 public:
     QSize itemWdtSize() override;
@@ -27,6 +37,13 @@ Q_SIGNALS:
 protected:
     void mousePressEvent(QMouseEvent *event) override;
     void setIcon(const QString& iconPath);
+
+private:
+    void init();
+    void initLayout();
+    void initSendLayout();
+    void initReceiveLayout();
+    void initContentLayout();
 
 private:
     QLabel *_iconLab;
@@ -45,11 +62,6 @@ private:
     int _rightSpacing;
     int _nameLabHeight;
 
-    void init();
-    void initLayout();
-    void initSendLayout();
-    void initReceiveLayout();
-    void initContentLayout();
 };
 
 

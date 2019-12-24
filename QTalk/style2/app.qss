@@ -446,6 +446,11 @@ QListView {
     background:rgba(39, 43, 48,1);
 }
 
+/** QTableView **/
+QTableView {
+    background:rgba(39, 43, 48,1);
+}
+
 /** MainWindow **/
 QFrame#MainWindowMainFrm{
     background-color: rgba(39, 43, 48, 1);

@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019/11/13.
+// Created by cc on 2019/11/13.
 //
 
 #ifndef QTALK_V2_NETIMAGELABEL_H
@@ -23,9 +23,11 @@ public:
 
 protected:
     void paintEvent(QPaintEvent* event) override ;
+    bool event(QEvent* e) override ;
 
 Q_SIGNALS:
     void sgDownloadSuccess();
+    void clicked();
 
 protected:
     QString _image_link{};

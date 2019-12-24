@@ -249,6 +249,9 @@ private:
 
     std::string _coEditor;
 
+public:
+    bool with_ssl = true;
+
 private:
 	static AppSetting* _appSetting;
     QTalk::util::spin_mutex sm;

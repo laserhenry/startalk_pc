@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2018/11/16.
+// Created by cc on 2018/11/16.
 //
 
 #ifndef QTALK_V2_PICTUREBROWSER_H

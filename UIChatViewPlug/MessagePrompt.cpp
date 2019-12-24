@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2018/11/29.
+// Created by cc on 2018/11/29.
 //
 
 #include "MessagePrompt.h"
@@ -97,7 +97,7 @@ void MessagePrompt::initUi()
     if(_msg.ChatType == QTalk::Enum::GroupChat)
     {
         //
-        std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = dbPlatForm::instance().getGroupInfo(jid.barename(), true);
+        std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = dbPlatForm::instance().getGroupInfo(jid.basename(), true);
         QString strHead = "";
         if(nullptr != groupInfo)
         {
@@ -126,7 +126,7 @@ void MessagePrompt::initUi()
     }
     else
     {
-        std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(jid.barename());
+        std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(jid.basename());
         QString strHead = "";
         if(nullptr != userInfo)
         {
@@ -299,7 +299,7 @@ void MessagePrompt::mousePressEvent(QMouseEvent *e) {
     {
 		QTalk::Entity::JID jid(_msg.SendJid.data());
         QString strName = _pLabelName->text();
-        emit openChatWnd(_msg.ChatType, QString::fromStdString(jid.barename()),
+        emit openChatWnd(_msg.ChatType, QString::fromStdString(jid.basename()),
                 QString::fromStdString(_msg.RealJid), _pLabelName->text(), g_pMainPanel->getSelfUserId().data());
     }
 

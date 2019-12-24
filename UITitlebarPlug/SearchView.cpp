@@ -1,10 +1,10 @@
 ﻿//
-// Created by QITMAC000260 on 2019-07-08.
+// Created by cc on 2019-07-08.
 //
 
 #include "SearchView.h"
 #include "../Platform/Platform.h"
-#include "../Platform/dbPlatform.h"
+#include "../Platform/dbPlatForm.h"
 #include <QScrollBar>
 #include <QMouseEvent>
 

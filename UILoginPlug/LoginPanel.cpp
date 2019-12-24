@@ -256,7 +256,7 @@ void LoginPanel::initLayout() {
         {
             QString program = QApplication::applicationFilePath();
             QStringList arguments;
-            arguments << "AUTO_LOGIN=OFF";
+            arguments << "AUTO_LOGIN=OFF" << "START_BY_STARTER=YES";
             QProcess::startDetached(program, arguments);
             exit(0);
         }
@@ -505,7 +505,7 @@ void LoginPanel::initloginWnd() {
     userNamelay->setMargin(0);
     userNamelay->setSpacing(0);
     _userNameEdt = new QLineEdit(this);
-
+    _userNameEdt->setAttribute(Qt::WA_InputMethodEnabled, false);
     _userNameEdt->setPlaceholderText(tr("请输入账号"));
     _userNameEdt->setObjectName("userNameEdt");
     userNamelay->addWidget(_userNameEdt);
@@ -519,6 +519,7 @@ void LoginPanel::initloginWnd() {
     passworldlay->setMargin(0);
     passworldlay->setSpacing(0);
     _passworldEdt = new QLineEdit(this);
+    _passworldEdt->setAttribute(Qt::WA_InputMethodEnabled, false);
     _passworldEdt->setPlaceholderText(tr("请输入密码"));
     _passworldEdt->setObjectName("passworldEdt");
     _passworldEdt->setEchoMode(QLineEdit::Password);
@@ -755,6 +756,7 @@ void LoginPanel::onLoginBtnClicked()
         //
         _pStsLabel->setText(tr("正在获取导航信息"));
         QFuture<bool> curRet = QtConcurrent::run(_pManager, &UILoginMsgManager::getNavInfo, nav);
+//        curRet.waitForFinished();
         while (!curRet.isFinished())
             QApplication::processEvents(QEventLoop::AllEvents, 100);
 
@@ -772,16 +774,28 @@ void LoginPanel::onLoginBtnClicked()
             return;
         }
         // try connect to server
-        _pStsLabel->setText(tr("正在尝试连接服务器"));
-        std::auto_ptr<QTcpSocket> tcpSocket(new QTcpSocket);
-        tcpSocket->connectToHost(host.data(), port);
-        if(!tcpSocket->waitForConnected(10000))
         {
-            tcpSocket->abort();
-            emit AuthFailedSignal(tr("连接服务器失败!"));
-            return;
+            auto future = QtConcurrent::run([this, host, port](){
+                _pStsLabel->setText(tr("正在尝试连接服务器"));
+                std::unique_ptr<QTcpSocket> tcpSocket(new QTcpSocket);
+                tcpSocket->connectToHost(host.data(), port);
+                if(!tcpSocket->waitForConnected(5000))
+                {
+                    tcpSocket->abort();
+                    return false;
+                }
+                tcpSocket->close();
+                return true;
+            });
+            while (!future.isFinished())
+                QApplication::processEvents(QEventLoop::AllEvents, 500);
+
+            if(!future.result())
+            {
+                emit AuthFailedSignal(tr("连接服务器失败!"));
+                return;
+            }
         }
-        tcpSocket->close();
         // login
         _pStsLabel->setText(tr("正在验证账户信息"));
         ret = _pManager->SendLoginMessage(strName.toStdString(), strPassword.toStdString());
@@ -875,7 +889,7 @@ void LoginPanel::setHead(const QString &headPath) {
  */
 void LoginPanel::loginError(const std::string &errMs) {
     QString errorMsg;
-    if("not-authorized" == errMs)
+    if("not-authorized" == errMs || "cancel-rsa" == errMs)
     {
         errorMsg = tr("账户或密码错误");
     }

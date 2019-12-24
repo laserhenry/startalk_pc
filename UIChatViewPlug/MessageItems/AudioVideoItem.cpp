@@ -95,20 +95,11 @@ void AudioVideoItem::initSendLayout() {
     auto* tmpLay = new QHBoxLayout;
     tmpLay->setMargin(0);
     tmpLay->setSpacing(5);
-    if(nullptr == _sending)
+    tmpLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
+    if(nullptr != _sending && nullptr != _resending)
     {
-        _sending = new HeadPhotoLab(":/chatview/image1/messageItem/loading.gif", 10, false, false, true, this);
-        tmpLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
         tmpLay->addWidget(_sending);
-        bool startMovie = (0 == _msgInfo.ReadedTag && 0 == _msgInfo.State);
-        _sending->setVisible(startMovie);
-        if(startMovie)
-            _sending->startMovie();
-    }
-    if(nullptr != _resending)
-    {
         tmpLay->addWidget(_resending);
-        _resending->setVisible(false);
     }
     tmpLay->addWidget(_contentFrm);
     tmpLay->setAlignment(_contentFrm, Qt::AlignRight);
@@ -280,20 +271,20 @@ void AudioVideoItem::mousePressEvent(QMouseEvent *event) {
                 if(peerId.empty())
                     return;
                 QTalk::Entity::JID jid(peerId.data());
-                QTalk::Entity::UID uid(jid.barename());
+                QTalk::Entity::UID uid(jid.basename());
 //                g_pMainPanel->sendStartAudioVideoMessage(uid, QTalk::Entity::WebRTC_MsgType_VideoCall == msgInfo().Type);
                 std::string selfId = Platform::instance().getSelfUserId();
 //                AudioVideo::start2Talk(selfId, jid.username());
-                g_pMainPanel->start2Talk_old(jid.barename(),
+                g_pMainPanel->start2Talk_old(jid.basename(),
                         QTalk::Entity::WebRTC_MsgType_VideoCall == msgInfo().Type, true);
             }
             else if(_msgInfo.ChatType == QTalk::Enum::GroupChat)
             {
                 std::string groupId;
                 if(!_msgInfo.RealJid.empty())
-                    groupId = QTalk::Entity::JID(_msgInfo.RealJid.data()).barename();
+                    groupId = QTalk::Entity::JID(_msgInfo.RealJid.data()).basename();
                 else
-                    groupId = QTalk::Entity::JID(_msgInfo.SendJid.data()).barename();
+                    groupId = QTalk::Entity::JID(_msgInfo.SendJid.data()).basename();
                 if(groupId.empty())
                     return;
                 auto info = dbPlatForm::instance().getGroupInfo(groupId);

@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-02-13.
+// Created by cc on 2019-02-13.
 //
 
 #ifndef QTALK_V2_WEBVIEW_H

@@ -31,8 +31,8 @@ MessageItemBase::MessageItemBase(const QTalk::Entity::ImMessageInfo &msgInfo, QW
     QTalk::Entity::JID realJid(msgInfo.RealJid.data());
 	_msgInfo = msgInfo;
 	_msgDirection = msgInfo.Direction;
-	_strUserId = QString::fromStdString(userId.barename());
-    _strRealJid = QString::fromStdString(realJid.barename());
+	_strUserId = QString::fromStdString(userId.basename());
+    _strRealJid = QString::fromStdString(realJid.basename());
 	_type = msgInfo.Type;
     _btnShareCheck = new QToolButton(this);
     _btnShareCheck->setCheckable(true);
@@ -84,6 +84,22 @@ MessageItemBase::MessageItemBase(const QTalk::Entity::ImMessageInfo &msgInfo, QW
         _resending->setParent(this);
         _resending->setHead(":/chatview/image1/error.png", 8, false, false, true);
         _resending->installEventFilter(this);
+
+        _sending = new HeadPhotoLab(":/QTalk/image1/loading.gif", 10, false, false, true, this);
+        bool unSend = (0 == _msgInfo.ReadedTag && 0 == _msgInfo.State);
+        if(unSend)
+        {
+            unSend = _msgInfo.Content.empty();
+            _sending->setVisible(unSend);
+            _resending->setVisible(!unSend);
+            if(unSend)
+                _sending->startMovie();
+        }
+        else
+        {
+            _sending->setVisible(false);
+            _resending->setVisible(false);
+        }
     }
 
 	qRegisterMetaType<std::string>("std::string");

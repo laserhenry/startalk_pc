@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-04-16.
+// Created by cc on 2019-04-16.
 //
 
 #include "ScanQRcode.h"

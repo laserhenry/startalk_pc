@@ -349,7 +349,7 @@ void UserManager::getUserFullInfo(std::shared_ptr<QTalk::Entity::ImUserSupplemen
         if(nullptr == userInfo)
         {
             userInfo = std::make_shared<QTalk::Entity::ImUserInfo>();
-            userInfo->XmppId = jid.barename();
+            userInfo->XmppId = jid.basename();
         }
 
         userInfo->Name = info.userName;
@@ -449,7 +449,7 @@ bool UserManager::getUserMood(QTalk::Entity::JID *jid, std::string &mood, int &v
         _pComm->addHttpRequest(req, callback);
 
         if (retSts) {
-            retSts = LogicManager::instance()->getDatabase()->insertOrUpdateUserMood(jid->barename(), mood, version);
+            retSts = LogicManager::instance()->getDatabase()->insertOrUpdateUserMood(jid->basename(), mood, version);
         }
     }
 
@@ -583,7 +583,7 @@ bool UserManager::getPhoneNo(const std::string &userId, std::string &phoneNo) {
         _pComm->addHttpRequest(req, callback);
 
         if (ret) {
-            ret = LogicManager::instance()->getDatabase()->insertOrUpdateUserPhoneNo(jid->barename(), phoneNo);
+            ret = LogicManager::instance()->getDatabase()->insertOrUpdateUserPhoneNo(jid->basename(), phoneNo);
         }
         else
             phoneNo = errMsg;
@@ -771,7 +771,7 @@ void UserManager::UpdateMood(const std::string &mood)
             //
             if(_pComm && _pComm->_pMsgManager)
             {
-                _pComm->_pMsgManager->updateMoodRet(selfId.barename(), mood);
+                _pComm->_pMsgManager->updateMoodRet(selfId.basename(), mood);
             }
         }
     }

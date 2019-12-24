@@ -35,6 +35,7 @@ public:
 	VectorMessage getUserLocalHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
 	VectorMessage getUserFileHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
 	VectorMessage getUserImageHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
+	VectorMessage getUserLinkHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
 	VectorMessage getSearchMessage(const QInt64& time, const QTalk::Entity::UID& uid, const std::string& text);
 	VectorMessage getAfterMessage(const QInt64& time, const QTalk::Entity::UID& uid);
 
@@ -68,7 +69,7 @@ public:
     //
     void addGroupMember(const std::vector<std::string>& members, const std::string& groupId);
     //qchat 客服挂断
-    void serverCloseSession(const std::string& username,const std::string& seatname,const std::string& virtualname);
+    void serverCloseSession(const std::string& username, const std::string& virtualname);
     //qchat 发送产品卡片
     void sendProduct(const std::string& userQName, const std::string& virtualId,const std::string &product,const std::string &type);
     //qchat 会话转移

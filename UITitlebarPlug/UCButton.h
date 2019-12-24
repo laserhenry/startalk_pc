@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019-07-10.
+// Created by cc on 2019-07-10.
 //
 
 #ifndef QTALK_V2_UCBUTTON_H

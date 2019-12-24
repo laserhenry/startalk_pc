@@ -34,7 +34,6 @@ private:
 	void onActShowVideoDemo();
 
 public:
-	void showSeats(std::vector<QTalk::Entity::ImTransfer> transfers);
 	void sendWechat();
 
 Q_SIGNALS:

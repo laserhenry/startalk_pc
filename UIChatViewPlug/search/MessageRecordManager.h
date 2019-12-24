@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019/11/01.
+// Created by cc on 2019/11/01.
 //
 
 #ifndef QTALK_V2_MESSAGERECORDMANAGER_H
@@ -7,7 +7,6 @@
 
 #include <QFrame>
 #include "SearchItemWgt.h"
-#include <QListView>
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QStandardItemModel>
@@ -16,35 +15,11 @@
 #include <QStackedWidget>
 #include <QSortFilterProxyModel>
 
+#include "MessageSortModel.h"
+#include "SearchUserView.h"
 #include "../../CustomUi/UShadowWnd.h"
 #include "../../include/STLazyQueue.h"
 #include "../../include/CommonStrcut.h"
-
-/**
-* @description: SearchUserView
-* @author: cc
-**/
-class SearchUserView : public  QListView
-{
-public:
-    explicit SearchUserView(QWidget* parent = nullptr);
-
-protected:
-    void currentChanged(const QModelIndex &current, const QModelIndex &previous) override;
-};
-
-/**
-* @description: MessageSortModel
-* @author: cc
-**/
-class MessageSortModel : public QSortFilterProxyModel {
-    Q_OBJECT
-public:
-    explicit MessageSortModel(QObject *parent = Q_NULLPTR);
-
-protected:
-    bool lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const override;
-};
 
 /**
 * @description: SearchMessageManager

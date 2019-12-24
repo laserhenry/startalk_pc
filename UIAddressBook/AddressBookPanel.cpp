@@ -8,6 +8,7 @@
 #include <QHeaderView>
 #include <QApplication>
 #include <QFileInfo>
+#include <QtConcurrent>
 #include "ListItemView.h"
 #include "MessageManager.h"
 #include "../Platform/Platform.h"
@@ -463,30 +464,43 @@ void AddressBookPanel::onListItemClicked(const QString &id, const QUInt8 &type) 
  * @param id 用户xmppid
  */
 void AddressBookPanel::showUserCard(const QString &id) {
-    if (_pMsgManager) {
-        _imuserSup = std::make_shared<QTalk::Entity::ImUserSupplement>();
-        _userInfo = std::make_shared<QTalk::Entity::ImUserInfo>();
-        _userInfo->XmppId = id.toStdString();
-        _imuserSup->XmppId = id.toStdString();
-        _pMsgManager->getUserCard(_imuserSup, _userInfo);
-        if (nullptr == _imuserSup)
-            return;
 
-        if (nullptr == _pUserCard) {
-            _pUserCard = new UserCard(this);
-        }
-        _rightLay->addWidget(_pUserCard);
-        _pUserCard->showUserCard(_imuserSup, _userInfo);
+    static bool flag = false;
+    if(flag) return;
+    else flag = true;
 
-        int flags = _arStarContact.contains(_imuserSup->XmppId);
-        flags |= _arBlackList.contains(_imuserSup->XmppId) << 1;
-        flags |= _arFriends.contains(_imuserSup->XmppId) << 2;
-        _pUserCard->setFlags(flags);
-        if (_mapMaskNames.contains(_imuserSup->XmppId)) {
-            _pUserCard->setMaskName(QString::fromStdString(_mapMaskNames[_imuserSup->XmppId]));
+    //
+    auto ret = QtConcurrent::run([this, id](){
+        if (_pMsgManager) {
+            _imuserSup = std::make_shared<QTalk::Entity::ImUserSupplement>();
+            _userInfo = std::make_shared<QTalk::Entity::ImUserInfo>();
+            _userInfo->XmppId = id.toStdString();
+            _imuserSup->XmppId = id.toStdString();
+            _pMsgManager->getUserCard(_imuserSup, _userInfo);
         }
-        _rightLay->setCurrentWidget(_pUserCard);
+    });
+//    ret.waitForFinished();
+    while (!ret.isFinished())
+        QApplication::processEvents(QEventLoop::AllEvents, 100);
+    //
+    if (nullptr == _imuserSup)
+        return;
+
+    if (nullptr == _pUserCard) {
+        _pUserCard = new UserCard(this);
     }
+    _rightLay->addWidget(_pUserCard);
+    _pUserCard->showUserCard(_imuserSup, _userInfo);
+
+    int flags = _arStarContact.contains(_imuserSup->XmppId);
+    flags |= _arBlackList.contains(_imuserSup->XmppId) << 1;
+    flags |= _arFriends.contains(_imuserSup->XmppId) << 2;
+    _pUserCard->setFlags(flags);
+    if (_mapMaskNames.contains(_imuserSup->XmppId)) {
+        _pUserCard->setMaskName(QString::fromStdString(_mapMaskNames[_imuserSup->XmppId]));
+    }
+    _rightLay->setCurrentWidget(_pUserCard);
+    flag = false;
 }
 
 /**

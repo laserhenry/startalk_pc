@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019-03-02.
+// Created by cc on 2019-03-02.
 //
 
 #ifndef QTALK_V2_CHANGEHEADWND_H

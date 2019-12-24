@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <thread>
+//#include "ThreadHelper.h"
 #ifdef _WINDOWS
 #include <windows.h>
 #else
@@ -70,6 +71,7 @@ public:
 protected:
     void run()
     {
+//        setThreadName("delayTask thread");
         _run = true;
         _thread = new std::thread([this](){
 

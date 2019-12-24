@@ -76,6 +76,9 @@ public:
     virtual void getImageMessage(const long long &time, const std::string &userId, const std::string &realJid,
                                  std::vector<QTalk::Entity::ImMessageInfo> &msgList) = 0;
 
+    virtual void getLinkMessage(const long long &time, const std::string &userId, const std::string &realJid,
+                                 std::vector<QTalk::Entity::ImMessageInfo> &msgList) = 0;
+
     virtual void getSearchMessage(const long long &time, const std::string &userId, const std::string &realJid,
                                   const std::string& searchKey, std::vector<QTalk::Entity::ImMessageInfo> &msgList) = 0;
 

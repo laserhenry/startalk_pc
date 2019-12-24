@@ -14,7 +14,7 @@ TipMessageItem::TipMessageItem(QWidget *parent)
     _pLabel = new QLabel;
     _pLabel->setObjectName("TipLabel");
 
-    QHBoxLayout* layout = new QHBoxLayout(this);
+    auto* layout = new QHBoxLayout(this);
     layout->setMargin(0);
     layout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
     layout->addWidget(_pLabel);

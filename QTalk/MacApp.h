@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019-02-25.
+// Created by cc on 2019-02-25.
 //
 
 #ifndef QTALK_V2_MACAPP_H

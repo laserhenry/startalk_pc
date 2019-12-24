@@ -15,7 +15,7 @@
 #include "MessageManager.h"
 #include "MultifunctionFrm.h"
 
-class StSessionInfo;
+struct StSessionInfo;
 
 class QMenu;
 
@@ -83,7 +83,6 @@ private:
     void init();
     void initLayout();
     void connects();
-    QString GenerateTimeText(const QInt64 &time);
     QString
     GenerateContent(const QString &content, const QUInt8 &chatType, const int &msgType, const QString &userName);
     void GenerateHeadPhotoName(QString &photosrc);

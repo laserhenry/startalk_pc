@@ -46,7 +46,8 @@ public:
 
 public:
     virtual bool sendReportMessage(const std::string& msg, std::string& error) = 0;
-    virtual bool sendReportMail(const std::string& strSub,
+    virtual bool sendReportMail(const std::vector<std::string>& tos,
+                                const std::string& strSub,
                                 const std::string& body,
                                 bool isHtml, std::string& error) = 0;
 };

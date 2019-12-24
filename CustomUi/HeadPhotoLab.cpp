@@ -6,14 +6,15 @@
 #include <QPainter>
 #include <QFileInfo>
 #include <QPainterPath>
+#include <utility>
 
-HeadPhotoLab::HeadPhotoLab(const QString& strHeadPath,
+HeadPhotoLab::HeadPhotoLab(QString strHeadPath,
         int radius,
         bool isGrey,
         bool startMovie,
         bool showRect,
         QWidget *parent)
-    : QLabel(parent), _imagePath(strHeadPath)
+    : QLabel(parent), _imagePath(std::move(strHeadPath))
     , _radius(radius), _isGrey(isGrey)
     , _mov(nullptr), _startMovie(startMovie)
     , _showRect(showRect)
@@ -23,10 +24,6 @@ HeadPhotoLab::HeadPhotoLab(const QString& strHeadPath,
         setFixedSize( radius * 2, radius * 2);
     }
     initMovie();
-}
-
-HeadPhotoLab::~HeadPhotoLab() {
-
 }
 
 /**
@@ -150,20 +147,6 @@ void HeadPhotoLab::initMovie() {
             }
         }
     }
-}
-
-bool HeadPhotoLab::event(QEvent *e) {
-
-//    if(e->type() == QEvent::Show)
-//    {
-//        if(_mov)
-//            _mov->start();
-//    } else if(e->type() == QEvent::Hide)
-//    {
-//        if(_mov)
-//            _mov->stop();
-//    }
-    return QLabel::event(e);
 }
 
 void HeadPhotoLab::startMovie() {

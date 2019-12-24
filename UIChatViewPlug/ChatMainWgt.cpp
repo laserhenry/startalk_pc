@@ -724,6 +724,21 @@ ChatMainWgt::onRecvFRileProcess(double speed, double dtotal, double dnow, double
 }
 
 //
+
+QString getStrTime(qint64 time)
+{
+    QString content = "";
+    QDateTime dateTime = QDateTime::currentDateTime();
+    QInt64 thisDay = dateTime.toMSecsSinceEpoch() - dateTime.time().msecsSinceStartOfDay();
+    if (time < thisDay) {
+        content = QDateTime::fromMSecsSinceEpoch(time).toString("yyyy-MM-dd hh:mm:ss");
+    } else {
+        content = QDateTime::fromMSecsSinceEpoch(time).toString("hh:mm:ss");
+    }
+    return  content;
+}
+
+//
 void ChatMainWgt::showMessageTime(const QString& msgId, const QInt64 &nCurTime, bool isHistoryMessage) {
 
     static QList<QString> msgList;
@@ -768,16 +783,28 @@ void ChatMainWgt::showMessageTime(const QString& msgId, const QInt64 &nCurTime, 
     }
 
     if (isshowtime) {
-        QString content = "";
-        QDateTime dateTime = QDateTime::currentDateTime();
-        QInt64 thisDay = dateTime.toMSecsSinceEpoch() - dateTime.time().msecsSinceStartOfDay();
-        if (nCurTime < thisDay) {
-            content = QDateTime::fromMSecsSinceEpoch(nCurTime).toString("yyyy-MM-dd hh:mm:ss");
-        } else {
-            content = QDateTime::fromMSecsSinceEpoch(nCurTime).toString("hh:mm:ss");
-        }
-        //
+        auto content = getStrTime(nCurTime);
         showTipMessage(QTalk::Entity::MessageTypeTime, content, isHistoryMessage, nCurTime - 1);
+    }
+}
+
+
+// 时间刷新
+void ChatMainWgt::updateTime() {
+
+    for(int i = 0; i < this->count(); i++)
+    {
+        auto* item = this->item(i);
+        if(item->data(EM_DATETYPE_MSGTYPE).toInt() == QTalk::Entity::MessageTypeTime)
+        {
+            auto *wgt = qobject_cast<TipMessageItem*>(this->itemWidget(item));
+            if(wgt)
+            {
+                auto t = item->data(EM_DATE_TYPE_TIME).toLongLong();
+                QString text = getStrTime(t);
+                wgt->setText(text);
+            }
+        }
     }
 }
 
@@ -1407,7 +1434,7 @@ void ChatMainWgt::updateRevokeMessage(const QString &fromId, const QString &mess
 }
 
 void ChatMainWgt::showRevokeMessage(const QString &userName, bool isHistory, QInt64 t) {
-    showTipMessage(QTalk::Entity::MessageTypeRevoke, QString("%1撤回了一条消息").arg(userName), isHistory, t);
+    showTipMessage(QTalk::Entity::MessageTypeRevoke, tr("%1撤回了一条消息").arg(userName), isHistory, t);
 }
 
 //
@@ -1601,7 +1628,7 @@ void ChatMainWgt::onQuoteAct(bool) {
     //
 //    QString userName = QString::fromStdString(itemWgt->msgInfo().UserName);
     QTalk::Entity::JID jid(itemWgt->msgInfo().From.data());
-    auto info = dbPlatForm::instance().getUserInfo(jid.barename());
+    auto info = dbPlatForm::instance().getUserInfo(jid.basename());
     if(info)
     {
         QString userName = QString::fromStdString(info->NickName.empty() ? info->Name : info->NickName);

@@ -26,8 +26,10 @@ public:
     Platform() = default;
 
 public:
-	void setExcutePath(const std::string& exePath);
-	std::string getExcutePath();
+	void setExecutePath(const std::string& exePath);
+	std::string getExecutePath();
+    void setExecuteName(const std::string& name);
+	std::string getExecuteName();
 
 public:
     std::string getAppdataRoamingPath() const;
@@ -170,7 +172,8 @@ private:
 
 private:
     std::string sys_str;
-	std::string excutePath;
+	std::string executePath;
+	std::string executeName;
 
 private:
 	std::string _qvt;

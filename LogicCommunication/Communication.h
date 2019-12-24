@@ -40,8 +40,8 @@ public:
     void
     AsyncConnect(const std::string &userName, const std::string &password, const std::string &host, int port);
 
-    void tryConneteToServer();
-    void tryConneteToServerByQVT();
+    void tryConnectToServer();
+    void tryConnectToServerByQVT();
 
 public:
     void addHttpRequest(const QTalk::HttpRequest &req,
@@ -106,7 +106,7 @@ public:
 
     //
     void reportLog(const std::string &desc, const std::string &logPath);
-    void reportDump(const std::string &dmp_path);
+    void reportDump(const std::string&ip, const std::string& id, const std::string &dmp_path, QInt64 time);
 
     void saveUserConfig();
 
@@ -167,11 +167,12 @@ private:
 
 public:
     void setServiceSeat(int sid, int seat);
-    void serverCloseSession(const std::string &username, const std::string &seatname, const std::string &virtualname);
-    void sendProduct(const std::string username, const std::string virtualname,const std::string product,const std::string type);
-    void getSeatList(const QTalk::Entity::UID uid);
-    void sessionTransfer(const QTalk::Entity::UID uid, const std::string newCser,const std::string reason);
-    void sendWechat(const QTalk::Entity::UID uid);
+    void serverCloseSession(const std::string &username, const std::string &virtualname);
+    void sendProduct(const std::string& username, const std::string &virtualname,
+            const std::string &product, const std::string &type);
+    void getSeatList(const QTalk::Entity::UID& uid);
+    void sessionTransfer(const QTalk::Entity::UID& uid, const std::string &newCser,const std::string& reason);
+    void sendWechat(const QTalk::Entity::UID &uid);
 
 //qchat 登录相关
 public:
@@ -216,7 +217,7 @@ private:
     int _port;
 
 private:
-    const int _threadPoolCount;
+    const int _threadPoolCount = 3;
     STLazyQueue<std::pair<std::string, UserCardMapParam>> *userCardQueue;
     std::vector<ThreadPool *> _httpPool;
 };

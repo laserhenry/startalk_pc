@@ -23,14 +23,14 @@ public:
 
 public:
     void initUI();
-    void showSeats(std::vector<QTalk::Entity::ImTransfer> _transfers);
+    void showSeats(const std::vector<QTalk::Entity::ImTransfer>& _transfers);
 
 
 private slots:
     void operatingModeButtonsToggled(int, bool);
 
 Q_SIGNALS:
-    void sessiontransfer(std::string&,std::string&);
+    void sessiontransfer(const std::string&, std::string&);
 
 public:
     bool isHaveShow = false;

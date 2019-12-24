@@ -25,8 +25,8 @@ class GroupCard : public UShadowDialog
 {
 	Q_OBJECT
 public:
-    GroupCard(CardManager* cardManager);
-    ~GroupCard();
+    explicit GroupCard(CardManager* cardManager);
+    ~GroupCard() override;
 
 public:
     void setData(std::shared_ptr<QTalk::Entity::ImGroupInfo>& data);
@@ -40,33 +40,33 @@ private:
     void initUi();
     void sendMessageSlot();
     void onClose();
+    void onSendMail();
 
 private:
-    CardManager* _pCardManager;
+    CardManager* _pCardManager{};
+    QLabel*      _pNameLabel{};
+    HeadPhotoLab*      _pHeadLabel{};
+    QPushButton* _pSendMailBtn{};
+    QPushButton* _pExitGroupBtn{};
+    QPushButton* _pDestroyGroupBtn{};
+    QLineEdit*   _pGroupNameEdit{};
+    QTextEdit*    _pGroupIdEdit{};
+    QTextEdit*    _pGroupTopicEdit{};
+    QLabel*      _pGroupMemberLabel{};
+    QTextEdit*    _pGroupIntroduce{};
+    QPushButton* _pSendMsgBtn{};
 
-    QLabel*      _pNameLabel;
-    HeadPhotoLab*      _pHeadLabel;
-    QPushButton* _pSendMailBtn;
-    QPushButton* _pExitGroupBtn;
-    QPushButton* _pDestroyGroupBtn;
+    GroupMemberPopWnd* _pGroupMemberPopWnd{};
 
-    QLineEdit*   _pGroupNameEdit;
-    QTextEdit*    _pGroupIdEdit;
-    QTextEdit*    _pGroupTopicEdit;
-    QLabel*      _pGroupMemberLabel;
-    QTextEdit*    _pGroupIntroduce;
-    QPushButton* _pSendMsgBtn;
-
-    GroupMemberPopWnd* _pGroupMemberPopWnd;
-
-    ModButton*    _modGroupName;
-    ModButton*    _modGroupTopic;
-    ModButton*    _modGroupJJ;
+    ModButton*    _modGroupName{};
+    ModButton*    _modGroupTopic{};
+    ModButton*    _modGroupJJ{};
 
 private:
-    QString _strGroupId;
-    QString _srtHead;
-    QString _groupName;
+    QString                  _strGroupId;
+    QString                  _srtHead;
+    QString                  _groupName;
+    std::vector<std::string> groupMembers;
 
 private:
     bool   _moded;

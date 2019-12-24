@@ -157,9 +157,7 @@ void UserCard::initUi()
         tmpLabel->setVisible(false);
         _pUserNoEdit->setVisible(false);
     }
-#if defined(_ATALK)
-    tmpLabel = new QLabel(tr("ATalk ID"));
-#elif defined(_STARTALK)
+#if defined(_STARTALK)
     tmpLabel = new QLabel(tr("StarTalk ID"));
 #else
     tmpLabel = new QLabel(tr("Qunar ID"));
@@ -255,8 +253,8 @@ void UserCard::initUi()
 	});
 }
 
-bool UserCard::showUserCard(std::shared_ptr<QTalk::Entity::ImUserSupplement> imuserSup,
-                            std::shared_ptr<QTalk::Entity::ImUserInfo> info)
+bool UserCard::showUserCard(const std::shared_ptr<QTalk::Entity::ImUserSupplement>& imuserSup,
+                            const std::shared_ptr<QTalk::Entity::ImUserInfo>& info)
 {
     QMutexLocker locker(&_mutex);
 

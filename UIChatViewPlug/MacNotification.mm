@@ -69,7 +69,7 @@ void sendTextMessage(const std::string &text,
     NSUserNotification *notification = [[NSUserNotification alloc] init];
     // title
     [notification setTitle:title];
-    [notification setIdentifier:[NSString stringWithUTF8String:param->loginUser.data()]];
+//    [notification setIdentifier:[NSString stringWithUTF8String:param->loginUser.data()]];
     // subTitle
 //    if(nil != subTitle)
 //        [notification setSubtitle:message];

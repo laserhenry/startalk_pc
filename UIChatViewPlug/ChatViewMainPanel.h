@@ -69,7 +69,6 @@ public:
 	void onRecvAddGroupMember(const std::string& memberId, const std::string& nick, int affiliation);
 	void onRecvRemoveGroupMember(const std::string& memberId);
 	void onShowSearchWnd();
-    void onPositionMessage(qint64);
 
 public:
     void setShareMessageState(bool flag);
@@ -79,11 +78,6 @@ private:
 
 private:
 	void   initUi();
-
-private:
-    void onGetBeforeAllMessage(qint64 time);
-    void onGetBeforeFileMessage(qint64 time);
-    void onSearch(qint64 time, const QString&);
 
 private slots:
 	void showMessageSlot(const QTalk::Entity::ImMessageInfo& msg, bool isHis);

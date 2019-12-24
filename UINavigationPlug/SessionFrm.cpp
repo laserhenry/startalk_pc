@@ -212,7 +212,7 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
 
         //
         QTalk::Entity::JID jid(userId.toStdString().data());
-        std::string id = jid.barename();
+        std::string id = jid.basename();
         if (SYSTEM_XMPPID == jid.username() || RBT_SYSTEM == jid.username()) {
             QString syshead = ":/UINavigationPlug/image1/system.png";
             item->setData(tr(SYSTEM_NAME), ITEM_DATATYPE_USERNAME);
@@ -253,7 +253,7 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
     }
     item->setData(mess.messageId, ITEM_DATATYPE_LAST_MESSAGE_ID);
     item->setData(mess.messageRecvTime, ITEM_DATATYPE_LASTTIME);
-    item->setData(GenerateTimeText(mess.messageRecvTime), ITEM_DATATYPE_LASTSTRTIME);
+//    item->setData(GenerateTimeText(mess.messageRecvTime), ITEM_DATATYPE_LASTSTRTIME);
 
     if (!isSend && notCurItem) {
         unsigned int count = item->data(ITEM_DATATYPE_UNREADCOUNT).toUInt();
@@ -419,7 +419,7 @@ void SessionFrm::onloadSessionData() {
             item->setData(sessionInfo->ChatType, ITEM_DATATYPE_CHATTYPE);
             item->setData(QString::fromStdString(sessionInfo->XmppId), ITEM_DATATYPE_USERID);
             item->setData(sessionInfo->LastUpdateTime, ITEM_DATATYPE_LASTTIME);
-            item->setData(GenerateTimeText(sessionInfo->LastUpdateTime), ITEM_DATATYPE_LASTSTRTIME);
+//            item->setData(GenerateTimeText(sessionInfo->LastUpdateTime), ITEM_DATATYPE_LASTSTRTIME);
             item->setData(QString::fromStdString(realJid), ITEM_DATATYPE_REALJID);
             item->setData(QString::fromStdString(sessionInfo->LastMessageId), ITEM_DATATYPE_LAST_MESSAGE_ID);
 
@@ -790,34 +790,6 @@ void SessionFrm::initLayout() {
     _pContextMenu->addAction(_quitGroupAct);
 }
 
-/**
-  * @函数名
-  * @功能描述
-  * @参数
-  * @author cc
-  * @date 2018.9.27
-  */
-QString SessionFrm::GenerateTimeText(const QInt64 &time) {
-
-    if(0 == time)
-        return "";
-
-    QDateTime curTime = QDateTime::currentDateTimeUtc();
-    QDateTime msgTime = QDateTime::fromMSecsSinceEpoch(time);
-    int curYear = curTime.date().year();
-    int msgYear = msgTime.date().year();
-    if (curYear > msgYear)
-        return msgTime.date().toString("yyyy-MM-dd");
-
-    QInt64 curDays = curTime.date().toJulianDay();
-    QInt64 msgDays = msgTime.date().toJulianDay();
-    if (curDays - msgDays > 10 * 24) {
-        return "";
-    }
-    QString t = curDays > msgDays ? msgTime.date().toString("MM-dd") : msgTime.time().toString("hh:mm");
-    std::string tt = t.toStdString();
-    return t;
-}
 
 /**
   * @函数名
@@ -852,7 +824,7 @@ void SessionFrm::setUserStatus(const QTalk::Entity::UID &uid, bool check) {
             item->setData(true, ITEM_DATATYPE_ISONLINE);
             return;
         }
-        if (jid.barename() == Platform::instance().getSelfXmppId()) {
+        if (jid.basename() == Platform::instance().getSelfXmppId()) {
             item->setData(true, ITEM_DATATYPE_ISONLINE);
             return;
         }
@@ -863,11 +835,11 @@ void SessionFrm::setUserStatus(const QTalk::Entity::UID &uid, bool check) {
         QMapIterator<QTalk::Entity::UID, QStandardItem *> mapIterator(_sessionMap);
         while (mapIterator.hasNext()) {
             QTalk::Entity::UID uidNext = mapIterator.next().key();
-            if (uidNext.usrId() == jid.barename() || uidNext.realId() == jid.barename()) {
+            if (uidNext.usrId() == jid.basename() || uidNext.realId() == jid.basename()) {
                 QStandardItem *item = mapIterator.value();
                 if (nullptr == item) continue;
                 //
-                bool isOnline = Platform::instance().isOnline(jid.barename());
+                bool isOnline = Platform::instance().isOnline(jid.basename());
                 item->setData(isOnline, ITEM_DATATYPE_ISONLINE);
             }
         }
@@ -1074,9 +1046,9 @@ void SessionFrm::recvRevikeMessage(const QTalk::Entity::UID &uid, const QString 
         }
 
         QInt64 time = QDateTime::currentDateTime().toMSecsSinceEpoch();
-        _sessionMap[uid]->setData(QString("%1撤回了一条消息").arg(userName), ITEM_DATATYPE_MESSAGECONTENT);
+        _sessionMap[uid]->setData(tr("%1撤回了一条消息").arg(userName), ITEM_DATATYPE_MESSAGECONTENT);
         _sessionMap[uid]->setData(time, ITEM_DATATYPE_LASTTIME);
-        _sessionMap[uid]->setData(GenerateTimeText(time), ITEM_DATATYPE_LASTSTRTIME);
+//        _sessionMap[uid]->setData(GenerateTimeText(time), ITEM_DATATYPE_LASTSTRTIME);
         // sort
         _pModel->sort(0);
     }
@@ -1469,7 +1441,10 @@ void SessionFrm::onGotMState(const QTalk::Entity::UID &uid, const QString &messa
     {
         auto itemMsgId = _sessionMap[uid]->data(ITEM_DATATYPE_LAST_MESSAGE_ID).toString();
         if(messageId == itemMsgId)
-            _sessionMap[uid]->setData(GenerateTimeText(time), ITEM_DATATYPE_LASTSTRTIME);
+        {
+            _sessionMap[uid]->setData(time, ITEM_DATATYPE_LASTTIME);
+//            _sessionMap[uid]->setData(GenerateTimeText(time), ITEM_DATATYPE_LASTSTRTIME);
+        }
     }
 }
 

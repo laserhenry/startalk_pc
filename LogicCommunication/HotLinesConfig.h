@@ -29,21 +29,21 @@ public:
 
 public:
     //会话转移
-    void getTransferSeatsList(const QTalk::Entity::UID uid);
-    void transferCsr(const QTalk::Entity::UID uid,const std::string newCsrName,const std::string reason);
+    void getTransferSeatsList(const QTalk::Entity::UID& uid);
+    void transferCsr(const QTalk::Entity::UID& uid,const std::string& newCsrName,const std::string &reason);
 
 public:
     //客服挂断
-    void serverCloseSession(const std::string username, const std::string seatname, const std::string virtualname);
+    void serverCloseSession(const std::string& username, const std::string& virtualname);
     //发送产品卡片
-    void sendProduct(const std::string username, const std::string virtualname, const std::string product,const std::string type);
+    void sendProduct(const std::string& username, const std::string& virtualname, const std::string& product,const std::string& type);
 
 public:
     //快捷回复
     void updateQuickReply();
 
 public:
-    void sendWechat(const QTalk::Entity::UID uid);
+    void sendWechat(const QTalk::Entity::UID &uid);
 
 public:
     void getHotLineMessageList(const std::string& xmppId);

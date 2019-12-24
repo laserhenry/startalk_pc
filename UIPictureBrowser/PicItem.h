@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2018/11/17.
+// Created by cc on 2018/11/17.
 //
 
 #ifndef QTALK_V2_PICITEM_H
@@ -26,8 +26,6 @@ protected:
     QRectF boundingRect() const override;
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
-
-    void wheelEvent(QGraphicsSceneWheelEvent *e) override;
 
 public:
     void setPixmap(QPixmap &pixmap, const QString &path, qreal);

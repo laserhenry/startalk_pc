@@ -121,40 +121,42 @@ private:
 	void adjustWndRect();
 	// 截屏
     void onScreentShot();
+    //
+    void dealDumpFile();
 
 public:
-    QTalkMsgManager  *_pMessageManager;
+    QTalkMsgManager   *_pMessageManager{};
 
 private:
-    QTimer  *_timr;
+    QTimer   *_timr{};
 
 private:
-    IUITitlebarPlug * _titleBarPlugin;
-    IUINavigationPlug * _navigationPlugin;
-    IUIChatViewPlug * _chatViewPlugin;
-    IUICardManagerPlug* _pCardManagerPlug;
-	IUIGroupManagerPlug* _pGroupManagerPlug;
-    IUIPictureBroswerPlug* _pPictureBrowserPlug;
-	IUIAddressBookPlug*    _pAddressBookPlug;
-	IUIOAManagerPlug*      _pOAManagerPlug;
-    QFrame * _mainFrm;
-    QFrame * _mainBottomFrm;
-    QWidget * _titleBar;
-    QWidget * _navigationPanel;
-    QWidget * _chatViewPanel;
-    QWidget * _pCardManager;
-    QWidget * _pGroupManager;
-    QWidget*  _pPictureBrowser;
-	QWidget*  _pAddressBook;
-	QWidget*  _pOAManager;
-    QVBoxLayout * _mainLayout;
-    QFrame * _bottomFrm;
-    QSplitter * _bottomSplt;
+    IUITitlebarPlug  *_titleBarPlugin{};
+    IUINavigationPlug  *_navigationPlugin{};
+    IUIChatViewPlug  *_chatViewPlugin{};
+    IUICardManagerPlug *_pCardManagerPlug{};
+	IUIGroupManagerPlug* _pGroupManagerPlug{};
+    IUIPictureBroswerPlug *_pPictureBrowserPlug{};
+	IUIAddressBookPlug *_pAddressBookPlug{};
+	IUIOAManagerPlug *_pOAManagerPlug{};
+    QFrame * _mainFrm{};
+    QFrame * _mainBottomFrm{};
+    QWidget  *_titleBar{};
+    QWidget  *_navigationPanel{};
+    QWidget  *_chatViewPanel{};
+    QWidget  *_pCardManager{};
+    QWidget * _pGroupManager{};
+    QWidget *_pPictureBrowser{};
+	QWidget *_pAddressBook{};
+	QWidget *_pOAManager{};
+    QVBoxLayout  *_mainLayout{};
+    QFrame  *_bottomFrm{};
+    QSplitter  *_bottomSplt{};
 
-	SystemTray* _pSysTrayIcon;
+	SystemTray* _pSysTrayIcon{};
 
 
-    QStackedLayout* bodyLay;
+    QStackedLayout* bodyLay{};
 
 #ifdef _MACOS
 protected:
@@ -167,34 +169,34 @@ public:
     static bool _sys_run;
 
 private:
-	QTalkMsgListener *_pListener;
-	IUILoginPlug     *_pLoginPlug;
-	QDialog          *_logindlg;
+	QTalkMsgListener  *_pListener{};
+	IUILoginPlug      *_pLoginPlug{};
+	QDialog           *_logindlg{};
 
 private:
-    QTalk::ConfigLoader *_pConfigLoader;
+    QTalk::ConfigLoader  *_pConfigLoader{};
 
 private:
     enum {WND_INVALID, WND_NORMAL, WND_MAXSIZE, WND_FULLSCREEN};
 
 private:
 	bool _initUi;
-	NoOperationThread *_noOperatorThread;
+	NoOperationThread  *_noOperatorThread{};
 
 private:
-    QHotkey* _pScreentShot;
-    QHotkey* _pWakeWnd;
-    STLazyQueue<bool> *_pScreentShotQueue;
+    QHotkey* _pScreentShot{};
+    QHotkey* _pWakeWnd{};
+    STLazyQueue<bool> *_pScreentShotQueue{};
 
 private:
     qint64 _login_t;
     qint64 _logout_t;
-    QTimer* _pOfflineTimer;
+    QTimer *_pOfflineTimer{};
     bool _isOffline; // 是否离线(包括逻辑离线)
     QString _ipv4Address;
 
     QMutex _logMutex;
-    QTimer* _pLogTimer;
+    QTimer* _pLogTimer{};
     std::vector<QTalk::StActLog> _operators;
 
 	int boundaryWidth = 5;

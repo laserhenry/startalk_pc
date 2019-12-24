@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019/10/21.
+// Created by cc on 2019/10/21.
 //
 
 #ifndef QTALK_V2_MEDALDETAILWND_H

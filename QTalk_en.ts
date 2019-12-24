@@ -269,6 +269,10 @@
         <source>请选择有效的消息</source>
         <translation>Select a valid message</translation>
     </message>
+    <message>
+        <source>%1撤回了一条消息</source>
+        <translation>%1 recalled a message</translation>
+    </message>
 </context>
 <context>
     <name>ChatViewItem</name>
@@ -570,19 +574,19 @@ the current number:%1</translation>
     <name>FileItemWgt</name>
     <message>
         <source>转发</source>
-        <translation>Forward</translation>
+        <translation type="vanished">Forward</translation>
     </message>
     <message>
         <source>提醒</source>
-        <translation>Warning</translation>
+        <translation type="vanished">Warning</translation>
     </message>
     <message>
         <source>未找到本地文件!</source>
-        <translation>No local file was found!</translation>
+        <translation type="vanished">No local file was found!</translation>
     </message>
     <message>
         <source>选择文件下载路径</source>
-        <translation>select file download path</translation>
+        <translation type="vanished">select file download path</translation>
     </message>
 </context>
 <context>
@@ -907,6 +911,10 @@ the current number:%1</translation>
     <message>
         <source>文件</source>
         <translation>File</translation>
+    </message>
+    <message>
+        <source>链接</source>
+        <translation>Link</translation>
     </message>
 </context>
 <context>
@@ -1730,6 +1738,25 @@ the current number:%1</translation>
     </message>
 </context>
 <context>
+    <name>SearchFileITem</name>
+    <message>
+        <source>下载</source>
+        <translation>Download</translation>
+    </message>
+    <message>
+        <source>打开文件夹</source>
+        <translation>Open folder</translation>
+    </message>
+    <message>
+        <source>提醒</source>
+        <translation>Warning</translation>
+    </message>
+    <message>
+        <source>未找到本地文件</source>
+        <translation>The local file was not found</translation>
+    </message>
+</context>
+<context>
     <name>SearchItemDelegate</name>
     <message>
         <source>展开更多</source>
@@ -2005,6 +2032,10 @@ or ID</translation>
         <source>即将退出群聊%1 (%2), 是否继续?</source>
         <translation>Quit group %1 (%2)?</translation>
     </message>
+    <message>
+        <source>%1撤回了一条消息</source>
+        <translation>%1 recalled a message</translation>
+    </message>
 </context>
 <context>
     <name>SessionTransferWnd</name>
@@ -2037,7 +2068,7 @@ or ID</translation>
     <name>ShareMessageFrm</name>
     <message>
         <source>分享消息</source>
-        <translation>Share messages</translation>
+        <translation>Share</translation>
     </message>
     <message>
         <source>已选%1条消息</source>
@@ -2295,7 +2326,7 @@ or ID</translation>
     </message>
     <message>
         <source>使用内置浏览器打开对话中的链接</source>
-        <translation>Open links in dialogs using built-in browsers</translation>
+        <translation type="vanished">Open links in dialogs using built-in browsers</translation>
     </message>
     <message>
         <source>使用内置浏览器打开OA链接</source>
@@ -2809,6 +2840,13 @@ or ID</translation>
     <message>
         <source>无效的视频文件!</source>
         <translation>Invalid video file!</translation>
+    </message>
+</context>
+<context>
+    <name>WebEnginePage</name>
+    <message>
+        <source>打开</source>
+        <translation>Open</translation>
     </message>
 </context>
 <context>

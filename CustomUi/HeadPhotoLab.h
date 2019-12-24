@@ -14,13 +14,12 @@ class CUSTOMUISHARED_EXPORT HeadPhotoLab : public QLabel
 {
 public:
     explicit HeadPhotoLab(
-            const QString& strHeadPath = QString(),
+            QString  strHeadPath = QString(),
             int radius = 0,
             bool isGrey = false,
             bool startMovie = false,
             bool showRect = false,
             QWidget *parent = nullptr);
-    ~HeadPhotoLab() override;
 
 public:
     void setHead(const QString& headPath,
@@ -35,7 +34,6 @@ public:
 protected:
     void paintEvent(QPaintEvent* e) override;
     void initMovie();
-    bool event(QEvent* e) override ;
 
 private:
     QString _imagePath;

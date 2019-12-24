@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2018/11/17.
+// Created by cc on 2018/11/17.
 //
 
 #include "PicItem.h"
@@ -72,19 +72,6 @@ void PicItem::setPixmap(QPixmap &pixmap, const QString &path, qreal proportion) 
     });
     _pixmap = pixmap;
     _proportion = proportion;
-}
-
-// 滚轮事件
-void PicItem::wheelEvent(QGraphicsSceneWheelEvent *e) {
-    if (e->delta() > 0)
-        _scaleVal++;
-    else
-        _scaleVal--;
-    //
-    onScaleChange(_scaleVal, QPoint(0, 0));
-    //
-    e->accept();
-    //QGraphicsItem::wheelEvent(e);
 }
 
 // 图片缩放

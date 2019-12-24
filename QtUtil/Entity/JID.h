@@ -16,37 +16,24 @@ namespace QTalk {
         class QTALK_UTIL_EXPORT JID {
 
         public:
-            JID(const char *user, const std::string &clientVersion = "",  const std::string &platformStr = "");
-
-            static JID *jidWithString(std::string *str);
-
-            JID(const std::string *jid, const std::string &clientVersion = "",  const std::string &platformStr = "");
-
-
-            JID(std::string *node, std::string *domain, std::string *resource, const std::string &clientVersion = "",  const std::string &platformStr = "");
+            explicit JID(const std::string &jid, const std::string &clientVersion = "",  const std::string &platformStr = "", int channel = 1);
 
         public:
             std::string fullname();
-
-            std::string barename();
-
+            std::string basename();
             string &username();
-
             string &resources();
-
             std::string &domainname();
 
         private:
-            void init(std::string *node, std::string *domain, std::string *resource);
-
-            void innerParseUser(const char *input, const string &clientVersion, const string &platformStr);
+            void init(const std::string &node, const  std::string &domain, const std::string &resource, int channel);
+            void innerParseUser(const string &input, const string &clientVersion, const string &platformStr, int channel);
 
         private:
-            std::string node;
-            std::string domain;
-            std::string resource;
-
-
+            std::string _node;
+            std::string _domain;
+            std::string _resource;
+            int         _channel{};
         };
     }
 

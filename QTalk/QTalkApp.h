@@ -21,9 +21,7 @@ public:
 protected:
     void initLogSys();
 
-    void initDump();
 
-	void dealDumpFile();
 
     bool notify(QObject *receiver, QEvent *e) Q_DECL_OVERRIDE;
 

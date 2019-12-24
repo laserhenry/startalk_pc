@@ -1,18 +1,78 @@
-//
-// Created by QITMAC000260 on 2019/11/07.
+﻿//
+// Created by cc on 2019/11/07.
 //
 
 #include "MessageAnalysis.h"
 #include "../../Emoticon/EmoticonMainWgt.h"
 #include "../../Platform/Platform.h"
 #include <QFileInfo>
+#include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonObject>
 #include <ChatUtil.h>
 
 namespace QTalk {
-    
+
+    void analysisMessage(StNetSearchResult &info)
+    {
+        switch (info.msg_type)
+        {
+            case QTalk::Entity::MessageTypeGroupNotify:
+            case QTalk::Entity::MessageTypeRevoke:
+            {
+                break;
+            }
+            case QTalk::Entity::MessageTypeFile:
+            {
+                QTalk::analysisFileMessage(info.body, info.extend_info, info);
+                break;
+            }
+            case QTalk::Entity::MessageTypeCommonTrdInfo:
+            case QTalk::Entity::MessageTypeCommonTrdInfoV2:
+            {
+                QTalk::analysisCommonTrdMessage(info.body, info.extend_info, info);
+                break;
+            }
+            case QTalk::Entity::MessageTypeSourceCode:
+            {
+                QTalk::analysisCodeMessage(info.body, info.extend_info, info);
+                break;
+            }
+            case QTalk::Entity::MessageTypeSmallVideo:
+            {
+                QTalk::analysisVideoMessage(info.body, info.extend_info, info);
+                break;
+            }
+            case QTalk::Entity::WebRTC_MsgType_VideoCall:
+            case QTalk::Entity::WebRTC_MsgType_AudioCall:
+            case QTalk::Entity::WebRTC_MsgType_Video:
+            case QTalk::Entity::WebRTC_MsgType_Video_Group:
+                break;
+            case QTalk::Entity::MessageTypeShock:
+            {
+                QString msgFrom = info.from;
+                info.body = QObject::tr("你");
+                if (Platform::instance().getSelfXmppId() == msgFrom.toStdString())
+                    info.body.append(QObject::tr("抖了他一下"));
+                else
+                    info.body.append(QObject::tr("收到一个窗口抖动"));
+                break;
+            }
+            default:
+            {
+                qWarning() << "------ default message type " << info.msg_type;
+            }
+            case QTalk::Entity::MessageTypeText:
+            case QTalk::Entity::MessageTypePhoto:
+            case QTalk::Entity::MessageTypeGroupAt:
+            case QTalk::Entity::MessageTypeImageNew:
+            case QTalk::Entity::MessageTypeRobotAnswer:
+                QTalk::analysisTextMessage(info.body, info.extend_info, info.text_messages);
+                break;
+        }
+    }
+
     void analysisTextMessage(const QString& content, const QString& extendInfo, std::vector<StTextMessage>& messages)
     {
         QRegExp regExp("\\[obj type=[\\\\]?\"([^\"]*)[\\\\]?\" value=[\\\\]?\"([^\"]*)[\\\\]?\"(.*)\\]");
@@ -240,28 +300,7 @@ namespace QTalk {
             ret.file_info.fileSize = object.value("FileSize").toString();
             ret.file_info.fileLink = object.value("HttpUrl").toString();
             ret.file_info.fileMd5 = object.value("FILEMD5").toString();
-
-            QFileInfo iconInfo(ret.file_info.fileName);
-            QString &iconPath = ret.file_info.fileIcon;
-            QString suffix = iconInfo.suffix().toLower();
-            if(suffix == "mp3")
-                iconPath = ":/QTalk/image1/file_type/audio.png";
-            else if(suffix == "mp4")
-                iconPath = ":/QTalk/image1/file_type/video.png";
-            else if(suffix == "txt" || suffix == "json")
-                iconPath = ":/QTalk/image1/file_type/text.png";
-            else if(suffix == "pdf")
-                iconPath = ":/QTalk/image1/file_type/pdf.png";
-            else if(suffix == "ppt" || suffix == "pptx")
-                iconPath = ":/QTalk/image1/file_type/ppt.png";
-            else if(suffix == "doc" || suffix == "docx")
-                iconPath = ":/QTalk/image1/file_type/word.png";
-            else if(suffix == "xls" || suffix == "xlsx")
-                iconPath = ":/QTalk/image1/file_type/excel.png";
-            else if(suffix == "rar" || suffix == "zip" || suffix == "7z")
-                iconPath = ":/QTalk/image1/file_type/zip.png";
-            else
-                iconPath = ":/QTalk/image1/file_type/unknown.png";
+            ret.file_info.fileIcon = QTalk::getIconByFileName(ret.file_info.fileName);
         }
     }
 
@@ -345,6 +384,48 @@ namespace QTalk {
                 ret.video.newVideo = object.value("newVideo").toBool();
             //
             QTalk::Image::scaImageSize(ret.video.width, ret.video.height);
+        }
+    }
+
+    void analysisLocalImage(const QString& content, QStringList& links)
+    {
+        QRegExp regExp("\\[obj type=[\\\\]?\"([^\"]*)[\\\\]?\" value=[\\\\]?\"([^\"]*)[\\\\]?\"(.*)\\]");
+        regExp.setMinimal(true);
+
+        int pos = 0;
+        while ((pos = regExp.indexIn(content, pos)) != -1) {
+            QString item = regExp.cap(0); // 符合条件的整个字符串
+            QString type = regExp.cap(1); // 多媒体类型
+            QString val = regExp.cap(2); // 路径
+
+            if("image" == type)
+            {
+                QString link;
+                qreal w = 0, h = 0;
+                analysisImageMessage(item, link, w, h);
+                if(!link.isEmpty())
+                    links.push_back(link);
+            }
+            //
+            pos += regExp.matchedLength();
+        }
+    }
+
+    void analysisLocalLink(const QString& content, QStringList& links)
+    {
+        QRegExp regExp("\\[obj type=[\\\\]?\"([^\"]*)[\\\\]?\" value=[\\\\]?\"([^\"]*)[\\\\]?\"(.*)\\]");
+        regExp.setMinimal(true);
+
+        int pos = 0;
+        while ((pos = regExp.indexIn(content, pos)) != -1) {
+            QString item = regExp.cap(0); // 符合条件的整个字符串
+            QString type = regExp.cap(1); // 多媒体类型
+            QString val = regExp.cap(2); // 路径
+
+            if("url" == type)
+                links.push_back(val);
+
+            pos += regExp.matchedLength();
         }
     }
 }

@@ -44,6 +44,8 @@ public:
     void clearData();
     // 处理时间信息判断是否显示 超一分钟显示
     void showMessageTime(const QString& msgId, const QInt64& strTime, bool isHistoryMessage = false);
+    //
+    void updateTime();
 
 private:
     void connects();

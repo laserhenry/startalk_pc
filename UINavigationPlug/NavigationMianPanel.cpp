@@ -4,6 +4,7 @@
 #include "ContactFrm.h"
 #include <QDebug>
 #include <QTimer>
+#include <QtConcurrent>
 #include "../UICom/UIEntity.h"
 #include "MessageManager.h"
 #include <QMetaType>
@@ -45,10 +46,10 @@ void NavigationMianPanel::receiveSession(R_Message mess)
 	info.chatType = (QTalk::Enum::ChatType)message.ChatType;
 	info.messageId = QString::fromStdString(message.MsgId);
 	info.messageContent = QString::fromStdString(message.Content);
-	info.xmppId = QString::fromStdString(QTalk::Entity::JID(message.SendJid.c_str()).barename());
-	info.realJid = QString::fromStdString(QTalk::Entity::JID(message.RealJid.c_str()).barename());
+	info.xmppId = QString::fromStdString(QTalk::Entity::JID(message.SendJid.c_str()).basename());
+	info.realJid = QString::fromStdString(QTalk::Entity::JID(message.RealJid.c_str()).basename());
 	info.messageRecvTime = message.LastUpdateTime;
-	std::string from = QTalk::Entity::JID(message.From.c_str()).barename();
+	std::string from = QTalk::Entity::JID(message.From.c_str()).basename();
 	info.sendJid = QString::fromStdString(from);
 	info.messtype = message.Type;
 
@@ -86,7 +87,7 @@ void NavigationMianPanel::init() {
     if (nullptr == _pConnToServerTimer) {
         _pConnToServerTimer = new QTimer(this);
         _pConnToServerTimer->setInterval(5000);
-        connect(_pConnToServerTimer, SIGNAL(timeout()), this, SLOT(retryToConnect()));
+        connect(_pConnToServerTimer, &QTimer::timeout, this, &NavigationMianPanel::retryToConnect);
         connect(this, SIGNAL(connToServerTimerSignal(bool)), this, SLOT(connToServerTimerSlot(bool)));
     }
     //
@@ -227,9 +228,8 @@ void NavigationMianPanel::connects() {
   * @date     2018/10/26
   */
 void NavigationMianPanel::connToServerTimerSlot(bool sts) {
+    Q_ASSERT(Platform::instance().isMainThread());
     if (nullptr != _pConnToServerTimer) {
-//        if (_conneted && _pConnToServerTimer->isActive())
-//            emit loadSession();
         sts ? _pConnToServerTimer->start() : _pConnToServerTimer->stop();
     }
 }
@@ -302,7 +302,11 @@ void NavigationMianPanel::onTcpDisconnect() {
   */
 void NavigationMianPanel::retryToConnect() {
 
-    if (nullptr != _pConnToServerTimer && _pConnToServerTimer->isActive()) {
+    if (Platform::instance().isMainThread() &&
+        nullptr != _pConnToServerTimer &&
+        _pConnToServerTimer->isActive()) {
+
+        info_log("retryToConnect by timer");
         _pConnToServerTimer->stop();
     }
 
@@ -316,16 +320,14 @@ void NavigationMianPanel::retryToConnect() {
         return;
     }
     //
-    if(_pTcpDisconnect)
-        _pTcpDisconnect->setText((tr("正在重连")));
-
     if (nullptr != _messageManager) {
-        std::thread([this, host, port](){
+        QtConcurrent::run([this, host, port](){
             // try connect to server
             std::unique_ptr<QTcpSocket> tcpSocket(new QTcpSocket);
             tcpSocket->connectToHost(host.data(), port);
-            if(!tcpSocket->waitForConnected(9000))
+            if(!tcpSocket->waitForConnected(5000))
             {
+                info_log("connect refuse by socket");
                 tcpSocket->abort();
                 emit connToServerTimerSignal(true);
                 return;
@@ -333,18 +335,8 @@ void NavigationMianPanel::retryToConnect() {
             tcpSocket->close();
             // 重连
             _messageManager->retryConnecToServer();
-        }).detach();
+        });
     }
-    //
-    QTimer::singleShot(10000, [this](){
-        if(!_conneted)
-        {
-            if(_pTcpDisconnect)
-                _pTcpDisconnect->setText((tr("当前网络不可用")));
-
-//            emit connToServerTimerSignal(true);
-        }
-    });
 }
 
 /**
@@ -357,7 +349,6 @@ void NavigationMianPanel::retryToConnect() {
 void NavigationMianPanel::onNewSession(const StSessionInfo &into) {
     if (_pSessionFrm) {
         if (!Platform::instance().isMainThread()) {
-            ////debug_log("NavigationMianPanel::onNewSession");
             throw std::runtime_error("not main thread");
         }
         _pSessionFrm->onNewSession(into);

@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019/11/14.
+// Created by cc on 2019/11/14.
 //
 
 #include "FileRecordWnd.h"
@@ -9,6 +9,7 @@
 #include <QGridLayout>
 #include <QToolButton>
 #include <QFileInfo>
+#include "../ChatUtil.h"
 
 #include "../MessageItems/FileRoundProgressBar.h"
 #include "../ChatViewMainPanel.h"
@@ -19,35 +20,7 @@
 
 extern ChatViewMainPanel *g_pMainPanel;
 
-QString getIconByFileName (const QString& fileName)
-{
-    QFileInfo iconInfo(fileName);
-    QString iconPath;
-    QString suffix = iconInfo.suffix().toLower();
-    if(suffix == "mp3")
-        iconPath = ":/QTalk/image1/file_type/audio.png";
-    else if(suffix == "mp4")
-        iconPath = ":/QTalk/image1/file_type/video.png";
-    else if(suffix == "txt" || suffix == "json")
-        iconPath = ":/QTalk/image1/file_type/text.png";
-    else if(suffix == "pdf")
-        iconPath = ":/QTalk/image1/file_type/pdf.png";
-    else if(suffix == "ppt" || suffix == "pptx")
-        iconPath = ":/QTalk/image1/file_type/ppt.png";
-    else if(suffix == "doc" || suffix == "docx")
-        iconPath = ":/QTalk/image1/file_type/word.png";
-    else if(suffix == "xls" || suffix == "xlsx")
-        iconPath = ":/QTalk/image1/file_type/excel.png";
-    else if(suffix == "rar" || suffix == "zip" || suffix == "7z")
-        iconPath = ":/QTalk/image1/file_type/zip.png";
-    else
-        iconPath = ":/QTalk/image1/file_type/unknown.png";
-
-    return iconPath;
-}
-
 /** FileRecordItemWgt **/
-QString getRealFilePath(const std::string& msgId, const std::string& md5);
 FileRecordItemWgt::FileRecordItemWgt(const StFileRecord &record, QWidget *parent)
     :QFrame(parent)
     , _msg_id(record.msg_id.toStdString())
@@ -61,7 +34,7 @@ FileRecordItemWgt::FileRecordItemWgt(const StFileRecord &record, QWidget *parent
     contentFrm->setObjectName("borderFrm");
 
     auto* iconLabel = new NetImageLabel("", this);
-    iconLabel->setLocalImage(getIconByFileName(record.file_name));
+    iconLabel->setLocalImage(QTalk::getIconByFileName(record.file_name));
     iconLabel->setFixedSize(36, 36);
 
     auto* nameLabel = new QLabel(record.file_name, this);
@@ -84,9 +57,6 @@ FileRecordItemWgt::FileRecordItemWgt(const StFileRecord &record, QWidget *parent
     openPathBtn->setObjectName("FileItemWgt_openPathBtn");
     openPathBtn->setToolTip(tr("打开文件夹"));
     auto *processBar = new FileRoundProgressBar(this);
-//    auto* moreBtn = new QToolButton(this);
-//    moreBtn->setObjectName("FileItemWgt_moreBtn");
-//    moreBtn->setFixedSize(26, 26);
     openPathBtn->setFixedSize(26, 26);
     downloadBtn->setFixedSize(26, 26);
     processBar->setFixedSize(26, 26);
@@ -97,8 +67,6 @@ FileRecordItemWgt::FileRecordItemWgt(const StFileRecord &record, QWidget *parent
     mainLay->addWidget(processBar);
     mainLay->addWidget(downloadBtn);
     mainLay->addWidget(openPathBtn);
-//    mainLay->addWidget(moreBtn);
-
     //
     auto* sourceLabel = new QLabel(this);
     sourceLabel->setMaximumWidth(300);
@@ -111,20 +79,7 @@ FileRecordItemWgt::FileRecordItemWgt(const StFileRecord &record, QWidget *parent
     lay->addWidget(sourceLabel);
 
     //
-//    auto* _menu = new QMenu(this);
-//    _menu->setAttribute(Qt::WA_TranslucentBackground, true);
-//
-//    auto* forwardAct = new QAction(tr("转发"), _menu);
-//    _menu->addAction(forwardAct);
-//
-//    connect(moreBtn, &QToolButton::clicked, [this, _menu](){
-//        _menu->exec(QCursor::pos());
-//    });
-//    connect(forwardAct, &QAction::triggered, [this](){
-//        g_pMainPanel->forwardMessage(_msg_id);
-//    });
-    //
-    auto localPath = getRealFilePath(record.msg_id.toStdString(), record.file_md5.toStdString());
+    auto localPath = QTalk::File::getRealFilePath(record.msg_id.toStdString(), record.file_md5.toStdString());
     bool downloaded = !localPath.isEmpty();
     processBar->setVisible(false);
     downloadBtn->setVisible(!downloaded);
@@ -136,34 +91,8 @@ FileRecordItemWgt::FileRecordItemWgt(const StFileRecord &record, QWidget *parent
     });
 }
 
-//
-QString getRealFilePath(const std::string& msgId, const std::string& md5)
-{
-    QString fullFileName = QString::fromStdString(g_pMainPanel->getFileMsgLocalPath(msgId));
-    if(fullFileName.isEmpty() || !QFile::exists(fullFileName))
-    {
-        QString linkFile = g_pMainPanel->getFileLink(md5.data());
-#ifdef _WINDOWS
-        linkFile.append(".lnk");
-#endif
-        QFileInfo linkFileInfo(linkFile);
-        if (linkFileInfo.exists() && !linkFileInfo.canonicalFilePath().isEmpty())
-#ifdef _WINDOWS
-            return linkFileInfo.symLinkTarget();
-#else
-            return linkFileInfo.canonicalFilePath();
-#endif // _WINDOWS
-        else
-            return QString();
-    }
-    else
-    {
-        return fullFileName;
-    }
-}
-
 void FileRecordItemWgt::onOpenFilePath() {
-    QString fileName = getRealFilePath(_msg_id, _md5);
+    QString fileName = QTalk::File::getRealFilePath(_msg_id, _md5);
     QFileInfo info(fileName);
     if (fileName.isEmpty() || !info.exists()) {
         int ret = QtMessageBox::question(this, tr("提醒"), tr("未找到本地文件, 是否下载?"));
@@ -171,31 +100,9 @@ void FileRecordItemWgt::onOpenFilePath() {
             return;
         } else {
             QDesktopServices::openUrl(QUrl(_file_link));
-//            g_pMainPanel->pool().enqueue(std::bind(&FileSendReceiveMessItem::downLoadFile, this));
         }
     } else {
-
-        QtConcurrent::run([info](){
-
-#if defined(_WINDOWS)
-        QStringList params;
-        QString path = info.absoluteFilePath();
-        if (!QFileInfo(path).isDir()) {
-            params << QLatin1String("/select,");
-            params << QDir::toNativeSeparators(path);
-            QProcess::startDetached(QLatin1String("explorer.exe"), params);
-        }
-#elif defined(_MACOS)
-            QStringList scriptArgs;
-            QDesktopServices::openUrl(QUrl::fromLocalFile(info.absolutePath()));
-            scriptArgs << QLatin1String("-e")
-                       << QString::fromLatin1(R"(tell application "Finder" to reveal POSIX file "%1")")
-                               .arg(info.absoluteFilePath());
-            QProcess::execute(QLatin1String("/usr/bin/osascript"), scriptArgs);
-#else
-            QDesktopServices::openUrl(QUrl::fromLocalFile(info.absolutePath()));
-#endif
-        });
+        QTalk::File::openFileFolder(fileName);
     }
 }
 
@@ -277,21 +184,6 @@ void FileRecordWnd::initUI() {
 #ifdef _MACOS
     setWindowFlags(this->windowFlags() | Qt::Tool);
 #endif
-//
-    auto makeLoadingLabel = [this](bool scale = false, QSize size = {0, 0}) -> QLabel* {
-        auto* label = new QLabel(this);
-        auto* mov = new QMovie(":/QTalk/image1/loading.gif");
-        if (scale)
-        {
-            mov->setScaledSize(size);
-            label->setFixedHeight(size.height());
-        }
-
-        label->setMovie(mov);
-        label->setAlignment(Qt::AlignCenter);
-        return label;
-    };
-
     auto* titleBar = new TitleBar(tr("文件管理器"), this, this);
     titleBar->setFixedHeight(50);
     setMoverAble(true, titleBar);
@@ -318,8 +210,8 @@ void FileRecordWnd::initUI() {
     auto* itemDelegate = new FileRecordDelegate(_pView);
     _pView->setItemDelegate(itemDelegate);
 
-    _pLoading = makeLoadingLabel();
-    _pLoadingBottom = makeLoadingLabel(true, {50, 50});
+    _pLoading = QTalk::makeLoadingLabel();
+    _pLoadingBottom = QTalk::makeLoadingLabel(true, {50, 50});
     _pLoadingBottom->setVisible(false);
 
     _pStackWgt = new QStackedWidget(this);

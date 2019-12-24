@@ -21,7 +21,7 @@ public:
     void sendOperatorStatistics(const std::string& ip, const std::vector<QTalk::StActLog>& operators);
     void sendLogReport(const std::string& desc, const std::string &logPath);
     void chanegUserStatus(const std::string &status);
-    void reportDump(const std::string & dump);
+    static  void reportDump(const std::string& ip, const std::string& id, const std::string & dump, QInt64 crashTime);
     std::string checkUpdater(int version);
 };
 

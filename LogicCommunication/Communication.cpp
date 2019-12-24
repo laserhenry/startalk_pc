@@ -1,5 +1,6 @@
 ﻿#include <utility>
 #include <iostream>
+#include<algorithm>
 #include "Communication.h"
 #include "../entity/IM_Session.h"
 #include "../LogicManager/LogicManager.h"
@@ -46,8 +47,7 @@ using namespace QTalk;
 using namespace QTalk::JSON;
 
 Communication::Communication()
-        : _threadPoolCount(3),
-          _port(0) {
+        : _port(0) {
     _pMsgManager = new CommMsgManager;
     _pMsgListener = new CommMsgListener(this);
     _pFileHelper = new FileHelper(this);
@@ -137,7 +137,7 @@ Communication::~Communication() {
  */
 bool Communication::OnLogin(const std::string& userName, const std::string& password)
 {
-    // 设置当前登录的域名
+    // 设置当前登录的userid
     Platform::instance().setSelfUserId(userName);
     // 下载公钥
     if(!_pFileHelper->DownloadPubKey()) return false;
@@ -165,6 +165,8 @@ bool Communication::OnLogin(const std::string& userName, const std::string& pass
         std::string u = map["u"];
         std::string p = map["t"];
         if(!u.empty() && !p.empty()){
+            // 设置当前登录的userid
+            Platform::instance().setSelfUserId(u);
             char uuid[36];
             utils::generateUUID(uuid);
             cJSON *nauth = cJSON_CreateObject();
@@ -210,16 +212,17 @@ bool Communication::OnLogin(const std::string& userName, const std::string& pass
 //
 void Communication::AsyncConnect(const std::string &userName, const std::string &password, const std::string &host,
                                  int port) {
-    debug_log("start login: user:{0}, password length:{1}, host:{2}, port:{3}", userName, password.length(), host, port);
+    info_log("start login: user:{0}, password length:{1}, host:{2}, port:{3}", userName, password.length(), host, port);
     _userName = userName;
     _password = password;
     _host = host;
     _port = port;
 
-    tryConneteToServer();
+    tryConnectToServer();
 }
 
-void Communication::tryConneteToServer()
+//
+void Communication::tryConnectToServer()
 {
     bool isNewLogin = (LOGIN_TYPE_NEW_PASSWORD == NavigationManager::instance().getLoginType());
     LogicManager::instance()->getLogicBase()->tryConnectToServer(_userName, _password, _host, _port,isNewLogin);
@@ -228,7 +231,7 @@ void Communication::tryConneteToServer()
 /**
  * qchat断线重连 需要根据qvt重新获取token
  */
-void Communication::tryConneteToServerByQVT()
+void Communication::tryConnectToServerByQVT()
 {
     std::string qvt = Platform::instance().getQvt();
     std::map<std::string,std::string> userMap;
@@ -460,7 +463,7 @@ void Communication::synSeverData() {
         //
         _pMsgManager->sendLoginProcessMessage("getting user state");
         if (_pMsgManager) {
-            _pMsgManager->sendSynOfflineSuccees();
+            _pMsgManager->sendSynOfflineSuccess();
             // 同步完离线后 开启在线信息查询定时器
             synUsersUserStatus();
         }
@@ -890,7 +893,16 @@ Communication::addHttpRequest(const QTalk::HttpRequest &req,
             auto http = _httpPool[currentThread]->enqueue([this, req, callback, currentThread, showCastWarn]() {
                 debug_log("在第{1}个http坑 开始请求: {0}", req.url, currentThread);
 
-                QTalk::QtHttpRequest request(req.url.c_str());
+                std::string url(req.url);
+                if(!AppSetting::instance().with_ssl)
+                {
+                    if(req.url.substr(0, 5) == "https")
+                    {
+                        url = std::string("http") + req.url.substr(5);
+                    }
+                }
+
+                QTalk::QtHttpRequest request(url.data());
                 //method
                 request.setRequestMethod((RequestMethod)req.method);
                 // header
@@ -1317,11 +1329,20 @@ void Communication::destroyGroup(const std::string &groupId) {
     LogicManager::instance()->getLogicBase()->destroyGroup(groupId);
 }
 
-void Communication::reportDump(const std::string& dumpPath)
+void Communication::reportDump(const std::string&ip, const std::string& id, const std::string &dumpPath, QInt64 crashTime)
 {
-	auto fun = [this, dumpPath](const std::string &url, const std::string &) {
+	auto fun = [this, ip, id, dumpPath, crashTime](const std::string &url, const std::string &) {
 		if (!url.empty()) {
 
+		    // format timestamp
+            struct tm * timeinfo;
+            char buffer [80];
+            time_t rawtime = crashTime / 1000;
+            timeinfo = localtime (&rawtime);
+            strftime (buffer, 80, "%F %T", timeinfo);
+            std::string strTime(buffer);
+
+#ifndef _STARTALK
 			{
 				// 发消息
 				std::ostringstream msgCont;
@@ -1329,13 +1350,70 @@ void Communication::reportDump(const std::string& dumpPath)
 					<< "登录用户: " << Platform::instance().getSelfXmppId()
 					<< " " << Platform::instance().getSelfName() << "\n"
 					<< "版本号: " << Platform::instance().getClientVersion() << "\n"
+					<< "版本id : " << id << "\n"
 					<< "使用平台: " << Platform::instance().getPlatformStr() << "\n"
 					<< "OS 信息: " << Platform::instance().getOSInfo() << "\n"
+					<< "ip: " << ip << "\n"
+					<< "crash at: " << strTime << "\n"
+                    << "exec: " << Platform::instance().getExecuteName() << "\n"
 					<< "dump文件: " << url;
 				//
 				std::string error;
 				bool isSuccess = LogicManager::instance()->getLogicBase()->sendReportMessage(msgCont.str(), error);
 			}
+#endif
+            {
+                // 发邮件
+                std::string strSub = string("QTalk 2.0 崩溃信息 ");
+                std::ostringstream strBody;
+                strBody << "登录用户: " << Platform::instance().getSelfXmppId()
+                        << " " << Platform::instance().getSelfName() <<"<br/>"
+                        << "版本号: " << Platform::instance().getClientVersion() << "<br/>"
+                        << "版本id : " << id << "<br/>"
+                        << "使用平台: " << Platform::instance().getPlatformStr() << "<br/>"
+                        << "OS 信息: " << Platform::instance().getOSInfo() << "<br/>"
+                        << "ip: " << ip << "<br/>"
+                        << "crash at: " << strTime << "<br/>"
+                        << "exec: " << Platform::instance().getExecuteName() << "<br/>"
+                        << "dump文件: " << url;
+                std::string error;
+                std::vector<std::string> tos;
+                {
+                    // todo add email address
+                }
+                bool isSuccess = LogicManager::instance()->getLogicBase()->sendReportMail(
+                        tos, strSub, strBody.str(), true, error);
+            }
+            // report
+#if not defined (_STARTALK) and not defined (_QCHAT)
+            {
+                cJSON *obj = cJSON_CreateObject();
+                cJSON_AddStringToObject(obj, "symbolFileId", id.data());
+                cJSON_AddStringToObject(obj, "resource", Platform::instance().getClientVersion().data());
+                cJSON_AddStringToObject(obj, "platform", Platform::instance().getPlatformStr().data());
+                cJSON_AddStringToObject(obj, "dumpFileUrl", url.data());
+                cJSON_AddStringToObject(obj, "uploadUser", Platform::instance().getSelfXmppId().data());
+                cJSON_AddStringToObject(obj, "uploadIp", ip.data());
+                cJSON_AddNumberToObject(obj, "dumpTime", crashTime);
+                cJSON_AddStringToObject(obj, "exec", Platform::instance().getExecuteName().data());
+
+                auto postBody = QTalk::JSON::cJSON_to_string(obj);
+                auto reportUrl = NavigationManager::instance().getHttpHost() + "/qtalkDump/upload_dump_file.qunar";
+                HttpRequest req(reportUrl, RequestMethod::POST);
+                req.header["Content-Type"] = "application/json;";
+                req.body = postBody;
+                addHttpRequest(req, [](int code, const std::string &response){
+                    if(code == 200)
+                    {
+
+                    }
+                    else
+                    {
+                        error_log("report dump failed");
+                    }
+                });
+            }
+#endif
 		};
 	};
 
@@ -1354,6 +1432,7 @@ void Communication::reportLog(const std::string &desc, const std::string &logPat
             if (!url.empty()) {
 
                 {
+#if !defined(_STARTALK)
                     // 发消息
                     std::ostringstream msgCont;
                     msgCont << "qtalk pc2.0 日志反馈 \n\n"
@@ -1368,7 +1447,6 @@ void Communication::reportLog(const std::string &desc, const std::string &logPat
                     //
                     std::string error;
                     bool isSuccess = LogicManager::instance()->getLogicBase()->sendReportMessage(msgCont.str(), error);
-#if !defined(_STARTALK) and !defined(_QCHAT)
                     debug_log("send message :{0}", isSuccess);
 #endif
                 }
@@ -1376,7 +1454,6 @@ void Communication::reportLog(const std::string &desc, const std::string &logPat
                     // 发邮件
                     std::string strSub = string("QTalk 2.0 反馈日志 ") + Platform::instance().getSelfXmppId();
                     std::ostringstream strBody;
-                    bool isHtml = true;
                     strBody << "登录用户: " << Platform::instance().getSelfXmppId()
                             << " " << Platform::instance().getSelfName() <<"<br/>"
                             << "版本号: " << Platform::instance().getClientVersion() << "<br/>"
@@ -1384,8 +1461,17 @@ void Communication::reportLog(const std::string &desc, const std::string &logPat
                             << "OS 信息: " << Platform::instance().getOSInfo() << "<br/>"
                             << "描述信息: " << desc << " <br/>"
                             << "日志文件: " << url;
+                    std::vector<std::string> tos;
+                    {
+//                        tos.push_back("xxx@xxx.com");
+                        // todo add email address
+                    }
                     std::string error;
-                    bool isSuccess = LogicManager::instance()->getLogicBase()->sendReportMail(strSub, strBody.str(), true, error);
+                    bool isSuccess = LogicManager::instance()->getLogicBase()->sendReportMail(tos,
+                            strSub,
+                            strBody.str(),
+                            true,
+                            error);
                     bool isNotify = (desc != "@@#@@");
                     if (_pMsgManager && isNotify) {
                         _pMsgManager->sendLogReportRet(isSuccess, isSuccess ? "日志反馈成功" : error);
@@ -1522,9 +1608,7 @@ void Communication::sendOperatorStatistics(const std::string &ip, const std::vec
             cJSON_addJsonObject(obj, "user", user);
             // device
             cJSON *device = cJSON_CreateObject();
-#if defined(_ATALK)
-            cJSON_AddStringToObject(device, "plat", "atalk");
-#elif defined(_STARTALK)
+#if defined(_STARTALK)
             cJSON_AddStringToObject(device, "plat", "starTalk");
 #else
             cJSON_AddStringToObject(device, "plat", "qtalk");
@@ -1715,33 +1799,33 @@ void Communication::setServiceSeat(const int sid, const int seat) {
     }
 }
 
-void Communication::serverCloseSession(const std::string& username, const std::string &seatname,
-                                       const std::string& virtualname) {
+void Communication::serverCloseSession(const std::string& username, const std::string& virtualname) {
     if(_pHotLinesConfig){
-        _pHotLinesConfig->serverCloseSession(username, seatname, virtualname);
+        _pHotLinesConfig->serverCloseSession(username, virtualname);
     }
 }
 
-void Communication::getSeatList(const QTalk::Entity::UID uid) {
+void Communication::getSeatList(const QTalk::Entity::UID& uid) {
     if(_pHotLinesConfig){
         _pHotLinesConfig->getTransferSeatsList(uid);
     }
 }
 
-void Communication::sendProduct(const std::string username, const std::string virtualname,const std::string product,const std::string type) {
+void Communication::sendProduct(const std::string& username, const std::string &virtualname,
+        const std::string &product, const std::string &type) {
     if(_pHotLinesConfig){
         _pHotLinesConfig->sendProduct(username,virtualname,product,type);
     }
 }
 
-void Communication::sessionTransfer(const QTalk::Entity::UID uid, const std::string newCser,
-                                    const std::string reason) {
+void Communication::sessionTransfer(const QTalk::Entity::UID& uid, const std::string &newCser,
+                                    const std::string& reason) {
     if(_pHotLinesConfig){
         _pHotLinesConfig->transferCsr(uid,newCser,reason);
     }
 }
 
-void Communication::sendWechat(const QTalk::Entity::UID uid) {
+void Communication::sendWechat(const QTalk::Entity::UID &uid) {
     if(_pHotLinesConfig){
         _pHotLinesConfig->sendWechat(uid);
     }

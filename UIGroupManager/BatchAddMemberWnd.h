@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-03-22.
+// Created by cc on 2019-03-22.
 //
 
 #ifndef QTALK_V2_BATCHADDMEMBERWND_H

@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019/11/07.
+// Created by cc on 2019/11/07.
 //
 
 #ifndef QTALK_V2_MESSAGEANALYSIS_H
@@ -9,6 +9,7 @@
 
 namespace QTalk
 {
+    void analysisMessage(StNetSearchResult &info);
     // text
     void analysisTextMessage(const QString& content, const QString& extendInfo, std::vector<StTextMessage>& messages);
     // link
@@ -24,6 +25,9 @@ namespace QTalk
     void analysisCodeMessage(const QString& content, const QString& extendInfo, StNetSearchResult& ret);
     // video item
     void analysisVideoMessage(const QString& content, const QString& extendInfo, StNetSearchResult& ret);
+    //
+    void analysisLocalImage(const QString& content, QStringList& links);
+    void analysisLocalLink(const QString& content, QStringList& links);
 }
 
 

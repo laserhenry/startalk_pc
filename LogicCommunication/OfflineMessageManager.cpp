@@ -952,7 +952,7 @@ VectorMessage OfflineMessageManager::getUserMessage(const QInt64 &time, const st
 
     std::string strUrl = url.str();
 
-    QTalk::Entity::JID jid(&userId);
+    QTalk::Entity::JID jid(userId);
     cJSON *jsonObject = cJSON_CreateObject();
 
     cJSON_AddStringToObject(jsonObject, "from", Platform::instance().getSelfUserId().c_str());
@@ -1130,8 +1130,8 @@ VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time,
 
     std::string strUrl = url.str();
 
-    QTalk::Entity::JID jid(&userId);
-    QTalk::Entity::JID relId(&realJid);
+    QTalk::Entity::JID jid(userId);
+    QTalk::Entity::JID relId(realJid);
     cJSON *jsonObject = cJSON_CreateObject();
 
     cJSON_AddStringToObject(jsonObject, "from", Platform::instance().getSelfUserId().c_str());
@@ -1253,7 +1253,7 @@ VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time,
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
-        warn_log("{0} \n {1}", strUrl, postData);
+        info_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
         if (saveDb && !msgList.empty()) {
             LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
@@ -1285,7 +1285,7 @@ VectorMessage OfflineMessageManager::getGroupMessage(const QInt64 &time,
 
     std::string strUrl = url.str();
 
-    QTalk::Entity::JID jid(&userId);
+    QTalk::Entity::JID jid(userId);
     cJSON *jsonObject = cJSON_CreateObject();
 
     cJSON_AddStringToObject(jsonObject, "muc", jid.username().c_str());
@@ -1375,7 +1375,7 @@ VectorMessage OfflineMessageManager::getGroupMessage(const QInt64 &time,
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
-        warn_log("{0} \n {1}", strUrl, postData);
+        info_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
         if (saveDb && !msgList.empty()) {
             LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);
@@ -1406,7 +1406,7 @@ VectorMessage OfflineMessageManager::getSystemMessage(const QInt64 &time, const 
 
     std::string strUrl = url.str();
 
-    QTalk::Entity::JID jid(&userId);
+    QTalk::Entity::JID jid(userId);
     cJSON *jsonObject = cJSON_CreateObject();
 
     cJSON_AddStringToObject(jsonObject, "from", Platform::instance().getSelfUserId().c_str());
@@ -1485,7 +1485,7 @@ VectorMessage OfflineMessageManager::getSystemMessage(const QInt64 &time, const 
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
-        warn_log("{0} \n {1}", strUrl, postData);
+        info_log("{0} \n {1}", strUrl, postData);
         _pComm->addHttpRequest(req, callBack);
         if (saveDb && !msgList.empty()) {
             LogicManager::instance()->getDatabase()->bulkInsertMessageInfo(msgList);

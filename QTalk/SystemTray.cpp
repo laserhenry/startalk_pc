@@ -22,10 +22,7 @@ SystemTray::SystemTray(MainWindow* mainWnd)
       _timerCount(0)
 {
     _pSysTrayIcon = new QSystemTrayIcon(this);
-#if defined(_ATALK)
-    _pSysTrayIcon->setToolTip("ATalk");
-    _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/atalk.png"));
-#elif defined(_STARTALK)
+#if defined(_STARTALK)
     _pSysTrayIcon->setToolTip("StarTalk");
     _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/StarTalk.png"));
 #elif defined(_QCHAT)
@@ -140,17 +137,13 @@ void SystemTray::onTimer() {
 	
     if(_timerCount % 2 == 0)
     {
-#if defined(_ATALK)
-        _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/atalk.png"));
-#elif defined(_STARTALK)
+#if defined(_STARTALK)
         _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/StarTalk.png"));
 #else
         _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/QTalk.png"));
 #endif
     } else {
-#if defined(_ATALK)
-        _pSysTrayIcon->setIcon(QIcon());
-#elif defined(_STARTALK)
+#if defined(_STARTALK)
         _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/starTalkTip.png"));
 #elif defined(_QCHAT)
         _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/Qchat.png"));
@@ -164,9 +157,7 @@ void SystemTray::stopTimer() {
     if(_timer->isActive())
     {
         _timer->stop();
-#if defined(_ATALK)
-        _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/atalk.png"));
-#elif defined(_STARTALK)
+#if defined(_STARTALK)
         _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/StarTalk.png"));
 #elif defined(_QCHAT)
         _pSysTrayIcon->setIcon(QIcon(":/QTalk/image1/Qchat.png"));

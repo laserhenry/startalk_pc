@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019-08-14.
+// Created by cc on 2019-08-14.
 //
 
 #ifndef QTALK_V2_LOGICBASEMESSAGE_H

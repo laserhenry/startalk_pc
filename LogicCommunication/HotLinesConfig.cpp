@@ -131,71 +131,66 @@ void HotLinesConfig::setServiceSeat(int sid, int state) {
     }
 }
 
-void HotLinesConfig::serverCloseSession(const std::string username, const std::string seatname,
-                                        const std::string virtualname) {
+//
+void HotLinesConfig::serverCloseSession(const std::string& username, const std::string& virtualname) {
+
     std::ostringstream url;
-    url << NavigationManager::instance().getJavaHost()
-        << "/admin/api/seat/closeSession.qunar?userName="
-        << username
-        << "&seatName="
-        << seatname
-        << "&virtualname="
-        << virtualname;
+    url << NavigationManager::instance().getHttpHost()
+        << "/admin/outer/qtalk/closeSession";
     std::string strUrl = url.str();
 
+    cJSON* obj = cJSON_CreateObject();
+    cJSON_AddStringToObject(obj, "customerName", username.data());
+    cJSON_AddStringToObject(obj, "hotlineName", virtualname.data());
+    std::string postDta = QTalk::JSON::cJSON_to_string(obj);
+    cJSON_Delete(obj);
+
     //
-    auto callback = [this](int code, const std::string &responseData) {
-
-        if (code == 200) {
-
-        }
+    auto callback = [virtualname, username](int code, const std::string &responseData) {
+        if(code == 200)
+            info_log("close session {0} -> {1}", virtualname, username);
+        else
+            error_log("close session failed {0} -> {1}", virtualname, username);
     };
     if (_pComm) {
-        QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::GET);
-        std::string requestHeaders = std::string("q_ckey=") + Platform::instance().getClientAuthKey();
+        QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
-        req.header["Cookie"] = requestHeaders;
+        req.body = postDta;
         _pComm->addHttpRequest(req, callback);
     }
 }
 
-void HotLinesConfig::getTransferSeatsList(const QTalk::Entity::UID uid) {
+void HotLinesConfig::getTransferSeatsList(const QTalk::Entity::UID& uid) {
     QTalk::Entity::JID jid(uid.usrId().c_str());
     std::string shopJId = jid.username();
     std::ostringstream url;
-    url << NavigationManager::instance().getJavaHost()
-        << "/admin/seat/getSeatList.json?shopJid="
-        << shopJId
-        << "&currentCsrName="
-        << Platform::instance().getSelfUserId()
-        << "&domain="
-        << Platform::instance().getSelfDomain();
+    url << NavigationManager::instance().getHttpHost()
+        << "/admin/outer/qtalk/hotlineSeatList.json";
     std::string strUrl = url.str();
-
     //
-    auto callback = [this,uid](int code, const std::string &responseData) {
+    cJSON* obj = cJSON_CreateObject();
+    cJSON_AddStringToObject(obj, "customerName", QTalk::Entity::JID(uid.realId().data()).username().data());
+    cJSON_AddStringToObject(obj, "hotlineName", shopJId.data());
+    std::string postDta = QTalk::JSON::cJSON_to_string(obj);
+    cJSON_Delete(obj);
+    //
+    auto callback = [this, uid](int code, const std::string &responseData) {
 
         if (code == 200) {
             cJSON* json = cJSON_Parse(responseData.c_str());
-            int ret = cJSON_GetObjectItem(json,"ret")->valueint;
+            cJSON_bool ret = QTalk::JSON::cJSON_SafeGetBoolValue(json,"ret");
             if(ret){
                 std::vector<QTalk::Entity::ImTransfer> transfers;
                 cJSON* data = cJSON_GetObjectItem(json,"data");
-                int size = cJSON_GetArraySize(data);
-                for(int i = 0;i<size;i++){
-                    cJSON* item = cJSON_GetArrayItem(data,i);
-                    std::string webName = QTalk::JSON::cJSON_SafeGetStringValue(item,"webName");
-                    std::string nickName = QTalk::JSON::cJSON_SafeGetStringValue(item,"nickName");
+                cJSON* item = nullptr;
+                cJSON_ArrayForEach(item, data) {
                     QTalk::Entity::ImTransfer transfer;
-                    transfer.nickName = webName.empty() ? nickName : webName;
-                    cJSON* qunarName = cJSON_GetObjectItem(item,"qunarName");
-                    std::string node = QTalk::JSON::cJSON_SafeGetStringValue(qunarName,"node");
-                    std::string d = QTalk::JSON::cJSON_SafeGetStringValue(qunarName,"domain");
-                    transfer.newCsrName = node;
+                    transfer.userId = QTalk::JSON::cJSON_SafeGetStringValue(item,"userId");
+                    transfer.userName = QTalk::JSON::cJSON_SafeGetStringValue(item,"userName");
                     transfers.push_back(transfer);
                 }
-                if(_pComm && _pComm->_pMsgManager){
 
+                if(_pComm && _pComm->_pMsgManager){
                     _pComm->_pMsgManager->setSeatList(uid,transfers);
                 }
             }
@@ -203,46 +198,43 @@ void HotLinesConfig::getTransferSeatsList(const QTalk::Entity::UID uid) {
         }
     };
     if (_pComm) {
-        QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::GET);
-        std::string requestHeaders = std::string("q_ckey=") + Platform::instance().getClientAuthKey();
+        QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
-        req.header["Cookie"] = requestHeaders;
+        req.body = postDta;
         _pComm->addHttpRequest(req, callback);
     }
 }
 
-void HotLinesConfig::transferCsr(const QTalk::Entity::UID uid,
-                                 const std::string newCsrName, const std::string reason) {
+void HotLinesConfig::transferCsr(const QTalk::Entity::UID& uid,
+                                 const std::string& newCsrName, const std::string &reason) {
     std::string shopJId = uid.usrId();
     std::string customerName = uid.realId();
     std::ostringstream url;
-    url << NavigationManager::instance().getJavaHost()
-        << "/admin/seat/transformCsr.json?shopJid="
-        << shopJId
-        << "&currentCsrName="
-        << Platform::instance().getSelfUserId()
-        << "&domain="
-        << Platform::instance().getSelfDomain()
-        << "&customerName="
-        << customerName
-        << "&newCsrName="
-        << newCsrName
-        << "&reason="
-        << reason;
-    std::string strUrl = url.str();
+    url << NavigationManager::instance().getHttpHost()
+        << "/admin/outer/qtalk/transformSeat.json";
 
+    std::string strUrl = url.str();
+    cJSON* obj = cJSON_CreateObject();
+    cJSON_AddStringToObject(obj, "customerName", customerName.data());
+    cJSON_AddStringToObject(obj, "hotlineName", shopJId.data());
+    cJSON_AddStringToObject(obj, "currentCsrName", Platform::instance().getSelfUserId().data());
+    cJSON_AddStringToObject(obj, "newCsrName", newCsrName.data());
+    cJSON_AddStringToObject(obj, "reason", reason.data());
+    std::string postDta = QTalk::JSON::cJSON_to_string(obj);
+    cJSON_Delete(obj);
     //
-    auto callback = [this](int code, const std::string &responseData) {
+    auto callback = [](int code, const std::string &responseData) {
 
         if (code == 200) {
 
+        } else {
+            error_log("transformSeat {0}", responseData);
         }
     };
     if (_pComm) {
-        QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::GET);
-        std::string requestHeaders = std::string("q_ckey=") + Platform::instance().getClientAuthKey();
+        QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
         req.header["Content-Type"] = "application/json;";
-        req.header["Cookie"] = requestHeaders;
+        req.body = postDta;
         _pComm->addHttpRequest(req, callback);
     }
 }
@@ -286,8 +278,8 @@ void HotLinesConfig::updateQuickReply() {
     }
 }
 
-void HotLinesConfig::sendProduct(const std::string username, const std::string virtualname,
-                                 const std::string product,const std::string type) {
+void HotLinesConfig::sendProduct(const std::string& username, const std::string& virtualname,
+                                 const std::string& product,const std::string& type) {
     // url
     std::ostringstream url;
     url << NavigationManager::instance().getQcadminHost()
@@ -337,7 +329,7 @@ void HotLinesConfig::sendProduct(const std::string username, const std::string v
     }
 }
 
-void HotLinesConfig::sendWechat(const QTalk::Entity::UID uid) {
+void HotLinesConfig::sendWechat(const QTalk::Entity::UID &uid) {
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/qchat/sendWe.qunar";
@@ -378,7 +370,7 @@ void HotLinesConfig::getHotLineMessageList(const std::string &xmppId) {
     url << NavigationManager::instance().getHttpHost()
         << "/robot/qtalk_robot/sendtips"
         << "?rexian_id=" << jid.username()
-        << "&m_from=" << jid.barename()
+        << "&m_from=" << jid.basename()
         << "&m_to=" << Platform::instance().getSelfXmppId();
 
     auto callback = [this](int code, const std::string &responseData) {

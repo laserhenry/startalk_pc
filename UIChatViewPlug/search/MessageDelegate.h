@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019/11/05.
+// Created by cc on 2019/11/05.
 //
 
 #ifndef QTALK_V2_MESSAGEDELEGATE_H
@@ -12,7 +12,8 @@ enum {
     SEARCH_USER_TYPE = Qt::UserRole + 1,
     SEARCH_USER_MSG_TYPE,
     SEARCH_USER_MSG_TIME,
-    SEARCH_USER_INFO
+    SEARCH_USER_INFO,
+    SEARCH_USER_ITEM_TYPE
 };
 
 /**

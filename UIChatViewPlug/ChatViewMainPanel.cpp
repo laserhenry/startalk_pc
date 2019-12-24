@@ -103,7 +103,6 @@ ChatViewItem::ChatViewItem(const QUInt8 &chatType, const QString &userName, cons
     connect(_pToolWgt, &ToolWgt::showSearchWnd, this, &ChatViewItem::onShowSearchWnd);
 
     qRegisterMetaType<std::vector<QTalk::Entity::ImTransfer>>("std::vector<QTalk::Entity::ImTransfer>");
-    connect(this,&ChatViewItem::sgShowSeats,_pToolWgt,&ToolWgt::showSeats);
     connect(this, &ChatViewItem::sgDeleteLater, this, &ChatViewItem::deleteLater, Qt::QueuedConnection);
 }
 
@@ -212,7 +211,7 @@ void ChatViewItem::initUi() {
     layout->addLayout(pMidLayout);
     setLayout(layout);
     //
-    QFrame* sendBtnFrm = new QFrame(this);
+    auto* sendBtnFrm = new QFrame(this);
     sendBtnFrm->setObjectName("sendBtnFrm");
     _sendBtn = new QPushButton(tr("发送"), this);
     _sendBtn->setObjectName("SendMessageBtn");
@@ -236,17 +235,7 @@ void ChatViewItem::initUi() {
         _pInputWgt->setVisible(false);
         _sendBtn->setVisible(false);
     }
-//
-    connect(_pSearchMainWgt, &LocalSearchMainWgt::sgGetBeforeAllMessage,
-        this, &ChatViewItem::onGetBeforeAllMessage);
 
-    connect(_pSearchMainWgt, &LocalSearchMainWgt::sgGetBeforeFileMessage,
-            this, &ChatViewItem::onGetBeforeFileMessage);
-    connect(_pSearchMainWgt, &LocalSearchMainWgt::sgSearch,
-            this, &ChatViewItem::onSearch);
-
-    connect(_pSearchMainWgt, &LocalSearchMainWgt::sgPositionMessage,
-            this, &ChatViewItem::onPositionMessage);
 }
 
 /**
@@ -411,138 +400,11 @@ void ChatViewItem::onShowSearchWnd()
     QPoint pos = this->geometry().topRight();
     pos = mapToGlobal(pos);
     _pSearchMainWgt->resetUi();
+    _pSearchMainWgt->showAllMessage(_uid);
     _pSearchMainWgt->move({pos.x() - 360, pos.y()});
     _pSearchMainWgt->setVisible(true);
     QApplication::setActiveWindow(_pSearchMainWgt);
     _pSearchMainWgt->raise();
-
-    QPointer<ChatViewItem> pThis(this);
-    std::thread([pThis](){
-
-        if(!pThis || !pThis->_pSearchMainWgt)
-            return;
-
-        std::vector<QTalk::Entity::ImMessageInfo> allMessage =
-                g_pMainPanel->getMessageManager()->getUserLocalHistoryMessage(0, pThis->_uid);
-
-        for(const auto& info : allMessage)
-        {
-            if(pThis && pThis->_pSearchMainWgt)
-                pThis->_pSearchMainWgt->addMessageInfo(info);
-        }
-
-        std::vector<QTalk::Entity::ImMessageInfo> fileMessage =
-                g_pMainPanel->getMessageManager()->getUserFileHistoryMessage(0, pThis->_uid);
-
-        for(const auto& info : fileMessage)
-        {
-            if(pThis && pThis->_pSearchMainWgt)
-                pThis->_pSearchMainWgt->addFileMessageInfo(info);
-        }
-
-    }).detach();
-}
-
-void ChatViewItem::onGetBeforeAllMessage(qint64 time)
-{
-    QPointer<ChatViewItem> pThis(this);
-    std::thread([time, pThis](){
-
-        if(!pThis) return;
-
-        std::vector<QTalk::Entity::ImMessageInfo> allMessage =
-                g_pMainPanel->getMessageManager()->getUserLocalHistoryMessage(time, pThis->_uid);
-
-        if(allMessage.empty())
-        {
-            if(pThis && pThis->_pSearchMainWgt)
-                pThis->_pSearchMainWgt->setHasBefore(LocalSearchMainWgt::EM_ALL, false);
-        }
-        else
-        {
-            for(const auto& info : allMessage)
-            {
-                if(pThis && pThis->_pSearchMainWgt)
-                    pThis->_pSearchMainWgt->addMessageInfo(info);
-            }
-        }
-    }).detach();
-
-}
-
-void ChatViewItem::onGetBeforeFileMessage(qint64 time)
-{
-    QPointer<ChatViewItem> pThis(this);
-    std::thread([time, pThis](){
-        if(!pThis) return;
-
-        std::vector<QTalk::Entity::ImMessageInfo> fileMessage =
-                g_pMainPanel->getMessageManager()->getUserFileHistoryMessage(time, pThis->_uid);
-
-        if(fileMessage.empty())
-        {
-            if(pThis && pThis->_pSearchMainWgt)
-                pThis->_pSearchMainWgt->setHasBefore(LocalSearchMainWgt::EM_FILE, false);
-        }
-        else {
-            for(const auto& info : fileMessage)
-            {
-                if(pThis && pThis->_pSearchMainWgt)
-                    pThis->_pSearchMainWgt->addFileMessageInfo(info);
-            }
-        }
-
-    }).detach();
-
-}
-
-/**
- *
- * @param time
- */
-void ChatViewItem::onSearch(qint64 time, const QString &text)
-{
-    QPointer<ChatViewItem> pThis(this);
-
-    std::thread([time, text, pThis](){
-
-        if(!pThis) return;
-
-        std::vector<QTalk::Entity::ImMessageInfo> searchMessage =
-                g_pMainPanel->getMessageManager()->getSearchMessage(time, pThis->_uid, text.toLower().toStdString());
-
-        if(searchMessage.empty())
-        {
-            if(pThis && pThis->_pSearchMainWgt)
-                pThis->_pSearchMainWgt->setHasBefore(LocalSearchMainWgt::EM_SEARCH, false);
-        }
-        else {
-            for(const auto& info : searchMessage)
-            {
-                if(pThis && pThis->_pSearchMainWgt)
-                    pThis->_pSearchMainWgt->addSearchMessageInfo(info, text);
-            }
-        }
-
-    }).detach();
-}
-
-void ChatViewItem::onPositionMessage(qint64 time)
-{
-    QPointer<ChatViewItem> pThis(this);
-    std::thread([time, pThis](){
-
-        if(!pThis) return;
-
-        std::vector<QTalk::Entity::ImMessageInfo> afterMessage =
-                g_pMainPanel->getMessageManager()->getAfterMessage(time, pThis->_uid);
-        for(const auto& info : afterMessage)
-        {
-            if(pThis && pThis->_pSearchMainWgt)
-                pThis->_pSearchMainWgt->addMessageInfo(info);
-        }
-
-    }).detach();
 }
 
 //*******************ChatViewMainPanel********************//
@@ -802,6 +664,10 @@ void ChatViewMainPanel::onChatUserChanged(const StSessionInfo &info) {
             }
         } else {
             //
+            auto n_item = _mapSession.value(uid);
+            if (nullptr != n_item && n_item->_pChatMainWgt) {
+                n_item->_pChatMainWgt->updateTime();
+            }
             func();
             updateHead();
         }
@@ -831,14 +697,14 @@ void ChatViewMainPanel::onRecvMessage(R_Message &e) {
     QTalk::Entity::ImMessageInfo message = e.message;
     Entity::JID jid(message.SendJid.c_str());
     Entity::JID from(message.From.c_str());
-    std::string userId = jid.barename();
+    std::string userId = jid.basename();
     std::string realJid = message.RealJid.empty() ? userId : message.RealJid;
-    std::string realFrom = QTalk::Entity::JID(message.RealFrom.data()).barename();
+    std::string realFrom = QTalk::Entity::JID(message.RealFrom.data()).basename();
     UID uid(userId, realJid);
 
     {
         QMutexLocker locker(&_mutex);
-        if (from.barename() != getSelfUserId())
+        if (from.basename() != getSelfUserId())
         {
             message.Direction = QTalk::Entity::MessageDirectionReceive;
             static QInt64 recvMessageTime = 0;
@@ -886,7 +752,7 @@ void ChatViewMainPanel::onRecvMessage(R_Message &e) {
             emit sgShockWnd();
         }
 
-        if(!message.AutoReply && message.ChatType == QTalk::Enum::TwoPersonChat && from.barename() != getSelfUserId())
+        if(!message.AutoReply && message.ChatType == QTalk::Enum::TwoPersonChat && from.basename() != getSelfUserId())
             sendAutoPeplyMessage(userId, message.MsgId);
 
         // 没有显示的会话不处理
@@ -897,7 +763,7 @@ void ChatViewMainPanel::onRecvMessage(R_Message &e) {
 
         //
         QTalk::Entity::JID jidSender(message.From.c_str());
-        QString sender = QString::fromStdString(jidSender.barename());
+        QString sender = QString::fromStdString(jidSender.basename());
 
         if (_mapHeadPath.contains(sender)) {
             message.HeadSrc = _mapHeadPath[sender].toStdString();
@@ -946,8 +812,6 @@ void updateItemProcess(ChatViewItem *item, const FileProcessMessage &e)
     if (item && item->_pChatMainWgt && item->_pSearchMainWgt) {
         item->_pChatMainWgt->recvFileProcess(e.speed, e.downloadTotal, e.downloadNow, e.uploadTotal,
                                              e.uploadNow, e.key);
-        item->_pSearchMainWgt->recvFileProcess(e.speed, e.downloadTotal, e.downloadNow, e.uploadTotal,
-                                               e.uploadNow, e.key);
     }
 }
 
@@ -1013,7 +877,7 @@ void ChatViewMainPanel::updateHead() {
     auto func = [this](){
         if(nullptr == _pStackedLayout)
             return;
-        if(_pStackedLayout->count())
+        if(_pStackedLayout && _pStackedLayout->count())
         {
             auto item = qobject_cast<ChatViewItem *>(_pStackedLayout->currentWidget());
             if (item && item->_pGroupSidebar && item->_pGroupSidebar->_pGroupMember) {
@@ -1390,7 +1254,7 @@ void getParam(const QTalk::Entity::ImMessageInfo &msg, StNotificationParam& para
     std::string headPath;
     if(msg.ChatType == QTalk::Enum::GroupChat)
     {
-        std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = dbPlatForm::instance().getGroupInfo(jid.barename(), true);
+        std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = dbPlatForm::instance().getGroupInfo(jid.basename(), true);
         if(nullptr != groupInfo)
         {
             param.title = groupInfo->Name;
@@ -1417,7 +1281,7 @@ void getParam(const QTalk::Entity::ImMessageInfo &msg, StNotificationParam& para
     }
     else
     {
-        std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(jid.barename());
+        std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(jid.basename());
         if(nullptr != userInfo)
         {
             param.title = QTalk::getUserName(userInfo);
@@ -1441,9 +1305,9 @@ void getParam(const QTalk::Entity::ImMessageInfo &msg, StNotificationParam& para
     param.icon = headPath;
     param.message = dealMessageContent(msg).toStdString();
     param.playSound = AppSetting::instance().getNewMsgAudioNotify();
-    param.xmppId = Entity::JID(msg.SendJid.c_str()).barename();
-    param.from = Entity::JID(msg.From.c_str()).barename();
-    param.realJid = Entity::JID(msg.RealJid.c_str()).barename();
+    param.xmppId = Entity::JID(msg.SendJid.c_str()).basename();
+    param.from = Entity::JID(msg.From.c_str()).basename();
+    param.realJid = Entity::JID(msg.RealJid.c_str()).basename();
     param.chatType = msg.ChatType;
 }
 
@@ -1606,7 +1470,7 @@ void ChatViewMainPanel::onAppDeactivated() {
     auto item = qobject_cast<ChatViewItem *>(_pStackedLayout->currentWidget());
     if (item && item->_pInputWgt) {
         item->_pInputWgt->onAppDeactivated();
-        item->_pSearchMainWgt->setVisible(false);
+//        item->_pSearchMainWgt->setVisible(false);
     }
 }
 
@@ -1772,26 +1636,23 @@ void ChatViewMainPanel::packAndSendLog(const QString &describe) {
         if (isNotify)
             emit sgShowLiteMessageBox(true, tr("开始收集日志..."));
         //db 文件
-        QString dbPath = QString::fromStdString(Platform::instance().getAppdataRoamingUserPath()) + "/qtalk.db";
-        QString logBasePath = QString::fromStdString(Platform::instance().getAppdataRoamingPath()) + "/logs";
-        QString logDbPath = logBasePath + "/qtalk.db";
-        if (QFile::exists(logDbPath))
-            QFile::remove(logDbPath);
-        if(QFile::exists(dbPath))
-            QFile::copy(dbPath, logDbPath);
-        dbPath = QString::fromStdString(Platform::instance().getAppdataRoamingUserPath()) + "/qtalk.db-shm";
-        logDbPath = logBasePath + "/qtalk.db-shm";
-        if (QFile::exists(logDbPath))
-            QFile::remove(logDbPath);
-        if(QFile::exists(dbPath))
-            QFile::copy(dbPath, logDbPath);
-        dbPath = QString::fromStdString(Platform::instance().getAppdataRoamingUserPath()) + "/qtalk.db-wal";
-        logDbPath = logBasePath + "/qtalk.db-wal";
-        if (QFile::exists(logDbPath))
-            QFile::remove(logDbPath);
-        if(QFile::exists(dbPath))
-            QFile::copy(dbPath, logDbPath);
+        auto appDataPath = QString::fromStdString(Platform::instance().getAppdataRoamingPath());
+        auto userPath = QString::fromStdString(Platform::instance().getAppdataRoamingUserPath());
+        QString logBasePath = appDataPath + "/logs";
 
+        auto copyFileFun = [appDataPath, userPath, logBasePath](const QString& src, const QString& dest){
+            QString dbPath = userPath + src;
+            QString logDbPath = logBasePath + dest;
+            if (QFile::exists(logDbPath))
+                QFile::remove(logDbPath);
+            if(QFile::exists(dbPath))
+                QFile::copy(dbPath, logDbPath);
+        };
+
+        copyFileFun("/qtalk.db", "/qtalk.db");
+        copyFileFun("/qtalk.db", "/qtalk.db-shm");
+        copyFileFun("/qtalk.db", "/qtalk.db-wal");
+        copyFileFun("/../sysconfig", "/sysconfig");
         //
         if (isNotify)
             emit sgShowLiteMessageBox(true, tr("日志收集完毕 开始打包..."));
@@ -2911,6 +2772,7 @@ void ChatViewMainPanel::sendFileMessage(const QTalk::Entity::UID& uid,
             message.FileMd5 = QTalk::utils::getFileMd5(tmp_file_path.toLocal8Bit().data());
         });
 
+//        future.waitForFinished();
         while(!future.isFinished())
             QApplication::processEvents(QEventLoop::AllEvents, 100);
 
@@ -3136,7 +2998,7 @@ void ChatViewMainPanel::onRecvWebRtcCommand(int msgType, const std::string &peer
 #endif
 //            onRecvVideo(peerId);
             std::string selfId = Platform::instance().getSelfUserId();
-            emit sgShowVidioWnd(QTalk::Entity::JID(peerId.data()).barename(), selfId,
+            emit sgShowVidioWnd(QTalk::Entity::JID(peerId.data()).basename(), selfId,
                     WebRTC_MsgType_VideoCall == msgType);
 
         } else {
@@ -3177,6 +3039,7 @@ void ChatViewMainPanel::start2Talk_old(const std::string &peerId, bool isVideo, 
                     .arg(Platform::instance().getClientAuthKey().data());
             return getMessageManager()->sendGetRequest(url.toStdString());
         });
+//        future.waitForFinished();
         while(!future.isFinished())
             QApplication::processEvents(QEventLoop::AllEvents, 100);
 

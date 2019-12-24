@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2018/11/19.
+// Created by cc on 2018/11/19.
 //
 
 #ifndef QTALK_V2_GROUPITEMDELEGATE_H

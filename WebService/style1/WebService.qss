@@ -5,23 +5,7 @@ QFrame#WebServiceMainFrm{
     border-top-right-radius:6px;
     border-bottom-right-radius:6px;
     border-bottom-left-radius:6px;
-    border: 1px solid rgba(248,248,248,1);
-}
-
-QToolButton#macCloseBtn {
-    border-image: url(:/web/image1/mac_close.png);
-}
-
-QToolButton#closeBtn {
-    border-image: url(:/web/image1/closeBtn_normal.png);
-}
-
-QToolButton#macCloseBtn:hover {
-    border-image: url(:/web/image1/mac_close_hover.png);
-}
-
-QToolButton#closeBtn:hover {
-    border-image: url(:/web/image1/closeBtn_hover.png);
+    border: 1px solid rgba(197, 197, 197,1);
 }
 
 QToolButton#BackBtn {

@@ -1253,6 +1253,12 @@ void DataBasePlug::getImageMessage(const long long &time, const std::string &use
     dao.getImageMessage(time, userId, realJid, msgList);
 }
 
+void DataBasePlug::getLinkMessage(const long long &time, const std::string &userId, const std::string &realJid,
+                                   std::vector<QTalk::Entity::ImMessageInfo> &msgList) {
+    MessageDao dao(_dataBass);
+    dao.getLinkMessage(time, userId, realJid, msgList);
+}
+
 void DataBasePlug::getSearchMessage(const long long &time, const std::string &userId, const std::string &realJid,
                                     const std::string &searchKey, std::vector<QTalk::Entity::ImMessageInfo> &msgList) {
 

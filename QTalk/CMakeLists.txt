@@ -17,16 +17,7 @@ find_package(Qt5 COMPONENTS Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Network)
 find_package(Qt5Concurrent)
-
-#SET(TRANSLATIONS
-#        lang_de.ts
-#        lang_en.ts
-#        )
-#
-#FIND_PACKAGE(Qt5LinguistTools)
-#QT5_ADD_TRANSLATION(QM_FILES ${TRANSLATIONS})
-#SET(QM_FILES ${QM_FILES} PARENT_SCOPE)
-#ADD_CUSTOM_TARGET (translations ALL DEPENDS ${QM_FILES})
+include_directories(../breakpad)
 
 if (APPLE)
     ADD_DEFINITIONS(-D_MACOS)
@@ -121,7 +112,9 @@ if (WIN32)
             Platform
             LogicManager
             UICom
-            quazip)
+            quazip
+            breakpad
+            )
 else ()
     target_link_libraries(${PROJECT_NAME}
             Qt5::Core
@@ -135,7 +128,8 @@ else ()
             LogicManager
             UICom
             pthread
-            quazip)
+            quazip
+            breakpad)
 endif ()
 
 

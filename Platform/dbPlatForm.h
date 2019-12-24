@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-01-18.
+// Created by cc on 2019-01-18.
 //
 
 #ifndef QTALK_V2_DBPLATFORM_H

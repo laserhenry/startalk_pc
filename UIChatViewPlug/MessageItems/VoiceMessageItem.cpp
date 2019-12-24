@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-05-08.
+// Created by cc on 2019-05-08.
 //
 
 #include "VoiceMessageItem.h"
@@ -99,20 +99,11 @@ void VoiceMessageItem::initSendLayout() {
     auto* tmpLay = new QHBoxLayout;
     tmpLay->setMargin(0);
     tmpLay->setSpacing(5);
-    if(nullptr == _sending)
+    tmpLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
+    if(nullptr != _sending && nullptr != _resending)
     {
-        _sending = new HeadPhotoLab(":/chatview/image1/messageItem/loading.gif", 10, false, false, true, this);
-        tmpLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
         tmpLay->addWidget(_sending);
-        bool startMovie = (0 == _msgInfo.ReadedTag && 0 == _msgInfo.State);
-        _sending->setVisible(startMovie);
-        if(startMovie)
-            _sending->startMovie();
-    }
-    if(nullptr != _resending)
-    {
         tmpLay->addWidget(_resending);
-        _resending->setVisible(false);
     }
     tmpLay->addWidget(_contentFrm);
     tmpLay->setAlignment(_contentFrm, Qt::AlignRight);

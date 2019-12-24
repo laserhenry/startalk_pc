@@ -90,6 +90,9 @@ public:
     void getImageMessage(const long long &time, const std::string &userId, const std::string &realJid,
                          std::vector<QTalk::Entity::ImMessageInfo> &msgList);
 
+    void getLinkMessage(const long long &time, const std::string &userId, const std::string &realJid,
+                         std::vector<QTalk::Entity::ImMessageInfo> &msgList);
+
     void getSearchMessage(const long long &time, const std::string &userId, const std::string &realJid,
                           const std::string& searchKey, std::vector<QTalk::Entity::ImMessageInfo> &msgList);
 

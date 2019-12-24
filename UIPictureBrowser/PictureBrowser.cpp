@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2018/11/16.
+// Created by cc on 2018/11/16.
 //
 
 #include "PictureBrowser.h"
@@ -174,44 +174,47 @@ void PictureBrowser::gotSourceImg(const QString &link, const QString &srcImg, bo
 
 void PictureBrowser::turnBefore()
 {
-    QMutexLocker locker(&_mutex);
-    if(!_images.empty() && _curIndex > 0)
     {
-        _curIndex--;
-        loadImage(false);
-    }
-    else
-    {
-        if(_hasBefore)
+        QMutexLocker locker(&_mutex);
+        if(!_images.empty() && _curIndex > 0)
         {
-            getBeforeImgs(_images[_curIndex].first);
+            _curIndex--;
+            loadImage(false);
+            return;
         }
         else
         {
-            QtMessageBox::warning(this, tr("警告"), tr("无法加载更早的图片了!"));
+            if(_hasBefore){
+                getBeforeImgs(_images[_curIndex].first);
+                return;
+            }
         }
     }
+    //
+    QtMessageBox::warning(this, tr("警告"), tr("无法加载更早的图片了!"));
 }
 
 void PictureBrowser::turnNext()
 {
-    QMutexLocker locker(&_mutex);
-    if(!_images.empty() && _curIndex < _images.size() - 1)
     {
-        _curIndex++;
-        loadImage(false);
-    }
-    else
-    {
-        if(_hasNext)
+        QMutexLocker locker(&_mutex);
+        if(!_images.empty() && _curIndex < _images.size() - 1)
         {
-            getNextImgs(_images[_curIndex].first);
+            _curIndex++;
+            loadImage(false);
+            return;
         }
         else
         {
-            QtMessageBox::warning(this, tr("警告"), tr("已看完最后一张图片!"));
+            if(_hasNext)
+            {
+                getNextImgs(_images[_curIndex].first);
+                return;
+            }
         }
     }
+    //
+    QtMessageBox::warning(this, tr("警告"), tr("已看完最后一张图片!"));
 }
 
 /**

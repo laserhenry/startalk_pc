@@ -85,6 +85,15 @@ public:
     VectorMessage  msgList;
 };
 
+class LinkHistoryMessage : public Event
+{
+public:
+    QInt64         time;
+    std::string    userid;
+    std::string    realJid;
+    VectorMessage  msgList;
+};
+
 class SearchHistoryMessage : public Event
 {
 public:
@@ -372,10 +381,16 @@ public:
 class ReportDump : public Event
 {
 public:
-  explicit ReportDump(std::string  dump):dumpFile(std::move(dump)) {}
+  explicit ReportDump(std::string ip, std::string id, std::string dump, QInt64 time)
+    :ipAddr(std::move(ip)), id(id), dumpFile(std::move(dump)), crashTime(time) {
+
+  }
 
 public:
+    std::string ipAddr;
+    std::string id;
     std::string dumpFile;
+    QInt64 crashTime;
 };
 
 class CheckUpdaterEvt : public Event

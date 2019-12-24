@@ -52,6 +52,7 @@ bool QuickReplyDao::clearData() {
     try {
         query1.executeStep();
         query2.executeStep();
+        return true;
     }
     catch (const std::exception &e) {
         error_log("Clear Data IM_Group_Member error {0}", e.what());

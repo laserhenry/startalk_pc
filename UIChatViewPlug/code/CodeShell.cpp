@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-02-28.
+// Created by cc on 2019-02-28.
 //
 
 #include "CodeShell.h"
@@ -43,7 +43,7 @@ void CodeShell::initUi()
     closeBtn->setObjectName("gwCloseBtn");
     titleLay->addWidget(_pTitleLabel);
     titleLay->addWidget(closeBtn);
-    closeBtn->setFixedSize(20, 20);
+    closeBtn->setFixedSize(24, 24);
     titleLay->setContentsMargins(30, 0, 10, 0);
 #endif
     // tool

@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019-06-18.
+// Created by cc on 2019-06-18.
 //
 
 #ifndef QTALK_V2_MACNOTIFICATION_H

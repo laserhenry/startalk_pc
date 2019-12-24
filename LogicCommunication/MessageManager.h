@@ -33,7 +33,7 @@ public:
     void sendLoginErrMessage(const std::string& message);
     void sendGetHistoryError();
     void sendGotStructure(bool ret);
-    void sendSynOfflineSuccees();
+    void sendSynOfflineSuccess();
 	void sendGotUserCard(const std::vector<QTalk::StUserCard> &userCard);
     void sendGotUsersStatus(const std::map<std::string, std::string> &userStatus);
 	void sendDownloadHeadSuccess();
@@ -137,6 +137,7 @@ class CommMsgListener :
 		, public EventHandler<LocalHistoryMessage>
 		, public EventHandler<FileHistoryMessage>
 		, public EventHandler<ImageHistoryMessage>
+		, public EventHandler<LinkHistoryMessage>
 		, public EventHandler<SearchHistoryMessage>
 		, public EventHandler<AfterMessage>
 		, public EventHandler<GetSeatListEvt>
@@ -237,6 +238,7 @@ public:
 	void onEvent(LocalHistoryMessage& e) override;
 	void onEvent(FileHistoryMessage& e) override;
 	void onEvent(ImageHistoryMessage& e) override;
+	void onEvent(LinkHistoryMessage& e) override;
 	void onEvent(SearchHistoryMessage& e) override;
 	void onEvent(AfterMessage& e) override;
 	void onEvent(SendProductEvt& e) override;

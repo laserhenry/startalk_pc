@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2018/12/4.
+// Created by cc on 2018/12/4.
 //
 
 #ifndef QTALK_V2_LOG_H

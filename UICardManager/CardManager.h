@@ -62,6 +62,8 @@ public:
 
     std::string getSourceHead(const std::string& headLink);
 
+    void deleteGroupCard();
+
 Q_SIGNALS:
 
     void showUserCardSignal();

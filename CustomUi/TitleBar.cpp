@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019/11/05.
+// Created by cc on 2019/11/05.
 //
 
 #include "TitleBar.h"
@@ -14,19 +14,19 @@ TitleBar::TitleBar(const QString& title, QWidget* controlWgt, QWidget* parent)
     auto * titleLay = new QHBoxLayout(this);
     titleLay->setMargin(10);
     _pCloseBtn = new QToolButton(this);
-    auto *titleLbl = new QLabel(title, this);
-    titleLbl->setObjectName("TitleBarLabel");
-    titleLbl->setAlignment(Qt::AlignmentFlag::AlignCenter);
+    _pTitleLbl = new QLabel(title, this);
+    _pTitleLbl->setObjectName("TitleBarLabel");
+    _pTitleLbl->setAlignment(Qt::AlignmentFlag::AlignCenter);
 
 #ifdef _MACOS
     _pCloseBtn->setFixedSize(10, 10);
     titleLay->addWidget(_pCloseBtn);
     _pCloseBtn->setObjectName("gmCloseBtn");
-    titleLay->addWidget(titleLbl);
+    titleLay->addWidget(_pTitleLbl);
     titleLay->addItem(new QSpacerItem(12, 12));
 #else
-    titleLay->addWidget(titleLbl);
-    _pCloseBtn->setFixedSize(20, 20);
+    titleLay->addWidget(_pTitleLbl);
+    _pCloseBtn->setFixedSize(24, 24);
     titleLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
     _pCloseBtn->setObjectName("gwCloseBtn");
     titleLay->addWidget(_pCloseBtn);
@@ -34,4 +34,9 @@ TitleBar::TitleBar(const QString& title, QWidget* controlWgt, QWidget* parent)
     //
     if(nullptr != controlWgt)
         connect(_pCloseBtn, &QToolButton::clicked, [controlWgt](){controlWgt->setVisible(false);});
+}
+
+void TitleBar::setLabelText(const QString &text) {
+    if(nullptr != _pTitleLbl)
+        _pTitleLbl->setText(text);
 }

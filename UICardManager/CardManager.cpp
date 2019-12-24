@@ -32,7 +32,7 @@ void CardManager::shwoUserCard(const QString &userId) {
     connect(_pUserCard, &user_card::sgJumpToStructre, [this](const QString &structreName) {
         emit sgSwitchCurFun(1);
         emit sgJumpToStructre(structreName);
-        _pUserCard->setVisible(false);
+        _pUserCard->close();
     });
     auto ret = QtConcurrent::run([this, userId]() {
 #ifdef _MACOS
@@ -60,10 +60,9 @@ void CardManager::shwoUserCard(const QString &userId) {
     });
 
     // wait data
+//    ret.waitForFinished();
     while (!ret.isFinished())
-    {
         QApplication::processEvents(QEventLoop::AllEvents, 100);
-    }
     // show user card
     showUserCardSlot();
     //
@@ -93,6 +92,7 @@ void CardManager::showGroupCard(const QString &groupId) {
         }
     });
     // wait data
+//    ret.waitForFinished();
     while (!ret.isFinished())
         QApplication::processEvents(QEventLoop::AllEvents, 100);
     // show group card
@@ -345,4 +345,9 @@ std::string CardManager::getSourceHead(const std::string& headLink)
         return _pMsgManager->getSourceImage(headLink);
     }
     return "";
+}
+
+void CardManager::deleteGroupCard() {
+    if(_groupCard)
+        _groupCard = nullptr;
 }

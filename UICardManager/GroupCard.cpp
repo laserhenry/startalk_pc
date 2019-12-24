@@ -6,12 +6,14 @@
 #include <QPushButton>
 #include <QHBoxLayout>
 #include <QFrame>
+#include <QDesktopServices>
 #include <QGridLayout>
 #include <QFile>
 #include <QEvent>
 #include <QKeyEvent>
 #include <QAction>
 #include <QDebug>
+#include <QApplication>
 #include <QScrollBar>
 #include "../CustomUi/HeadPhotoLab.h"
 #include "CardManager.h"
@@ -21,6 +23,7 @@
 #include "../Platform/Platform.h"
 #include "../QtUtil/Entity/JID.h"
 #include "../CustomUi/QtMessageBox.h"
+#include "../Platform/NavigationManager.h"
 
 GroupCard::GroupCard(CardManager* cardManager)
     :UShadowDialog(cardManager, true)
@@ -35,6 +38,8 @@ GroupCard::GroupCard(CardManager* cardManager)
 GroupCard::~GroupCard()
 {
     qInfo() << "delete GroupCard";
+    if(_pCardManager)
+        _pCardManager->deleteGroupCard();
 }
 
 void GroupCard::initUi()
@@ -73,6 +78,7 @@ void GroupCard::initUi()
     _pExitGroupBtn->setToolTip(tr("退出群组"));
     _pDestroyGroupBtn->setToolTip(tr("销毁群"));
     _pDestroyGroupBtn->setObjectName("btn_destroy_group");
+    _pSendMailBtn->setVisible(false);
     //
     auto* btnLay = new QHBoxLayout;
     btnLay->addWidget(_pSendMailBtn);
@@ -80,7 +86,6 @@ void GroupCard::initUi()
     btnLay->addWidget(_pDestroyGroupBtn);
 	btnLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
 	//
-	_pSendMailBtn->setVisible(false);
     _pDestroyGroupBtn->setVisible(false);
     //
     auto* topMainLay = new QGridLayout;
@@ -280,6 +285,7 @@ void GroupCard::initUi()
             }
         }
     });
+    connect(_pSendMailBtn, &QPushButton::clicked, this, &GroupCard::onSendMail);
 }
 
 /**
@@ -313,12 +319,16 @@ void GroupCard::setData(std::shared_ptr<QTalk::Entity::ImGroupInfo> &data)
  */
 void GroupCard::showGroupMember(const std::map<std::string, QTalk::StUserCard>& userCards, const std::map<std::string, QUInt8>& userRole)
 {
+    _pSendMailBtn->setVisible(true);
     int onlineNum = 0;
     //
     _pGroupMemberPopWnd->reset();
     auto it = userCards.begin();
     for(; it != userCards.end(); it++)
     {
+        //
+        groupMembers.push_back(it->first);
+        //
         std::string name = it->second.nickName;
         if(name.empty())
             name = it->second.userName;
@@ -334,7 +344,7 @@ void GroupCard::showGroupMember(const std::map<std::string, QTalk::StUserCard>& 
         if(userRole.find(it->first) != userRole.end())
             role = userRole.at(it->first);
         //
-        bool isOnline = Platform::instance().isOnline(QTalk::Entity::JID(it->first.c_str()).barename());
+        bool isOnline = Platform::instance().isOnline(QTalk::Entity::JID(it->first.c_str()).basename());
 
         if(role == 1)
         {
@@ -484,4 +494,33 @@ void GroupCard::onClose() {
 
         _pCardManager->updateGroupInfo(_strGroupId, groupName, groupTopic, groupDesc);
     }
+}
+
+void GroupCard::onSendMail() {
+    if(!groupMembers.empty())
+    {
+        int btn = QtMessageBox::warning(this, tr("%1 即将打开您的默认邮箱客户端 \n")
+                                          .arg(QApplication::applicationName()),
+                tr("此操作可能导致邮箱客户端崩溃( 取决于邮件客户端和群发人数 )"),
+                              QtMessageBox::EM_BUTTON_YES | QtMessageBox::EM_BUTTON_NO);
+
+        if(btn == QtMessageBox::EM_BUTTON_NO)
+            return;
+
+        QString mailUrl = QString("mailto:");
+        auto selfDomain = Platform::instance().getSelfDomain();
+        for(const auto& u : groupMembers)
+        {
+            QTalk::Entity::JID jid(u.data());
+            if(selfDomain != jid.domainname())
+                continue;
+
+            QString mail = QString("%1@%2; ")
+                    .arg(jid.username().data())
+                    .arg(NavigationManager::instance().getMailSuffix().data());
+            mailUrl.append(mail);
+        }
+        QDesktopServices::openUrl(QUrl(mailUrl));
+    }
+    this->close();
 }

@@ -380,7 +380,7 @@ void FileHelper::uploadLogFile(const std::string &filePath,
             string fileName = key + "." + suffix;
 
             std::ostringstream url;
-            url << NavigationManager::instance().getFileHttpHost()
+            url << "https://i.startalk.im"
                 << "/file/v2/upload/file"
                 << "?name=" << fileName
                 << "&p=" << Platform::instance().getPlatformStr()

@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019/11/06.
+// Created by cc on 2019/11/06.
 //
 
 #include "SearchItemWgt.h"
@@ -13,6 +13,7 @@
 #include <QPointer>
 #include <QApplication>
 #include <QMouseEvent>
+#include <ChatUtil.h>
 #include "../NetImageLabel.h"
 #include "../ChatViewMainPanel.h"
 #include "../../Platform/Platform.h"
@@ -21,6 +22,7 @@
 #include "../../WebService/WebService.h"
 #include "../../Emoticon/EmoticonMainWgt.h"
 #include "../../Platform/NavigationManager.h"
+#include "../../CustomUi/QtMessageBox.h"
 
 #define DEM_AT_HTML "<span style=\"color:#FF4E3F;\">%1</span>"
 
@@ -74,14 +76,14 @@ SearchTextItem::SearchTextItem(const StNetSearchResult& info, QWidget *parent)
     connect(_pBrowser, &TextBrowser::sgImageClicked, g_pMainPanel, &ChatViewMainPanel::sgShowPicture);
     connect(_pBrowser, &TextBrowser::anchorClicked, [](const QUrl &url){
         QString strUrl = url.toString();
-        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
+//        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
         if (!strUrl.startsWith("http")) {
             strUrl = (QString("http://%1").arg(strUrl));
         }
-        if (userDftBrowser)
-            WebService::loadUrl(QUrl(strUrl));
-        else
-            QDesktopServices::openUrl(QUrl(strUrl));
+//        if (userDftBrowser)
+//            WebService::loadUrl(QUrl(strUrl));
+//        else
+        QDesktopServices::openUrl(QUrl(strUrl));
     });
 
     QTextCharFormat f;
@@ -275,8 +277,40 @@ SearchFileITem::SearchFileITem(const StNetSearchResult &info, QWidget *parent)
     leftLay->addWidget(iconLabel);
     leftLay->addLayout(bbLay);
     leftLay->setAlignment(iconLabel, Qt::AlignVCenter);
+    contentFrm->setToolTip(QString("%1\n%2").arg(info.file_info.fileName).arg(info.file_info.fileSize));
 
-    lay->addWidget(contentFrm);
+    auto* downloadBtn = new QToolButton(this);
+    downloadBtn->setObjectName("FileItemWgt_downloadBtn");
+    downloadBtn->setToolTip(tr("下载"));
+    auto* openPathBtn = new QToolButton(this);
+    openPathBtn->setObjectName("FileItemWgt_openPathBtn");
+    openPathBtn->setToolTip(tr("打开文件夹"));
+    openPathBtn->setFixedSize(26, 26);
+    downloadBtn->setFixedSize(26, 26);
+    auto* mainLay = new QHBoxLayout;
+    mainLay->addWidget(contentFrm);
+    mainLay->addItem(new QSpacerItem(30, 10, QSizePolicy::MinimumExpanding));
+    mainLay->addWidget(downloadBtn);
+    mainLay->addWidget(openPathBtn);
+
+    lay->addLayout(mainLay);
+
+    auto localPath = QTalk::File::getRealFilePath(info.msg_id.toStdString(), info.file_info.fileMd5.toStdString());
+    bool downloaded = !localPath.isEmpty();
+    downloadBtn->setVisible(!downloaded);
+    openPathBtn->setVisible(downloaded);
+
+    connect(openPathBtn, &QToolButton::clicked, [localPath](){
+        QFileInfo info(localPath);
+        if (localPath.isEmpty() || !info.exists()) {
+            QtMessageBox::information(g_pMainPanel, tr("提醒"), tr("未找到本地文件"));
+        } else {
+            QTalk::File::openFileFolder(localPath);
+        }
+    });
+    connect(downloadBtn, &QToolButton::clicked, [this, info](){
+        QDesktopServices::openUrl(QUrl(info.file_info.fileLink));
+    });
 }
 
 /** CommonTrd item **/
@@ -333,10 +367,10 @@ void SearchCommonTrdItem::mousePressEvent(QMouseEvent *e) {
                     .arg("qunar").arg(_xmppId).arg(Platform::instance().getServerAuthKey().data()).arg(linkUrl);
         }
 
-        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
+//        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
         MapCookie cookies;
         cookies["ckey"] = QString::fromStdString(Platform::instance().getClientAuthKey());
-        if (userDftBrowser ||
+        if (/**userDftBrowser ||**/
             linkUrl.contains(NavigationManager::instance().getShareUrl().data()) ||
             linkUrl.contains("tu.qunar.com/vote/vote_list.php") ||
             linkUrl.contains("tu.qunar.com/vote/cast_vote.php") ||

@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-01-27.
+// Created by cc on 2019-01-27.
 //
 
 #ifndef QTALK_V2_USHADOWBORDER_H

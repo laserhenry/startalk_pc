@@ -64,7 +64,7 @@ void CommMsgManager::sendGotStructure(bool ret) {
   * @参数
   * @date 2018.9.29
   */
-void CommMsgManager::sendSynOfflineSuccees() {
+void CommMsgManager::sendSynOfflineSuccess() {
     SynOfflineSuccees e;
     EventBus::FireEvent(e);
 }
@@ -415,6 +415,7 @@ CommMsgListener::CommMsgListener(Communication *pComm)
 	EventBus::AddHandler<GetMedalUserEvt>(*this);
 	EventBus::AddHandler<ModifyUserMedalStatusEvt>(*this);
 	EventBus::AddHandler<NetHistoryMessage>(*this);
+	EventBus::AddHandler<LinkHistoryMessage>(*this);
 }
 
 CommMsgListener::~CommMsgListener() {
@@ -926,7 +927,7 @@ void CommMsgListener::onEvent(ReportDump &e) {
     if (e.getCanceled()) return;
 
     if (_pComm) {
-        _pComm->reportDump(e.dumpFile);
+        _pComm->reportDump(e.ipAddr, e.id, e.dumpFile, e.crashTime);
     }
 }
 
@@ -1073,10 +1074,9 @@ void CommMsgListener::onEvent(ServerCloseSessionEvt &e) {
     if(e.getCanceled()) return;
     if(_pComm){
         std::string userName = e.username;
-        std::string seatname = e.seatname;
         std::string virtualname = e.virtualname;
 
-        _pComm->serverCloseSession(userName,seatname,virtualname);
+        _pComm->serverCloseSession(userName, virtualname);
     }
 }
 
@@ -1238,7 +1238,7 @@ void CommMsgListener::onEvent(RetryConnectToServerEvt& e)
 #ifdef _QCHAT
         _pComm->tryConneteToServerByQVT();
 #else
-        _pComm->tryConneteToServer();
+        _pComm->tryConnectToServer();
 #endif
     }
 }
@@ -1309,4 +1309,8 @@ void CommMsgListener::onEvent(ModifyUserMedalStatusEvt &e) {
 void CommMsgListener::onEvent(NetHistoryMessage &e) {
     if(nullptr != _pComm)
         _pComm->getNetHistoryMessage(e.time, e.chatType, e.uid, e.direction, e.msgList);
+}
+
+void CommMsgListener::onEvent(LinkHistoryMessage &e) {
+    LogicManager::instance()->getDatabase()->getLinkMessage(e.time, e.userid, e.realJid, e.msgList);
 }

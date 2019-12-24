@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019/11/06.
+// Created by cc on 2019/11/06.
 //
 
 #ifndef QTALK_V2_SEARCHITEMWGT_H
@@ -36,9 +36,7 @@ struct StNetSearchResult {
     // video
     StVideoMessage video;
 };
-
 Q_DECLARE_METATYPE(StNetSearchResult)
-
 
 /** SearchItemBase **/
 class SearchItemBase : public QFrame {

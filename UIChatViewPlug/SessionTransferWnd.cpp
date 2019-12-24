@@ -2,10 +2,12 @@
 // Created by lihaibin on 2019-06-18.
 //
 #include <QVBoxLayout>
+#include <QRadioButton>
 #include "SessionTransferWnd.h"
-#include "../UITitlebarPlug/SystemSettingWnd.h"
 #include "../CustomUi/LiteMessageBox.h"
 #include <QPushButton>
+
+
 SessionTransferWnd::SessionTransferWnd(QWidget *parent)
         : UShadowDialog(parent, true,true)
 {
@@ -103,23 +105,24 @@ void SessionTransferWnd::initUI() {
     });
 }
 
-void SessionTransferWnd::showSeats(std::vector<QTalk::Entity::ImTransfer> transfers) {
+void SessionTransferWnd::showSeats(const std::vector<QTalk::Entity::ImTransfer>& transfers) {
     if(isHaveShow)
         return;
     int i = 0;
-    for(QTalk::Entity::ImTransfer transfer : transfers){
-        SettingCheckBox* radioButton = new SettingCheckBox(transfer.nickName.c_str());
-        radioButton->setWhatsThis(QString::fromStdString(transfer.newCsrName));
-        _pButtonGroup->addButton(radioButton,i++);
-        _pSeats->addWidget(radioButton);
+    for(const QTalk::Entity::ImTransfer& transfer : transfers){
+        auto* btn = new QRadioButton(transfer.userName.c_str(), this);
+        btn->setToolTip(transfer.userId.data());
+        _pButtonGroup->addButton(btn, i++);
+        _pSeats->addWidget(btn);
     }
-    connect(_pButtonGroup, SIGNAL(buttonToggled(int,bool)), this, SLOT(operatingModeButtonsToggled(int,bool)));
+    connect(_pButtonGroup, SIGNAL(buttonToggled(int, bool)),
+            this, SLOT(operatingModeButtonsToggled(int, bool)));
     isHaveShow = true;
 }
 
 void SessionTransferWnd::operatingModeButtonsToggled(int id, bool status) {
     if(status){
-        QString jid = _pButtonGroup->button(id)->whatsThis();
+        QString jid = _pButtonGroup->button(id)->toolTip();
         newCsrName = jid.toStdString();
     }
 }

@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019/10/22.
+// Created by cc on 2019/10/22.
 //
 
 #include "UserHeadWgt.h"

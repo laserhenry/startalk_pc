@@ -1007,7 +1007,33 @@ void MessageDao::getImageMessage(const long long &time, const std::string &userI
                       "and M.`LastUpdateTime` < ?  "
                       "and M.content like '%[obj type=\"image\"%' "
                       "order by M.`LastUpdateTime` DESC "
-                      "limit 10;";
+                      "limit 50;";
+
+    qtalk::sqlite::statement query(*_pSqlDb, sql);
+    query.bind(1, userId);
+    query.bind(2, realJid);
+    query.bind(3, t);
+
+    dealMessage(query, msgList);
+
+}
+
+void MessageDao::getLinkMessage(const long long &time, const std::string &userId, const std::string &realJid,
+                                 std::vector<QTalk::Entity::ImMessageInfo> &msgList) {
+
+    long long t = time == 0 ? LLONG_MAX : time;
+
+    std::string sql = "SELECT M.`XmppId`, M.`ChatType`, U.`Name`, M.`Content`, M.`State`, M.`Direction`, M.`ReadedTag`, M.`LastUpdateTime`,  "
+                      "U.`HeaderSrc`, M.`From`, M.`Type`, M.`ExtendedFlag`, M.`MsgId`, M.`ExtendedInfo`,M.`RealJid`  "
+                      "from IM_Message AS M  "
+                      "left join  IM_User AS U  "
+                      "on M.`From` = U.`XmppId` "
+                      "where M.`XmppId` = ? "
+                      "and M.`RealJid` = ? "
+                      "and M.`LastUpdateTime` < ?  "
+                      "and M.content like '%[obj type=\"url\"%' "
+                      "order by M.`LastUpdateTime` DESC "
+                      "limit 50;";
 
     qtalk::sqlite::statement query(*_pSqlDb, sql);
     query.bind(1, userId);

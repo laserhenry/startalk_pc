@@ -200,9 +200,7 @@ void user_card::initUi()
         tmpLabel->setVisible(false);
         _pUserNoEdit->setVisible(false);
     }
-#if defined(_ATALK)
-    tmpLabel = new QLabel(tr("ATalk ID"));
-#elif defined(_STARTALK)
+#if defined(_STARTALK)
     tmpLabel = new QLabel(tr("StarTalk ID"));
 #else
     tmpLabel = new QLabel(tr("Qunar ID"));
@@ -379,7 +377,7 @@ bool user_card::showUserCard(std::shared_ptr<QTalk::Entity::ImUserSupplement> im
     {
         if(!imuserSup->LeaderId.empty())
             _strLeaderId = QString("%1@%2").arg(imuserSup->LeaderId.c_str()).arg(jid.domainname().c_str());
-        _strUserId = jid.barename();
+        _strUserId = jid.basename();
 
         std::string strName = info->NickName;
         if(strName.empty())
@@ -475,12 +473,20 @@ void user_card::setWgtStatus()
 //
 void user_card::onLeaderBtnClick()
 {
+    // 防止崩溃
+    {
+        disconnect(_pLeaderEdit, SIGNAL(clicked()), this, SLOT(onLeaderBtnClick()));
+        static void* pVoid = nullptr;
+        if(pVoid == this)
+            return;
+        pVoid = this;
+    }
     if(nullptr != _pMainPanel)
     {
         if(!_strLeaderId.isEmpty())
         {
             _pMainPanel->shwoUserCard(_strLeaderId);
-            this->close();
+            this->deleteLater();
         }
         else
         {
@@ -725,6 +731,7 @@ void user_card::modifyUserMedalStatus(int id, bool isWear)
     }
 
     QFuture<bool> future = QtConcurrent::run(&UserCardMsgManager::modifyUserMedal, id, isWear);
+//    future.waitForFinished();
     while (!future.isFinished())
         QApplication::processEvents(QEventLoop::AllEvents, 100);
 

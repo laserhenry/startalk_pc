@@ -44,8 +44,8 @@ void QTalkMsgManager::chanegUserStatus(const std::string& status)
     EventBus::FireEvent(evt);
 }
 
-void QTalkMsgManager::reportDump(const std::string &dump) {
-    ReportDump e(dump);
+void QTalkMsgManager::reportDump(const std::string& ip, const std::string& id, const std::string &dump, QInt64 crashTime) {
+    ReportDump e(ip, id, dump, crashTime);
     EventBus::FireEvent(e);
 }
 

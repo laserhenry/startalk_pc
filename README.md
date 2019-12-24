@@ -20,11 +20,13 @@ ___
  quazip |  | https://github.com/stachenov/quazip | 项目中包含源码
  EventBus |  | https://github.com/greenrobot/EventBus | 项目中包含源码
  cJson | | https://github.com/DaveGamble/cJSON | 项目中包含源码 
+ breakpad | | https://github.com/google/breakpad | 
  
 1. Windows 操作系统  
     ① Visual Studio 2017/2019  
     ② Cmake  
-    ③ Clion(IDE建议使用Clion, 也可以根据cmakelist 写vs项目, 或者使用记事本)  
+    ③ Clion(IDE建议使用Clion, 也可以根据cmakelist写vs项目)  
+      
 2. Linux/MacOS 操作系统  
     ① Cmake  
     ② UUID  
@@ -58,6 +60,7 @@ $ cmake --build ${root_dir}/build --target all --
 ```
 
 可执行文件会生成到 ${root_dir}/build/bin 目录下
+可以参考 build_script 下的脚本
 
 tips:  
     1> 需要修改跟目录下的CMakeList.txt 中第三方的路径 根据自己的安装位置修改  
@@ -70,5 +73,5 @@ tips:
 此版本不包含版本升级功能、我们会在功能完善之后放出。
 
 ### 联系我们
-1> issue  
+1> [issue](https://github.com/startalkIM/startalk/issues)  
 2> 我们的[官网](https://i.startalk.im/home/#/) 留言  

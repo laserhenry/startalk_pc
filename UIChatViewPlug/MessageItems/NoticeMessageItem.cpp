@@ -36,8 +36,8 @@ void NoticeMessageItem::loadUrl(const QTalk::Entity::ImMessageInfo& msgInfo) {
         QJsonObject jsonObject = jsonDocument.object();
         QString linkUrl = jsonObject.value("linkurl").toString();
 
-        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
-        if (userDftBrowser){
+//        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
+//        if (userDftBrowser){
             MapCookie cookies;
             cookies["ckey"] = QString::fromStdString(Platform::instance().getClientAuthKey());
             std::string qvt = Platform::instance().getQvt();
@@ -52,9 +52,9 @@ void NoticeMessageItem::loadUrl(const QTalk::Entity::ImMessageInfo& msgInfo) {
                 cookies["_t"] = QString::fromStdString(tcookie);
             }
             WebService::loadUrl(QUrl(linkUrl), false, cookies);
-        }
-        else
-            QDesktopServices::openUrl(QUrl(linkUrl));
+//        }
+//        else
+//        QDesktopServices::openUrl(QUrl(linkUrl));
     }
 }
 
@@ -109,21 +109,11 @@ void NoticeMessageItem::initSendLayout() {
     auto* tmpLay = new QHBoxLayout;
     tmpLay->setMargin(0);
     tmpLay->setSpacing(5);
-    if(nullptr == _sending)
+    tmpLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
+    if(nullptr != _sending && nullptr != _resending)
     {
-        _sending = new HeadPhotoLab(":/chatview/image1/messageItem/loading.gif", 10, false, false, true, this);
-//        _sending->setHead(":/chatview/image1/messageItem/loading.gif", 15, false, true, true);
-        tmpLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
         tmpLay->addWidget(_sending);
-        bool startMovie = (0 == _msgInfo.ReadedTag && 0 == _msgInfo.State);
-        _sending->setVisible(startMovie);
-        if(startMovie)
-            _sending->startMovie();
-    }
-    if(nullptr != _resending)
-    {
         tmpLay->addWidget(_resending);
-        _resending->setVisible(false);
     }
     tmpLay->addWidget(_contentFrm);
     tmpLay->setAlignment(_contentFrm, Qt::AlignRight);

@@ -25,11 +25,6 @@ namespace QTalk {
 		}
 		return *_qimage;
 	}
-	//
-    qimage::qimage() {}
-
-    qimage::~qimage() {}
-
     //
     QPixmap qimage::loadPixmap(const QString &srcPath, bool save, bool scaled, int width, int height) {
 
@@ -81,6 +76,8 @@ namespace QTalk {
     }
 
     QPixmap qimage::scaledPixmap(const QPixmap &src, int width, int height, bool model) {
+//	    if(src.width() < width && src.height() < height)
+//            return src;
         return src.scaled(width, (height == 0 ? width : height),
                           model ? Qt::KeepAspectRatioByExpanding : Qt::KeepAspectRatio,
                           Qt::SmoothTransformation);

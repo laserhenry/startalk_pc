@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019/11/13.
+// Created by cc on 2019/11/13.
 //
 
 #include "NetImageLabel.h"
@@ -9,6 +9,7 @@
 #include "../Platform/Platform.h"
 #include "ChatViewMainPanel.h"
 #include "../UICom/qimage/qimage.h"
+#include "../UICom/StyleDefine.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
 NetImageLabel::NetImageLabel(QString link, QWidget* parent)
@@ -46,11 +47,19 @@ void NetImageLabel::paintEvent(QPaintEvent *event) {
 
     if(!imgPath.isEmpty())
     {
-        QPixmap image = QTalk::qimage::instance().loadPixmap(imgPath, false);
+        qreal dpi = QTalk::qimage::instance().dpi();
+        QPixmap image = QTalk::qimage::instance().loadPixmap(imgPath,
+                false, true, rect.width() * dpi, rect.height() * dpi);
         if(image.isNull())
             load_default_image();
         else
-            painter.drawPixmap(rect, image);
+        {
+            qreal imgW = image.width() / dpi;
+            qreal imgH = image.height() / dpi;
+            painter.drawPixmap((rect.width() - imgW) / 2 + rect.x(),
+                               (rect.height() - imgH) / 2 + rect.y(),
+                               imgW, imgH, image);
+        }
     }
     else
         load_default_image();
@@ -89,4 +98,12 @@ void NetImageLabel::showVideoMask()
 {
     _showVideoMask = true;
     update();
+}
+
+//
+bool NetImageLabel::event(QEvent *e) {
+
+    if(e->type() == QEvent::MouseButtonPress)
+        emit clicked();
+    return QFrame::event(e);
 }

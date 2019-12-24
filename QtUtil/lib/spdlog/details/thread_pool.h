@@ -195,6 +195,9 @@ private:
 
     void worker_loop_()
     {
+#ifdef _MACOS
+        pthread_setname_np("log thread");
+#endif
         while (process_next_msg_()) {};
     }
 

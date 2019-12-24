@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019-06-25.
+// Created by cc on 2019-06-25.
 //
 
 #ifndef QTALK_V2_SEARCHITEMDELEGATE_H

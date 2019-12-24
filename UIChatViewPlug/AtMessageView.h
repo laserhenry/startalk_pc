@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2018/11/26.
+// Created by cc on 2018/11/26.
 //
 
 #ifndef QTALK_V2_ATMESSAGEVIEW_H

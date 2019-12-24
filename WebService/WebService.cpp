@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-01-27.
+// Created by cc on 2019-01-27.
 //
 
 #include "WebService.h"
@@ -105,7 +105,7 @@ WebService::WebService()
     titleLay->addWidget(_pCloseBtn);
     titleLay->addWidget(_pTitleLabel);
 #else
-    _pCloseBtn->setFixedSize(20, 20);
+    _pCloseBtn->setFixedSize(24, 24);
     _pCloseBtn->setObjectName("gwCloseBtn");
 
     titleLay->addWidget(_pTitleLabel);

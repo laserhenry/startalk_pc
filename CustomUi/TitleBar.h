@@ -1,11 +1,12 @@
 //
-// Created by QITMAC000260 on 2019/11/05.
+// Created by cc on 2019/11/05.
 //
 
 #ifndef QTALK_V2_TITLEBAR_H
 #define QTALK_V2_TITLEBAR_H
 
 #include <QFrame>
+#include <QLabel>
 #include <QToolButton>
 #include "customui_global.h"
 
@@ -20,9 +21,11 @@ public:
 
 public:
     QToolButton* getCloseBtn(){ return _pCloseBtn; };
+    void setLabelText(const QString& text);
 
 private:
     QToolButton* _pCloseBtn;
+    QLabel*      _pTitleLbl{};
 };
 
 

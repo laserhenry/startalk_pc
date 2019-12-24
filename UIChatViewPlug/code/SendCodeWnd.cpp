@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-02-28.
+// Created by cc on 2019-02-28.
 //
 
 #include "SendCodeWnd.h"

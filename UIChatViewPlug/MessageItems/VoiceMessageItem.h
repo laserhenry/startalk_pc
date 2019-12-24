@@ -1,5 +1,5 @@
 //
-// Created by QITMAC000260 on 2019-05-08.
+// Created by cc on 2019-05-08.
 //
 
 #ifndef QTALK_V2_VOICEMESSAGEITEM_H

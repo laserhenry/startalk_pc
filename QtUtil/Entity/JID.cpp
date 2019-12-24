@@ -15,16 +15,11 @@ using namespace std;
 namespace QTalk {
     namespace Entity {
 
-        JID *JID::jidWithString(std::string *str) {
-            JID *jid = new JID(str);
-            return jid;
-        }
-
-        void JID::innerParseUser(const char *input, const std::string &clientVersion, const std::string &platformStr) {
+        void JID::innerParseUser(const string &input, const std::string &clientVersion, const std::string &platformStr, int channel) {
 
             std::string jid(input);
 
-            size_t pos = jid.find("@");
+            size_t pos = jid.find('@');
             if (pos > 0 && pos <= jid.size()) 
 			{
                 std::string node = jid.substr(0, pos);
@@ -34,94 +29,82 @@ namespace QTalk {
                 std::string domain;
                 std::string resource;
 
-                if (!remain.empty()) 
-				{
-                    if (pos > 0 && pos <= remain.size()) 
-					{
+                if (remain.empty()) {
+                    throw "jid's parameter is illegal";
+                } else {
+                    if (pos > 0 && pos <= remain.size()) {
                         domain = remain.substr(0, pos);
                         resource = remain.substr(pos + 1, remain.size() - pos);
-                    } 
-					else
-					{
-						domain = remain;
-						// resource todo
-						char uuid[36] = {};
-						memset(uuid, 0, strlen(uuid));
-						QTalk::utils::generateUUID(uuid);
-						
-						std::ostringstream stream;
-                        stream  << "V[" << clientVersion
-                                << "]_P[" << platformStr
-								<< "]_ID[" << uuid
-								<< "]_PB";
-						resource = stream.str();
-					}
-                    init(&node, &domain, &resource);
-                } 
-				else 
-				{
-                    throw "jid's parameter is illegal";
+                    } else {
+                        domain = remain;
+                        // resource todo
+                        char uuid[36] = {};
+                        memset(uuid, 0, strlen(uuid));
+                        QTalk::utils::generateUUID(uuid);
+
+                        std::ostringstream stream;
+                        stream << "V[" << clientVersion
+                               << "]_P[" << platformStr
+                               << "]_ID[" << uuid
+                               << "]_C[" << channel
+                               << "]_PB";
+                        resource = stream.str();
+                    }
+                    init(node, domain, resource, channel);
                 }
             }
         }
 
-        JID::JID(const std::string *jid, const string &clientVersion, const string &platformStr) {
-            innerParseUser(jid->c_str(), clientVersion, platformStr);
+        JID::JID(const std::string &jid, const string &clientVersion, const string &platformStr, int channel) {
+            innerParseUser(jid, clientVersion, platformStr, channel);
         }
 
 
-        void JID::init(string *node, string *domain, string *resource) {
-            if (node == nullptr || domain == nullptr) {
+        void JID::init(const std::string &node, const  std::string &domain,
+                const std::string &resource, int channel) {
+            if (node.empty() || domain.empty()) {
                 throw "jid's parameter is illegal";
             }
 
-            this->domain = *domain;
-            this->node = *node;
-            this->resource = *resource;
-
+            _domain = domain;
+            _node = node;
+            _resource = resource;
+            _channel = channel;
         }
 
-        JID::JID(string *node, string *domain, string *resource, const string &clientVersion, const string &platformStr) {
-            init(node, domain, resource);
-        }
-
-        std::string JID::barename() {
-            if(node.empty() || domain.empty())
+        std::string JID::basename() {
+            if(_node.empty() || _domain.empty())
                 return std::string();
             std::stringstream ss;
-            ss << node
+            ss << _node
                << "@"
-               << domain;
+               << _domain;
             return ss.str();
         }
 
         std::string JID::fullname() {
-            if (resource.empty())
-                return barename();
+            if (_resource.empty())
+                return basename();
 
             std::stringstream ss;
-            ss << node
+            ss << _node
                << "@"
-               << domain
+               << _domain
                << "/"
-               << resource;
+               << _resource;
             return ss.str();
         }
 
         std::string &JID::username() {
-            return node;
+            return _node;
         }
 
         std::string &JID::domainname() {
-            return domain;
-        }
-
-        JID::JID(const char *user, const string &clientVersion, const string &platformStr) {
-            innerParseUser(user, clientVersion, platformStr);
+            return _domain;
         }
 
         string &JID::resources() {
-            return this->resource;
+            return this->_resource;
         }
     }
 }

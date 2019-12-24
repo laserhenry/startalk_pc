@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-02-18.
+// Created by cc on 2019-02-18.
 //
 
 #include "WebEnginePage.h"
@@ -96,10 +96,26 @@ QStringList WebEnginePage::chooseFiles(QWebEnginePage::FileSelectionMode mode, c
     for(const auto& it : acceptedMimeTypes)
     {
         if(it.contains("image"))
-            filter += "image(*.png *.PNG *.jpg *.JPG *.jpeg *.JPEG *.gif *.GIF);;";
-        else if(it.contains("pdf"))
-            filter += "pdf(*.pdf *.PDF);;";
+            filter += "*.png *.PNG *.jpg *.JPG *.jpeg *.JPEG *.gif *.GIF ";
+        else {
+            if(it == ("application/pdf"))
+                filter += "*.pdf *.PDF ";
+            else if(it == ("application/msword"))
+                filter += "*.doc *.DOC ";
+            else if(it == ("application/vnd.ms-excel"))
+                filter += "*.xls *.xlt *.xla *.XLS *.XLT *.XLA ";
+            else if(it == ("application/vnd.ms-powerpoint"))
+                filter += "*.ppt *.pot *.pps *.ppa *.PPT *.POT *.PPS *.PPA ";
+            else if(it == ("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                filter += "*.docx *.DOCX ";
+            else if(it == ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                filter += "*.xlsx *.XLSX ";
+            else if(it == ("application/vnd.openxmlformats-officedocument.presentationml.slideshow"))
+                filter += "*.ppsx *.PPSX ";
+        }
     }
+    if(!acceptedMimeTypes.isEmpty())
+        filter.append(";;");
     filter += "All Files(*.*)";
 
     auto list = QFileDialog::getOpenFileNames((QWidget*)parent(), tr("打开"),

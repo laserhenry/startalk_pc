@@ -16,17 +16,47 @@
 #include "../CustomUi/QtMessageBox.h"
 #include "ChangeHeadWnd.h"
 
+void deleteDir(const QString& path)
+{
+    if (path.isEmpty())
+        return;
+
+    QFileInfo info(path);
+    if(!info.exists())
+        return;
+
+    if(info.isDir())
+    {
+        QDir dir(path);
+        if(!dir.exists())
+            return;
+
+        dir.setFilter(QDir::AllEntries | QDir::NoDotAndDotDot);
+        QFileInfoList fileList = dir.entryInfoList();
+        for (const auto& fi : fileList)
+        {
+            deleteDir(fi.absoluteFilePath());
+        }
+        dir.rmpath(dir.absolutePath());
+    }
+    else
+    {
+        info.dir().remove(info.fileName());
+    }
+}
+
+
 MainPanel::MainPanel(QWidget *parent) :
         QFrame(parent),
         _pCtrlWdt(nullptr),
         _pSearchResultPanel(nullptr),
         _pAboutWnd(nullptr),
         _pSystemSettingWnd(nullptr) {
+
     init();
     connects();
     getSelfCard();
 
-//    this->setAutoFillBackground(false);
 }
 
 MainPanel::~MainPanel() = default;
@@ -63,9 +93,10 @@ void MainPanel::getSelfCard() {
 void MainPanel::recvUserCard(const std::vector<QTalk::StUserCard> &userCards) {
     std::string strSelfId = Platform::instance().getSelfUserId() + "@" + Platform::instance().getSelfDomain();
 
-    auto itFind = std::find_if(userCards.begin(), userCards.end(), [&](const QTalk::StUserCard user) {
+    auto itFind = std::find_if(userCards.begin(), userCards.end(), [strSelfId](const QTalk::StUserCard& user) {
         return user.xmppId == strSelfId;
     });
+
     if (itFind != userCards.end() && _pMessageManager) {
         std::string headPath = _pMessageManager->getHeadPath(itFind->headerSrc);
         if (!headPath.empty() && _userBtn) {
@@ -290,6 +321,15 @@ void MainPanel::init() {
         int ret = QtMessageBox::question(this, tr("友情提示"), tr("是否要清除应用缓存，清除后应用会自动重启？"), QtMessageBox::EM_BUTTON_YES | QtMessageBox::EM_BUTTON_NO);
         if(ret == QtMessageBox::EM_BUTTON_YES)
         {
+            // 清除文件夹
+            QString userPath = Platform::instance().getAppdataRoamingUserPath().data();
+            // image
+            deleteDir(QString("%1/image").arg(userPath));
+            // video
+            deleteDir(QString("%1/video").arg(userPath));
+            // temp
+            deleteDir(QString("%1/temp").arg(userPath));
+            //
             if (_pMessageManager)
                 _pMessageManager->clearSystemCache();
 

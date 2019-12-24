@@ -1,7 +1,7 @@
 #include <utility>
 
 //
-// Created by QITMAC000260 on 2019-04-17.
+// Created by cc on 2019-04-17.
 //
 
 #include "TipButton.h"

@@ -147,12 +147,11 @@ public:
 class ServerCloseSessionEvt : public Event
 {
 public:
-    ServerCloseSessionEvt(std::string username,std::string seatname,std::string virtualname)
-			:username(std::move(username)), seatname(std::move(seatname)),virtualname(std::move(virtualname)) {}
+    ServerCloseSessionEvt(std::string username, std::string virtualname)
+			:username(std::move(username)),virtualname(std::move(virtualname)) {}
 
 public:
 	std::string username;
-	std::string seatname;
 	std::string virtualname;
 };
 

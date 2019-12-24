@@ -1,5 +1,5 @@
 ﻿//
-// Created by QITMAC000260 on 2019-05-22.
+// Created by cc on 2019-05-22.
 //
 
 #include "EmoticonView.h"

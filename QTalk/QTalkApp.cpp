@@ -16,6 +16,8 @@
 #include <QTemporaryFile>
 #include <QFontDatabase>
 #include <curl/curl.h>
+#include <QtConcurrent>
+#include <QSslSocket>
 #include "UIGolbalManager.h"
 #include "../LogicManager/LogicManager.h"
 #include "../Platform/Platform.h"
@@ -41,8 +43,6 @@ QTalkApp::QTalkApp(int argc, char *argv[])
     //strExcutePath = strExcutePath.replace("/", "\\");
 	// 启动日志
 	initLogSys();
-	// 崩溃处理 获取dump 暂时处理以后用breakpad替代
-    initDump();
 
 #ifdef _MACOS
     MacApp::initApp();
@@ -56,7 +56,8 @@ QTalkApp::QTalkApp(int argc, char *argv[])
     curl_global_init(CURL_GLOBAL_ALL);
     // 加载全局单利platform
     Platform::instance().setMainThreadId();
-    Platform::instance().setExcutePath(strExcutePath.toStdString());
+    Platform::instance().setExecutePath(strExcutePath.toStdString());
+    Platform::instance().setExecuteName(qApp->applicationName().toStdString());
     Platform::instance().setProcessId(qApp->applicationPid());
     QString systemStr = QSysInfo::prettyProductName();
     QString productType = QSysInfo::productType();
@@ -334,7 +335,7 @@ void QTalkApp::initLogSys() {
     strlogPath = QString("%1/logs/%2/")
             .arg(appdata)
             .arg(curDateTime.toString("yyyy-MM-dd"));
-    strqLogPath = QString("/%1/%2_qdebug.log").arg(strlogPath).arg(curDateTime.toString("yyyy-MM-dd hh-mm-dd"));
+    strqLogPath = QString("%1/%2_qdebug.log").arg(strlogPath).arg(curDateTime.toString("yyyy-MM-dd hh-mm-dd"));
 
     QDir logDir(strlogPath);
     if (!logDir.exists()) {
@@ -354,6 +355,7 @@ void QTalkApp::initLogSys() {
     qInstallMessageHandler(LogMsgOutput);
     //
     info_log("系统启动 当前版本号:{0}", Platform::instance().getClientVersion());
+    info_log("supportsSsl {0}", QSslSocket::supportsSsl());
 //    qDebug() << QStringLiteral("系统启动");
 }
 
@@ -454,76 +456,6 @@ LONG WINAPI TopLevelFilter(struct _EXCEPTION_POINTERS *pExceptionInfo) {
 
 #endif // _WINDOWS
 
-void QTalkApp::dealDumpFile()
-{
-#ifdef _WINDOWS
-	// deal dump
-	QDateTime curDateTime = QDateTime::currentDateTime();
-	QString appdata = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-	QString logDirPath = QString("%1/logs/").arg(appdata);
-	std::function<void(const QString&)> delDmpfun;
-	delDmpfun = [this, curDateTime, &delDmpfun](const QString& path) {
-
-		QDir dir(path);
-		QFileInfoList infoList = dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-		for (QFileInfo tmpInfo : infoList)
-		{
-			if (tmpInfo.isDir())
-			{
-				delDmpfun(tmpInfo.absoluteFilePath());
-			}
-			else if (tmpInfo.isFile())
-			{
-				if (tmpInfo.suffix().toLower() == "dmp")
-				{
-					if (curDateTime.toMSecsSinceEpoch() - tmpInfo.baseName().toLongLong() < 1000 * 60 * 60 * 24 * 2) {
-
-						std::string dumpFilePath = std::string(tmpInfo.absoluteFilePath().toLocal8Bit());
-						std::thread([this, tmpInfo, dumpFilePath]() {
-							if (_pMainWnd)
-							{
-								_pMainWnd->_pMessageManager->reportDump(dumpFilePath);
-								QFile::remove(tmpInfo.absoluteFilePath());
-							}
-						}).detach();
-					}
-					else
-						QFile::remove(tmpInfo.absoluteFilePath());
-				}
-			}
-		}
-	};
-	delDmpfun(logDirPath);
-#endif // _WINDOWS
-}
-
-void QTalkApp::initDump() {
-#ifdef _WINDOWS
-    ::SetUnhandledExceptionFilter(TopLevelFilter);
-#endif // _WINDOWS
-#ifdef _LINUX
-    QString corePath = QFileInfo(".").absoluteFilePath();
-    if(!corePath.isEmpty())
-    {
-        QFileInfo info(corePath);
-        if(info.isDir())
-        {
-            QDir dir(info.absoluteFilePath());
-            QFileInfoList fileList = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
-            QString dirPath = QString::fromStdString(Platform::instance().getAppdataRoamingPath());
-            for(QFileInfo fileInfo : fileList) {
-                QString path = fileInfo.absolutePath();
-                if(fileInfo.baseName().toLower() == "core")
-                {
-                    QString newName = QString("/core_%1").arg(fileInfo.lastModified().toString("yyyy-MM-dd hh:mm:ss"));
-                    QFile::copy(fileInfo.absoluteFilePath(), dirPath + "/logs/" + newName);
-                    break;
-                }
-            }
-        }
-    }
-#endif //_LINUX
-}
 
 void QTalkApp::initTTF() {
     std::string appDataPath = Platform::instance().getAppdataRoamingPath();
