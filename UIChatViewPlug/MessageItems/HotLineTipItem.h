@@ -6,6 +6,7 @@
 #define QTALK_V2_HOTLINETIPITEM_H
 
 #include <QFrame>
+#include <NativeChatStruct.h>
 #include "../../entity/im_message.h"
 
 /**
@@ -15,11 +16,11 @@
 **/
 class HotLineTipItem : public QFrame{
 public:
-    explicit HotLineTipItem(const QTalk::Entity::ImMessageInfo& info, QWidget* parent = nullptr);
+    explicit HotLineTipItem(const StNetMessageResult& info, QWidget* parent = nullptr);
     ~HotLineTipItem() override;
 
 private:
-    QTalk::Entity::ImMessageInfo _msgInfo;
+    StNetMessageResult _msgInfo;
 };
 
 

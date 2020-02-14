@@ -17,7 +17,6 @@ class QuickReplyWnd : public UShadowDialog{
 Q_OBJECT
 public:
     explicit QuickReplyWnd(QWidget* parent = nullptr);
-    ~QuickReplyWnd() override;
 
 public:
     void addTagItem();

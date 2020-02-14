@@ -25,18 +25,15 @@
 using namespace QTalk;
 extern ChatViewMainPanel *g_pMainPanel;
 
-GroupMember::GroupMember(QWidget *parent, const QString& groupId)
+GroupMember::GroupMember(QWidget *parent)
         : QFrame(parent),
           _selfIsCreator(false) ,
           _selfIsAdmin(false){
-    _groupId = groupId.toStdString();
     initUi();
 
 }
 
-GroupMember::~GroupMember() {
-
-}
+GroupMember::~GroupMember() = default;
 
 /**
   * @函数名   addMember
@@ -89,8 +86,8 @@ GroupMember::addMember(const std::string &xmppid, const std::string &userName, c
         }
 
         {
-            std::lock_guard<QTalk::util::spin_mutex> lock(_sm);
             _srcModel->appendRow(item);
+            std::lock_guard<QTalk::util::spin_mutex> lock(_sm);
             _mapMemberItem[xmppid] = item;
         }
 
@@ -107,6 +104,7 @@ GroupMember::addMember(const std::string &xmppid, const std::string &userName, c
   */
 void GroupMember::deleteMember(const std::string &xmppid) {
 
+    qInfo() << "deleteMember" << xmppid.data() << _groupId.data();
     {
         std::lock_guard<QTalk::util::spin_mutex> lock(_sm);
         //
@@ -122,41 +120,28 @@ void GroupMember::deleteMember(const std::string &xmppid) {
 
 void GroupMember::updateGroupMember(const std::string& memberJid, const std::string& nick, int affiliation) {
 
-    QPointer<GroupMember> pThis(this);
-    auto func = [pThis, memberJid, nick, affiliation]() {
+    std::string userId = Entity::JID(memberJid).basename();
+    std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(memberJid);
+    bool isOnline = Platform::instance().isOnline(userId);
+
+    std::lock_guard<QTalk::util::spin_mutex> lock(_sm);
+    if (_mapMemberItem.contains(memberJid)) {
+        if(userInfo)
         {
-            if(!pThis) return;
-
-            std::lock_guard<QTalk::util::spin_mutex> lock(pThis->_sm);
-#ifdef _MACOS
-            pthread_setname_np("GroupMember::updateMemberInfo");
-#endif
-            std::string userId = Entity::JID(memberJid.c_str()).basename();
-            std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(memberJid);
-            bool isOnline = Platform::instance().isOnline(userId);
-            if(!pThis) return;
-            if (pThis && pThis->_mapMemberItem.contains(memberJid)) {
-                if(userInfo)
-                {
-                    std::string headSrc = GetHeadPathByUrl(userInfo->HeaderSrc);
-                    pThis->_mapMemberItem[memberJid]->setData(QString(headSrc.data()), EM_ITEMDATA_TYPE_HEADPATH);
-                }
-                pThis->_mapMemberItem[memberJid]->setData(affiliation, EM_ITEMDATA_TYPE_USERTYPE);
-                pThis->_mapMemberItem[memberJid]->setData(isOnline, EM_ITEMDATA_TYPE_ISONLINE);
-
-            } else {
-                if(pThis && userInfo)
-                {
-                    std::string headSrc = GetHeadPathByUrl(userInfo->HeaderSrc);
-                    emit pThis->addMemberSignal(memberJid, nick, QString::fromStdString(headSrc), affiliation, isOnline,
-                            QString::fromStdString(userInfo->SearchIndex));
-                }
-            }
+            std::string headSrc = GetHeadPathByUrl(userInfo->HeaderSrc);
+            _mapMemberItem[memberJid]->setData(QString(headSrc.data()), EM_ITEMDATA_TYPE_HEADPATH);
         }
-    };
+        _mapMemberItem[memberJid]->setData(affiliation, EM_ITEMDATA_TYPE_USERTYPE);
+        _mapMemberItem[memberJid]->setData(isOnline, EM_ITEMDATA_TYPE_ISONLINE);
 
-    std::thread t(func);
-    t.detach();
+    } else {
+        if(userInfo)
+        {
+            std::string headSrc = GetHeadPathByUrl(userInfo->HeaderSrc);
+            emit addMemberSignal(memberJid, nick, QString::fromStdString(headSrc), affiliation, isOnline,
+                    QString::fromStdString(userInfo->SearchIndex));
+        }
+    }
 }
 
 /**
@@ -167,51 +152,36 @@ void GroupMember::updateGroupMember(const std::string& memberJid, const std::str
   * @date     2018/10/09
   */
 void GroupMember::updateMemberInfo(const std::vector<StUserCard> &users) {
-    QPointer<GroupMember> pThis(this);
-    auto func = [pThis, users]() {
-        {
-#ifdef _MACOS
-            pthread_setname_np("GroupMember::updateMemberInfo");
-#endif
-            if(!pThis) return;
-            std::lock_guard<QTalk::util::spin_mutex> lock(pThis->_sm);
-            for (const auto &user : users) {
-                if (pThis && pThis->_mapMemberItem.contains(user.xmppId)) {
-                    std::string headSrc = GetHeadPathByUrl(user.headerSrc);
-                    QFileInfo head(QString(headSrc.c_str()));
-                    if (!head.exists() || !head.isFile()) {
+
+    std::lock_guard<QTalk::util::spin_mutex> lock(_sm);
+    for (const auto &user : users) {
+        if (_mapMemberItem.contains(user.xmppId)) {
+            std::string headSrc = GetHeadPathByUrl(user.headerSrc);
+            QFileInfo head(QString(headSrc.c_str()));
+            if (!head.exists() || !head.isFile()) {
 #ifdef _STARTALK
-                        QString headPath = ":/QTalk/image1/StarTalk_defaultHead.png";
+                QString headPath = ":/QTalk/image1/StarTalk_defaultHead.png";
 #else
-                        QString headPath = ":/QTalk/image1/headPortrait.png";
+                QString headPath = ":/QTalk/image1/headPortrait.png";
 #endif
-                        pThis->_mapMemberItem[user.xmppId]->setData(headPath, EM_ITEMDATA_TYPE_HEADPATH);
-                    } else {
-                        QString tmphead(head.absoluteFilePath());
-                        pThis->_mapMemberItem[user.xmppId]->setData(tmphead, EM_ITEMDATA_TYPE_HEADPATH);
-                    }
-                    std::string name = user.nickName;
-                    if(name.empty())
-                        name = user.userName;
-                    if(name.empty())
-                        name = QTalk::Entity::JID(user.xmppId.data()).username();
-
-                    if(pThis)
-                    {
-                        pThis->_mapMemberItem[user.xmppId]->setData(QString::fromStdString(name), EM_ITEMDATA_TYPE_USERNAME);
-                        pThis->_mapMemberItem[user.xmppId]->setData(
-                                QString::fromStdString(dbPlatForm::instance().getMaskName(user.xmppId)),
-                                EM_ITEMDATA_TYPE_MASKNAME);
-                    }
-                }
+                _mapMemberItem[user.xmppId]->setData(headPath, EM_ITEMDATA_TYPE_HEADPATH);
+            } else {
+                QString tmphead(head.absoluteFilePath());
+                _mapMemberItem[user.xmppId]->setData(tmphead, EM_ITEMDATA_TYPE_HEADPATH);
             }
-            if(pThis)
-                pThis->_pModel->sort(0);
-        }
-    };
+            std::string name = user.nickName;
+            if(name.empty())
+                name = user.userName;
+            if(name.empty())
+                name = QTalk::Entity::JID(user.xmppId).username();
 
-    std::thread t(func);
-    t.detach();
+            _mapMemberItem[user.xmppId]->setData(QString::fromStdString(name), EM_ITEMDATA_TYPE_USERNAME);
+            _mapMemberItem[user.xmppId]->setData(
+                    QString::fromStdString(dbPlatForm::instance().getMaskName(user.xmppId)),
+                    EM_ITEMDATA_TYPE_MASKNAME);
+        }
+    }
+    _pModel->sort(0);
 }
 
 /**
@@ -339,21 +309,17 @@ void GroupMember::initUi() {
 }
 
 void GroupMember::setAdminByJid(const std::string& nick,const std::string& xmppId) {
-    ChatMsgManager *manager = g_pMainPanel->getMessageManager();
-    manager->setGroupAdmin(_groupId,nick,xmppId, false);
+    ChatMsgManager::setGroupAdmin(_groupId,nick,xmppId, false);
     _pModel->sort(0);
 }
 
 void GroupMember::removeAdminByJid(const std::string& nick,const std::string& xmppId) {
-    ChatMsgManager *manager = g_pMainPanel->getMessageManager();
-    manager->setGroupAdmin(_groupId,nick,xmppId, true);
+    ChatMsgManager::setGroupAdmin(_groupId,nick,xmppId, true);
     _pModel->sort(0);
 }
 
 void GroupMember::removeGroupByJid(const std::string& nick,const std::string& xmppId) {
-//    deleteMember(xmppId);
-    ChatMsgManager *manager = g_pMainPanel->getMessageManager();
-    manager->removeGroupMember(_groupId,nick,xmppId);
+    ChatMsgManager::removeGroupMember(_groupId,nick,xmppId);
     _pModel->sort(0);
 }
 
@@ -472,7 +438,7 @@ bool GroupMember::eventFilter(QObject *o, QEvent *e) {
 void GroupMember::updateHead() {
 
     {
-//        std::lock_guard<QTalk::util::spin_mutex> lock(_sm);
+        std::lock_guard<QTalk::util::spin_mutex> lock(_sm);
         unsigned int onlineCount = 0;
         for (const auto item : _mapMemberItem) {
             std::string xmppId(item->data(EM_ITEMDATA_TYPE_XMPPID).toByteArray());
@@ -482,7 +448,6 @@ void GroupMember::updateHead() {
 
             item->setData(isOnline, EM_ITEMDATA_TYPE_ISONLINE);
         }
-
         emit sgUpdateMemberCount(_mapMemberItem.size(), onlineCount);
     }
     _pModel->sort(0);
@@ -501,4 +466,18 @@ void GroupMember::setMemberCount(unsigned int allCount, unsigned int onlineCount
         groupMemberOnlineCount = onlineCount;
         _pSearchLineEdit->setPlaceholderText(QString(tr("成员 %1/ %2")).arg(onlineCount).arg(allCount));
     }
+}
+
+void GroupMember::setGroupId(const std::string &groupId) {
+    _groupId = groupId;
+}
+
+void GroupMember::clearData() {
+
+//    setMemberCount(0, 0);
+//    //
+//    std::lock_guard<QTalk::util::spin_mutex> lock(_sm);
+//    groupMemberCount = groupMemberOnlineCount = 0;
+//    _mapMemberItem.clear();
+//    _srcModel->clear();
 }

@@ -7,6 +7,7 @@
 #include <QDesktopWidget>
 #include <QApplication>
 #include <iostream>
+#include <QDateTime>
 #include <cmath>
 #include <QFile>
 #include <QFileDialog>
@@ -57,7 +58,7 @@ bool PictureFrm::loadNewPicture(const QString &picTure, bool isFirst) {
     _pGraphicsScene->addItem(_pPicItem);
 
     _strPicPath = picTure;
-    _pixmap = QTalk::qimage::instance().loadPixmap(picTure, false);
+    _pixmap = QTalk::qimage::instance().loadImage(picTure, false);
     if(_pixmap.isNull())
     {
         QtMessageBox::information(nullptr, tr("提示"), tr("加载图片失败"));
@@ -147,7 +148,7 @@ void PictureFrm::connects() {
                 Platform::instance().setHistoryDir(QFileInfo(newPath).absoluteDir().absolutePath().toStdString());
                 QString newSuffix = QFileInfo(newPath).suffix().toUpper();
                 //
-                auto tmpPix = QTalk::qimage::instance().loadPixmap(_strPicPath, false);
+                auto tmpPix = QTalk::qimage::instance().loadImage(_strPicPath, false);
                 if(!tmpPix.isNull())
                 {
                     auto format = newSuffix.toUtf8().data();
@@ -176,7 +177,7 @@ void PictureFrm::connects() {
 
 bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
 
-    static bool touch = false;
+    static qint64 pt = 0;
     switch (e->type())
     {
         case QEvent::TouchBegin:
@@ -189,11 +190,15 @@ bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
             if (touchPoints.count() == 2) {
                 switch (e->type()) {
                     case QEvent::TouchBegin:
+//                        touch = true;
                         break;
                     case QEvent::TouchUpdate:
                     {
-                        touch = true;
-
+//                        touch = true;
+                        qint64 now = QDateTime::currentMSecsSinceEpoch();
+                        if(now - pt < 50)
+                            break;
+                        pt = now;
                         const QTouchEvent::TouchPoint &pos0 = touchPoints.first();
                         const QTouchEvent::TouchPoint &pos1 = touchPoints.last();
                         qreal currentScaleFactor =
@@ -205,7 +210,7 @@ bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
                     }
                     case QEvent::TouchEnd:
                     case QEvent::TouchCancel:
-                        touch = false;
+//                        touch = false;
                         break;
                     default:
                         break;
@@ -240,7 +245,11 @@ bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
         }
         case QEvent::GraphicsSceneWheel:
         {
-            if(!touch)
+            qint64 now = QDateTime::currentMSecsSinceEpoch();
+            if(now - pt < 50)
+                break;
+            pt = now;
+//            if(!touch)
             {
                 auto* evt = dynamic_cast<QGraphicsSceneWheelEvent *>(e);
                 if (evt->delta() > 0)
@@ -257,6 +266,15 @@ bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
         {
             if(_pPicItem)
                 _pPicItem->setPos(0, 0);
+            break;
+        }
+        case QEvent::KeyPress:
+        {
+            auto* evt = (QKeyEvent*)e;
+            if(evt->key() == Qt::Key_Down || evt->key() == Qt::Key_Right)
+                _pPicBrowser->turnNext();
+            else if(evt->key() == Qt::Key_Up || evt->key() == Qt::Key_Left)
+                _pPicBrowser->turnBefore();
             break;
         }
         default:

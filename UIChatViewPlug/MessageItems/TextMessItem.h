@@ -6,17 +6,17 @@
 #include <QLabel>
 #include <QTextCursor>
 #define MAX_CONTENT_WIDTH 1024
+#define DEM_AT_HTML "<span style=\"color:#FF4E3F;\">%1</span>"
 
 class TextBrowser;
 class TextMessItem : public MessageItemBase
 {
     Q_OBJECT
 public:
-    TextMessItem(QVector<StTextMessage>  msgs, const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent = Q_NULLPTR);
+    TextMessItem(const StNetMessageResult &msgInfo, QWidget *parent = Q_NULLPTR);
     ~TextMessItem() override;
 
 public:
-    void setHtmlText(const QString &text );
     QSize textWdtSize();
     qreal getRealString(const QString& src, qreal& lastLineWidth);
 
@@ -29,7 +29,7 @@ public:
     QString getImageLink();
     //
     void onImageDownloaded(const QString& link);
-    void setStTextMessages(QVector<StTextMessage> msgs) { _msgs = std::move(msgs); };
+    void setStTextMessages(const std::vector<StTextMessage>& msgs) { _msgs = QVector<StTextMessage>::fromStdVector(msgs); };
 
 protected:
     bool eventFilter(QObject* o, QEvent* e) override;

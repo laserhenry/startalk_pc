@@ -106,7 +106,6 @@ namespace QTalk {
 				ExtendedInfo = "";
 				BackupInfo = "";
 				ExtendedFlag = "";
-				BackupInfo = "";
 				RealFrom = "";
 				RealTo = "";
 				SendJid = "";

@@ -14,7 +14,7 @@ class GroupChatSidebar : public QFrame
 {
 	Q_OBJECT
 public:
-    explicit GroupChatSidebar(QWidget* parent = nullptr, const QString& groupId = nullptr);
+    explicit GroupChatSidebar(QWidget* parent = nullptr);
 	~GroupChatSidebar() override;
 
 Q_SIGNALS:
@@ -24,6 +24,8 @@ Q_SIGNALS:
 public:
 	void updateGroupMember(const GroupMemberMessage& e);
 	void updateGroupMember(const std::string& memberJid, const std::string& nick, int affiliation);
+	void clearData();
+
 private:
 	void initUi();
 
@@ -33,7 +35,7 @@ public:
 private:
 	GroupTopic*  _pGroupTopic;
 	std::vector<std::string> _arMembers;
-	std::string _groupId;
+
 private:
 	QMutex _mutex;
 };

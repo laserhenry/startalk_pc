@@ -11,7 +11,7 @@
 TipMessageItem::TipMessageItem(QWidget *parent)
     //:MessageItemBase(msgInfo, parent)
 {
-    _pLabel = new QLabel;
+    _pLabel = new QLabel(this);
     _pLabel->setObjectName("TipLabel");
 
     auto* layout = new QHBoxLayout(this);
@@ -22,6 +22,7 @@ TipMessageItem::TipMessageItem(QWidget *parent)
 
     //绑定超链接与信号槽
     connect(_pLabel, SIGNAL(linkActivated(QString)), this, SLOT(openURL(QString)));
+	_pLabel->setAlignment(Qt::AlignCenter);
 }
 
 TipMessageItem::~TipMessageItem()

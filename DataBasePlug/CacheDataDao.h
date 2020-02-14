@@ -6,6 +6,7 @@
 #define QTALK_V2_CACHEDATADAO_H
 
 #include "DaoInterface.h"
+#include "../include/CommonDefine.h"
 #include <vector>
 
 class CacheDataDao : public DaoInterface
@@ -19,11 +20,11 @@ public:
     bool insertUserId(const std::string& value);
     bool insertHotLine(std::string value);
     void getHotLines(std::string &hotLines);
-    bool isHotlineMerchant(const std::string xmppid);
+    bool isHotlineMerchant(const std::string& xmppid);
 
 public:
     std::string getGroupReadMarkTime();
-    bool updateGroupReadMarkTime(const std::string time);
+    bool updateGroupReadMarkTime(const std::string& time);
 
     std::string getLoginBeforeGroupReadMarkTime();
     bool saveLoginBeforeGroupReadMarkTime(const std::string& time);
@@ -31,7 +32,9 @@ public:
 public:
     //
     void clear_data_01();
-
+    // new message timestamp
+    void insertNewMessageTimestamp(QInt64 time);
+    QInt64 getNewMessageTimestamp();
 };
 
 #endif //QTALK_V2_CACHEDATADAO_H

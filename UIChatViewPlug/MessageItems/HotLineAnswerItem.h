@@ -119,7 +119,7 @@ class HotLineAnswerItem : public MessageItemBase {
 
 Q_OBJECT
 public:
-    explicit HotLineAnswerItem(const QTalk::Entity::ImMessageInfo &msgInfo, ChatMainWgt *parent = nullptr);
+    explicit HotLineAnswerItem(const StNetMessageResult &msgInfo, ChatMainWgt *parent = nullptr);
     ~HotLineAnswerItem() override;
 
 public:
@@ -153,10 +153,10 @@ private:
     int _nameLabHeight;
 
 private:
-    TextBrowser * _textBrowser;
-    ChatMainWgt*  _pMainWgt;
-    QListView*    _pTipListView;
-    QStandardItemModel* _pTipListModel;
+    TextBrowser * _textBrowser{};
+    ChatMainWgt*  _pMainWgt{};
+    QListView*    _pTipListView{};
+    QStandardItemModel* _pTipListModel{};
 
 private:
     QVector<StTextMessage> msgs;

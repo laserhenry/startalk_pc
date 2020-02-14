@@ -95,7 +95,7 @@ void AtItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option
 	if (!QFile(headPath).isOpen())
 	{
         int dpi = QTalk::qimage::instance().dpi();
-		QPixmap pixmap = QTalk::qimage::instance().loadPixmap(headPath, true, true, 24 * dpi);
+		QPixmap pixmap = QTalk::qimage::instance().loadImage(headPath, true, true, 24 * dpi);
 		QPainterPath path;
 		QRect headRect(rect.x() + 5, rect.y() + 3, 24, 24);
 		path.addEllipse(headRect);
@@ -178,7 +178,7 @@ void AtMessageView::addItem(const QString &icon, const QString& xmppId, const QS
     {
         auto *item = _items[xmppId];
         item->setData(name, ITEM_DATE_NAME);
-        item->setData(QString::fromStdString(QTalk::Entity::JID(xmppId.toStdString().c_str()).username()), ITEM_DATA_USERID);
+        item->setData(QString::fromStdString(QTalk::Entity::JID(xmppId.toStdString()).username()), ITEM_DATA_USERID);
         item->setData(xmppId, ITEM_DATA_XMPPID);
         item->setData(searchIndex, ITEM_DATA_SEARCHINDEX);
         QString headSrc = QString::fromStdString(QTalk::GetHeadPathByUrl(icon.toStdString()));
@@ -189,7 +189,7 @@ void AtMessageView::addItem(const QString &icon, const QString& xmppId, const QS
     {
         auto * item = new QStandardItem;
         item->setData(name, ITEM_DATE_NAME);
-        item->setData(QString::fromStdString(QTalk::Entity::JID(xmppId.toStdString().c_str()).username()), ITEM_DATA_USERID);
+        item->setData(QString::fromStdString(QTalk::Entity::JID(xmppId.toStdString()).username()), ITEM_DATA_USERID);
         item->setData(xmppId, ITEM_DATA_XMPPID);
         item->setData(searchIndex, ITEM_DATA_SEARCHINDEX);
 
@@ -316,7 +316,7 @@ void AtMessageView::updateGroupMemberInfo(const std::vector<QTalk::StUserCard> &
         if(name.empty())
             name = it.userName;
         if(name.empty())
-            name = QTalk::Entity::JID(it.xmppId.data()).username();
+            name = QTalk::Entity::JID(it.xmppId).username();
 
         if(_items.contains(xmppid))
         {

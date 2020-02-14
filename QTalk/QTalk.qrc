@@ -47,6 +47,10 @@
         <file>image1/file_type/word.png</file>
         <file>image1/file_type/zip.png</file>
         <file>image1/loading.gif</file>
+        <file>image1/logo.png</file>
+        <file>image1/quit.png</file>
+        <file>image1/feedback.png</file>
+        <file>image1/newMessage.png</file>
         <file>ttf/FZLTHJW.TTF</file>
         <file>ttf/FZLTZHJW.TTF</file>
     </qresource>

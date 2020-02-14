@@ -47,7 +47,7 @@ void GroupItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
     if(!QFile(headPath).isOpen())
     {
         int dpi = QTalk::qimage::instance().dpi();
-        QPixmap pixmap = QTalk::qimage::instance().loadPixmap(headPath, true, true, HEAD_WIDTH * dpi);
+        QPixmap pixmap = QTalk::qimage::instance().loadImage(headPath, true, true, HEAD_WIDTH * dpi);
         if(!isOnline)
         {
             pixmap = QTalk::qimage::instance().generateGreyPixmap(pixmap);

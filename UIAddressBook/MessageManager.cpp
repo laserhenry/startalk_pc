@@ -29,7 +29,7 @@ void AddressBookMsgManager::getUserCard(std::shared_ptr<QTalk::Entity::ImUserSup
 void AddressBookMsgManager::getUserPhoneNo(const std::string &userId, std::string &phoneNo) {
     UserPhoneNo e;
     e.userId = userId;
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
     phoneNo = e.phoneNo;
 }
 
@@ -58,7 +58,7 @@ void AddressBookMsgManager::setUserSetting(bool isSetting, const std::string &ke
  * @param structure
  */
 void AddressBookMsgManager::getStructure(std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>> &structure) {
-    StructureMessage e(*this, structure);
+    StructureMessage e(structure);
     e.structure = structure;
     EventBus::FireEvent(e);
 }
@@ -87,7 +87,7 @@ void AddressBookMsgManager::getStructureMembers(const std::string &structName, s
  * eventbus 创建群请求
  */
 void AddressBookMsgManager::creatGroup(const std::string &groupId, const std::string &groupName) {
-    CreatGroup e(*this, groupId);
+    CreatGroup e(groupId);
     e.groupName = groupName;
     EventBus::FireEvent(e);
 }
@@ -96,7 +96,7 @@ void AddressBookMsgManager::creatGroup(const std::string &groupId, const std::st
  * 拉人进群
  */
 void AddressBookMsgManager::addGroupMember(const std::vector<std::string> &members, const std::string &groupId) {
-    AddGroupMember e(*this, members, groupId);
+    AddGroupMember e(members, groupId);
     EventBus::FireEvent(e);
 }
 

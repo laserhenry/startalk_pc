@@ -13,7 +13,7 @@ EmoCellWidget::EmoCellWidget(QString emoPath, QString pkgId, QString shortCut, Q
 	setAlignment(Qt::AlignCenter | Qt::AlignHCenter);
     QFileInfo fileInfo(_imagePath);
     if(fileInfo.exists()) {
-        QPixmap img = QTalk::qimage::instance().loadPixmap(_imagePath, true);
+        QPixmap img = QTalk::qimage::instance().loadImage(_imagePath, true);
         _width = qMin((int)img.height(), (int)img.width());
         _width = qMin(45, _width);
     }
@@ -40,7 +40,7 @@ void EmoCellWidget::paintEvent(QPaintEvent *e) {
 
     const int dpi = QTalk::qimage::instance().dpi();
 
-    QPixmap pix = QTalk::qimage::instance().loadPixmap(_imagePath, false, true, _width * dpi, _width * dpi);
+    QPixmap pix = QTalk::qimage::instance().loadImage(_imagePath, false, true, _width * dpi, _width * dpi);
 
     int w = pix.width() / dpi;
     int h = pix.height() / dpi;

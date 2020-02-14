@@ -11,7 +11,7 @@
 #include "../../entity/im_message.h"
 #include "../../entity/im_user.h"
 #include "../../entity/im_group.h"
-#include "../../QtUtil/Enum/im_enum.h"
+#include "../../include/im_enum.h"
 #include "../../entity/im_userSupplement.h"
 #include "../../entity/im_config.h"
 #include "../../entity/im_friend_list.h"

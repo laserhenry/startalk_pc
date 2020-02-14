@@ -8,15 +8,17 @@
 #include <QFrame>
 #include <QListWidget>
 #include <QLabel>
+#include <QStandardItem>
 #include <QMutexLocker>
+#include <utility>
 
 struct StShowAtInfo {
     bool            isAtAll;
     QString          name;
-    QListWidgetItem* atItem;
+    QStandardItem*  atItem{};
 
     StShowAtInfo(): isAtAll(false) {}
-    StShowAtInfo(bool all, const QString& n, QListWidgetItem* item)
+    StShowAtInfo(bool all, const QString& n, QStandardItem* item)
         : isAtAll(all), name(n), atItem(item)
     {
 
@@ -28,15 +30,15 @@ class AtMessageTip : public QFrame
 {
 	Q_OBJECT
 public:
-    AtMessageTip(ChatMainWgt* chatMainWgt);
-    ~AtMessageTip();
+    explicit AtMessageTip(ChatMainWgt* chatMainWgt);
 
 public:
     void addAt(const StShowAtInfo& info);
     void showAtInfo();
+    void clear();
 
 protected:
-    virtual void mousePressEvent(QMouseEvent* e);
+    void mousePressEvent(QMouseEvent* e) override;
 
 private:
     ChatMainWgt*      _pChatMainWgt;

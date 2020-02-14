@@ -113,6 +113,7 @@ Q_SIGNALS:
     void sgUserConfigChanged(const QTalk::Entity::UID& );
     void sgShowDraft(const QTalk::Entity::UID&, const QString&);
     void sgGotMState(const QTalk::Entity::UID& , const QString&, const long long&);
+    void sgShowUnreadMessage(int, const QTalk::Entity::UID&, const QString&, qint64, int);
 
 private:
     QVBoxLayout * _mainLayout;

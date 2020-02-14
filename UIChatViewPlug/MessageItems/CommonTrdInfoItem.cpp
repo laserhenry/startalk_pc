@@ -21,7 +21,7 @@
 
 extern ChatViewMainPanel *g_pMainPanel;
 
-void load(const QTalk::Entity::ImMessageInfo& msgInfo)
+void load(const StNetMessageResult& msgInfo)
 {
     static qint64 t = 0;
     qint64 cur_t = QDateTime::currentMSecsSinceEpoch();
@@ -30,23 +30,37 @@ void load(const QTalk::Entity::ImMessageInfo& msgInfo)
     else
         t = cur_t;
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(msgInfo.ExtendedInfo.data());
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(msgInfo.extend_info.toUtf8());
     if (!jsonDocument.isNull()) {
         QJsonObject jsonObject = jsonDocument.object();
         QString linkUrl = jsonObject.value("linkurl").toString();
-        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
+
+        //        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
         MapCookie cookies;
         cookies["ckey"] = QString::fromStdString(Platform::instance().getClientAuthKey());
-        if (userDftBrowser ||
-            linkUrl.contains(NavigationManager::instance().getShareUrl().data()))
+        if (/**userDftBrowser ||**/
+            linkUrl.contains(NavigationManager::instance().getShareUrl().data()) ||
+            linkUrl.contains("tu.qunar.com/vote/vote_list.php") ||
+            linkUrl.contains("tu.qunar.com/vote/cast_vote.php") ||
+            linkUrl.contains("tu.qunar.com/task/task_list.php") ||
+            linkUrl.contains("tu.qunar.com/task/create_task.php"))
+        {
+            if(linkUrl.contains("?"))
+                linkUrl += "&";
+            else
+                linkUrl += "?";
+            //
+            linkUrl = QString("%5username=%1&company=%2&group_id=%3&rk=%4").arg(Platform::instance().getSelfUserId().data())
+                    .arg("qunar").arg(msgInfo.xmpp_id).arg(Platform::instance().getServerAuthKey().data()).arg(linkUrl);
             WebService::loadUrl(QUrl(linkUrl), false, cookies);
+        }
         else
             QDesktopServices::openUrl(QUrl(linkUrl));
     }
 }
 
 
-CommonTrdInfoItem::CommonTrdInfoItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent) :
+CommonTrdInfoItem::CommonTrdInfoItem(const StNetMessageResult &msgInfo, QWidget *parent) :
         MessageItemBase(msgInfo, parent),
         _iconLab(Q_NULLPTR),
         _titleLab(Q_NULLPTR),
@@ -64,7 +78,7 @@ void CommonTrdInfoItem::initLayout() {
     _contentSize = QSize(350, 0);
     _mainMargin = QMargins(15, 0, 20, 0);
     _mainSpacing = 10;
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         _headPixSize = QSize(0, 0);
         _nameLabHeight = 0;
         _leftMargin = QMargins(0, 0, 0, 0);
@@ -72,7 +86,7 @@ void CommonTrdInfoItem::initLayout() {
         _leftSpacing = 0;
         _rightSpacing = 0;
         initSendLayout();
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         _headPixSize = QSize(28, 28);
         _nameLabHeight = 16;
         _leftMargin = QMargins(0, 10, 0, 0);
@@ -81,7 +95,7 @@ void CommonTrdInfoItem::initLayout() {
         _rightSpacing = 4;
         initReceiveLayout();
     }
-    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.type) {
         _nameLabHeight = 0;
     }
     setContentsMargins(0, 5, 0, 5);
@@ -124,20 +138,11 @@ void CommonTrdInfoItem::initSendLayout() {
     auto* tmpLay = new QHBoxLayout;
     tmpLay->setMargin(0);
     tmpLay->setSpacing(5);
-    if(nullptr == _sending)
+    tmpLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
+    if(nullptr != _sending && nullptr != _resending)
     {
-        _sending = new HeadPhotoLab(":/chatview/image1/messageItem/loading.gif", 10, false, false, true, this);
-        tmpLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
         tmpLay->addWidget(_sending);
-        bool startMovie = (0 == _msgInfo.ReadedTag && 0 == _msgInfo.State);
-        _sending->setVisible(startMovie);
-        if(startMovie)
-            _sending->startMovie();
-    }
-    if(nullptr != _resending)
-    {
         tmpLay->addWidget(_resending);
-        _resending->setVisible(false);
     }
     tmpLay->addWidget(_contentFrm);
     tmpLay->setAlignment(_contentFrm, Qt::AlignRight);
@@ -175,7 +180,7 @@ void CommonTrdInfoItem::initReceiveLayout() {
         _headLab = new HeadPhotoLab;
     }
     _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(QString::fromStdString(_msgInfo.HeadSrc), HEAD_RADIUS);
+    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
     _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -188,8 +193,8 @@ void CommonTrdInfoItem::initReceiveLayout() {
     rightLay->setContentsMargins(_rightMargin);
     rightLay->setSpacing(_rightSpacing);
     mainLay->addLayout(rightLay);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
         auto* nameLay = new QHBoxLayout;
         nameLay->setMargin(0);
         nameLay->setSpacing(5);
@@ -208,7 +213,7 @@ void CommonTrdInfoItem::initReceiveLayout() {
 
     auto *horizontalSpacer = new QSpacerItem(40, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
     mainLay->addItem(horizontalSpacer);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type) {
         mainLay->setStretch(0, 0);
         mainLay->setStretch(1, 0);
         mainLay->setStretch(2, 1);
@@ -222,7 +227,7 @@ void CommonTrdInfoItem::initReceiveLayout() {
 
 void CommonTrdInfoItem::initContentLayout() {
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.ExtendedInfo.data());
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.extend_info.toUtf8());
     if (jsonDocument.isNull()) {
 
         auto *vBox = new QVBoxLayout;
@@ -234,7 +239,7 @@ void CommonTrdInfoItem::initContentLayout() {
         _titleLab->setWordWrap(true);
         _titleLab->setFixedWidth(_contentSize.width() - 20);
         _titleLab->setStyleSheet("QLabel{font-size:14px;color:#212121;}");
-        _titleLab->setText(QString::fromStdString(_msgInfo.Content));
+        _titleLab->setText(_msgInfo.body);
         _titleLab->adjustSize();
         vBox->addWidget(_titleLab);
 
@@ -243,7 +248,7 @@ void CommonTrdInfoItem::initContentLayout() {
     } else {
         QJsonObject jsonObject = jsonDocument.object();
         bool allContent = jsonObject.value("showas667").toBool(false);
-		allContent |= (_msgInfo.Type == QTalk::Entity::MessageTypeCommonTrdInfoV2);
+		allContent |= (_msgInfo.msg_type == QTalk::Entity::MessageTypeCommonTrdInfoV2);
         QString title = jsonObject.value("title").toString();
         QString desc = jsonObject.value("desc").toString();
         if (desc.isEmpty()) {
@@ -280,7 +285,7 @@ void CommonTrdInfoItem::initContentLayout() {
             _titleLab->setFixedSize(_contentSize.width()-10-12-40-18-12-10,18);
             vBox->addWidget(_titleLab);
 
-            _contentLab = new QTextEdit(this);
+            _contentLab = new CommonTrdInfoEdit(this);
             _contentLab->setFrameShape(QFrame::NoFrame);
             _contentLab->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
             _contentLab->setReadOnly(true);
@@ -323,33 +328,37 @@ void CommonTrdInfoItem::initContentLayout() {
         connect(this, &CommonTrdInfoItem::sgDownloadedIcon, this, &CommonTrdInfoItem::setIcon, Qt::QueuedConnection);
         QString imgUrl = jsonObject.value("img").toString();
         QString placeHolder = ":/chatview/image1/defaultShareIcon.png";
-        QPixmap defaultPix = QTalk::qimage::instance().loadPixmap(placeHolder, true, true, 40, 40);
+        QPixmap defaultPix = QTalk::qimage::instance().loadImage(placeHolder, true, true, 40, 40);
         if (imgUrl.isEmpty()) {
             _iconLab->setPixmap(defaultPix);
         } else {
             std::string imgPath = QTalk::GetImagePathByUrl(imgUrl.toStdString());
             if(QFile::exists(imgPath.data()))
             {
-                _iconLab->setPixmap(QTalk::qimage::instance().loadPixmap(imgPath.data(), false, true, 40, 40));
+                _iconLab->setPixmap(QTalk::qimage::instance().loadImage(imgPath.data(), false, true, 40, 40));
             }
             else
             {
                 _iconLab->setPixmap(defaultPix);
                 QPointer<CommonTrdInfoItem> pThis(this);
                 g_pMainPanel->pool().enqueue([pThis, imgUrl](){
-                    std::string downloadFile = g_pMainPanel->getMessageManager()->getLocalFilePath(imgUrl.toStdString());
+                    std::string downloadFile = ChatMsgManager::getLocalFilePath(imgUrl.toStdString());
                     if(pThis && !downloadFile.empty())
                         emit pThis->sgDownloadedIcon(QString::fromStdString(downloadFile));
                 });
             }
         }
+        _contentLab->adjustSize();
+        this->adjustSize();
+        auto height = 10 + 12 + _titleLab->height() + 8 + _contentLab->height() + 12 + 10;
+
         _contentFrm->setFixedHeight(
                 10 + 12 + _titleLab->height() + 8 + _contentLab->height() + 12 + 10);
     }
 }
 
 void CommonTrdInfoItem::setIcon(const QString &iconPath) {
-    QPixmap pixmap = QTalk::qimage::instance().loadPixmap(iconPath, false, true, 40, 40);
+    QPixmap pixmap = QTalk::qimage::instance().loadImage(iconPath, false, true, 40, 40);
     _iconLab->setPixmap(pixmap);
 }
 

@@ -14,7 +14,7 @@
 #include "../../Platform/Platform.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
-MedalMind::MedalMind(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent) :
+MedalMind::MedalMind(const StNetMessageResult &msgInfo, QWidget *parent) :
         MessageItemBase(msgInfo, parent),
         _iconLab(Q_NULLPTR),
         _contentLab(Q_NULLPTR),
@@ -31,7 +31,7 @@ void MedalMind::initLayout() {
     _contentSize = QSize(370, 160);
     _mainMargin = QMargins(15, 0, 20, 0);
     _mainSpacing = 10;
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         _headPixSize = QSize(0, 0);
         _nameLabHeight = 0;
         _leftMargin = QMargins(0, 0, 0, 0);
@@ -39,7 +39,7 @@ void MedalMind::initLayout() {
         _leftSpacing = 0;
         _rightSpacing = 0;
         initSendLayout();
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         _headPixSize = QSize(28, 28);
         _nameLabHeight = 16;
         _leftMargin = QMargins(0, 10, 0, 0);
@@ -48,7 +48,7 @@ void MedalMind::initLayout() {
         _rightSpacing = 4;
         initReceiveLayout();
     }
-    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.type) {
         _nameLabHeight = 0;
     }
     setContentsMargins(0, 5, 0, 5);
@@ -133,7 +133,7 @@ void MedalMind::initReceiveLayout() {
         _headLab = new HeadPhotoLab;
     }
     _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(QString::fromStdString(_msgInfo.HeadSrc), HEAD_RADIUS);
+    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
     _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -146,8 +146,8 @@ void MedalMind::initReceiveLayout() {
     rightLay->setContentsMargins(_rightMargin);
     rightLay->setSpacing(_rightSpacing);
     mainLay->addLayout(rightLay);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
         auto* nameLay = new QHBoxLayout;
         nameLay->setMargin(0);
         nameLay->setSpacing(5);
@@ -166,7 +166,7 @@ void MedalMind::initReceiveLayout() {
 
     auto *horizontalSpacer = new QSpacerItem(40, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
     mainLay->addItem(horizontalSpacer);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type) {
         mainLay->setStretch(0, 0);
         mainLay->setStretch(1, 0);
         mainLay->setStretch(2, 1);
@@ -194,10 +194,10 @@ void MedalMind::initContentLayout() {
     contentLay->addWidget(contentLabel);
     contentLay->addWidget(tipLabel);
 
-    QJsonDocument document = QJsonDocument::fromJson(_msgInfo.ExtendedInfo.data());;
+    QJsonDocument document = QJsonDocument::fromJson(_msgInfo.extend_info.toUtf8());;
     if(document.isNull())
     {
-        contentLabel->setText(_msgInfo.Content.data());
+        contentLabel->setText(_msgInfo.body);
     }
     else
     {

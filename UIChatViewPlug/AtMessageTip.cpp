@@ -7,7 +7,6 @@
 #include <QHBoxLayout>
 #include <QPainter>
 #include <QPointer>
-#include <QtWidgets/QGraphicsDropShadowEffect>
 
 AtMessageTip::AtMessageTip(ChatMainWgt *chatMainWgt)
     : QFrame(chatMainWgt), _pChatMainWgt(chatMainWgt)
@@ -24,10 +23,6 @@ AtMessageTip::AtMessageTip(ChatMainWgt *chatMainWgt)
     layout->addWidget(_pAtLabel);
 }
 
-AtMessageTip::~AtMessageTip() {
-
-}
-
 /**
  * 增加At
  * @param info
@@ -42,8 +37,6 @@ void AtMessageTip::addAt(const StShowAtInfo &info)
     {
         // 显示
         this->setVisible(true);
-        // 移动
-        
     }
 }
 
@@ -57,12 +50,10 @@ void AtMessageTip::mousePressEvent(QMouseEvent *e)
     _arAtItems.pop_back();
     //
     if(info.atItem)
-        _pChatMainWgt->scrollToItem(info.atItem, QAbstractItemView::PositionAtBottom);
+        _pChatMainWgt->scrollToItem(info.atItem);
 
 	if (!_arAtItems.empty())
-	{
         showAtInfo();
-	}
     else
         this->setVisible(false);
     //
@@ -92,4 +83,10 @@ void AtMessageTip::showAtInfo()
         this->setFixedWidth(w + 20);
         this->move(_pChatMainWgt->width() - this->width(), 10);
     }
+}
+
+//
+void AtMessageTip::clear() {
+    this->setVisible(false);
+    _arAtItems.clear();
 }

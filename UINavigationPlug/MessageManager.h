@@ -25,7 +25,7 @@ public:
     ~NavigationMsgManager() override;
 
 public:
-    void getSessionData();
+    static void getSessionData();
 
     void removeSession(std::string &peerId);
 

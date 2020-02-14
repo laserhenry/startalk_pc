@@ -9,7 +9,7 @@ class EmojiMessItem : public MessageItemBase
 {
     Q_OBJECT
 public:
-    EmojiMessItem(const QTalk::Entity::ImMessageInfo &msgInfo,
+    EmojiMessItem(const StNetMessageResult &msgInfo,
                   QString path,
                    const QSizeF& size,
                    QWidget *parent = nullptr);

@@ -34,7 +34,7 @@ namespace QTalk
 
         void scaImageSizeByPath(const QString &imagePath, qreal &width, qreal &height)
         {
-            QPixmap pix = qimage::instance().loadPixmap(imagePath, false);
+            QPixmap pix = qimage::instance().loadImage(imagePath, false);
             width = pix.width();
             height = pix.height();
 

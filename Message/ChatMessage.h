@@ -6,7 +6,7 @@
 #include <set>
 #include "../EventBus/Event.hpp"
 #include "../include/CommonDefine.h"
-#include "../QtUtil/Enum/im_enum.h"
+#include "../include/im_enum.h"
 #include "../entity/IM_Session.h"
 #include "../entity/im_message.h"
 #include "../include/CommonStrcut.h"
@@ -34,6 +34,7 @@ public:
 	QUInt8                          chatType;
 	std::string                     userId;
 	QTalk::Entity::ImMessageInfo    message;
+	bool                            isCarbon;
 };
 
 class PreSendMessageEvt : public Event
@@ -290,6 +291,7 @@ public:
     const std::map<std::string, int >& mapReadCount;
 };
 
+// delete delete
 class GroupReadMState : public Event
 {
 public:

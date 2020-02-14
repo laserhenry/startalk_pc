@@ -933,7 +933,7 @@ void UIGroupManager::initStructure()
 
             auto* mainItem = new QStandardItem;
             mainItem->setData(xmppId.data(), EM_SEARCH_DATATYPE_XMPPID);
-            mainItem->setData(QTalk::Entity::JID(xmppId.data()).username().data(),
+            mainItem->setData(QTalk::Entity::JID(xmppId).username().data(),
                     EM_SEARCH_DATATYPE_USERID);
             mainItem->setData(false, EM_SEARCH_DATATYPE_CHECKSTATE);
             mainItem->setData(info->SearchIndex.data(), EM_SEARCH_DATATYPE_INDEX);
@@ -1031,7 +1031,7 @@ void UIGroupManager::gotIncrementUser(const std::vector<QTalk::Entity::ImUserInf
 
         auto* mainItem = new QStandardItem;
         mainItem->setData(xmppId.data(), EM_SEARCH_DATATYPE_XMPPID);
-        mainItem->setData(QTalk::Entity::JID(xmppId.data()).username().data(),
+        mainItem->setData(QTalk::Entity::JID(xmppId).username().data(),
                           EM_SEARCH_DATATYPE_USERID);
         mainItem->setData(false, EM_SEARCH_DATATYPE_CHECKSTATE);
         mainItem->setData(it.SearchIndex.data(), EM_SEARCH_DATATYPE_INDEX);

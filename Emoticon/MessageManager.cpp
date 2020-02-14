@@ -22,7 +22,7 @@ EmoMsgManager::~EmoMsgManager()
 std::string EmoMsgManager::getEmoRealFilePath(const std::string& pid, const std::string& sid, const std::string& fileName)
 {
 	GetEmoticonFileMessage e( pid, sid, fileName);
-	EventBus::FireEvent(e, false);
+	EventBus::FireEvent(e);
 	return e.realFilePath;
 }
 
@@ -36,7 +36,7 @@ std::string EmoMsgManager::getEmoRealFilePath(const std::string& pid, const std:
 ArStNetEmoticon EmoMsgManager::getNetEmoticon()
 {
 	GetNetEmoticon e;
-	EventBus::FireEvent(e, false);
+	EventBus::FireEvent(e);
 	return e.arEmoInfo;
 }
 

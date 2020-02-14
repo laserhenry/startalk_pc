@@ -16,16 +16,14 @@
 
 class QchatMoreFun{
 public:
-    QchatMoreFun(QTalk::Entity::UID _uid,QTalk::Enum::ChatType _chatType);
-
-    ~QchatMoreFun();
+    QchatMoreFun(QTalk::Entity::UID _uid, QTalk::Enum::ChatType &_chatType);
 
 public:
     void showSuggestProducts();
 
 private:
     QTalk::Entity::UID uid;
-    QTalk::Enum::ChatType chatType;
+    QTalk::Enum::ChatType &chatType;
 };
 
 #endif //QTALK_V2_PRODUCTSUGGEST_H

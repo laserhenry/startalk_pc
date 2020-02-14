@@ -332,13 +332,6 @@ void AudioVideoManager::startGroupTalk(const QString& id, const QString &name)
         return;
     }
 
-//    if(_groupTalks.contains(id) && _groupTalks[id])
-//    {
-//        _groupTalks[id]->activateWindow();
-//        _groupTalks[id]->show();
-//        return;
-//    }
-
     auto * pAudioVideo = new AudioVideo;
     _groupTalks[id] = pAudioVideo;
 
@@ -371,13 +364,7 @@ void AudioVideoManager::startGroupTalk(const QString& id, const QString &name)
     }
     qInfo() << "AudioVideoManager cookie ckey" << ckey.data();
     QNetworkCookie ckeyCookie("q_ckey", QByteArray(ckey.data(), ckey.size()));
-//    ckeyCookie.setPath("/");
     pAudioVideo->_webView->setCookie(ckeyCookie, url);
-//    pAudioVideo->_webView->setCookie(QNetworkCookie("userId", Platform::instance().getSelfXmppId().data()), url);
-//    pAudioVideo->_webView->setCookie(QNetworkCookie("nick", QUrl(Platform::instance().getSelfName().data()).toEncoded()), url);
-//    pAudioVideo->_webView->setCookie(QNetworkCookie("roomId", id.toUtf8()), url);
-//    pAudioVideo->_webView->setCookie(QNetworkCookie("startTime", QString::number(QDateTime::currentMSecsSinceEpoch()).toUtf8()), url);
-//    pAudioVideo->_webView->setCookie(QNetworkCookie("topic", QUrl(name.toUtf8()).toEncoded()), url);
     pAudioVideo->_webView->setAgent(agent);
     pAudioVideo->_webView->startReq(req);
     pAudioVideo->resize(1000, 750);

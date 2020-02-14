@@ -17,6 +17,7 @@
 #include "../include/STLazyQueue.h"
 #include "NoOperationThread.h"
 #include "LocalServer.h"
+#include "../UICom/UIEntity.h"
 #include <QStackedLayout>
 
 #ifdef _MACOS
@@ -55,6 +56,7 @@ public:
     //
     void checkUpdater();
     void onGetHistoryError();
+    QWidget* getActiveWnd();
 
 public:
 	inline IUILoginPlug* getLoginPlug() { return _pLoginPlug; }
@@ -68,6 +70,7 @@ Q_SIGNALS:
 	void sgRunNewInstance();
 	void sgResetOperator();
 	void sgRestartWithMessage(const QString&);
+    void sgJumtoSession(const StSessionInfo&);
 
 public slots:
 	void InitLogin(bool, const QString& loginMsg);

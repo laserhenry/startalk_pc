@@ -11,7 +11,7 @@ class NoteMessageItem : public MessageItemBase
 {
     Q_OBJECT
 public:
-    explicit NoteMessageItem(const QTalk::Entity::ImMessageInfo &msgInfo,
+    explicit NoteMessageItem(const StNetMessageResult &msgInfo,
             QWidget *parent = nullptr);
 
     ~NoteMessageItem() override;

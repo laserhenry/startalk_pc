@@ -50,8 +50,8 @@ public:
 class StructureMessage : public Event
 {
 public:
-    StructureMessage(Object& sender, std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>>& structure)
-    :Event(sender), structure(structure) { }
+    StructureMessage(std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>>& structure)
+    : structure(structure) { }
 
 public:
     std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>>& structure;
@@ -61,8 +61,8 @@ public:
 class AddGroupMember: public Event
 {
 public:
-    AddGroupMember(Object& sender, std::vector<std::string>  members, std::string  groupId)
-    :Event(sender),members(std::move(members)), groupId(std::move(groupId)) { }
+    AddGroupMember(std::vector<std::string>  members, std::string  groupId)
+    :members(std::move(members)), groupId(std::move(groupId)) { }
 
 public:
     std::string groupId;
@@ -73,8 +73,8 @@ public:
 class CreatGroup: public Event
 {
 public:
-    CreatGroup(Object& sender, std::string  groupId)
-    :Event(sender), groupId(std::move(groupId))
+    CreatGroup(std::string groupId)
+    : groupId(std::move(groupId))
     {
 
     }

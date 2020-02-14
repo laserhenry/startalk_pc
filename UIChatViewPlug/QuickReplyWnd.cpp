@@ -8,7 +8,7 @@
 #include "ChatViewMainPanel.h"
 #include <QScrollBar>
 #include <QToolButton>
-#include "ChatViewMainPanel.h"
+#include <QSplitter>
 
 extern ChatViewMainPanel *g_pMainPanel;
 QuickReplyWnd::QuickReplyWnd(QWidget *parent)
@@ -19,11 +19,11 @@ QuickReplyWnd::QuickReplyWnd(QWidget *parent)
     setWindowFlag(Qt::Popup);
 #endif // !_WINDOWS
 
-    QFrame* titleFrm = new QFrame(this);
+    auto* titleFrm = new QFrame(this);
     titleFrm->setObjectName("titleFrm");
     titleFrm->setFixedHeight(50);
 
-    QLabel* titleLabel = new QLabel(tr("快捷回复"), this);
+    auto* titleLabel = new QLabel(tr("快捷回复"), this);
     titleLabel->setAlignment(Qt::AlignCenter);
 
     auto * titleLay = new QHBoxLayout(titleFrm);
@@ -42,43 +42,36 @@ QuickReplyWnd::QuickReplyWnd(QWidget *parent)
 #endif
     titleLay->addWidget(titleLabel);
 
-    QFrame* middleFrm = new QFrame(this);
-    auto* middlelay = new QHBoxLayout(middleFrm);
     _tagListWidget = new QListWidget(this);
-    _tagListWidget->setFixedWidth(200);
+    _tagListWidget->setObjectName("QuickReplyWndList");
     _tagListWidget->setFrameShape(QFrame::NoFrame);
     _tagListWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     _tagListWidget->verticalScrollBar()->setSingleStep(15);
     _tagListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     _tagListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-//    _tagListWidget->installEventFilter(this);
-
-    QFrame * line = new QFrame();
-    line->setFrameShape(QFrame::VLine);
-    line->setFrameShadow(QFrame::Sunken);
 
     _contentListWidget = new QListWidget(this);
-    _contentListWidget->setFixedWidth(400);
+    _contentListWidget->setObjectName("QuickReplyWndList");
     _contentListWidget->setFrameShape(QFrame::NoFrame);
     _contentListWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     _contentListWidget->verticalScrollBar()->setSingleStep(15);
     _contentListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     _contentListWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-//    _contentListWidget->installEventFilter(this);
 
-    middlelay->addWidget(_tagListWidget);
-    middlelay->addWidget(line);
-    middlelay->addWidget(_contentListWidget);
-    middlelay->setSpacing(0);
-    middlelay->setMargin(0);
+    auto *splt = new QSplitter;
+    splt->setHandleWidth(1);
+    splt->addWidget(_tagListWidget);
+    splt->addWidget(_contentListWidget);
+    splt->setStretchFactor(1,2);
+    splt->setCollapsible(0, false);
+    splt->setCollapsible(1, false);
 
-    QFrame* mainFrm = new QFrame(this);
+    auto* mainFrm = new QFrame(this);
     auto* mainlay = new QVBoxLayout(mainFrm);
     mainlay->setMargin(0);
     mainlay->setSpacing(0);
     mainlay->addWidget(titleFrm);
-    mainlay->addWidget(middleFrm);
-
+    mainlay->addWidget(splt);
 
     auto* lay = new QVBoxLayout(_pCenternWgt);
     lay->setMargin(0);
@@ -86,7 +79,7 @@ QuickReplyWnd::QuickReplyWnd(QWidget *parent)
     lay->setSpacing(0);
 
     setMoverAble(true, titleFrm);
-    setFixedSize(600, 400);
+    resize(700, 480);
 
     addTagItem();
 
@@ -96,19 +89,15 @@ QuickReplyWnd::QuickReplyWnd(QWidget *parent)
     QObject::connect(_contentListWidget,SIGNAL(itemDoubleClicked(QListWidgetItem*)),this,SLOT(doubleclicked(QListWidgetItem*)));
 }
 
-QuickReplyWnd::~QuickReplyWnd()
-{
-
-}
-
 void QuickReplyWnd::addTagItem() {
     std::vector<QTalk::Entity::ImQRgroup> groups;
     if(g_pMainPanel ){
-        g_pMainPanel->getMessageManager()->getQuickGroups(groups);
+        ChatMsgManager::getQuickGroups(groups);
     }
     int id = -1;
-    for(QTalk::Entity::ImQRgroup group :groups){
-        QListWidgetItem *item = new QListWidgetItem;
+    for(const QTalk::Entity::ImQRgroup& group :groups){
+        auto *item = new QListWidgetItem;
+        item->setSizeHint({150, 30});
         if(id == -1){
             id = group.sid;
         }
@@ -124,11 +113,13 @@ void QuickReplyWnd::addContentItem(int id) {
     _contentListWidget->clear();
     std::vector<QTalk::Entity::IMQRContent> contents;
     if(g_pMainPanel ){
-        g_pMainPanel->getMessageManager()->getQuickContentByGroup(contents,id);
+        ChatMsgManager::getQuickContentByGroup(contents,id);
     }
-    for(QTalk::Entity::IMQRContent content :contents){
-        QListWidgetItem *item = new QListWidgetItem;
+    for(const QTalk::Entity::IMQRContent& content :contents){
+        auto *item = new QListWidgetItem;
+        item->setSizeHint({550, 30});
         item->setText(QString::fromStdString(content.content));
+        item->setToolTip(QString::fromStdString(content.content));
         _contentListWidget->addItem(item);
     }
 }

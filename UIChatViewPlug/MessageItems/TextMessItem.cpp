@@ -16,7 +16,6 @@
 #include "../ChatViewMainPanel.h"
 #include "../../UICom/qimage/qimage.h"
 #include "../../WebService/WebService.h"
-#include "../../QtUtil/Utils/Log.h"
 #include "../../Platform/AppSetting.h"
 #include "../../QtUtil/lib/cjson/cJSON.h"
 #include "../../QtUtil/lib/cjson/cJSON_inc.h"
@@ -25,14 +24,14 @@
 #include "../../UICom/StyleDefine.h"
 
 #define DEM_LINK_HTML "<a href=\"%1\" style=\"text-decoration:none; color:rgba(%2);\">%3</a>"
-#define DEM_AT_HTML "<span style=\"color:#FF4E3F;\">%1</span>"
+
 extern ChatViewMainPanel *g_pMainPanel;
 
-TextMessItem::TextMessItem(QVector<StTextMessage> msgs, const QTalk::Entity::ImMessageInfo &msgInfo,
+TextMessItem::TextMessItem(const StNetMessageResult &msgInfo,
                            QWidget *parent) :
         MessageItemBase(msgInfo, parent),
-        _textBrowser(Q_NULLPTR),
-        _msgs(std::move(msgs)) {
+        _textBrowser(Q_NULLPTR){
+    _msgs = QVector<StTextMessage>::fromStdVector(msgInfo.text_messages);
     init();
     setMessageContent();
     _textBrowser->installEventFilter(this);
@@ -42,15 +41,6 @@ TextMessItem::TextMessItem(QVector<StTextMessage> msgs, const QTalk::Entity::ImM
 
 TextMessItem::~TextMessItem() = default;
 
-/**
-  * @函数名
-  * @功能描述
-  * @参数
-  * @date 2018.10.15
-  */
-void TextMessItem::setHtmlText(const QString &text) {
-
-}
 
 /**
   * @函数名
@@ -163,12 +153,10 @@ void TextMessItem::setMessageContent() {
     //
     deleteMovies(_mapMovies);
     _mapMovies.clear();
-    // todo 暂时保留
-    MessageItemBase::setMessageContent(QString::fromStdString(_msgInfo.Content));
 
     if (_textBrowser) {
         int width = g_pMainPanel->width() - _headPixSize.width();
-        if(msgInfo().ChatType == QTalk::Enum::TwoPersonChat)
+        if(_msgInfo.type == QTalk::Enum::TwoPersonChat)
             width -= 90;
         else
             width -= 250;
@@ -193,10 +181,9 @@ void TextMessItem::setMessageContent() {
                         //warn_log("load head failed, use default picture-> imagePath:{0}", imagePath);
                         //imagePath = ":/chatview/image1/defaultImage.png";
                         invalidImg.push_back(imagePath);
-                        lastLineW += 80;
                     } else {
-                        lastLineW += msg.imageWidth;
                     }
+                    lastLineW += msg.imageWidth;
 
                     contentMaxW = qMax(lastLineW, contentMaxW);
                     break;
@@ -224,14 +211,12 @@ void TextMessItem::setMessageContent() {
                     qreal imageHeight = msg.imageHeight;
                     if (invalidImg.contains(imagePath)) {
                         imagePath = ":/chatview/image1/defaultImage.png";
-                        imageWidth = imageHeight = 80;
                     }
 
                     if (QPixmap(imagePath).isNull()) {
                         QString realPath = QTalk::qimage::instance().getRealImagePath(imagePath);
                         if (QPixmap(realPath).isNull()) {
                             imagePath = ":/chatview/image1/defaultImage.png";
-                            imageWidth = imageHeight = 80;
                         } else {
                             imagePath = realPath;
                         }
@@ -308,7 +293,7 @@ void TextMessItem::initLayout() {
     _contentMargin = QMargins(5, 5, 3, 5);
     _mainSpacing = 10;
     _contentSpacing = 0;
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         _headPixSize = QSize(0, 0);
         _nameLabHeight = 0;
         _leftMargin = QMargins(0, 0, 0, 0);
@@ -316,7 +301,7 @@ void TextMessItem::initLayout() {
         _leftSpacing = 0;
         _rightSpacing = 0;
         initSendLayout();
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         _headPixSize = QSize(28, 28);
         _nameLabHeight = 16;
         _leftMargin = QMargins(0, 10, 0, 0);
@@ -325,7 +310,7 @@ void TextMessItem::initLayout() {
         _rightSpacing = 0;
         initReceiveLayout();
     }
-    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.type) {
         _nameLabHeight = 0;
     }
 }
@@ -407,7 +392,7 @@ void TextMessItem::initReceiveLayout() {
         _headLab = new HeadPhotoLab;
     }
     _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(QString::fromStdString(_msgInfo.HeadSrc), HEAD_RADIUS);
+    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
     _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -420,8 +405,8 @@ void TextMessItem::initReceiveLayout() {
     rightLay->setContentsMargins(_rightMargin);
     rightLay->setSpacing(_rightSpacing);
     mainLay->addLayout(rightLay);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
         auto* nameLay = new QHBoxLayout;
         nameLay->setMargin(0);
         nameLay->setSpacing(5);
@@ -449,7 +434,7 @@ void TextMessItem::initReceiveLayout() {
     contentLay->setSpacing(_contentSpacing);
     auto *horizontalSpacer = new QSpacerItem(40, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
     mainLay->addItem(horizontalSpacer);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type) {
         mainLay->setStretch(0, 0);
         mainLay->setStretch(1, 0);
         mainLay->setStretch(2, 1);
@@ -558,7 +543,7 @@ void TextMessItem::copyText() {
                 else
                     imagePath = tmpImgPath.data();
 
-                QPixmap pixmap = QTalk::qimage::instance().loadPixmap(imagePath, false);
+                QPixmap pixmap = QTalk::qimage::instance().loadImage(imagePath, false);
                 if(!pixmap.isNull())
                 {
                     mimeData->setImageData(pixmap.toImage());
@@ -615,7 +600,7 @@ void TextMessItem::copyText() {
             else
                 imagePath = _msgs[0].content;
 
-            QPixmap pixmap = QTalk::qimage::instance().loadPixmap(imagePath, false);
+            QPixmap pixmap = QTalk::qimage::instance().loadImage(imagePath, false);
             mimeData->setImageData(pixmap.toImage());
         }
         else
@@ -633,8 +618,8 @@ void TextMessItem::copyText() {
  * @param imageLink
  */
 void TextMessItem::onImageClicked(int index) {
-    const QString &messageId = QString::fromStdString(msgInfo().MsgId);
-    const QString &msgContent = QString::fromStdString(msgInfo().Content);
+    const QString &messageId = _msgInfo.msg_id;
+    const QString &msgContent = _msgInfo.body;
     emit g_pMainPanel->showChatPicture(messageId, msgContent, index);
 }
 

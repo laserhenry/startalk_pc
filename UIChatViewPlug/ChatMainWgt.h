@@ -5,6 +5,7 @@
 #define _CHATMAINWGT_H_
 
 #include <QListWidget>
+#include <QStandardItemModel>
 #include <QTime>
 #include <QMultiMap>
 #include <QMenu>
@@ -17,13 +18,14 @@
 #include "AtMessageTip.h"
 #include "../entity/im_message.h"
 #include "../include/STLazyQueue.h"
-
+#include "ChatMainSoreModel.h"
 
 class ChatViewItem;
 class MessageItemBase;
 class FileSendReceiveMessItem;
 class VideoMessageItem;
-class ChatMainWgt : public QListWidget
+class ChatMainDelegate;
+class ChatMainWgt : public QListView
 {
 	Q_OBJECT
 public:
@@ -31,51 +33,44 @@ public:
 	~ChatMainWgt() override;
 
 public:
-	enum {EM_DATE_TYPE_TIME = Qt::UserRole, EM_DATETYPE_MSGTYPE};
-
-public:
-    void analysisMessage(QVector<StTextMessage> &msgs, const std::string& content, const std::string& msgId);
-	// 显示消息
-    void showMessage(const QTalk::Entity::ImMessageInfo &msg, bool isHistory);
     void recvFileProcess(const double &speed, const double &dtotal, const double &dnow, const double &utotal, const double &unow, const std::string &key);
 	void setHasNotHistoryMsgFlag(bool hasHistory);
-    void resizeItems();
     void recvBlackListMessage(const QString& messageId);
     void clearData();
     // 处理时间信息判断是否显示 超一分钟显示
-    void showMessageTime(const QString& msgId, const QInt64& strTime, bool isHistoryMessage = false);
+    void showMessageTime(const QString& messageId, const QInt64& strTime);
+    void onShowMessage(StNetMessageResult info, int);
     //
-    void updateTime();
+    void scrollToItem(QStandardItem* pItem);
 
 private:
     void connects();
 
 Q_SIGNALS:
-	void showTipMessageSignal(int, const QString&, bool, QInt64);
+	void showTipMessageSignal(const QString&, int, const QString&, QInt64);
 	void adjustItems();
 	void sgSelectItem();
 	void sgSelectedSize(unsigned int);
 	void sgUploadShareMsgSuccess(const QString&, int type, const QString&);
 	void sgImageDownloaded(const QString&, const QString&);
+	void sgJumTo();
 
 public:
     void setShareMessageState(bool flag);
     void onShareMessage();
-    void onChangeUserMood(const std::string&, const std::string&);
     void setConnectState(bool isConnected) {_connectState = isConnected; };
     void onUserMedalChanged(const std::set<std::string>& changedUser);
 
 protected:
 	void resizeEvent(QResizeEvent *e) override;
 	void wheelEvent(QWheelEvent *e) override;
-	void mousePressEvent(QMouseEvent *e) override;
 	bool event(QEvent* e) override ;
+    void showEvent(QShowEvent* e) override;
 
 private slots:
     void onRecvFRileProcess(double speed, double dtotal, double dnow, double utotal, double unow, std::string key);
     void onRecvReadState(const std::map<std::string, QInt32 >& readStates);
     void onMState(const QString& msgId, const long long& time);
-    void onRecvGroupMState(const std::vector<std::string> &msgIds);
     void updateRevokeMessage(const QString& fromId, const QString& messageId, const long long&);
     void onForwardAct(bool);
 	void onScrollBarChanged(int val);
@@ -83,17 +78,7 @@ private slots:
 	void onCustomContextMenuRequested(const QPoint &pos);
 
 private:
-	//
-    void analysisSendTextMessage(QVector<StTextMessage> &msgs, const std::string &msg);
-
-    void analysisTextMessage(QVector<StTextMessage> &msgs, const QString& text);
-	void analysisAtMessage(QVector<StTextMessage> &msgs, const QString& text);
-    void analysisImageMessage(const QString& content, QString& imageLink, qreal& width, qreal& height);
-    void analysisEmoticonMessage(const QString& content, QString& pkgid, QString& shortCut);
-	QTalk::Entity::ImMessageInfo analysisFileMessage(const QTalk::Entity::ImMessageInfo &msg, bool isHis);
-    void dealMessage(MessageItemBase *msgItemWgt, QListWidgetItem *pLstItem, bool isHistoryMessage);
-    void showRevokeMessage(const QString& userName, bool isHistory, QInt64 t);
-    void showTipMessage(long long type, const QString& content, bool isHistory, QInt64 t);
+    void showTipMessage(const QString& messageId, int type, const QString& content, QInt64 t);
     void saveAsImage(const QString &oldFilePath);
 
 private:
@@ -104,15 +89,17 @@ private:
     void onCollectionAct(bool);
     void onQRCodeAct(bool);
     void onAdjustItems();
-    void onItemSelectionChanged();
+    void selectionChanged(const QItemSelection &, const QItemSelection &) override;
     void onItemChanged();
     void onDisconnected();
     void onSendMessageFailed(const QString& msgId);
 
+public slots:
+    void onItemCheckChanged(bool);
+
 Q_SIGNALS:
     void sgRecvFRileProcess(double speed, double dtotal, double dnow, double utotal, double unow, std::string key);
     void gotReadStatueSignal(const std::map<std::string, QInt32 >& readStates);
-    void sgGotGroupMStatue(const std::vector<std::string>& msgIds);
     void sgDisConnected();
     void updateRevokeSignal(const QString& fromId, const QString& messageId, const long long&);
     void sgSendFailed(const QString& msgId);
@@ -122,46 +109,34 @@ private:
     void downloadImage(const QString& msgId, const QString& link, int width, int height);
     void downloadEmoticon(const QString& msgId, const QString& pkgid, const QString& shortCut);
 
-private:
-    bool positionIsTop();
-    bool positionIsBottom();
-
 public:
 	ChatViewItem* _pViewItem;
 
-public:
     bool _connectState = false;
+
+private:
+    QStandardItemModel* _pSrcModel;
+    ChatMainSoreModel*  _pModel;
 
 private:
 
 //    QTime         _downLoadElapsed; //用于进度条
     //long long      downloadProcess = 0;
     bool          _hasnotHistoryMsg;
-    QMutex        _mutex;
     QMenu         *_pMenu;
-
-    QMultiMap<QString, MessageItemBase*> _itemWgts;
-    QMap<MessageItemBase*, QListWidgetItem*> _items;
-    std::set<FileSendReceiveMessItem*>   _fileItems;
-    std::set<VideoMessageItem*>          _videoItems;
-    std::set<std::string>                _arHistoryIds;
 
 private:
 	NewMessageTip* _pNewMessageTipItem;
 	AtMessageTip*   _pAtMessageTipItem;
 
 private:
-	QString _selfUserName;
-
-private:
 	int _oldScrollBarVal;
     long long downloadProcess = 0;
-    qint64 _historyTime = 0;
-    STLazyQueue<bool> *_resizeQueue;
-    STLazyQueue<bool> *_selectItemQueue;
+    STLazyQueue<bool> *_resizeQueue{};
+    STLazyQueue<bool> *_selectItemQueue{};
 
 private:
-    bool _selectEnable;
+    bool _selectEnable{};
 
 private:
     QAction* saveAsAct;
@@ -172,6 +147,24 @@ private:
     QAction* collectionAct;
     QAction* shareMessageAct;
     QAction* qrcodeAct;
+
+private:
+	QMap<QString, MessageItemBase*> _mapItemWgt;
+	QMap<QString, QStandardItem*>   _mapItem;
+	QMap<QString, QStandardItem*>   _mapTimeItem;
+	std::list<QInt64>               _times;
+
+    ChatMainDelegate*               _pDelegate{};
+
+public:
+	enum {EM_JUM_INVALID, EM_JUM_BOTTOM, EM_JUM_ITEM, EM_JUM_TOP};
+
+private:
+    int _jumType = EM_JUM_INVALID;
+	QModelIndex _jumIndex;
+
+public:
+	void jumTo();
 };
 
 #endif//_CHATMAINWGT_H_

@@ -112,7 +112,7 @@ SelectUserWndDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     if(!QFile(headPath).isOpen())
     {
         int dpi = QTalk::qimage::instance().dpi();
-        QPixmap pixmap = QTalk::qimage::instance().loadPixmap(headPath, true, true, HEAD_WIDTH * dpi);
+        QPixmap pixmap = QTalk::qimage::instance().loadImage(headPath, true, true, HEAD_WIDTH * dpi);
         QPainterPath path;
         QRect headRect(rect.x() + 13, rect.y() + 8, HEAD_WIDTH, HEAD_WIDTH);
         path.addEllipse(headRect);

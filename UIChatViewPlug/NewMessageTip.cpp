@@ -60,11 +60,9 @@ void NewMessageTip::onResetWnd() {
     this->setVisible(false);
     _newMessageCount = 0;
     _pLabel->setText(QString(tr("%1 条新消息")).arg(_newMessageCount));
-    QListWidget* parentWgt = qobject_cast<QListWidget*>(_parentWgt);
+    auto* parentWgt = qobject_cast<QListView*>(_parentWgt);
     if(parentWgt)
-    {
         parentWgt->scrollToBottom();
-    }
 }
 
 void NewMessageTip::onResize()

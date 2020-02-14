@@ -18,19 +18,12 @@
 #include "ChatViewMainPanel.h"
 #include "MessageItems/TextMessItem.h"
 #include "MessageItems/ImageMessItem.h"
-#include "MessageItems/EmojiMessItem.h"
 #include "MessageItems/FileSendReceiveMessItem.h"
 #include "MessageItems/TipMessageItem.h"
-#include "MessageItems/CommonTrdInfoItem.h"
 #include "MessageItems/NoteMessageItem.h"
-#include "MessageItems/NoticeMessageItem.h"
-#include "MessageItems/MeetingRemindItem.h"
-#include "MessageItems/SystemMessageItem.h"
-#include "MessageItems/VideoMessageItem.h"
-#include "MessageItems/MedalMind.h"
-#include "MessageItems/CodeItem.h"
-#include "MessageItems/AudioVideoItem.h"
 #include "MessageItems/VoiceMessageItem.h"
+#include "MessageItems/EmojiMessItem.h"
+#include "MessageItems/VideoMessageItem.h"
 #include "../Emoticon/EmoticonMainWgt.h"
 #include "../QtUtil/Entity/JID.h"
 #include "InputWgt.h"
@@ -43,42 +36,13 @@
 #include "../include/perfcounter.h"
 #include "search/LocalSearchMainWgt.h"
 #include "ChatUtil.h"
-#include "MessageItems/HotLineTipItem.h"
 #include "MessageItems/HotLineAnswerItem.h"
 #include "ShareMessageFrm.h"
 
-#define DEM_ATALL_STR "@all"
-
 extern ChatViewMainPanel *g_pMainPanel;
 
-int get_index(QListWidget* wgt, qint64 time, bool isHis)
-{
-    int index = 0;
-    if(isHis)
-    {
-        for(index = 0; index < wgt->count(); index++)
-        {
-            qint64 t = wgt->item(index)->data(ChatMainWgt::EM_DATE_TYPE_TIME).toLongLong();
-            if(time <= t)
-                break;
-        }
-    }
-    else
-    {
-        for(index = wgt->count() - 1; index >= 0; index--)
-        {
-            qint64 t = wgt->item(index)->data(ChatMainWgt::EM_DATE_TYPE_TIME).toLongLong();
-            if(time >= t)
-                break;
-        }
-        index+=1;
-    }
-
-    return index;
-}
-
 ChatMainWgt::ChatMainWgt(ChatViewItem *pViewItem)
-        : QListWidget(pViewItem),
+        : QListView(pViewItem),
         _pViewItem(pViewItem),
         _hasnotHistoryMsg(true),
         _oldScrollBarVal(0),
@@ -86,23 +50,28 @@ ChatMainWgt::ChatMainWgt(ChatViewItem *pViewItem)
 
     // 设置滚动方式
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    //this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     this->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    this->setEditTriggers(QAbstractItemView::NoEditTriggers);
     this->verticalScrollBar()->setSingleStep(15);
-//    this->setAutoScroll(false);
     this->setObjectName("ChatMainWgt");
     this->setFrameShape(QFrame::NoFrame);
     this->setFocusPolicy(Qt::NoFocus);
     this->setSelectionMode(QAbstractItemView::NoSelection);
     this->verticalScrollBar()->setVisible(false);
     //
+    _pSrcModel = new QStandardItemModel(pViewItem);
+    _pModel = new ChatMainSoreModel(this);
+    _pModel->setSourceModel(_pSrcModel);
+    this->setModel(_pModel);
+    //
+    _pDelegate = new ChatMainDelegate(_mapItemWgt, this);
+    this->setItemDelegate(_pDelegate);
+    //
     _pNewMessageTipItem = new NewMessageTip(this);
     _pNewMessageTipItem->setVisible(false);
     _pAtMessageTipItem = new AtMessageTip(this);
     _pAtMessageTipItem->setVisible(false);
     //
-    std::string selfName = Platform::instance().getSelfName();
-    _selfUserName = QString::fromStdString(selfName);
 
     _pMenu = new QMenu(this);
     _pMenu->setAttribute(Qt::WA_TranslucentBackground, true);
@@ -175,10 +144,8 @@ void ChatMainWgt::connects() {
     connect(this, SIGNAL(sgRecvFRileProcess(double, double, double, double, double, std::string)),
             this, SLOT(onRecvFRileProcess(double, double, double, double, double, std::string)));
 
-
     connect(this, &ChatMainWgt::gotReadStatueSignal, this, &ChatMainWgt::onRecvReadState);
     connect(this, &ChatMainWgt::sgGotMState, this, &ChatMainWgt::onMState);
-    connect(this, &ChatMainWgt::sgGotGroupMStatue, this, &ChatMainWgt::onRecvGroupMState);
     connect(this, &ChatMainWgt::sgDisConnected, this, &ChatMainWgt::onDisconnected);
     connect(this, &ChatMainWgt::sgSendFailed, this, &ChatMainWgt::onSendMessageFailed);
     connect(this, &ChatMainWgt::updateRevokeSignal, this, &ChatMainWgt::updateRevokeMessage);
@@ -198,18 +165,23 @@ void ChatMainWgt::connects() {
 
     connect(this, &ChatMainWgt::showTipMessageSignal,
             this, &ChatMainWgt::showTipMessage);
+    connect(this, &ChatMainWgt::sgJumTo,
+            this, &ChatMainWgt::jumTo, Qt::QueuedConnection);
     connect(forwardAct, &QAction::triggered, this, &ChatMainWgt::onForwardAct);
     QScrollBar *scrolbar = this->verticalScrollBar();
-    connect(scrolbar, &QScrollBar::valueChanged, this, &ChatMainWgt::onScrollBarChanged, Qt::QueuedConnection);
+    connect(scrolbar, &QScrollBar::valueChanged, this, &ChatMainWgt::onScrollBarChanged);
+    connect(scrolbar, &QScrollBar::rangeChanged, [this](int, int){
+        emit this->sgJumTo();
+    });
     connect(this, &ChatMainWgt::adjustItems, this, &ChatMainWgt::onAdjustItems, Qt::QueuedConnection);
-    connect(this, &QListWidget::itemSelectionChanged, this, &ChatMainWgt::onItemSelectionChanged, Qt::QueuedConnection);
+//    connect(this, &QListView::selectionChanged, this, &ChatMainWgt::onItemSelectionChanged, Qt::QueuedConnection);
     connect(this, &ChatMainWgt::sgSelectItem, this, &ChatMainWgt::onItemChanged, Qt::QueuedConnection);
 }
 
 //
 void ChatMainWgt::onCustomContextMenuRequested(const QPoint &pos) {
 
-    auto *itemWgt = qobject_cast<MessageItemBase *>(itemWidget(currentItem()));
+    auto *itemWgt = qobject_cast<MessageItemBase *>(indexWidget(currentIndex()));
     bool isItem = (nullptr != itemWgt);
     saveAsAct->setVisible(isItem);
     revokeAct->setVisible(isItem);
@@ -227,7 +199,7 @@ void ChatMainWgt::onCustomContextMenuRequested(const QPoint &pos) {
         quoteAct->setEnabled(true);
         copyAct->setEnabled(true);
 
-        switch (itemWgt->type()) {
+        switch (itemWgt->messageType()) {
             case QTalk::Entity::MessageTypeText:
             case QTalk::Entity::MessageTypeRobotAnswer:
             case QTalk::Entity::MessageTypeGroupAt:
@@ -240,7 +212,7 @@ void ChatMainWgt::onCustomContextMenuRequested(const QPoint &pos) {
             case QTalk::Entity::MessageTypeSmallVideo:
 
                 if (!itemWgt->contains(QCursor::pos())) return;
-                switch (itemWgt->type()) {
+                switch (itemWgt->messageType()) {
                     case QTalk::Entity::MessageTypeFile:
                         saveAsAct->setEnabled(true);
                         quoteAct->setEnabled(false);
@@ -257,7 +229,6 @@ void ChatMainWgt::onCustomContextMenuRequested(const QPoint &pos) {
                         break;
                     }
                     case QTalk::Entity::MessageTypeSourceCode: {
-                        auto codeItem = qobject_cast<CodeItem *>(itemWgt);
                         saveAsAct->setEnabled(false);
                         copyAct->setEnabled(true);
                         quoteAct->setEnabled(false);
@@ -292,371 +263,10 @@ void ChatMainWgt::onCustomContextMenuRequested(const QPoint &pos) {
             default:
                 return;
         }
-        bool isSelfMsg = itemWgt->msgInfo().From == g_pMainPanel->getSelfUserId();
+        bool isSelfMsg = itemWgt->_msgInfo.from.toStdString() == g_pMainPanel->getSelfUserId();
         revokeAct->setEnabled(isSelfMsg);
     }
     _pMenu->exec(mapToGlobal(pos));
-
-}
-
-/**
-  * @函数名   showMessage
-  * @功能描述 显示消息接口
-  * @参数
-  * @author   cc
-  * @date     2018/09/18
-  */
-void ChatMainWgt::showMessage(const QTalk::Entity::ImMessageInfo &msg, bool isHistory) {
-	
-    if(_arHistoryIds.find(msg.MsgId) != _arHistoryIds.end())
-    {
-        if(_itemWgts.contains(msg.MsgId.data()))
-        {
-            for(MessageItemBase* item : _itemWgts.values(msg.MsgId.data()))
-            {
-                if(item->_adjust) {
-//                    warn_log("repeat message id: {0} content: {1}", msg.MsgId, msg.Content);
-                    return;
-                }
-
-                if(msg.Content.empty())
-                    return;
-
-                item->_adjust = true;
-
-                switch (item->msgInfo().Type)
-                {
-                    case QTalk::Entity::MessageTypeText:
-                    case QTalk::Entity::MessageTypeGroupAt:
-                    {
-                        QVector<StTextMessage> msgs;
-                        analysisMessage(msgs, msg.Content, msg.MsgId);
-                        auto *textItem = qobject_cast<TextMessItem*>(item);
-                        textItem->setStTextMessages(msgs);
-                        if(_items.contains(textItem))
-                        {
-                            textItem->setMsgInfo(msg);
-                            textItem->setMessageContent();
-                            dealMessage(textItem, _items[textItem], isHistory);
-//                            emit adjustItems();
-//                            dealMessage(textItem, _items[textItem], isHistory);
-                        }
-                        break;
-                    }
-                    case QTalk::Entity::MessageTypeFile:
-                        break;
-                    default:
-                        break;
-                }
-            }
-            return;
-        }
-        else
-        {
-            warn_log("repeat message id: {0} content: {1}", msg.MsgId, msg.Content);
-            return;
-        }
-    }
-    else
-        _arHistoryIds.insert(msg.MsgId);
-
-    //
-    switch (msg.Type) {
-        case QTalk::Entity::MessageTypeEmpty:
-        {
-            return;
-        }
-        case QTalk::Entity::MessageTypeGroupNotify:
-        {
-            showTipMessage(msg.Type, QString::fromStdString(msg.Content), isHistory, msg.LastUpdateTime);
-            return;
-        }
-        case QTalk::Entity::MessageTypeShock:
-        {
-            std::string msgFrom = msg.From;
-            QString content = tr("你");
-            if (g_pMainPanel->getSelfUserId() == msgFrom)
-                content.append(tr("抖了他一下"));
-            else
-                content.append(tr("收到一个窗口抖动"));
-
-            showTipMessage(msg.Type, content, isHistory, msg.LastUpdateTime);
-
-            return;
-        }
-        case QTalk::Entity::MessageTypeRevoke: {
-            QString userName = tr("你");
-            std::string msgFrom = msg.From;
-            if(msgFrom.empty() && !msg.ExtendedInfo.empty())
-            {
-                cJSON *data = cJSON_Parse(msg.ExtendedInfo.data());
-                if(nullptr != data)
-                {
-                    msgFrom = QTalk::JSON::cJSON_SafeGetStringValue(data, "fromId");
-                    cJSON_Delete(data);
-                }
-            }
-
-            if (g_pMainPanel->getSelfUserId() != msgFrom) {
-                userName = QString::fromStdString(msg.UserName);
-                if (userName.isEmpty()) {
-                    std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo
-                            = dbPlatForm::instance().getUserInfo(msgFrom);
-                    if (userInfo) {
-                        userName = QString::fromStdString(QTalk::getUserName(userInfo));
-                    }
-                }
-            }
-            showRevokeMessage(userName, isHistory, msg.LastUpdateTime);
-            return;
-        }
-        default: {
-            showMessageTime(msg.MsgId.data(), msg.LastUpdateTime, isHistory);
-            switch (msg.Type) {
-                case QTalk::Entity::MessageTypeFile: {
-                    QTalk::Entity::ImMessageInfo msgT = analysisFileMessage(msg, isHistory);
-                    auto *pChatItem = new FileSendReceiveMessItem(msgT, this);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pChatItem);
-                    _fileItems.insert(pChatItem);
-                    dealMessage(pChatItem, new QListWidgetItem(), isHistory);
-                    break;
-                }
-                case QTalk::Entity::MessageTypeCommonTrdInfo:
-                case QTalk::Entity::MessageTypeCommonTrdInfoV2: {
-                    auto *pChatItem = new CommonTrdInfoItem(msg, this);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pChatItem);
-                    dealMessage(pChatItem, new QListWidgetItem(), isHistory);
-                    break;
-                }
-                case QTalk::Entity::MessageTypeProduct:
-                case QTalk::Entity::MessageTypeNote:{
-                    auto *pChatItem = new NoteMessageItem(msg, this);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pChatItem);
-                    dealMessage(pChatItem, new QListWidgetItem(), isHistory);
-                    break;
-                }
-                case QTalk::Entity::MessageTypeSystem:{
-                    auto *pChatItem = new SystemMessageItem(msg, this);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pChatItem);
-                    dealMessage(pChatItem, new QListWidgetItem(), isHistory);
-                    break;
-                }
-                case QTalk::Entity::MessageTypeNotice:{
-                    auto *pChatItem = new NoticeMessageItem(msg, this);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pChatItem);
-                    dealMessage(pChatItem, new QListWidgetItem(), isHistory);
-                    break;
-                }
-                case QTalk::Entity::MessageTypeMeetingRemind:{
-                    auto *pChatItem = new MeetingRemindItem(msg, this);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pChatItem);
-                    dealMessage(pChatItem, new QListWidgetItem(), isHistory);
-                    break;
-                }
-                case QTalk::Entity::MessageTypeSourceCode: {
-                    auto *pCodeItem = new CodeItem(msg, this);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pCodeItem);
-                    dealMessage(pCodeItem, new QListWidgetItem(), isHistory);
-                    break;
-                }
-
-                // 表情
-                case QTalk::Entity::MessageTypeImageNew:
-                case QTalk::Entity::MessageTypePhoto: {
-
-                    QString strContent = QString::fromStdString(msg.Content);
-
-                    if(strContent.contains("[obj type=\"emoticon\""))
-                    {
-                        QString pkgid, shortCut, imagePath;
-                        double width = 0, height = 0;
-                        analysisEmoticonMessage(strContent, pkgid, shortCut);
-
-                        if(pkgid.isEmpty() || shortCut.isEmpty())
-                        {
-                            width = height = 128;
-                            imagePath = ":/chatview/image1/default.png";
-                        }
-                        else
-                        {
-                            QString localEmo = EmoticonMainWgt::getInstance()->getEmoticonLocalFilePath(pkgid, shortCut);
-                            QFileInfo info(localEmo);
-                            if(localEmo.isEmpty() || !info.exists() || info.isDir())
-                            {
-                                imagePath = ":/chatview/image1/default.png";
-                                width = height = 128;
-                                downloadEmoticon(msg.MsgId.data(), pkgid, shortCut);
-//
-                            }
-                            else
-                            {
-                                imagePath = localEmo;
-                                QPixmap emo(localEmo);
-                                width = emo.width();
-                                height = emo.height();
-                                QTalk::Image::scaImageSize(width, height);
-                            }
-                        }
-                        auto *pChatItem = new EmojiMessItem(msg, imagePath, {width, height}, this);
-                        _itemWgts.insert(QString::fromStdString(msg.MsgId), pChatItem);
-                        auto* item = new QListWidgetItem();
-                        dealMessage(pChatItem, item, isHistory);
-
-                        connect(pChatItem, &EmojiMessItem::sgItemChanged, [pChatItem, item](){
-                            auto size = pChatItem->itemWdtSize();
-                            item->setSizeHint(size);
-                        });
-                    }
-                    else if(strContent.contains("[obj type=\"image\""))
-                    {
-
-                        QString imagePath, imageLink;
-                        double width = 0, height = 0;
-
-                        analysisImageMessage(strContent, imageLink, width, height);
-
-                        QString localImg = QTalk::GetImagePathByUrl(imageLink.toStdString()).data();
-                        QFileInfo info(localImg);
-                        if(!info.exists() || info.isDir())
-                        {
-                            imagePath = ":/chatview/image1/default.png";
-                            downloadImage(msg.MsgId.data(), imageLink, width, height);
-                        }
-                        else
-                            imagePath = localImg;
-
-                        auto *pChatItem = new ImageMessItem(msg, imageLink, imagePath, QSize(width, height), this);
-                        _itemWgts.insert(QString::fromStdString(msg.MsgId), pChatItem);
-                        auto* item = new QListWidgetItem();
-                        dealMessage(pChatItem, item, isHistory);
-                        connect(pChatItem, &ImageMessItem::sgItemChanged, [pChatItem, item](){
-                            auto size = pChatItem->itemWdtSize();
-                            item->setSizeHint(size);
-                        });
-                    }
-                    else
-                    {
-                        error_log("analysis error type content:{0}", strContent.toStdString());
-                    }
-                    break;
-                }
-                case QTalk::Entity::MessageTypeSmallVideo:
-                {
-                    auto *pChatItem = new VideoMessageItem(msg, this);
-                    connect(pChatItem, &VideoMessageItem::sgPlayVideo,
-                            g_pMainPanel->_pVideoPlayWnd, &VideoPlayWnd::showVideo, Qt::QueuedConnection);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pChatItem);
-                    _videoItems.insert(pChatItem);
-                    dealMessage(pChatItem, new QListWidgetItem(), isHistory);
-                    break;
-                }
-                case QTalk::Entity::MessageTypeVoice:
-                {
-                    auto *pChatItem = new VoiceMessageItem(msg, this);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pChatItem);
-                    dealMessage(pChatItem, new QListWidgetItem(), isHistory);
-                    break;
-                }
-                case QTalk::Entity::WebRTC_MsgType_VideoCall:
-                case QTalk::Entity::WebRTC_MsgType_AudioCall:
-                case QTalk::Entity::WebRTC_MsgType_Video:
-                case QTalk::Entity::WebRTC_MsgType_Video_Group:
-                {
-                    auto *pVideoItem = new AudioVideoItem(msg, this);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pVideoItem);
-                    dealMessage(pVideoItem, new QListWidgetItem(), isHistory);
-                    break;
-                }
-                case QTalk::Entity::MessageTypeRobotTurnToUser:
-                {
-                    auto *pHotLineTip = new HotLineTipItem(msg, this);
-
-                    auto *item = new QListWidgetItem;
-                    item->setData(EM_DATETYPE_MSGTYPE, QTalk::Entity::MessageTypeRobotTurnToUser);
-                    item->setData(EM_DATE_TYPE_TIME, msg.LastUpdateTime);
-                    QSize size = QSize(this->width(), 40);
-                    item->setSizeHint(size);
-
-                    if (isHistory) {
-                        auto index = get_index(this, msg.LastUpdateTime, isHistory);
-                        this->insertItem(index, item);
-                        this->scrollToItem(item, QAbstractItemView::PositionAtBottom);
-                    } else {
-                        this->addItem(item);
-                        this->scrollToBottom();
-//                        int scroBarval = this->verticalScrollBar()->value();
-//                        int maximum = this->verticalScrollBar()->maximum();
-//                        if ((maximum - scroBarval) < 300) {
-//
-//                        } else {
-//                            if (scroBarval != maximum && _pNewMessageTipItem) {
-//                                _pNewMessageTipItem->onNewMessage();
-//                            }
-//                        }
-                    }
-
-                    setItemWidget(item, pHotLineTip);
-                    break;
-                }
-                case QTalk::Entity::MessageTypeRobotAnswerList:
-                {
-                    auto *pHotLineAnswer = new HotLineAnswerItem(msg, this);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pHotLineAnswer);
-                    dealMessage(pHotLineAnswer, new QListWidgetItem(), isHistory);
-                    break;
-                }
-                case QTalk::Entity::MessageTypeMedalRemind:
-                {
-                    auto *pChatItem = new MedalMind(msg, this);
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), pChatItem);
-                    dealMessage(pChatItem, new QListWidgetItem(), isHistory);
-                    break;
-                }
-                default: {
-                    QVector<StTextMessage> msgs;
-                    bool isSendMessage = msg.Direction == QTalk::Entity::MessageDirectionSent && msg.State == 0;
-                    if(isSendMessage && msg.Content.empty())
-                    {
-                        analysisSendTextMessage(msgs, msg.ExtendedInfo.data());
-                    }
-                    else
-                    {
-                        if(msg.Content.empty() && !msg.ExtendedInfo.empty())
-                            analysisSendTextMessage(msgs, msg.ExtendedInfo.data());
-                        else
-                            analysisMessage(msgs, msg.Content, msg.MsgId);
-                    }
-                    //
-                    auto *msgbase = new TextMessItem(msgs, msg, this);
-                    if(isSendMessage && msg.Content.empty())
-                        msgbase->_adjust = false;
-                    _itemWgts.insert(QString::fromStdString(msg.MsgId), msgbase);
-                    dealMessage(msgbase, new QListWidgetItem(), isHistory);
-
-                    break;
-                }
-            }
-        }
-        //
-//        QApplication::processEvents(QEventLoop::AllEvents, 50);
-    }
-
-    if (msg.State) {
-        for (MessageItemBase *item : _itemWgts.values(QString::fromStdString(msg.MsgId))) {
-            // 阅读状态
-            if (msg.State & 1)
-                item->setReadState(msg.ReadedTag | 1);
-            else
-                item->setReadState(msg.ReadedTag);
-        }
-    }
-    else
-    {
-        for (MessageItemBase *item : _itemWgts.values(QString::fromStdString(msg.MsgId))) {
-            if(!_connectState || isHistory)
-                item->onDisconnected();
-        }
-    }
 
 }
 
@@ -670,7 +280,7 @@ void ChatMainWgt::showMessage(const QTalk::Entity::ImMessageInfo &msg, bool isHi
 void ChatMainWgt::resizeEvent(QResizeEvent *e)
 {
     _resizeQueue->push(true);
-    QListWidget::resizeEvent(e);
+    QListView::resizeEvent(e);
 }
 
 /**
@@ -681,6 +291,9 @@ void ChatMainWgt::resizeEvent(QResizeEvent *e)
   */
 void
 ChatMainWgt::onRecvFRileProcess(double speed, double dtotal, double dnow, double utotal, double unow, std::string key) {
+    if(! _mapItemWgt.contains(key.data()))
+        return;
+
     double total;
     double now;
 
@@ -699,507 +312,182 @@ ChatMainWgt::onRecvFRileProcess(double speed, double dtotal, double dnow, double
     }
     downloadProcess = milliseconds_since_epoch;
 
+    auto* item = _mapItemWgt[key.data()];
+    {
+        auto* pFileItem = qobject_cast<FileSendReceiveMessItem*>(item);
+        if(pFileItem)
+            pFileItem->setProcess(speed, dtotal, dnow, utotal, unow);
+    }
     //
     {
-        auto itFind = std::find_if(_fileItems.cbegin(), _fileItems.cend(), [key](const auto& fileItemWdt) {
-            return fileItemWdt->msgInfo().MsgId == key;
-        });
-        if (itFind != _fileItems.cend())
-        {
-            (*itFind)->setProcess(speed, dtotal, dnow, utotal, unow);
-        }
+        auto* pVideoItem = qobject_cast<VideoMessageItem*>(item);
+        if(pVideoItem)
+            pVideoItem->setProcess(speed, dtotal, dnow, utotal, unow);
     }
-	//
+}
+
+
+//
+void ChatMainWgt::showMessageTime(const QString& messageId, const QInt64 &nCurTime) {
+
+    _times.push_back(nCurTime);
+    _times.sort();
+    auto it = std::find(_times.begin(), _times.end(), nCurTime);
+    if(it != _times.begin())
     {
-        auto itFind = std::find_if(_videoItems.cbegin(), _videoItems.cend(), [key](const auto& itemwgt) {
-            return itemwgt->msgInfo().MsgId == key;
-        });
-        if (itFind != _videoItems.cend())
+        it--;
+        if(nCurTime - *it < 60 * 1000)
         {
-            (*itFind)->setProcess(speed, dtotal, dnow, utotal, unow);
+            _times.remove(nCurTime);
+            return;
         }
     }
-	//
-	QApplication::processEvents(QEventLoop::AllEvents, 100);
+
+    auto* item = new QStandardItem();
+    item->setData(QTalk::Entity::MessageTypeTime, EM_USER_MSG_TYPE);
+    item->setData(nCurTime, EM_USER_MSG_TIME);
+    _pSrcModel->appendRow(item);
+    _mapTimeItem.insert(messageId, item);
+    _pDelegate->dealWidget(_pModel->mapFromSource(item->index()));
+    item->setSizeHint({this->width(), 40});
+    _pModel->sort(0);
 }
 
-//
+/**
+ *
+ * @param info
+ */
+void ChatMainWgt::onShowMessage(StNetMessageResult info, int jumType) {
 
-QString getStrTime(qint64 time)
-{
-    QString content = "";
-    QDateTime dateTime = QDateTime::currentDateTime();
-    QInt64 thisDay = dateTime.toMSecsSinceEpoch() - dateTime.time().msecsSinceStartOfDay();
-    if (time < thisDay) {
-        content = QDateTime::fromMSecsSinceEpoch(time).toString("yyyy-MM-dd hh:mm:ss");
-    } else {
-        content = QDateTime::fromMSecsSinceEpoch(time).toString("hh:mm:ss");
-    }
-    return  content;
-}
+    QTalk::Entity::UID uid(info.xmpp_id, info.real_id);
+    if(uid == _pViewItem->_uid)
+    {} else return;
 
-//
-void ChatMainWgt::showMessageTime(const QString& msgId, const QInt64 &nCurTime, bool isHistoryMessage) {
-
-    static QList<QString> msgList;
-    if(msgList.contains(msgId))
+    if(info.msg_type == QTalk::Entity::MessageTypeEmpty)
         return;
+
+    QStandardItem* item = nullptr;
+
+    if(_mapItemWgt.contains(info.msg_id))
+    {
+        auto* base = qobject_cast<MessageItemBase*>(_mapItemWgt[info.msg_id]);
+        if(base)
+            base->updateMessageInfo(info);
+    }
+
+    if(_mapItem.contains(info.msg_id))
+    {
+        item = _mapItem[info.msg_id];
+        StNetMessageResult oinfo = item->data(EM_USER_INFO).value<StNetMessageResult>();
+        info.state = qMax(oinfo.state, info.state);
+        info.read_flag = qMax(oinfo.read_flag, info.read_flag);
+        if(info.body.isEmpty() && !oinfo.body.isEmpty())
+            info.body = oinfo.body;
+        item->setData(QVariant::fromValue(info), EM_USER_INFO);
+    }
     else
-        msgList.push_back(msgId);
+    {
+        showMessageTime(info.msg_id, info.time);
+        //
+        item = new QStandardItem();
+        _mapItem.insert(info.msg_id, item);
+        item->setData(QVariant::fromValue(info), EM_USER_INFO);
+        _pSrcModel->appendRow(item);
 
-    bool isshowtime = false;
-    if (this->count() == 0) {
-        isshowtime = true;
-    } else {
 
-        int tmpIndex = this->count() - 1;
-        QInt64 itemTime = 0;
-        if(isHistoryMessage)
-        {
-            tmpIndex = 0;
-            while (tmpIndex <= this->count() - 1)
-            {
-                QListWidgetItem *lastItem = this->item(tmpIndex);
-                if (nullptr != lastItem) {
-                    int msgType = lastItem->data(EM_DATETYPE_MSGTYPE).toInt();
-                    if(msgType != QTalk::Entity::MessageTypeTime)
-                    {
-                        itemTime = lastItem->data(EM_DATE_TYPE_TIME).toLongLong();
-                        if(itemTime > nCurTime)
-                            break;
-                    }
+        if (QTalk::Enum::GroupChat == info.type &&
+            ((info.read_flag & 0x02) == 0) &&
+            QTalk::Entity::MessageDirectionReceive == info.direction ) {
+
+            if (QTalk::Entity::MessageTypeText == info.msg_type && info.body.contains("@all")) {
+                StShowAtInfo atInfo(true, info.user_name, item);
+                _pAtMessageTipItem->addAt(atInfo);
+            } else if(QTalk::Entity::MessageTypeGroupAt == info.msg_type) {
+                if(info.at_users.find(Platform::instance().getSelfXmppId().data()) != info.at_users.end())
+                {
+                    StShowAtInfo atInfo(false, info.user_name, item);
+                    _pAtMessageTipItem->addAt(atInfo);
                 }
-                tmpIndex++;
             }
         }
+    }
+
+    {
+        item->setData(info.type, EM_USER_TYPE);
+        item->setData(info.msg_type, EM_USER_MSG_TYPE);
+        item->setData(info.time, EM_USER_MSG_TIME);
+        item->setData(_selectEnable, EM_USER_SHOW_SHARE);
+    }
+    //
+
+    //
+    if(!info.text_messages.empty())
+    {
+        for(const auto& it : info.text_messages)
+        {
+            if(it.type == StTextMessage::EM_EMOTICON)
+            {
+                if(it.content.isEmpty())
+                    downloadEmoticon(info.msg_id, it.pkgid, it.shortCut);
+            }
+            else if(it.type == StTextMessage::EM_IMAGE)
+            {
+                if(it.content.isEmpty())
+                    downloadImage(info.msg_id, it.imageLink, it.imageWidth, it.imageHeight);
+            } else {}
+        }
+    }
+    //
+    _pModel->sort(0);
+    //
+    auto index = _pModel->mapFromSource(item->index());
+    _pDelegate->dealWidget(index);
+    {
+        // default size hint
+        auto *base = dynamic_cast<MessageItemBase*>(this->indexWidget(index));
+        if(base)
+            item->setSizeHint({this->width(), base->itemWdtSize().height()});
         else
-        {
-            QListWidgetItem *lastItem = this->item(tmpIndex);
-            if (nullptr != lastItem) {
-                itemTime = lastItem->data(EM_DATE_TYPE_TIME).toLongLong();
-            }
-        }
-        isshowtime = abs(nCurTime - itemTime) > 60 * 1000; // 两个消息相差一分钟
+            item->setSizeHint({this->width(), 40});
     }
-
-    if (isshowtime) {
-        auto content = getStrTime(nCurTime);
-        showTipMessage(QTalk::Entity::MessageTypeTime, content, isHistoryMessage, nCurTime - 1);
-    }
-}
-
-
-// 时间刷新
-void ChatMainWgt::updateTime() {
-
-    for(int i = 0; i < this->count(); i++)
     {
-        auto* item = this->item(i);
-        if(item->data(EM_DATETYPE_MSGTYPE).toInt() == QTalk::Entity::MessageTypeTime)
-        {
-            auto *wgt = qobject_cast<TipMessageItem*>(this->itemWidget(item));
-            if(wgt)
-            {
-                auto t = item->data(EM_DATE_TYPE_TIME).toLongLong();
-                QString text = getStrTime(t);
-                wgt->setText(text);
-            }
-        }
+        static unsigned char flag = 0;
+        if(++flag % 2)
+            this->resize(this->width() - 1, this->height());
+        else
+            this->resize(this->width() + 1, this->height());
     }
-}
-
-/**
- *
- * @param msgs
- * @param jsonMessage
- */
-void ChatMainWgt::analysisSendTextMessage(QVector<StTextMessage> &msgs, const std::string &jsonMessage)
-{
-    auto document = QJsonDocument::fromJson(jsonMessage.data());
-    if(document.isNull()){
-
-    }
-    else
+    //
+    _jumType = jumType;
+    if(_jumType == EM_JUM_INVALID)
     {
-        QJsonArray array = document.array();
-        for(auto && i : array)
+        static int oldMax = 0;
+        int scrollBarVal = this->verticalScrollBar()->value();
+        int maximum = this->verticalScrollBar()->maximum();
+
+        if(maximum != 0)
         {
-            QJsonObject obj = i.toObject();
-            int key = obj.value("key").toInt();
-            QString value = obj.value("value").toString();
-            switch (key)
+            if(scrollBarVal > oldMax)
             {
-                case Type_Text:
-                {
-                    analysisTextMessage(msgs, value);
-                    break;
-                }
-                case Type_Image:
-                {
-                    StTextMessage imageMsg(StTextMessage::EM_IMAGE);
-                    QFileInfo info(value);
-                    if(!info.exists() || info.isDir())
-                    {
-                        imageMsg.content = ":/chatview/image1/default.png";
-                        imageMsg.imageWidth = imageMsg.imageHeight = 200;
-                    }
-                    else
-                    {
-                        imageMsg.content = value;
-                        QPixmap pixmap(value);
-                        imageMsg.imageWidth = pixmap.width();
-                        imageMsg.imageHeight = pixmap.height();
-                        QTalk::Image::scaImageSize(imageMsg.imageWidth, imageMsg.imageHeight);
-                    }
-
-                    msgs.push_back(imageMsg);
-                    break;
-                }
-                case Type_At:
-                {
-                    if (!_selfUserName.isEmpty() && _selfUserName == value) {
-                        //
-                        StTextMessage atMsg(StTextMessage::EM_ATMSG);
-                        atMsg.content = QString("@%1 ").arg(value);
-                        msgs.push_back(atMsg);
-                    } else {
-                        StTextMessage textMsg(StTextMessage::EM_TEXT);
-                        textMsg.content = value;
-                        msgs.push_back(textMsg);
-                    }
-                    break;
-                }
-                case Type_Url:
-                {
-                    StTextMessage linkMsg(StTextMessage::EM_LINK);
-                    linkMsg.content = value;
-                    msgs.push_back(linkMsg);
-                    break;
-                }
-                case Type_Invalid:
-                default:
-                    break;
-            }
-        }
-    }
-}
-
-/**
-  * @函数名
-  * @功能描述
-  * @参数
-  * @date 2018.10.17
-  */
-void ChatMainWgt::analysisMessage(QVector<StTextMessage> &msgs, const std::string& content, const std::string& msgId) {
-
-    QRegExp regExp("\\[obj type=[\\\\]?\"([^\"]*)[\\\\]?\" value=[\\\\]?\"([^\"]*)[\\\\]?\"(.*)\\]");
-    regExp.setMinimal(true);
-
-    int pos = 0;
-    int prePos = 0;
-    while ((pos = regExp.indexIn(QString::fromStdString(content), pos)) != -1) {
-        // 前面的文本
-        QString text = QString::fromStdString(content).mid(prePos, pos - prePos); // 取匹配开始位置到匹配到的位置文本
-        if (!text.isEmpty())
-            analysisTextMessage(msgs, text);
-
-        QString item = regExp.cap(0); // 符合条件的整个字符串
-        QString type = regExp.cap(1); // 多媒体类型
-        QString val = regExp.cap(2); // 路径
-
-        if ("url" == type) {
-            StTextMessage linkMsg(StTextMessage::EM_LINK);
-            linkMsg.content = val;
-            msgs.push_back(linkMsg);
-        } else if ("emoticon" == type) {
-
-            StTextMessage emoMsg(StTextMessage::EM_EMOTICON);
-            QString pkgid, shortCut;
-            analysisEmoticonMessage(item, pkgid, shortCut);
-
-            if(pkgid.isEmpty() || shortCut.isEmpty())
-            {
-                emoMsg.imageWidth = emoMsg.imageHeight = 50;
-                emoMsg.content = ":/chatview/image1/default.png";
+                if(maximum - scrollBarVal > 220)
+                    _pNewMessageTipItem->onNewMessage();
             }
             else
             {
-                QString localEmo = EmoticonMainWgt::getInstance()->getEmoticonLocalFilePath(pkgid, shortCut);
-                QFileInfo info(localEmo);
-                if(localEmo.isEmpty() || !info.exists() || info.isDir())
-                {
-                    emoMsg.content = ":/chatview/image1/default.png";
-
-                    emoMsg.imageWidth = emoMsg.imageHeight = 50;
-                    downloadEmoticon(msgId.data(), pkgid, shortCut);
-                }
-                else
-                {
-                    emoMsg.content = localEmo;
-                    QPixmap emo(localEmo);
-                    emoMsg.imageWidth = emo.width();
-                    emoMsg.imageHeight = emo.height();
-                    QTalk::Image::scaImageSize(emoMsg.imageWidth, emoMsg.imageHeight);
-                }
-                shortCut.replace("/", "");
-                emoMsg.imageLink = QString("%1_%2").arg(pkgid, shortCut);
+                if(oldMax - scrollBarVal > 220)
+                    _pNewMessageTipItem->onNewMessage();
             }
-
-            msgs.push_back(emoMsg);
-        }
-        else if("image" == type)
-        {
-            StTextMessage imageMsg(StTextMessage::EM_IMAGE);
-            analysisImageMessage(item, imageMsg.imageLink, imageMsg.imageWidth, imageMsg.imageHeight);
-
-            QString localImg = QTalk::GetImagePathByUrl(imageMsg.imageLink.toStdString()).data();
-            QFileInfo info(localImg);
-            if(!info.exists() || info.isDir())
-            {
-                imageMsg.content = ":/chatview/image1/default.png";
-                downloadImage(msgId.data(), imageMsg.imageLink, imageMsg.imageWidth, imageMsg.imageHeight);
-            }
-            else
-                imageMsg.content = localImg;
-
-            msgs.push_back(imageMsg);
-        }
-        //
-        pos += regExp.matchedLength();
-        prePos = pos;
-    }
-
-    QString lastStr = QString::fromStdString(content).mid(prePos);
-    if (!lastStr.isEmpty())
-        analysisTextMessage(msgs, lastStr);
-}
-
-/**
- * 处理文本类消息
- */
-void ChatMainWgt::analysisTextMessage(QVector<StTextMessage> &msgs, const QString &text) {
-    if (!text.isEmpty()) {
-        // 对于没有安装[obj]格式发送的链接 进行转换
-        QRegExp regExp("(((ftp|https?)://|www.)[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z0-9]{1,4})([^ ^\"^\\[^\\]^\\r^\\n]*))");
-
-        auto pos = 0;
-        auto prePos = 0;
-        while ((pos = regExp.indexIn(text, pos)) != -1) {
-            QString url = regExp.cap(0);
-
-            if (pos - prePos > 0) {
-                QString tmpText = text.mid(prePos, pos - prePos); // 取匹配开始位置到匹配到的位置文本
-                analysisAtMessage(msgs, tmpText);
-            }
-
-            StTextMessage linkMsg(StTextMessage::EM_LINK);
-            linkMsg.content = url;
-            msgs.push_back(linkMsg);
-
-            pos += regExp.matchedLength();
-            prePos = pos;
-        }
-
-
-        if (prePos <= text.size() - 1) {
-            QString lastStr = text.mid(prePos);
-            analysisAtMessage(msgs, lastStr);
+            oldMax = maximum;
         }
     }
-}
+    this->repaint();
+    this->setRowHidden(index.row(), false);
 
-/**
- * 
- */
-void ChatMainWgt::analysisAtMessage(QVector<StTextMessage> &msgs, const QString &text) {
-    if (_pViewItem->_chatType == QTalk::Enum::GroupChat) {
-        if (text.contains(DEM_ATALL_STR)) {
-            //
-            QString leftStr = text.section(DEM_ATALL_STR, 0, 0);
-            QString rightStr = text.section(DEM_ATALL_STR, 1, 1);
-            if (!leftStr.isEmpty())
-                analysisAtMessage(msgs, leftStr);
-            //
-            StTextMessage atMsg(StTextMessage::EM_ATMSG);
-            atMsg.content = DEM_ATALL_STR;
-            msgs.push_back(atMsg);
-            //
-            if (!rightStr.isEmpty())
-                analysisAtMessage(msgs, rightStr);
-        } else {
-            QString atSelfName = QString("@%1").arg(_selfUserName);
-            if (!_selfUserName.isEmpty() && text.contains(QString("@%1").arg(_selfUserName))) {
-
-                auto pos = text.indexOf(atSelfName);
-                QString leftStr = text.mid(0, pos);
-                QString rightStr = text.mid(pos + atSelfName.size());
-                if (!leftStr.isEmpty())
-                    analysisAtMessage(msgs, leftStr);
-                //
-                StTextMessage atMsg(StTextMessage::EM_ATMSG);
-                atMsg.content = atSelfName;
-                msgs.push_back(atMsg);
-                //
-                if (!rightStr.isEmpty())
-                    analysisAtMessage(msgs, rightStr);
-            } else {
-                StTextMessage textMsg(StTextMessage::EM_TEXT);
-                textMsg.content = text;
-                msgs.push_back(textMsg);
-            }
-        }
-    } else {
-        StTextMessage textMsg(StTextMessage::EM_TEXT);
-        textMsg.content = text;
-        msgs.push_back(textMsg);
-    }
-}
-
-void ChatMainWgt::analysisImageMessage(const QString &content, QString &imageLink, qreal &width, qreal &height) {
-
-    QRegExp regExp("\\[obj type=[\\\\]?\"([^\"]*)[\\\\]?\" value=[\\\\]?\"([^\"]*)[\\\\]?\"(.*)\\]");
-
-    if (regExp.indexIn(content) != -1) {
-
-        QString item = regExp.cap(0); // 符合条件的整个字符串
-        QString type = regExp.cap(1); // 多媒体类型
-        QString val = regExp.cap(2); // 路径
-        QString strWidth = regExp.cap(3); // 宽高
-
-        std::string localFilePath;
-
-        if ("image" == type) {
-
-            QString rawUrl = QUrl(val).toEncoded();
-            imageLink = rawUrl;
-
-            if (!strWidth.isEmpty()) {
-                QRegExp exp("width=([0-9]*\\.?[0-9]+) height=([0-9]*\\.?[0-9]+)");
-                if (exp.indexIn(strWidth) >= 0) {
-                    width = exp.cap(1).toDouble();
-                    height = exp.cap(2).toDouble();
-                }
-            }
-            //
-            if(width == 0 && height == 0)
-            {
-                QString localImg = QTalk::GetImagePathByUrl(imageLink.toStdString()).data();
-                QFileInfo info(localImg);
-                if(info.exists() && !info.isDir())
-                {
-                    QPixmap pixmap(localImg);
-                    width = pixmap.width();
-                    height = pixmap.height();
-                }
-                else
-                {
-                    width = height = 200;
-                    return;
-                }
-            }
-
-            QTalk::Image::scaImageSize(width, height);
-
-        } else if ("emoticon" == type) {
-            error_log("analysis error type content:{0}", content.toStdString());
-        }
-    }
-}
-
-/**
- *
- * @param content
- * @param imageLink
- * @param width
- * @param height
- */
-void ChatMainWgt::analysisEmoticonMessage(const QString& content, QString& pkgid, QString& shortCut)
-{
-    QRegExp regExp("\\[obj type=[\\\\]?\"([^\"]*)[\\\\]?\" value=[\\\\]?\"([^\"]*)[\\\\]?\"(.*)\\]");
-
-    if (regExp.indexIn(content) != -1) {
-
-        QString item = regExp.cap(0); // 符合条件的整个字符串
-        QString type = regExp.cap(1); // 多媒体类型
-        QString val = regExp.cap(2); // 路径
-        QString strWidth = regExp.cap(3); // 宽高
-
-        if ("image" == type) {
-
-            error_log("analysis error type content:{0}", content.toStdString());
-
-        } else if ("emoticon" == type) {
-            shortCut = val;
-            shortCut.remove("[").remove("]");
-            if (!strWidth.isEmpty()) {
-                QRegExp exp("width=(.+) height=(.+)");
-                if (exp.indexIn(strWidth) >= 0) {
-                    pkgid = exp.cap(1);
-                }
-            }
-//            emoLocalPath = EmoticonMainWgt::getInstance()->getEmoticonLocalFilePath(pkgid, shortCut);
-//            localFilePath = EmoticonMainWgt::getInstance()->getEmoticonFilePath(pkgid, shortCut).toStdString();
-//
-//            localPath = QString::fromStdString(localFilePath);
-//            QPixmap image = QTalk::qimage::instance().loadPixmap(localPath, true);
-//            width = image.width();
-//            height = image.height();
-//            scaImageSize(width, height);
-        }
-    }
-}
-
-/**
-  * @函数名
-  * @功能描述
-  * @参数
-  * @author
-  * @date 2018.10.22
-  */
-QTalk::Entity::ImMessageInfo ChatMainWgt::analysisFileMessage(const QTalk::Entity::ImMessageInfo &msg, bool isHis) {
-
-    QTalk::Entity::ImMessageInfo msgT = msg;
-    if(msg.Content.empty())
+    //
     {
-        if(!msg.ExtendedInfo.empty())
-        {
-            cJSON *content = cJSON_Parse(msg.ExtendedInfo.data());
-            if (nullptr == content) {
-                return msgT;
-            }
-            //
-            msgT.FileName = QTalk::JSON::cJSON_SafeGetStringValue(content, "FileName");
-            msgT.FileSize = QTalk::JSON::cJSON_SafeGetStringValue(content, "FileSize");
-            msgT.FileMd5 = QTalk::JSON::cJSON_SafeGetStringValue(content, "FILEMD5");
-            cJSON_Delete(content);
-        }
+        QApplication::processEvents(QEventLoop::AllEvents, 50);
+        jumTo();
     }
-    else
-    {
-        cJSON *content = cJSON_Parse(msg.Content.data());
-        if (nullptr == content) {
-            return msgT;
-        }
-        //
-        msgT.FileName = QTalk::JSON::cJSON_SafeGetStringValue(content, "FileName");
-        msgT.FileSize = QTalk::JSON::cJSON_SafeGetStringValue(content, "FileSize");
-        msgT.FileUrl = QTalk::JSON::cJSON_SafeGetStringValue(content, "HttpUrl");
-        msgT.FileMd5 = QTalk::JSON::cJSON_SafeGetStringValue(content, "FILEMD5");
-        cJSON_Delete(content);
-
-        if(msgT.FileMd5.empty() && !msgT.FileUrl.empty())
-        {
-            QUrlQuery query(QString(msgT.FileUrl.data()).section("?", 1, 1));
-
-            if(query.hasQueryItem("name"))
-            {
-                msgT.FileMd5 = query.queryItemValue("name").
-                        section(".", 0, 0).toLower().toStdString();
-            }
-        }
-    }
-
-    return msgT;
 }
 
 /**
@@ -1210,7 +498,7 @@ QTalk::Entity::ImMessageInfo ChatMainWgt::analysisFileMessage(const QTalk::Entit
   */
 void ChatMainWgt::recvFileProcess(const double &speed, const double &dtotal, const double &dnow, const double &utotal,
                                   const double &unow, const std::string &key) {
-    if(_arHistoryIds.find(key) != _arHistoryIds.end())
+    if(_mapItemWgt.contains(key.data()))
         emit sgRecvFRileProcess(speed, dtotal, dnow, utotal, unow, key);
 }
 
@@ -1229,243 +517,102 @@ void ChatMainWgt::wheelEvent(QWheelEvent *e) {
     //上翻
     if((maximum == 0 || scrollBarVal == 0) && direct > 0)
     {
-        qint64 curTime = QDateTime::currentMSecsSinceEpoch();
-        if(curTime - _historyTime < 500)
-        {
-//            warn_log("getHistory time too short {0}", curTime - _historyTime);
-            return;
-        }
-        else
-            _historyTime = curTime;
-
-        QInt64 time = 0;
-        if (count() > 0) {
+        qint64 time = 0;
+        if (_pModel->rowCount() > 0) {
             int i = 0;
-
             while (true) {
-                long long type = this->item(i)->data(EM_DATETYPE_MSGTYPE).toLongLong();
-                if (type != QTalk::Entity::MessageTypeTime) {
-                    time = this->item(i)->data(EM_DATE_TYPE_TIME).toLongLong();
-                    if (time != 0) {
-
-                        break;
-                    }
+                time = _pModel->index(i, 0).data(EM_USER_MSG_TIME).toLongLong();
+                if (time != 0) {
+                    _jumIndex = _pModel->mapToSource(_pModel->index(i , 0));
+                    break;
                 }
 
-                if (i == this->count())
+                if (i == _pModel->rowCount() - 1)
                     break;
                 i++;
             }
         }
+
         if(_hasnotHistoryMsg)
             g_pMainPanel->getHistoryMsg(time, _pViewItem->_chatType, _pViewItem->getPeerId());
     }
 
-    QListWidget::wheelEvent(e);
-}
-
-void ChatMainWgt::mousePressEvent(QMouseEvent *e) {
-
-    QListWidget::mousePressEvent(e);
+    QListView::wheelEvent(e);
 }
 
 void ChatMainWgt::setHasNotHistoryMsgFlag(bool hasHistory) {
     _hasnotHistoryMsg = hasHistory;
 
     if (!_hasnotHistoryMsg) {
-        QListWidgetItem *item = nullptr;
-        TipMessageItem *itemWgt = nullptr;
-
-        if (count() > 0) {
-            item = this->item(0);
-            if (item->data(EM_DATETYPE_MSGTYPE).toLongLong() == QTalk::Entity::MessageTypeTime) {
-                itemWgt = (TipMessageItem *) this->itemWidget(item);
-            }
-        }
-
-        if (nullptr == item && nullptr != itemWgt) {
-            item = new QListWidgetItem();
-            itemWgt = new TipMessageItem();
-            this->insertItem(0, item);
-            setItemWidget(item, itemWgt);
-        }
-
-        if (itemWgt) {
-            itemWgt->setText(tr("没有更多消息了"));
-        }
+        showTipMessage(QTalk::utils::getMessageId().data(), QTalk::Entity::MessageTypeGroupNotify, tr("没有更多消息了"), 0);
     }
 }
 
-void ChatMainWgt::dealMessage(MessageItemBase *msgItemWgt, QListWidgetItem *pLstItem, bool isHistoryMessage) {
-
-    if (msgItemWgt && pLstItem) {
-
-        const QTalk::Entity::ImMessageInfo &stMessage = msgItemWgt->msgInfo();
-        pLstItem->setData(EM_DATE_TYPE_TIME, stMessage.LastUpdateTime);
-        pLstItem->setData(EM_DATETYPE_MSGTYPE, static_cast<long long>(msgItemWgt->type()));
-
-        switch (msgItemWgt->type()) {
-            case QTalk::Entity::MessageTypeText:
-            case QTalk::Entity::MessageTypeRobotAnswer:
-            case QTalk::Entity::MessageTypeGroupAt:
-            case QTalk::Entity::MessageTypeImageNew:
-            case QTalk::Entity::MessageTypePhoto:
-            case QTalk::Entity::MessageTypeGroupNotify:
-            case QTalk::Entity::MessageTypeFile:
-            case QTalk::Entity::MessageTypeCommonTrdInfo:
-            case QTalk::Entity::MessageTypeCommonTrdInfoV2:
-            default: {
-                QSize size = msgItemWgt->itemWdtSize();
-                pLstItem->setSizeHint({this->width(), size.height()});
-                break;
-            }
-        }
-
-        int scroBarval = this->verticalScrollBar()->value();
-        int maximum = this->verticalScrollBar()->maximum();
-        this->update();
-        // 判断是否是首次创建item
-        if (_items.contains(msgItemWgt)) {
-            return;
-        }
-        //
-        _items.insert(msgItemWgt, pLstItem);
-        msgItemWgt->showShareCheckBtn(_selectEnable);
-        connect(msgItemWgt, &MessageItemBase::sgSelectItem, [this, pLstItem](bool checked){
-            disconnect(this, &QListWidget::itemSelectionChanged, this, &ChatMainWgt::onItemSelectionChanged);
-            this->setItemSelected(pLstItem, checked);
-            connect(this, &QListWidget::itemSelectionChanged, this, &ChatMainWgt::onItemSelectionChanged);
-            emit sgSelectedSize(selectedItems().size());
-        });
-
-
-        if (QTalk::Entity::MessageTypeText == msgItemWgt->type() ||
-            QTalk::Entity::MessageTypeGroupAt == msgItemWgt->type()) {
-            //
-            if (stMessage.ChatType == QTalk::Enum::GroupChat &&
-                stMessage.Direction == QTalk::Entity::MessageDirectionReceive &&
-                !((bool) (stMessage.ReadedTag & MessageItemBase::EM_READSTS_READED))) {
-                if (QString::fromStdString(stMessage.Content).contains(DEM_ATALL_STR)) {
-                    StShowAtInfo info(true, QString::fromStdString(stMessage.UserName), pLstItem);
-                    _pAtMessageTipItem->addAt(info);
-                } else {
-                    if (!_selfUserName.isEmpty() &&
-                        QString::fromStdString(stMessage.Content).contains(QString("@%1").arg(_selfUserName))) {
-                        StShowAtInfo info(false, QString::fromStdString(stMessage.UserName), pLstItem);
-                        _pAtMessageTipItem->addAt(info);
-                    }
-                }
-            }
-        }
-        //
-        if (isHistoryMessage) {
-            auto index = get_index(this, stMessage.LastUpdateTime, isHistoryMessage);
-            this->insertItem(index, pLstItem);
-            this->scrollToItem(pLstItem, QAbstractItemView::PositionAtTop);
-        } else {
-            this->addItem(pLstItem);
-            // 自己发消息时 或 当前就在最底端
-            if (stMessage.Direction == QTalk::Entity::MessageDirectionSent || (maximum - scroBarval) < 300) {
-                this->scrollToBottom();
-            } else {
-                if (scroBarval != maximum && _pNewMessageTipItem) {
-                    _pNewMessageTipItem->onNewMessage();
-                }
-            }
-        }
-        debug_log("show message id:{0}", stMessage.MsgId);
-        setItemWidget(pLstItem, msgItemWgt);
-        this->update();
-    }
-}
-
-void ChatMainWgt::resizeItems() {
-    for (int i = 0; i < count(); i++) {
-        QListWidgetItem *item = this->item(i);
-        item->setSizeHint(QSize(this->size().width(), item->sizeHint().height()));
-    }
-}
-
+// 阅读状态
 void ChatMainWgt::onRecvReadState(const std::map<std::string, QInt32> &readStates) {
     auto it = readStates.begin();
     for (; it != readStates.end(); it++) {
 
         QString messageId = QString::fromStdString(it->first);
-        for(MessageItemBase *item : _itemWgts.values(messageId)) {
-            item->setReadState(it->second);
+        if(_mapItem.contains(messageId))
+        {
+            StNetMessageResult info = _mapItem[messageId]->data(EM_USER_INFO).value<StNetMessageResult>();
+            info.state = it->second;
+            _mapItem[messageId]->setData(QVariant::fromValue(info), EM_USER_INFO);
+        }
+
+        if(_mapItemWgt.contains(messageId))
+        {
+            auto* base = qobject_cast<MessageItemBase*>(_mapItemWgt[messageId]);
+            if(base)
+                base->setReadState(it->second);
         }
     }
-}
 
-void ChatMainWgt::onRecvGroupMState(const std::vector<std::string> &msgIds)
-{
-    auto it = msgIds.begin();
-    for (; it != msgIds.end(); it++) {
 
-        QString msgId = it->data();
-        for(MessageItemBase *item : _itemWgts.values(msgId)) {
-            item->setReadState(0x01);
-        }
-    }
 }
 
 void ChatMainWgt::updateRevokeMessage(const QString &fromId, const QString &messageId, const long long& time) {
-    if (_itemWgts.contains(messageId)) {
-        QMutexLocker locker(&_mutex);
-        for (MessageItemBase *itemWgt : _itemWgts.values(messageId)) {
-
-            QListWidgetItem *item = _items[itemWgt];
-            item->setHidden(true);
-        }
-        _itemWgts.remove(messageId);
-
-        if (!fromId.isEmpty()) {
-            QString userName = tr("你");
-            if (g_pMainPanel->getSelfUserId() != fromId.toStdString()) {
-                std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(
-                        fromId.toStdString());
-                if (userInfo) {
-                    userName = QString::fromStdString(QTalk::getUserName(userInfo));
-                }
+    if (_mapItem.contains(messageId) && !fromId.isEmpty()) {
+        QString userName = tr("你");
+        if (g_pMainPanel->getSelfUserId() != fromId.toStdString()) {
+            std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(
+                    fromId.toStdString());
+            if (userInfo) {
+                userName = QString::fromStdString(QTalk::getUserName(userInfo));
             }
-            showRevokeMessage(userName, false, time);
         }
-    }
-}
+        auto* item = _mapItem[messageId];
+        StNetMessageResult info = item->data(EM_USER_INFO).value<StNetMessageResult>();
+        _pSrcModel->removeRow(item->index().row());
+        _mapItem.remove(messageId);
+        _mapItemWgt.remove(messageId);
 
-void ChatMainWgt::showRevokeMessage(const QString &userName, bool isHistory, QInt64 t) {
-    showTipMessage(QTalk::Entity::MessageTypeRevoke, tr("%1撤回了一条消息").arg(userName), isHistory, t);
+        QString content = tr("%1撤回了一条消息").arg(fromId == Platform::instance().getSelfXmppId().data() ?
+                tr("你") : info.user_name);
+
+        showTipMessage(messageId, QTalk::Entity::MessageTypeRevoke, content, info.time);
+    }
 }
 
 //
-void ChatMainWgt::showTipMessage(long long type, const QString &content, bool isHistory, QInt64 t) {
-    auto *tipItem = new TipMessageItem(this);
-    auto *item = new QListWidgetItem;
-    item->setData(EM_DATETYPE_MSGTYPE, type);
-    item->setData(EM_DATE_TYPE_TIME, t);
-    QSize size = QSize(this->width(), 40);
-    item->setSizeHint(size);
+void ChatMainWgt::showTipMessage(const QString& messageId, int type, const QString &content, QInt64 t) {
 
-    tipItem->setText(content);
+    auto* item = new QStandardItem;
+    StNetMessageResult info;
+    info.msg_type = type;
+    info.time = t;
+    info.body = content;
+    item->setData(QVariant::fromValue(info), EM_USER_INFO);
+    item->setData(type, EM_USER_MSG_TYPE);
+    item->setData(t, EM_USER_MSG_TIME);
+    item->setData(_selectEnable, EM_USER_SHOW_SHARE);
+    _pSrcModel->appendRow(item);
 
-    if (isHistory) {
-        auto index = get_index(this, t, isHistory);
-        this->insertItem(index, item);
-        this->scrollToItem(item, QAbstractItemView::PositionAtBottom);
-    } else {
-        this->addItem(item);
-        int scroBarval = this->verticalScrollBar()->value();
-        int maximum = this->verticalScrollBar()->maximum();
-        if ((maximum - scroBarval) < 300) {
-            this->scrollToBottom();
-        } else {
-            if (scroBarval != maximum && _pNewMessageTipItem) {
-                _pNewMessageTipItem->onNewMessage();
-            }
-        }
-    }
+    _mapItem[messageId] = item;
 
-    setItemWidget(item, tipItem);
+    _pModel->sort(0);
+    this->scrollToBottom();
 }
 
 void ChatMainWgt::saveAsImage(const QString &imageLink) {
@@ -1476,7 +623,7 @@ void ChatMainWgt::saveAsImage(const QString &imageLink) {
         return;
     }
 
-    std::string imageLocalFile = g_pMainPanel->getMessageManager()->getSouceImagePath(imageLink.toStdString());
+    std::string imageLocalFile = ChatMsgManager::getSouceImagePath(imageLink.toStdString());
     QString oldFilePath = QString::fromStdString(imageLocalFile);
     QFileInfo oldFileInfo(oldFilePath);
     if (!oldFilePath.isEmpty() && oldFileInfo.exists()) {
@@ -1492,7 +639,7 @@ void ChatMainWgt::saveAsImage(const QString &imageLink) {
                 Platform::instance().setHistoryDir(QFileInfo(newPath).absoluteDir().absolutePath().toStdString());
                 QString newSuffix = QFileInfo(newPath).suffix().toUpper();
                 //
-                auto tmpPix = QTalk::qimage::instance().loadPixmap(oldFilePath, false);
+                auto tmpPix = QTalk::qimage::instance().loadImage(oldFilePath, false);
                 if(!tmpPix.isNull())
                 {
                     auto format = newSuffix.toUtf8().data();
@@ -1521,7 +668,7 @@ void ChatMainWgt::saveAsImage(const QString &imageLink) {
 
 void copyImage(const QString& imageLink, const QString& imagePath)
 {
-    std::string srcImgPath = g_pMainPanel->getMessageManager()->getSouceImagePath(imageLink.toStdString());
+    std::string srcImgPath = ChatMsgManager::getSouceImagePath(imageLink.toStdString());
     QFileInfo srcInfo(srcImgPath.data());
 
     auto *mimeData = new QMimeData;
@@ -1533,17 +680,17 @@ void copyImage(const QString& imageLink, const QString& imagePath)
 //        urls << QUrl::fromLocalFile(imagePath);
 
 //    mimeData->setUrls(urls);
-    QPixmap pixmap = QTalk::qimage::instance().loadPixmap(srcImgPath.data(), false);
+    QPixmap pixmap = QTalk::qimage::instance().loadImage(srcImgPath.data(), false);
     mimeData->setImageData(pixmap.toImage());
     QApplication::clipboard()->setMimeData(mimeData);
 }
 
 // action 处理相关
 void ChatMainWgt::onCopyAction(bool) {
-    auto *itemWgt = qobject_cast<MessageItemBase *>(itemWidget(currentItem()));
+    auto *itemWgt = qobject_cast<MessageItemBase *>(indexWidget(currentIndex()));
     if (nullptr == itemWgt) return;
 
-    switch (itemWgt->type()) {
+    switch (itemWgt->messageType()) {
         case QTalk::Entity::MessageTypeText:
         case QTalk::Entity::MessageTypeRobotAnswer:
         case QTalk::Entity::MessageTypeGroupAt: {
@@ -1567,9 +714,9 @@ void ChatMainWgt::onCopyAction(bool) {
 
 // action 处理相关
 void ChatMainWgt::onSaveAsAction(bool) {
-    auto *itemWgt = qobject_cast<MessageItemBase *>(itemWidget(currentItem()));
+    auto *itemWgt = qobject_cast<MessageItemBase *>(indexWidget(currentIndex()));
     if (nullptr == itemWgt) return;
-    switch (itemWgt->type()) {
+    switch (itemWgt->messageType()) {
         case QTalk::Entity::MessageTypeText:
         case QTalk::Entity::MessageTypeRobotAnswer:
         case QTalk::Entity::MessageTypeGroupAt: {
@@ -1603,52 +750,51 @@ void ChatMainWgt::onSaveAsAction(bool) {
 void ChatMainWgt::onRevokeAction(bool) {
     emit g_pMainPanel->sgOperator(tr("撤回消息"));
 
-    auto *itemWgt = qobject_cast<MessageItemBase *>(itemWidget(currentItem()));
+    auto *itemWgt = qobject_cast<MessageItemBase *>(indexWidget(currentIndex()));
     if (nullptr == itemWgt) return;
 
     QInt64 now = QDateTime::currentDateTime().toMSecsSinceEpoch() - Platform::instance().getServerDiffTime() * 1000;
-    if (now - itemWgt->msgInfo().LastUpdateTime > 2 * 60 * 1000) {
-        // 时间戳传现在 可能有点问题 todo
-        showTipMessage(QTalk::Entity::MessageTypeGroupNotify, tr("超过2分钟的消息不能撤回"), false, now);
+    if (now - itemWgt->_msgInfo.time > 2 * 60 * 1000) {
+        showTipMessage(QTalk::utils::getMessageId().data(), QTalk::Entity::MessageTypeGroupNotify, tr("超过2分钟的消息不能撤回"), now);
         return;
     }
 
-    QString messageId = QString::fromStdString(itemWgt->msgInfo().MsgId);
+    QString messageId = itemWgt->_msgInfo.msg_id;
     auto time = QDateTime::currentMSecsSinceEpoch() - Platform::instance().getServerDiffTime() * 1000;
     updateRevokeMessage(QString::fromStdString(g_pMainPanel->getSelfUserId()), messageId, time);
-    if (nullptr != g_pMainPanel && nullptr != g_pMainPanel->getMessageManager()) {
-        g_pMainPanel->getMessageManager()->sendRevokeMessage(_pViewItem->_uid, g_pMainPanel->getSelfUserId(),
+    if (nullptr != g_pMainPanel) {
+        ChatMsgManager::sendRevokeMessage(_pViewItem->_uid, g_pMainPanel->getSelfUserId(),
                                                              messageId.toStdString(),_pViewItem->_chatType);
     }
 }
 
 void ChatMainWgt::onQuoteAct(bool) {
-    auto *itemWgt = qobject_cast<MessageItemBase *>(itemWidget(currentItem()));
+    auto *itemWgt = qobject_cast<MessageItemBase *>(indexWidget(currentIndex()));
     if (nullptr == itemWgt) return;
     //
-//    QString userName = QString::fromStdString(itemWgt->msgInfo().UserName);
-    QTalk::Entity::JID jid(itemWgt->msgInfo().From.data());
+//    QString userName = QString::fromStdString(itemWgt->_msgInfo.UserName);
+    QTalk::Entity::JID jid(itemWgt->_msgInfo.from.toStdString());
     auto info = dbPlatForm::instance().getUserInfo(jid.basename());
     if(info)
     {
         QString userName = QString::fromStdString(info->NickName.empty() ? info->Name : info->NickName);
         //
-        QString source = QString::fromStdString(itemWgt->msgInfo().Content);
+        QString source = itemWgt->_msgInfo.body;
         _pViewItem->_pInputWgt->insertQuote(userName, source);
 
         emit g_pMainPanel->sgOperator(tr("引用"));
     }
     else
     {
-        warn_log("user info not exist user:{0}", itemWgt->msgInfo().From);
+        warn_log("user info not exist user:{0}", itemWgt->_msgInfo.from.toStdString());
     }
 }
 
 void ChatMainWgt::onCollectionAct(bool) {
-    auto *itemWgt = qobject_cast<MessageItemBase *>(itemWidget(currentItem()));
+    auto *itemWgt = qobject_cast<MessageItemBase *>(indexWidget(currentIndex()));
     if (nullptr == itemWgt) return;
     //
-    auto type = itemWgt->type();
+    auto type = itemWgt->messageType();
     QString netPath;
     switch(type)
     {
@@ -1680,10 +826,10 @@ void ChatMainWgt::onCollectionAct(bool) {
 
 void ChatMainWgt::onQRCodeAct(bool)
 {
-    auto *itemWgt = qobject_cast<MessageItemBase *>(itemWidget(currentItem()));
+    auto *itemWgt = qobject_cast<MessageItemBase *>(indexWidget(currentIndex()));
     if (nullptr == itemWgt) return;
     //
-    auto type = itemWgt->type();
+    auto type = itemWgt->messageType();
     QString netPath;
     switch(type)
     {
@@ -1706,7 +852,7 @@ void ChatMainWgt::onQRCodeAct(bool)
             break;
     }
     //
-    std::string imageLocalFile = g_pMainPanel->getMessageManager()->getSouceImagePath(netPath.toStdString());
+    std::string imageLocalFile = ChatMsgManager::getSouceImagePath(netPath.toStdString());
 
     if(!imageLocalFile.empty() && QFile::exists(imageLocalFile.data()) && g_pMainPanel)
     {
@@ -1715,12 +861,13 @@ void ChatMainWgt::onQRCodeAct(bool)
 }
 
 void ChatMainWgt::recvBlackListMessage(const QString &messageId) {
-    if (_itemWgts.contains(messageId)) {
-        for (MessageItemBase *item : _itemWgts.values(messageId)) {
-            item->setReadState(MessageItemBase::EM_BLACK_RET);
-            emit showTipMessageSignal(QTalk::Entity::MessageTypeGroupNotify, tr("对方已将你的消息屏蔽, 消息已被拦截"), false,
-                    QDateTime::currentMSecsSinceEpoch() - Platform::instance().getServerDiffTime() * 1000);
-        }
+    if (_mapItemWgt.contains(messageId)) {
+        auto* item = _mapItemWgt[messageId];
+        item->setReadState(MessageItemBase::EM_BLACK_RET);
+        emit showTipMessageSignal(QTalk::utils::getMessageId().data(),
+                QTalk::Entity::MessageTypeGroupNotify,
+                tr("对方已将你的消息屏蔽, 消息已被拦截"),
+                QDateTime::currentMSecsSinceEpoch() - Platform::instance().getServerDiffTime() * 1000);
     }
 }
 
@@ -1728,11 +875,11 @@ void ChatMainWgt::recvBlackListMessage(const QString &messageId) {
  *
  */
 void ChatMainWgt::onForwardAct(bool) {
-    auto *itemWgt = qobject_cast<MessageItemBase *>(itemWidget(currentItem()));
+    auto *itemWgt = qobject_cast<MessageItemBase *>(indexWidget(currentIndex()));
     if (nullptr == itemWgt) return;
 
-    QTalk::Entity::ImMessageInfo stMsg = itemWgt->msgInfo();
-    g_pMainPanel->forwardMessage(stMsg.MsgId);
+    auto stMsg = itemWgt->_msgInfo;
+    g_pMainPanel->forwardMessage(stMsg.msg_id.toStdString());
     emit g_pMainPanel->sgOperator(tr("转发消息"));
 }
 
@@ -1740,38 +887,31 @@ void ChatMainWgt::onForwardAct(bool) {
  * 
  */
 void ChatMainWgt::onScrollBarChanged(int val) {
-    if (_oldScrollBarVal - val > 0) {
-        if (val > 5)
-            return;
 
-        qint64 curTime = QDateTime::currentMSecsSinceEpoch();
-        if(curTime - _historyTime < 2000)
+    if (_oldScrollBarVal - val > 0) {
+        if (val > 10)
         {
-//            warn_log("getHistory time too short {0}", curTime - _historyTime);
+            _oldScrollBarVal = val;
             return;
         }
-        else
-            _historyTime = curTime;
 
         QInt64 time = 0;
-        if (count() > 0) {
+        if (_pModel->rowCount() > 0) {
             int i = 0;
 
             while (true) {
-                long long type = this->item(i)->data(EM_DATETYPE_MSGTYPE).toLongLong();
-                if (type != QTalk::Entity::MessageTypeTime) {
-                    time = this->item(i)->data(EM_DATE_TYPE_TIME).toLongLong();
-                    if (time != 0) {
-                        debug_log("get history message type: {0} time: {1}", type, QDateTime::fromMSecsSinceEpoch(time).toString("yyyy-MM-dd hh:mm:ss").toStdString());
-                        break;
-                    }
+                time = _pModel->index(i, 0).data(EM_USER_MSG_TIME).toLongLong();
+                if (time != 0) {
+                    _jumIndex = _pModel->mapToSource(_pModel->index(i , 0));
+                    break;
                 }
 
-                if (i == this->count() - 1)
+                if (i == _pModel->rowCount() - 1)
                     break;
                 i++;
             }
         }
+
         if(_hasnotHistoryMsg)
             g_pMainPanel->getHistoryMsg(time, _pViewItem->_chatType, _pViewItem->getPeerId());
 
@@ -1781,39 +921,26 @@ void ChatMainWgt::onScrollBarChanged(int val) {
             _pNewMessageTipItem->onResetWnd();
         }
     }
+
     _oldScrollBarVal = val;
 }
 
 void ChatMainWgt::onAdjustItems() {
-
-    for (int i = 0; i < count(); i++) {
-        auto *itemWgt = (QFrame *) itemWidget(item(i));
-        QListWidgetItem *item = this->item(i);
+    for (const auto& itemWgt : _mapItemWgt) {
         //
-//        static int index = 0;
-//        index = 0;
-        //
-        if (itemWgt && item && !item->isHidden()) {
-            long long itemType = item->data(EM_DATETYPE_MSGTYPE).toLongLong();
+        if (itemWgt) {
+            long long itemType = itemWgt->_msgInfo.msg_type;
             if (QTalk::Entity::MessageTypeText == itemType ||
                 QTalk::Entity::MessageTypeGroupAt == itemType ||
                 QTalk::Entity::MessageTypeRobotAnswer == itemType) {
 
-                auto *chatItem = (TextMessItem *) itemWgt;
+                auto *chatItem = qobject_cast<TextMessItem *>( itemWgt);
                 chatItem->setMessageContent();
-                dealMessage(chatItem, item, false);
-
-//                if(++index == 10)
-//                {
-//                    QApplication::processEvents(QEventLoop::AllEvents, 200);
-//                    index = 0;
-//                }
             }
         }
     }
-    resizeItems();
-    _pAtMessageTipItem->showAtInfo();
-    _pNewMessageTipItem->onResize();
+
+    this->repaint();
 }
 
 void ChatMainWgt::setShareMessageState(bool flag)
@@ -1829,8 +956,7 @@ void ChatMainWgt::setShareMessageState(bool flag)
         this->clearSelection();
         this->setSelectionMode(QAbstractItemView::NoSelection);
     }
-
-    for(const auto& item : _itemWgts)
+    for(const auto& item : _mapItemWgt)
     {
         item->showShareCheckBtn(flag);
         item->checkShareCheckBtn(false);
@@ -1839,18 +965,32 @@ void ChatMainWgt::setShareMessageState(bool flag)
 
 void ChatMainWgt::onItemChanged()
 {
-    auto it = _items.begin();
-    for(; it != _items.end(); it++)
+    auto selectInxs = this->selectedIndexes();
+    for(int row = 0; row < _pModel->rowCount(); row++)
     {
-        bool isSelected = (*it)->isSelected();
-        it.key()->checkShareCheckBtn(isSelected);
+        auto index = _pModel->index(row, 0);
+        auto* wgt = this->indexWidget(index);
+        auto* base = qobject_cast<MessageItemBase*>(wgt);
+        if(base)
+            base->checkShareCheckBtn(selectInxs.contains(index));
     }
-    emit sgSelectedSize(selectedItems().size());
+    emit sgSelectedSize(selectedIndexes().size());
 }
 
-void ChatMainWgt::onItemSelectionChanged()
+void ChatMainWgt::onItemCheckChanged(bool check) {
+    auto *base = qobject_cast<MessageItemBase*>(sender());
+    if(base)
+    {
+        auto id = base->_msgInfo.msg_id;
+        if(_mapItem.contains(id))
+            selectionModel()->select(_pModel->mapFromSource(_mapItem[id]->index()), QItemSelectionModel::Toggle);
+    }
+}
+
+void ChatMainWgt::selectionChanged(const QItemSelection &, const QItemSelection &)
 {
-    _selectItemQueue->push(true);
+    if(_selectItemQueue)
+        _selectItemQueue->push(true);
 }
 
 /**
@@ -1858,18 +998,21 @@ void ChatMainWgt::onItemSelectionChanged()
  */
 void ChatMainWgt::onShareMessage()
 {
-    if(selectedItems().empty())
+    if(selectedIndexes().empty())
     {
         QtMessageBox::warning(this, tr("警告"), tr("请选择需要转发的消息"));
         return;
     }
 
-    std::vector<QTalk::Entity::ImMessageInfo> arMsgs;
-    auto it = _items.begin();
-    for(; it != _items.end(); it++)
+    std::vector<StNetMessageResult> arMsgs;
+    //
+    auto selects = selectedIndexes();
+    auto it = selects.begin();
+    for(; it != selects.end(); it++)
     {
-        if((*it)->isSelected())
-            arMsgs.push_back(it.key()->msgInfo());
+        auto* wgt = qobject_cast<MessageItemBase*>(this->indexWidget(*it));
+        if(wgt)
+            arMsgs.push_back(wgt->_msgInfo);
     }
     if(arMsgs.empty())
     {
@@ -1882,10 +1025,9 @@ void ChatMainWgt::onShareMessage()
         _pViewItem->setShareMessageState(false);
     }
     //
-//    LiteMessageBox::success("消息正在打包发送中...", 1000);
-    //
-    QPointer<ChatMainWgt> pThis(this);
-    g_pMainPanel->pool().enqueue([pThis, arMsgs]() {
+    auto id = _pViewItem->_uid.toQString();
+    auto chatType = _pViewItem->_chatType;
+    g_pMainPanel->pool().enqueue([this, arMsgs, id, chatType]() {
 #ifdef _MACOS
         pthread_setname_np("ChatMainWgt onShareMessage thread");
 #endif
@@ -1894,14 +1036,14 @@ void ChatMainWgt::onShareMessage()
         for(const auto& msg : arMsgs)
         {
             cJSON* obj = cJSON_CreateObject();
-            cJSON_AddNumberToObject(obj, "d", msg.Direction);
-            if(msg.ExtendedInfo.empty())
-                cJSON_AddStringToObject(obj, "b", msg.Content.data());
+            cJSON_AddNumberToObject(obj, "d", msg.direction);
+            if(msg.extend_info.isEmpty())
+                cJSON_AddStringToObject(obj, "b", msg.body.toStdString().data());
             else
-                cJSON_AddStringToObject(obj, "b", msg.ExtendedInfo.data());
-            cJSON_AddStringToObject(obj, "n", QTalk::getUserNameNoMask(msg.From).data());
-            cJSON_AddNumberToObject(obj, "s", msg.LastUpdateTime);
-            cJSON_AddNumberToObject(obj, "t", msg.Type);
+                cJSON_AddStringToObject(obj, "b", msg.extend_info.toStdString().data());
+            cJSON_AddStringToObject(obj, "n", QTalk::getUserNameNoMask(msg.from.toStdString()).data());
+            cJSON_AddNumberToObject(obj, "s", msg.time);
+            cJSON_AddNumberToObject(obj, "t", msg.msg_type);
 
             cJSON_AddItemToArray(objs, obj);
         }
@@ -1920,8 +1062,7 @@ void ChatMainWgt::onShareMessage()
         if(g_pMainPanel)
         {
             std::string url = g_pMainPanel->uploadFile(jsonFilePath.toStdString());
-            if(pThis && pThis->_pViewItem)
-                emit pThis->sgUploadShareMsgSuccess(pThis->_pViewItem->_uid.toQString(), pThis->_pViewItem->_chatType, QString::fromStdString(url));
+            emit sgUploadShareMsgSuccess(id, chatType, QString::fromStdString(url));
         }
     });
 }
@@ -1929,40 +1070,20 @@ void ChatMainWgt::onShareMessage()
 bool ChatMainWgt::event(QEvent *e) {
 
     if(e->type() == QEvent::Enter)
-    {
         this->verticalScrollBar()->setVisible(true);
-    }
     else if(e->type() == QEvent::Leave)
-    {
         this->verticalScrollBar()->setVisible(false);
-    }
-
-    return QListWidget::event(e);
-}
-
-/**
- * 更新群聊 尾巴状态
- */
-void ChatMainWgt::onChangeUserMood(const std::string &id, const std::string &mood)
-{
-//    for(const auto item : _itemWgts.values())
-//    {
-//        std::string xmppId = item->msgInfo().From;
-//        if(id == xmppId)
-//        {
-//            emit item->sgChangeUserMood(mood);
-//        }
-//    }
+    return QListView::event(e);
 }
 
 //
 void ChatMainWgt::onUserMedalChanged(const std::set<std::string> &changedUser) {
-    auto items = _itemWgts.values();
+    auto items = _mapItemWgt.values();
     for(auto* wgt : items)
     {
-        if(wgt && wgt->msgInfo().Direction == QTalk::Entity::MessageDirectionReceive)
+        if(wgt && wgt->_msgInfo.direction == QTalk::Entity::MessageDirectionReceive)
         {
-            const auto& id = wgt->msgInfo().From;
+            const auto& id = wgt->_msgInfo.from.toStdString();
             if(changedUser.find(id) != changedUser.end())
                 emit wgt->sgUpdateUserMedal();
         }
@@ -1977,8 +1098,8 @@ void ChatMainWgt::onUserMedalChanged(const std::set<std::string> &changedUser) {
 void ChatMainWgt::downloadImage(const QString &msgid, const QString &link, int width, int height)
 {
     QPointer<ChatMainWgt> pThis(this);
-    g_pMainPanel->pool().enqueue([pThis, link, msgid, width, height](){
-        g_pMainPanel->getMessageManager()->getLocalFilePath(link.toStdString());
+    g_pMainPanel->pool().enqueue([pThis, link, msgid](){
+        ChatMsgManager::getLocalFilePath(link.toStdString());
         if(pThis)
             emit pThis->sgImageDownloaded(msgid, link);
     });
@@ -1987,13 +1108,12 @@ void ChatMainWgt::downloadImage(const QString &msgid, const QString &link, int w
 
 void ChatMainWgt::onImageDownloaded(const QString &msgid, const QString &path)
 {
-    if(_itemWgts.contains(msgid))
+    if(_mapItemWgt.contains(msgid))
     {
-        QList<MessageItemBase*> items = _itemWgts.values(msgid);
-        for(MessageItemBase* item : items)
+        auto* item = _mapItemWgt[msgid];
         {
-            if( QTalk::Entity::MessageTypePhoto == item->type() ||
-                    QTalk::Entity::MessageTypeImageNew == item->type())
+            if( QTalk::Entity::MessageTypePhoto == item->messageType() ||
+                    QTalk::Entity::MessageTypeImageNew == item->messageType())
             {
                 auto* imgWgtItem = qobject_cast<ImageMessItem*>(item);
                 if(imgWgtItem)
@@ -2005,14 +1125,14 @@ void ChatMainWgt::onImageDownloaded(const QString &msgid, const QString &path)
                         emoWgtItem->onImageDownloaded(path);
                 }
             }
-            else if(QTalk::Entity::MessageTypeRobotAnswerList == item->type())
+            else if(QTalk::Entity::MessageTypeRobotAnswerList == item->messageType())
             {
                 auto* ansItem = qobject_cast<HotLineAnswerItem*>(item);
                 if(ansItem)
                     ansItem->onImageDownloaded(path);
             }
             // path 为下载地址
-            else /*if(QTalk::Entity::MessageTypeText == item->type())*/
+            else /*if(QTalk::Entity::MessageTypeText == item->messageType())*/
             {
                 auto* textWgtItem = qobject_cast<TextMessItem*>(item);
                 if(textWgtItem)
@@ -2021,6 +1141,31 @@ void ChatMainWgt::onImageDownloaded(const QString &msgid, const QString &path)
         }
 
         _resizeQueue->push(true);
+    }
+
+    if(_mapItem.contains(msgid))
+    {
+        auto* item = _mapItem[msgid];
+        StNetMessageResult info = item->data(EM_USER_INFO).value<StNetMessageResult>();
+        for(auto&& it : info.text_messages)
+        {
+            if(it.type == StTextMessage::EM_IMAGE && it.imageLink == path)
+            {
+                it.content = QTalk::GetImagePathByUrl(path.toStdString()).data();
+                QTalk::Image::scaImageSizeByPath(it.content, it.imageWidth, it.imageHeight);
+            }
+            else if(it.type == StTextMessage::EM_EMOTICON)
+            {
+                QFileInfo fileInfo(path);
+                if(fileInfo.baseName() == QString("%1_%2").arg(it.pkgid, it.shortCut))
+                {
+                    it.content = path;
+                    QTalk::Image::scaImageSizeByPath(it.content, it.imageWidth, it.imageHeight);
+                }
+            }
+        }
+
+        item->setData(QVariant::fromValue(info), EM_USER_INFO);
     }
 }
 
@@ -2039,31 +1184,11 @@ void ChatMainWgt::downloadEmoticon(const QString& msgId, const QString& pkgid, c
     });
 }
 
-bool ChatMainWgt::positionIsTop() {
-    int scrollBarVal = this->verticalScrollBar()->value();
-    int maximum = this->verticalScrollBar()->maximum();
-
-    if(scrollBarVal == maximum == 0)
-        return true;
-    else
-        return scrollBarVal <= 5;
-}
-
-bool ChatMainWgt::positionIsBottom() {
-    int scrollBarVal = this->verticalScrollBar()->value();
-    int maximum = this->verticalScrollBar()->maximum();
-
-    if(scrollBarVal == maximum == 0)
-        return true;
-    else
-        return scrollBarVal >= maximum - 5;
-}
-
 void ChatMainWgt::onDisconnected()
 {
     setConnectState(false);
     //
-    for(auto *wgt : _itemWgts)
+    for(auto *wgt : _mapItemWgt)
     {
         if(wgt)
             wgt->onDisconnected();
@@ -2071,30 +1196,94 @@ void ChatMainWgt::onDisconnected()
 }
 
 void ChatMainWgt::onSendMessageFailed(const QString &msgId) {
-    for(auto *wgt : _itemWgts.values(msgId))
+    if(_mapItemWgt.contains(msgId))
     {
-        if(wgt)
-            wgt->onDisconnected();
+        _mapItemWgt[msgId]->onDisconnected();
     }
 }
 
 void ChatMainWgt::clearData()
 {
     _hasnotHistoryMsg = true;
-    _itemWgts.clear();
-    _items.clear();
-    _fileItems.clear();
-    _videoItems.clear();
-    _arHistoryIds.clear();
-    //
-//    this->disconnect(this);
-    this->clear();
-//    this->connects();
+    _jumIndex = QModelIndex();
+    _oldScrollBarVal = 0;
+    _times.clear();
+    _mapItemWgt.clear();
+    _mapItem.clear();
+    _pAtMessageTipItem->clear();
+    _pSrcModel->clear();
 }
 
+//
 void ChatMainWgt::onMState(const QString& msgId, const long long& time) {
-    for(MessageItemBase *wgt : _itemWgts.values(msgId)) {
-        wgt->setReadState(0x01);
-        _items[wgt]->setData(ChatMainWgt::EM_DATE_TYPE_TIME, time);
+    if(_mapItem.contains(msgId))
+    {
+        StNetMessageResult info = _mapItem[msgId]->data(EM_USER_INFO).value<StNetMessageResult>();
+        info.state = 1;
+        info.read_flag = 1;
+        _mapItem[msgId]->setData(QVariant::fromValue(info), EM_USER_INFO);
+        _mapItem[msgId]->setData(time, EM_USER_MSG_TIME);
+
+        if(_mapTimeItem.contains(msgId))
+            _mapTimeItem[msgId]->setData(time, EM_USER_MSG_TIME);
+
+        _pModel->sort(0);
+        this->scrollToBottom();
     }
+
+    if(_mapItemWgt.contains(msgId))
+        _mapItemWgt[msgId]->setReadState(1);
+}
+
+void ChatMainWgt::jumTo() {
+
+    switch (_jumType)
+    {
+        case EM_JUM_BOTTOM:
+        {
+            this->scrollToBottom();
+            break;
+        }
+        case EM_JUM_ITEM:
+        {
+            if(_jumIndex.isValid())
+                this->scrollTo(_pModel->mapFromSource(_jumIndex), PositionAtCenter);
+            break;
+        }
+        case EM_JUM_TOP:
+        {
+            this->scrollToTop();
+            break;
+        }
+        case EM_JUM_INVALID:
+        default:
+        {
+            static int oldMax = 0;
+            int scrollBarVal = this->verticalScrollBar()->value();
+            int maximum = this->verticalScrollBar()->maximum();
+            if(scrollBarVal > oldMax)
+            {
+                if(maximum - scrollBarVal < 220)
+                    this->scrollToBottom();
+            }
+            else
+            {
+                if(oldMax - scrollBarVal < 220)
+                    this->scrollToBottom();
+            }
+
+            oldMax = maximum;
+            break;
+        }
+    }
+    _jumType = EM_JUM_INVALID;
+}
+
+void ChatMainWgt::showEvent(QShowEvent *e) {
+    jumTo();
+    QWidget::showEvent(e);
+}
+
+void ChatMainWgt::scrollToItem(QStandardItem *pItem) {
+    this->scrollTo(_pModel->mapFromSource(pItem->index()), QAbstractItemView::PositionAtTop);
 }

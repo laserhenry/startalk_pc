@@ -14,7 +14,7 @@ class CodeItem : public MessageItemBase {
 
 Q_OBJECT
 public:
-    explicit CodeItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent = Q_NULLPTR);
+    explicit CodeItem(const StNetMessageResult &msgInfo, QWidget *parent = Q_NULLPTR);
     ~CodeItem() override = default;;
 
 public:

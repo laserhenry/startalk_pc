@@ -3,12 +3,10 @@
 //
 #include "QchatMoreFun.h"
 
-QchatMoreFun::QchatMoreFun(QTalk::Entity::UID _uid,QTalk::Enum::ChatType _chatType)
-        :uid(_uid),chatType(_chatType) {
+#include <utility>
 
-}
-
-QchatMoreFun::~QchatMoreFun() {
+QchatMoreFun::QchatMoreFun(QTalk::Entity::UID _uid, QTalk::Enum::ChatType &_chatType)
+        :uid(std::move(_uid)), chatType(_chatType) {
 
 }
 

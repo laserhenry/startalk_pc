@@ -6,7 +6,7 @@
 #include <QPainter>
 #include "../Platform/dbPlatForm.h"
 #include "../UICom/UIEntity.h"
-#include "../QtUtil/Enum/im_enum.h"
+#include "../include/im_enum.h"
 #include "ChatViewMainPanel.h"
 #include "../QtUtil/Utils/Log.h"
 #include "../Platform/Platform.h"
@@ -16,23 +16,19 @@
 #define DEM_BTN_ICON_LEN  30
 
 extern ChatViewMainPanel *g_pMainPanel;
-
-StautsLabel::StautsLabel(QWidget* parent)
+StatusLabel::StatusLabel(QWidget* parent)
 	: QLabel(parent),
 	_sts(EM_STS_INVALID)
 {
 
 }
 
-StautsLabel::~StautsLabel()
-{
-
-}
+StatusLabel::~StatusLabel() = default;
 
 /**
  *
  */
-void StautsLabel::setStatus(Status sts)
+void StatusLabel::setStatus(Status sts)
 {
 	_sts = sts;
 	update();
@@ -57,7 +53,7 @@ void StautsLabel::setStatus(Status sts)
 	}
 }
 
-void StautsLabel::paintEvent(QPaintEvent * e)
+void StatusLabel::paintEvent(QPaintEvent * e)
 {
 	QPainter painter;
 	painter.begin(this);
@@ -118,16 +114,16 @@ void StatusWgt::switchUser(QUInt8 t, const QTalk::Entity::UID &uid, const QStrin
     _isConsultServer = (t == QTalk::Enum::ChatType::ConsultServer);
     _uid = uid;
 
-    _pEdit->setVisible(false);
+    _pEdit->setVisible(_isGroupChat);
+    _pLabelPlat->setVisible(false);
+    _pStsLabel->setVisible(!_isGroupChat);
+    _pmood->setVisible(!_isGroupChat);
+    _pBtnStructure->setVisible(!_isGroupChat);
 	if (_isGroupChat)
 	{
-		_pStsLabel->setVisible(false);
-		_pLabelPlat->setVisible(false);
-        _pmood->setVisible(false);
-
-        std::string coEdit = AppSetting::instance().getCoEdit();
-        _pEdit->setVisible(true);
+//        std::string coEdit = AppSetting::instance().getCoEdit();
         _pBtnAddGroup->setToolTip(tr("邀请群成员"));
+        this->setMinimumHeight(50);
 	}
 	else
     {
@@ -143,20 +139,20 @@ void StatusWgt::switchUser(QUInt8 t, const QTalk::Entity::UID &uid, const QStrin
     //群用户名为空时从数据库取一次 其他的每次都从数据库取
     if (nullptr != _pLabelChatUser) {
         if (_isGroupChat) {
-            if (!userName.isEmpty()){
+            if (!userName.isEmpty()) {
                 _pLabelChatUser->setText(name);
-            } else{
+            } else {
                 std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = dbPlatForm::instance().getGroupInfo(
                         uid.usrId());
                 if (groupInfo)
                     _pLabelChatUser->setText(QString::fromStdString(groupInfo->Name));
                 else
-                    _pLabelChatUser->setText(uid.qUsrId());
+                    _pLabelChatUser->setText(uid.qUsrId().section("@", 0, 0));
             }
-        } else if(_isConsultServer){
+        } else if (_isConsultServer) {
             std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(
                     uid.realId());
-            if (userInfo){
+            if (userInfo) {
                 _pLabelChatUser->setText(QString::fromStdString(QTalk::getUserName(userInfo)));
                 _pBtnStructure->setToolTip(QString::fromStdString(userInfo->DescInfo));
                 QString mood = QString::fromStdString(userInfo->Mood);
@@ -164,15 +160,14 @@ void StatusWgt::switchUser(QUInt8 t, const QTalk::Entity::UID &uid, const QStrin
                 mood = mf.elidedText(mood, Qt::ElideRight, 500);
                 mood = mood.replace("\n", " ");
                 _pmood->setText(mood);
-            }else{
-                std::shared_ptr<QTalk::Entity::ImUserInfo> pImUserInfo(new QTalk::Entity::ImUserInfo);
-                pImUserInfo->XmppId = uid.realId();
-                _pLabelChatUser->setText(QString::fromStdString(QTalk::getUserName(pImUserInfo)));
+            } else {
+                _pLabelChatUser->setText(uid.qReadJid().section("@", 0, 0));
+                _pmood->setText("");
             }
         } else {
             std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(
                     uid.realId());
-            if (userInfo){
+            if (userInfo) {
                 _pLabelChatUser->setText(QString::fromStdString(QTalk::getUserName(userInfo)));
                 _pBtnStructure->setToolTip(QString::fromStdString(userInfo->DescInfo));
                 QString mood = QString::fromStdString(userInfo->Mood);
@@ -180,51 +175,18 @@ void StatusWgt::switchUser(QUInt8 t, const QTalk::Entity::UID &uid, const QStrin
                 mood = mf.elidedText(mood, Qt::ElideRight, 500);
                 mood = mood.replace("\n", " ");
                 _pmood->setText(mood);
-            }else
-            {
-                if(userName.isEmpty())
-                    _pLabelChatUser->setText(uid.qUsrId());
+            } else {
+                _pmood->setText("");
+                if (userName.isEmpty())
+                    _pLabelChatUser->setText(uid.qReadJid().section("@", 0, 0));
                 else
                     _pLabelChatUser->setText(name);
             }
-
+            // 显示状态
+            auto status = Platform::instance().getUserStatus(uid.realId());
+            updateUserSts(status.data());
         }
-        // 增加一个补偿逻辑 用户名为空时从数据库取一次
-//        if (userName.isEmpty() || _isConsultServer) {
-//            if (_isGroupChat) {
-//                std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = dbPlatForm::instance().getGroupInfo(
-//                        uid.usrId());
-//                if (groupInfo)
-//                    _pLabelChatUser->setText(QString::fromStdString(groupInfo->Name));
-//                else
-//                    _pLabelChatUser->setText(uid.qUsrId());
-//            } else if(_isConsultServer){
-//                std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(
-//                        uid.realId());
-//                if (userInfo){
-//                    _pLabelChatUser->setText(QString::fromStdString(userInfo->Name));
-//                    _pLabelDeptName->setText(QString::fromStdString(userInfo->DescInfo));
-//                }else
-//                    _pLabelChatUser->setText(uid.qReadJid());
-//            } else {
-//                std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(
-//                        uid.realId());
-//                if (userInfo){
-//                    _pLabelChatUser->setText(QString::fromStdString(userInfo->Name));
-//                    _pLabelDeptName->setText(QString::fromStdString(userInfo->DescInfo));
-//                }else
-//                    _pLabelChatUser->setText(uid.qUsrId());
-//            }
-//        } else {
-//            _pLabelChatUser->setText(userName);
-//        }
     }
-    //
-//    if (nullptr != _pBtnStructure && nullptr != _pBtnLock) {
-//        _pBtnStructure->setVisible(!_isGroupChat);
-        //_pBtnLock->setVisible(!_isGroupChat);
-//    }
-    _pBtnStructure->setVisible(false);
 }
 
 /**
@@ -267,7 +229,7 @@ void StatusWgt::initUi() {
     _pLabelPlat = new HeadPhotoLab;
     _pLabelPlat->setParent(this);
     _pmood = new QLabel(this);
-	_pStsLabel = new StautsLabel(this);
+	_pStsLabel = new StatusLabel(this);
     _pBtnStructure = new QPushButton(this);
     _pBtnAddGroup = new QPushButton(this);
     _pBtnLock = new QPushButton(this);
@@ -325,7 +287,6 @@ void StatusWgt::initUi() {
     layout->setAlignment(vlayout, Qt::AlignVCenter);
     setLayout(layout);
     _pBtnLock->setVisible(false);
-    _pBtnStructure->setVisible(false);
     connect(_pBtnAddGroup, &QPushButton::clicked, [this]() {
 
         if (g_pMainPanel) {
@@ -375,6 +336,7 @@ void StatusWgt::setName(const QString &name) {
 
 void StatusWgt::showResource(const std::string& resource){
 
+    _pLabelPlat->setVisible(true);
     QString res = QString::fromStdString(resource);
     QStringList lst = res.split("]");
     QString version, plat;

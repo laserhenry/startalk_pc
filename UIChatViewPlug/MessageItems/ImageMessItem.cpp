@@ -15,17 +15,17 @@
 
 extern ChatViewMainPanel *g_pMainPanel;
 
-ImageMessItem::ImageMessItem(const QTalk::Entity::ImMessageInfo &msgInfo,
+ImageMessItem::ImageMessItem(const StNetMessageResult &msgInfo,
                              const QString &link,
                              const QString &path,
-                             const QSize &size,
+                             const QSizeF &size,
                              QWidget *parent) :
         MessageItemBase(msgInfo, parent),
         _imageLab(nullptr),
         _movie(nullptr),
         _imageLink(link),
         _imagePath(path),
-        _size(size),
+        _size(size.toSize()),
         _isGIF(false){
     init();
     setImage();
@@ -92,7 +92,7 @@ void ImageMessItem::initLayout() {
     _contentMargin = QMargins(5, 5, 5, 5);
     _mainSpacing = 10;
     _contentSpacing = 0;
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         _headPixSize = QSize(0, 0);
         _nameLabHeight = 0;
         _leftMargin = QMargins(0, 0, 0, 0);
@@ -100,7 +100,7 @@ void ImageMessItem::initLayout() {
         _leftSpacing = 0;
         _rightSpacing = 0;
         initSendLayout();
-    } else //if (QTalk::Entity::MessageDirectionReceive == _msgDirection)
+    } else //if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction)
     {
         _headPixSize = QSize(28, 28);
         _nameLabHeight = 16;
@@ -110,7 +110,7 @@ void ImageMessItem::initLayout() {
         _rightSpacing = 4;
         initReceiveLayout();
     }
-    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.type) {
         _nameLabHeight = 0;
     }
     setContentsMargins(0, 5, 0, 5);
@@ -187,7 +187,7 @@ void ImageMessItem::initReceiveLayout() {
         _headLab = new HeadPhotoLab;
     }
     _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(QString::fromStdString(_msgInfo.HeadSrc), HEAD_RADIUS);
+    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
     _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -200,8 +200,8 @@ void ImageMessItem::initReceiveLayout() {
     rightLay->setContentsMargins(_rightMargin);
     rightLay->setSpacing(_rightSpacing);
     mainLay->addLayout(rightLay);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
         auto* nameLay = new QHBoxLayout;
         nameLay->setMargin(0);
         nameLay->setSpacing(5);
@@ -228,7 +228,7 @@ void ImageMessItem::initReceiveLayout() {
     contentLay->setSpacing(_contentSpacing);
     auto* horizontalSpacer = new QSpacerItem(40, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
     mainLay->addItem(horizontalSpacer);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type) {
         mainLay->setStretch(0, 0);
         mainLay->setStretch(1, 0);
         mainLay->setStretch(2, 1);
@@ -247,16 +247,16 @@ void ImageMessItem::initReceiveLayout() {
 void ImageMessItem::setImage() {
     if (_imagePath.isEmpty() || !QFile::exists(_imagePath)) {
         //warn_log("load head failed, use default picture-> imagePath:{0}, realMessage:{1}", _imagePath,
-          //       _msgInfo.Content);
+          //       _msgInfo.body);
 
         _imagePath = ":/chatview/image1/defaultImage.png";
-        QPixmap image = QTalk::qimage::instance().loadPixmap(_imagePath, true, true, 80, 80);
+        QPixmap image = QTalk::qimage::instance().loadImage(_imagePath, true, true, 80, 80);
         _imageLab->setPixmap(image);
         _imageLab->setFixedSize(image.size());
     } else {
         QString suffix = QTalk::qimage::instance().getRealImageSuffix(_imagePath);
         if ("GIF" == suffix) {
-            QPixmap image = QTalk::qimage::instance().loadPixmap(_imagePath, false);
+            QPixmap image = QTalk::qimage::instance().loadImage(_imagePath, false);
             if (image.isNull()) {
                 _imagePath = "";
                 setImage();
@@ -265,7 +265,7 @@ void ImageMessItem::setImage() {
             _isGIF = true;
             _imageLab->setFixedSize(_size);
         } else {
-            QPixmap pixmap = QTalk::qimage::instance().loadPixmap(_imagePath, false);
+            QPixmap pixmap = QTalk::qimage::instance().loadImage(_imagePath, false);
             if (pixmap.isNull()) {
                 _imagePath = "";
                 setImage();
@@ -296,9 +296,9 @@ void ImageMessItem::onMoveTimer() {
 
 void ImageMessItem::mousePressEvent(QMouseEvent *e) {
     if (e->button() == Qt::LeftButton && _contentFrm->geometry().contains(mapFromGlobal(QCursor::pos()))) {
-        const QString &userId = _strUserId;
-        const QString &messageId = QString::fromStdString(msgInfo().MsgId);
-        const QString &msgContent = QString::fromStdString(msgInfo().Content);
+        const QString &userId = _msgInfo.xmpp_id;
+        const QString &messageId = _msgInfo.msg_id;
+        const QString &msgContent = _msgInfo.body;
         emit g_pMainPanel->showChatPicture(messageId, msgContent, 0);
     }
     QFrame::mousePressEvent(e);

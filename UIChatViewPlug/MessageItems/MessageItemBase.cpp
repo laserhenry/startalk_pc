@@ -12,36 +12,21 @@
 #include "../../Platform/NavigationManager.h"
 #include "../../Platform/Platform.h"
 #include "../../CustomUi/QtMessageBox.h"
+#include "TextMessItem.h"
 
 extern ChatViewMainPanel* g_pMainPanel;
-MessageItemBase::MessageItemBase(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent) :
-    QFrame(parent),
-    _pParentWgt(parent),
-    _headLab(nullptr),
-    _nameLab(nullptr),
-    _readStateLabel(nullptr),
-    _contentFrm(nullptr),
-    _btnShareCheck(nullptr),
-    _isPressEvent(false),
-    _alreadyRelease(false),
-    _medalWgt(nullptr),
-    _readSts(0)
+MessageItemBase::MessageItemBase(const StNetMessageResult &msgInfo, QWidget *parent) :
+    QFrame(parent), _readSts(0)
 {
-	QTalk::Entity::JID userId(msgInfo.From.data());
-    QTalk::Entity::JID realJid(msgInfo.RealJid.data());
 	_msgInfo = msgInfo;
-	_msgDirection = msgInfo.Direction;
-	_strUserId = QString::fromStdString(userId.basename());
-    _strRealJid = QString::fromStdString(realJid.basename());
-	_type = msgInfo.Type;
     _btnShareCheck = new QToolButton(this);
     _btnShareCheck->setCheckable(true);
     _btnShareCheck->setFixedSize(20, 20);
     _btnShareCheck->setObjectName("ShareCheck");
     connect(_btnShareCheck, &QToolButton::clicked, this, &MessageItemBase::sgSelectItem);
 
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
         if (!_nameLab) {
             _nameLab = new QLabel(this);
         }
@@ -49,36 +34,34 @@ MessageItemBase::MessageItemBase(const QTalk::Entity::ImMessageInfo &msgInfo, QW
         _nameLab->setFixedHeight(16);
         _nameLab->setTextFormat(Qt::PlainText);
         _nameLab->installEventFilter(this);
-        QString nameText = QString::fromStdString(_msgInfo.UserName);
-        _nameLab->setText(nameText);
-//        std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo
-//                = dbPlatForm::instance().getUserInfo(_msgInfo.From);
-//        changeUserMood(userInfo ? userInfo->Mood : "");
-        //
+        _nameLab->setText(_msgInfo.user_name);
+        // 勋章状态
         updateUserMedal();
     }
 
-	QFileInfo fInfo(QString::fromStdString(_msgInfo.HeadSrc));
-	if (_msgInfo.HeadSrc.empty() || !fInfo.exists() || fInfo.isDir())
+	QFileInfo fInfo(_msgInfo.user_head);
+	if (_msgInfo.user_head.isEmpty() || !fInfo.exists() || fInfo.isDir())
 	{
 #ifdef _STARTALK
-        _msgInfo.HeadSrc = ":/QTalk/image1/StarTalk_defaultHead.png";
+        _msgInfo.user_head = ":/QTalk/image1/StarTalk_defaultHead.png";
 #else
-        _msgInfo.HeadSrc = ":/QTalk/image1/headPortrait.png";
+        _msgInfo.user_head = ":/QTalk/image1/headPortrait.png";
 #endif
 	}
 
-	if (NavigationManager::instance().isShowmsgstat() && (_msgInfo.ChatType == QTalk::Enum::TwoPersonChat || _msgInfo.ChatType == QTalk::Enum::Consult || _msgInfo.ChatType == QTalk::Enum::ConsultServer))
+	if (NavigationManager::instance().isShowmsgstat() &&
+	    _msgInfo.direction == QTalk::Entity::MessageDirectionSent &&
+        (_msgInfo.type == QTalk::Enum::TwoPersonChat ||
+        _msgInfo.type == QTalk::Enum::Consult ||
+        _msgInfo.type == QTalk::Enum::ConsultServer))
 	{
 		_readSts = EM_SENDDING;
-		_readStateLabel = new QLabel;
+		_readStateLabel = new QLabel(this);
 		_readStateLabel->setContentsMargins(0, 0, 0, 0);
 		_readStateLabel->setObjectName("ReadStateLabel");
-//		if(0 == _msgInfo.ReadedTag && 0 == _msgInfo.State)
-//		    _readStateLabel->setText("发送中...");
 	}
 
-	if(QTalk::Entity::MessageDirectionSent == _msgInfo.Direction)
+	if(QTalk::Entity::MessageDirectionSent == _msgInfo.direction)
     {
         _resending = new HeadPhotoLab;
         _resending->setParent(this);
@@ -86,14 +69,14 @@ MessageItemBase::MessageItemBase(const QTalk::Entity::ImMessageInfo &msgInfo, QW
         _resending->installEventFilter(this);
 
         _sending = new HeadPhotoLab(":/QTalk/image1/loading.gif", 10, false, false, true, this);
-        bool unSend = (0 == _msgInfo.ReadedTag && 0 == _msgInfo.State);
+        bool unSend = (0 == _msgInfo.read_flag && 0 == _msgInfo.state);
+        bool isConnect = g_pMainPanel->getConnectStatus();
         if(unSend)
         {
-            unSend = _msgInfo.Content.empty();
-            _sending->setVisible(unSend);
-            _resending->setVisible(!unSend);
-            if(unSend)
+            _sending->setVisible(isConnect);
+            if(isConnect)
                 _sending->startMovie();
+            _resending->setVisible(!isConnect);
         }
         else
         {
@@ -103,19 +86,12 @@ MessageItemBase::MessageItemBase(const QTalk::Entity::ImMessageInfo &msgInfo, QW
     }
 
 	qRegisterMetaType<std::string>("std::string");
-//	connect(this, &MessageItemBase::sgChangeUserMood, this, &MessageItemBase::changeUserMood, Qt::QueuedConnection);
 	connect(this, &MessageItemBase::sgDisconnected, this, &MessageItemBase::onDisconnected, Qt::QueuedConnection);
 	connect(this, &MessageItemBase::sgUpdateUserMedal, this, &MessageItemBase::updateUserMedal, Qt::QueuedConnection);
+
 }
 
-MessageItemBase::~MessageItemBase()
-{
-	//if (_readStateLabel)
-	//{
-	//	delete _readStateLabel;
-	//	_readStateLabel = nullptr;
-	//}
-}
+MessageItemBase::~MessageItemBase()= default;
 
 bool MessageItemBase::eventFilter(QObject *o, QEvent *e)
 {
@@ -123,12 +99,12 @@ bool MessageItemBase::eventFilter(QObject *o, QEvent *e)
     {
         if(e->type() == QEvent::MouseButtonDblClick)
         {
-            if(msgInfo().ChatType == QTalk::Enum::GroupChat)
+            if(_msgInfo.type == QTalk::Enum::GroupChat)
             {
                 _isPressEvent = false;
 
                 StSessionInfo sessionInfo;
-                sessionInfo.userId = QString::fromStdString(_msgInfo.From);
+                sessionInfo.userId = _msgInfo.from;
                 sessionInfo.chatType = QTalk::Enum::TwoPersonChat;
                 emit g_pMainPanel->sgOpenNewSession(sessionInfo);
             }
@@ -141,20 +117,16 @@ bool MessageItemBase::eventFilter(QObject *o, QEvent *e)
             QTimer::singleShot(350, [this](){
                 if(_isPressEvent){
 
-                    if(!_alreadyRelease && _msgInfo.ChatType == QTalk::Enum::GroupChat)
+                    if(!_alreadyRelease && _msgInfo.type == QTalk::Enum::GroupChat)
                     {
-                        auto* mainWgt = qobject_cast<ChatMainWgt*>(_pParentWgt);
-                        if(nullptr != mainWgt)
-                        {
-                            mainWgt->_pViewItem->_pInputWgt->insertAt(_msgInfo.From);
-                        }
+                        g_pMainPanel->insertAt(_msgInfo.xmpp_id, _msgInfo.from);
                     }
                     else
                     {
-                        if(msgInfo().ChatType == QTalk::Enum::ChatType::ConsultServer){
-                            g_pMainPanel->showUserCard(_strRealJid);
+                        if(_msgInfo.type == QTalk::Enum::ChatType::ConsultServer){
+                            g_pMainPanel->showUserCard(_msgInfo.real_id);
                         } else{
-                            g_pMainPanel->showUserCard(_strUserId);
+                            g_pMainPanel->showUserCard(_msgInfo.from);
                         }
                     }
                 }
@@ -212,6 +184,8 @@ void MessageItemBase::setReadState(const QInt32& state)
     _readSts = state;
     if(state > 0)
     {
+        _msgInfo.read_flag = state;
+        _msgInfo.state = 1;
         if(_sending)
         {
             _sending->deleteLater();
@@ -223,14 +197,6 @@ void MessageItemBase::setReadState(const QInt32& state)
             _resending = nullptr;
         }
     }
-
-
-//    if(state == EM_BLACK_RET)
-//    {
-//        _readStateLabel->setText("发送失败");
-//        _readStateLabel->setStyleSheet("color:rgba(255, 48, 48, 1)");
-//        return;
-//    }
 
     if (_readStateLabel == nullptr) {
         return;
@@ -263,28 +229,6 @@ void MessageItemBase::checkShareCheckBtn(bool check)
     _btnShareCheck->setChecked(check);
 }
 
-/**
- *
- */
-void MessageItemBase::changeUserMood(const std::string& mood)
-{
-    if(QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-       && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction
-       && _nameLab)
-    {
-        QString nameText = QString::fromStdString(_msgInfo.UserName);
-        QString strMood = QString::fromStdString(mood).trimmed().replace(QRegExp("\\s{1,}"), " ");
-        if(!strMood.isEmpty() && mood != "这个人很懒，什么都没留下")
-        {
-            nameText.append(QString(tr("「 %1 」")).arg(strMood));
-        }
-        _nameLab->setToolTip(mood.data());
-        nameText = nameText.replace("\n", " ");
-        nameText = QFontMetricsF(_nameLab->font()).elidedText(nameText, Qt::ElideRight, 350);
-        _nameLab->setText(nameText);
-    }
-}
-
 void MessageItemBase::onDisconnected() {
 
     if(!Platform::instance().isMainThread())
@@ -306,13 +250,32 @@ void MessageItemBase::onDisconnected() {
 }
 
 void MessageItemBase::updateUserMedal() {
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
 
         if(nullptr == _medalWgt)
             _medalWgt = new MedalWgt(18, this);
         std::set<QTalk::StUserMedal> user_medal;
-        g_pMainPanel->getUserMedal(_msgInfo.From, user_medal);
+        g_pMainPanel->getUserMedal(_msgInfo.from.toStdString(), user_medal);
         _medalWgt->addMedals(user_medal, true);
+    }
+}
+
+void MessageItemBase::updateMessageInfo(const StNetMessageResult &messageInfo) {
+    this->_msgInfo = messageInfo;
+    switch (messageInfo.msg_type)
+    {
+
+        case QTalk::Entity::MessageTypeFile:
+            break;
+        case QTalk::Entity::MessageTypeText:
+        case QTalk::Entity::MessageTypeGroupAt:
+        default:
+        {
+            auto* pItem = qobject_cast<TextMessItem*>(this);
+            if(pItem)
+                pItem->setStTextMessages(messageInfo.text_messages);
+            break;
+        }
     }
 }

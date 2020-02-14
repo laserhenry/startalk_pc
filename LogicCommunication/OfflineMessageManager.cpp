@@ -448,6 +448,7 @@ void OfflineMessageManager::getOfflineChatMessageJson(long long chatTimestamp, i
                         int platform = safeGetJsonIntValue(body, "maType");
                         int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
                         std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
+                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
                         //之前的老逻辑 去掉
 //                        if (type == "note") {
 //                            msgType = -11;
@@ -511,6 +512,7 @@ void OfflineMessageManager::getOfflineChatMessageJson(long long chatTimestamp, i
                         msgInfo.To = toJid;
                         msgInfo.Content = msg;
                         msgInfo.ExtendedInfo = extendInfo;
+                        msgInfo.BackupInfo = backupinfo;
                         msgInfo.Platform = platform;
                         msgInfo.Type = msgType;
                         msgInfo.State = 1; // 从服务器拉回来的消息 -> 消息已送达服务器
@@ -672,7 +674,7 @@ void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, 
         std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
         cJSON_Delete(jsonObject);
 
-        auto callback = [this, chatTimestamp, count, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
+        auto callback = [this, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
                 (int code, string responseData) {
             info_log("{0}  {1}", code, responseData);
             std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;
@@ -712,6 +714,7 @@ void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, 
 //                    int msgType = safeGetJsonIntValue(body,"msgType");
                             int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
                             std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
+                            std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
                             std::string realFrom = safeGetJsonStringValue(message, "sendjid");
                             int direction = 0;
                             int readState = 0;
@@ -738,6 +741,7 @@ void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, 
                             msgInfo.State = 1;
                             msgInfo.ReadedTag = readState;
                             msgInfo.LastUpdateTime = msec_times;
+                            msgInfo.BackupInfo = backupinfo;
                             outMsgList.push_back(msgInfo);
 
                             std::string sessionKey = xmppId + "-" + realJid;
@@ -868,6 +872,7 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
 //                    int msgType = safeGetJsonIntValue(body,"msgType");
                         int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
                         std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
+                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
                         std::string realFrom = safeGetJsonStringValue(message, "sendjid");
 
                         QTalk::Entity::ImMessageInfo msgInfo;
@@ -880,6 +885,7 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
                         msgInfo.To = "";
                         msgInfo.Content = msg;
                         msgInfo.ExtendedInfo = extendInfo;
+                        msgInfo.BackupInfo = backupinfo;
                         msgInfo.Platform = platform;
                         msgInfo.Type = msgType;
                         msgInfo.State = 1;
@@ -969,7 +975,7 @@ VectorMessage OfflineMessageManager::getUserMessage(const QInt64 &time, const st
 
     //
     std::vector<QTalk::Entity::ImMessageInfo> msgList;
-    auto callBack = [this, time, userId, &msgList](int code, const std::string &responseData) {
+    auto callBack = [this, userId, &msgList](int code, const std::string &responseData) {
         if (code == 200) {
             cJSON *resData = cJSON_Parse(responseData.c_str());
 
@@ -1019,6 +1025,7 @@ VectorMessage OfflineMessageManager::getUserMessage(const QInt64 &time, const st
                         int platform = safeGetJsonIntValue(body, "maType");
                         int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
                         std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
+                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
                         if (type == "note") {
                             msgType = -11;
                         } else if (type == "consult") {
@@ -1080,6 +1087,7 @@ VectorMessage OfflineMessageManager::getUserMessage(const QInt64 &time, const st
                         msgInfo.To = toJid;
                         msgInfo.Content = msg;
                         msgInfo.ExtendedInfo = extendInfo;
+                        msgInfo.BackupInfo = backupinfo;
                         msgInfo.Platform = platform;
                         msgInfo.Type = msgType;
                         msgInfo.State = 1; // 从服务器拉回来的消息 -> 消息已送达服务器
@@ -1195,6 +1203,7 @@ VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time,
                         int platform = safeGetJsonIntValue(body, "maType");
                         int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
                         std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
+                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
                         int direction = 0;
                         if (fromJid == (selfJid + "@" + fromDomain)) {
                             xmppId = toJid;
@@ -1236,6 +1245,7 @@ VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time,
                         msgInfo.To = toJid;
                         msgInfo.Content = msg;
                         msgInfo.ExtendedInfo = extendInfo;
+                        msgInfo.BackupInfo = backupinfo;
                         msgInfo.Platform = platform;
                         msgInfo.Type = msgType;
                         msgInfo.State = 1; // 从服务器拉回来的消息 -> 消息已送达服务器
@@ -1335,6 +1345,7 @@ VectorMessage OfflineMessageManager::getGroupMessage(const QInt64 &time,
                         //                    int msgType = safeGetJsonIntValue(body,"msgType");
                         int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
                         std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
+                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
                         std::string realFrom = safeGetJsonStringValue(message, "sendjid");
                         int direction = 0;
                         int readState = 0;
@@ -1356,6 +1367,7 @@ VectorMessage OfflineMessageManager::getGroupMessage(const QInt64 &time,
                         msgInfo.To = "";
                         msgInfo.Content = msg;
                         msgInfo.ExtendedInfo = extendInfo;
+                        msgInfo.BackupInfo = backupinfo;
                         msgInfo.Platform = platform;
                         msgInfo.Type = msgType;
                         msgInfo.State = 1;
@@ -1455,6 +1467,7 @@ VectorMessage OfflineMessageManager::getSystemMessage(const QInt64 &time, const 
                         int platform = safeGetJsonIntValue(body, "maType");
                         int msgType = atoi(safeGetJsonStringValue(body, "msgType").c_str());
                         std::string extendInfo = safeGetJsonStringValue(body, "extendInfo");
+                        std::string backupinfo = safeGetJsonStringValue(body, "backupinfo");
                         std::string realFrom = safeGetJsonStringValue(message, "sendjid");
 
                         QTalk::Entity::ImMessageInfo msgInfo;
@@ -1467,6 +1480,7 @@ VectorMessage OfflineMessageManager::getSystemMessage(const QInt64 &time, const 
                         msgInfo.To = "";
                         msgInfo.Content = msg;
                         msgInfo.ExtendedInfo = extendInfo;
+                        msgInfo.BackupInfo = backupinfo;
                         msgInfo.Platform = platform;
                         msgInfo.Type = msgType;
                         msgInfo.State = 1;

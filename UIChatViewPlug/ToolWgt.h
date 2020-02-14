@@ -18,6 +18,9 @@ class EmoticonMainWgt;
 class ToolWgt : public QFrame
 {
 	Q_OBJECT
+
+
+
 public:
 	ToolWgt(InputWgt* pInputWgt, ChatViewItem* chatItem);
 	~ToolWgt() override;
@@ -35,6 +38,7 @@ private:
 
 public:
 	void sendWechat();
+    void switchSession(const QUInt8 &i);
 
 Q_SIGNALS:
     void showSearchWnd();
@@ -65,7 +69,9 @@ private:
 
 	QMenu* _pMultiMenu{};
 
-
+	QAction* pVideoAct{};
+    QAction* pAudioAct{};
+    QAction* pActionVideo{};
 };
 
 #endif//_TOOLWGT_H_

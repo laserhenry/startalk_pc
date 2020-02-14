@@ -140,13 +140,13 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo  =
                 dbPlatForm::instance().getUserInfo(realJid.toStdString());
         if(userInfo != nullptr){
-            strName = QString::fromStdString(QTalk::getUserName(userInfo) + "-") + strName;
+            strName = QString("咨询: %1").arg(QTalk::getUserName(userInfo).data());
         } else{
             std::string remark = dbPlatForm::instance().getMaskName(realJid.toStdString());
             if(remark.empty()){
-                strName = realJid + "-" + strName;
+                strName = QString("咨询: %1").arg(realJid.section("@", 0, 0));
             } else{
-                strName = QString::fromStdString(remark) + "-" + strName;
+                strName = QString("咨询: %1").arg(remark.data());
             }
         }
     }
@@ -183,7 +183,8 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     if(unNotice)
     {
         painter->setRenderHints(QPainter::Antialiasing,true);
-        QPixmap pixmap = QTalk::qimage::instance().loadPixmap(":/UINavigationPlug/image1/noNotice.png", true, true, HEAD_WIDTH * dpi);
+        QPixmap pixmap = QTalk::qimage::instance().loadImage(":/UINavigationPlug/image1/noNotice.png", true, true,
+                                                             HEAD_WIDTH * dpi);
         QRect unNoticeRect(rect.right() - 35, rect.y() + rect.height()/2 + 6, 16, 16);
         painter->drawPixmap(unNoticeRect, pixmap);
         painter->restore();
@@ -245,7 +246,7 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     painter->save();
     // 头像
     painter->setRenderHints(QPainter::Antialiasing,true);
-    QPixmap pixmap = QTalk::qimage::instance().loadPixmap(headPath, true, true, HEAD_WIDTH * dpi);
+    QPixmap pixmap = QTalk::qimage::instance().loadImage(headPath, true, true, HEAD_WIDTH * dpi);
     if(pixmap.isNull())
     {
         if(chattype == QTalk::Enum::GroupChat)
@@ -264,7 +265,7 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
             headPath = ":/QTalk/image1/headPortrait.png";
 #endif
         }
-        pixmap = QTalk::qimage::instance().loadPixmap(headPath, true, true, HEAD_WIDTH * dpi);
+        pixmap = QTalk::qimage::instance().loadImage(headPath, true, true, HEAD_WIDTH * dpi);
     }
     if(!isOnline)
     {

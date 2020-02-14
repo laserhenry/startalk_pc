@@ -65,7 +65,7 @@ void UserHeadWgt::paintEvent(QPaintEvent *e) {
         QPainterPath path;
         path.addEllipse(contentRect);
         painter.setClipPath(path);
-        auto image = QTalk::qimage::instance().loadPixmap(_headSrc, false);
+        auto image = QTalk::qimage::instance().loadImage(_headSrc, false);
         painter.drawPixmap(contentRect, image);
     }
 

@@ -34,6 +34,19 @@ namespace QTalk {
                         _realId = usrId;
                     }
                 }
+                else if(usrId.empty())
+                {
+                    auto index = realId.find("<>");
+                    if(index != std::string::npos)
+                    {
+                        _usrId = realId.substr(0, index);
+                        _realId = realId.substr(index + 2);
+                    }
+                    else
+                    {
+                        _usrId = realId;
+                    }
+                }
                 else
                     _realId = realId;
             }
@@ -95,7 +108,7 @@ public:
             }
 
 #if defined(QT_VERSION)
-            QString toQString()
+            QString toQString() const
             {
                 QString ret = QString("%1<>%2").arg(_usrId.data()).arg(_realId.data());
                 return ret;

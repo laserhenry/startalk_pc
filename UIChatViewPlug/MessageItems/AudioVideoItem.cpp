@@ -19,7 +19,7 @@
 #include "../../UICom/qimage/qimage.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
-AudioVideoItem::AudioVideoItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent) :
+AudioVideoItem::AudioVideoItem(const StNetMessageResult &msgInfo, QWidget *parent) :
         MessageItemBase(msgInfo, parent),
         _contentLab(Q_NULLPTR),
         _pIconLabel(nullptr){
@@ -35,7 +35,7 @@ void AudioVideoItem::initLayout() {
     _contentSize = QSize(370, 160);
     _mainMargin = QMargins(15, 0, 20, 0);
     _mainSpacing = 10;
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         _headPixSize = QSize(0, 0);
         _nameLabHeight = 0;
         _leftMargin = QMargins(0, 0, 0, 0);
@@ -43,7 +43,7 @@ void AudioVideoItem::initLayout() {
         _leftSpacing = 0;
         _rightSpacing = 0;
         initSendLayout();
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         _headPixSize = QSize(28, 28);
         _nameLabHeight = 16;
         _leftMargin = QMargins(0, 10, 0, 0);
@@ -52,7 +52,7 @@ void AudioVideoItem::initLayout() {
         _rightSpacing = 4;
         initReceiveLayout();
     }
-    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.type) {
         _nameLabHeight = 0;
     }
     setContentsMargins(0, 5, 0, 5);
@@ -137,7 +137,7 @@ void AudioVideoItem::initReceiveLayout() {
         _headLab = new HeadPhotoLab;
     }
     _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(QString::fromStdString(_msgInfo.HeadSrc), HEAD_RADIUS);
+    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
     _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -150,8 +150,8 @@ void AudioVideoItem::initReceiveLayout() {
     rightLay->setContentsMargins(_rightMargin);
     rightLay->setSpacing(_rightSpacing);
     mainLay->addLayout(rightLay);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
         auto* nameLay = new QHBoxLayout;
         nameLay->setMargin(0);
         nameLay->setSpacing(5);
@@ -170,7 +170,7 @@ void AudioVideoItem::initReceiveLayout() {
 
     auto *horizontalSpacer = new QSpacerItem(40, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
     mainLay->addItem(horizontalSpacer);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type) {
         mainLay->setStretch(0, 0);
         mainLay->setStretch(1, 0);
         mainLay->setStretch(2, 1);
@@ -188,10 +188,10 @@ void AudioVideoItem::initReceiveLayout() {
 void AudioVideoItem::initContentLayout() {
 
     QString content = tr("视频通话");
-    bool isCalled = QTalk::Entity::MessageDirectionSent == _msgDirection;
-    if(!msgInfo().ExtendedInfo.empty())
+    bool isCalled = QTalk::Entity::MessageDirectionSent == _msgInfo.direction;
+    if(!_msgInfo.extend_info.isEmpty())
     {
-        QJsonDocument document = QJsonDocument::fromJson(msgInfo().ExtendedInfo.data());
+        QJsonDocument document = QJsonDocument::fromJson(_msgInfo.extend_info.toUtf8());
         if(document.isNull())
         {
 
@@ -215,7 +215,7 @@ void AudioVideoItem::initContentLayout() {
         }
     }
 
-    if(QTalk::Entity::WebRTC_MsgType_Video == msgInfo().Type)
+    if(QTalk::Entity::WebRTC_MsgType_Video == _msgInfo.msg_type)
         content = tr("发送端版本过低，视频无法接通");
 
     _contentFrm->installEventFilter(this);
@@ -227,7 +227,7 @@ void AudioVideoItem::initContentLayout() {
     lay->addWidget(_pIconLabel, 0);
     lay->addWidget(_contentLab, 1);
 
-    QPixmap icon = QTalk::qimage::instance().loadPixmap(":/chatview/image1/messageItem/AudioVideo.png", true);
+    QPixmap icon = QTalk::qimage::instance().loadImage(":/chatview/image1/messageItem/AudioVideo.png", true);
     icon = icon.scaled(25, 25, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     _pIconLabel->setPixmap(icon);
     _contentLab->adjustSize();
@@ -263,36 +263,28 @@ void AudioVideoItem::mousePressEvent(QMouseEvent *event) {
 #endif
         if(g_pMainPanel)
         {
-            if(_msgInfo.ChatType == QTalk::Enum::TwoPersonChat)
+            if(_msgInfo.type == QTalk::Enum::TwoPersonChat)
             {
-                std::string peerId = _msgInfo.XmppId;
+                std::string peerId = _msgInfo.xmpp_id.toStdString();
                 if(peerId.empty())
-                    peerId = _msgInfo.RealJid;
+                    peerId = _msgInfo.real_id.toStdString();
                 if(peerId.empty())
                     return;
-                QTalk::Entity::JID jid(peerId.data());
+                QTalk::Entity::JID jid(peerId);
                 QTalk::Entity::UID uid(jid.basename());
-//                g_pMainPanel->sendStartAudioVideoMessage(uid, QTalk::Entity::WebRTC_MsgType_VideoCall == msgInfo().Type);
+//                g_pMainPanel->sendStartAudioVideoMessage(uid, QTalk::Entity::WebRTC_MsgType_VideoCall == _msgInfo.Type);
                 std::string selfId = Platform::instance().getSelfUserId();
 //                AudioVideo::start2Talk(selfId, jid.username());
                 g_pMainPanel->start2Talk_old(jid.basename(),
-                        QTalk::Entity::WebRTC_MsgType_VideoCall == msgInfo().Type, true);
+                        QTalk::Entity::WebRTC_MsgType_VideoCall == _msgInfo.msg_type, true);
             }
-            else if(_msgInfo.ChatType == QTalk::Enum::GroupChat)
+            else if(_msgInfo.type == QTalk::Enum::GroupChat)
             {
-                std::string groupId;
-                if(!_msgInfo.RealJid.empty())
-                    groupId = QTalk::Entity::JID(_msgInfo.RealJid.data()).basename();
-                else
-                    groupId = QTalk::Entity::JID(_msgInfo.SendJid.data()).basename();
+                std::string groupId = QTalk::Entity::JID(_msgInfo.xmpp_id.toStdString()).basename();
                 if(groupId.empty())
                     return;
                 auto info = dbPlatForm::instance().getGroupInfo(groupId);
                 g_pMainPanel->startGroupTalk(groupId.data(), QString::fromStdString(QTalk::getGroupName(info)));
-//                if(info)
-//                    AudioVideo::startGroupTalk(groupId.data(), QString::fromStdString(info->Name));
-//                else
-//                    AudioVideo::startGroupTalk(groupId.data(), /**groupId.section("@", 0, 0)**/ "新建群");
             }
         }
     }

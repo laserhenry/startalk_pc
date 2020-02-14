@@ -170,6 +170,7 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
     QStandardItem *item = _sessionMap.value(uid);
     bool notCurItem = true;
     bool unNotice = _mapNotice.find(userId.toStdString()) != _mapNotice.end();
+    QString sessionName;
     if (nullptr != item) {
         ////debug_log("会话已存在:{0}", mess.messageId);
         {
@@ -198,6 +199,8 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
                 }
             }
         }
+        //
+        sessionName = item->data(ITEM_DATATYPE_USERNAME).toString();
 
     } else //新会话需要创建
     {
@@ -211,29 +214,31 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
         item->setData(unNotice, ITEM_DATATYPE_UNNOTICE);
 
         //
-        QTalk::Entity::JID jid(userId.toStdString().data());
+        QTalk::Entity::JID jid(userId.toStdString());
         std::string id = jid.basename();
         if (SYSTEM_XMPPID == jid.username() || RBT_SYSTEM == jid.username()) {
             QString syshead = ":/UINavigationPlug/image1/system.png";
-            item->setData(tr(SYSTEM_NAME), ITEM_DATATYPE_USERNAME);
+            sessionName = tr(SYSTEM_NAME);
+//            item->setData(tr(SYSTEM_NAME), ITEM_DATATYPE_USERNAME);
             item->setData(syshead, ITEM_DATATYPE_HEADPATH);
             item->setData(true, ITEM_DATATYPE_ISONLINE);
         } else if (RBT_NOTICE == jid.username()) {
             QString noticehead = ":/UINavigationPlug/image1/atom_ui_rbt_notice.png";
-            item->setData(tr(RBT_NOTICE_NAME), ITEM_DATATYPE_USERNAME);
+//            item->setData(tr(RBT_NOTICE_NAME), ITEM_DATATYPE_USERNAME);
+            sessionName = tr(RBT_NOTICE_NAME);
             item->setData(noticehead, ITEM_DATATYPE_HEADPATH);
             item->setData(true, ITEM_DATATYPE_ISONLINE);
         } else if(RBT_QIANGDAN == jid.username()){
             QString qdhead = ":/UINavigationPlug/image1/atom_ui_robot_qiangdan.png";
-            item->setData(tr(RBT_QIANGDAN_NAME), ITEM_DATATYPE_USERNAME);
+//            item->setData(tr(RBT_QIANGDAN_NAME), ITEM_DATATYPE_USERNAME);
+            sessionName = tr(RBT_QIANGDAN_NAME);
             item->setData(qdhead, ITEM_DATATYPE_HEADPATH);
             item->setData(true, ITEM_DATATYPE_ISONLINE);
         } else {
             if (name.isEmpty()) {
                 name = getUserName(id, mess.chatType == QTalk::Enum::GroupChat);
             }
-            item->setData((name.isEmpty() ? QString::fromStdString(id) : name), ITEM_DATATYPE_USERNAME);
-            Q_ASSERT(!headPath.startsWith("http"));
+            sessionName = (name.isEmpty() ? QString::fromStdString(id) : name);
             item->setData(headPath, ITEM_DATATYPE_HEADPATH);
             item->setToolTip(name);
 
@@ -245,8 +250,8 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
                 item->setData(isOnline, ITEM_DATATYPE_ISONLINE);
             }
         }
+        item->setData(sessionName, ITEM_DATATYPE_USERNAME);
         // 显示新会话
-
         _sessionMap.insert(uid, item);
         _pSrcModel->appendRow(item);
         //debug_log("显示新回话: {0}", mess.messageId);
@@ -256,8 +261,15 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
 //    item->setData(GenerateTimeText(mess.messageRecvTime), ITEM_DATATYPE_LASTSTRTIME);
 
     if (!isSend && notCurItem) {
-        unsigned int count = item->data(ITEM_DATATYPE_UNREADCOUNT).toUInt();
+        int count = item->data(ITEM_DATATYPE_UNREADCOUNT).toInt();
         item->setData(++count, ITEM_DATATYPE_UNREADCOUNT);
+
+        if(count > 0 && !unNotice)
+        {
+            emit _mainPanel->sgShowUnreadMessage(mess.chatType,
+                                                 uid, sessionName, mess.messageRecvTime, count);
+        }
+
         if (!unNotice) {
             _totalUnReadCount++;
             emit _mainPanel->updateTotalUnreadCount(_totalUnReadCount);
@@ -423,31 +435,42 @@ void SessionFrm::onloadSessionData() {
             item->setData(QString::fromStdString(realJid), ITEM_DATATYPE_REALJID);
             item->setData(QString::fromStdString(sessionInfo->LastMessageId), ITEM_DATATYPE_LAST_MESSAGE_ID);
 
+            QString sessionName;
             if (SYSTEM_XMPPID == QTalk::Entity::JID(sessionInfo->XmppId.c_str()).username() ||
                 RBT_SYSTEM == QTalk::Entity::JID(sessionInfo->XmppId.c_str()).username()) {
                 QString syshead = ":/UINavigationPlug/image1/system.png";
-                item->setData(tr(SYSTEM_NAME), ITEM_DATATYPE_USERNAME);
+                sessionName = tr(SYSTEM_NAME);
                 item->setData(syshead, ITEM_DATATYPE_HEADPATH);
                 item->setData(true, ITEM_DATATYPE_ISONLINE);
             } else if (RBT_NOTICE == QTalk::Entity::JID(sessionInfo->XmppId.c_str()).username()) {
                 QString noticehead = ":/UINavigationPlug/image1/atom_ui_rbt_notice.png";
-                item->setData(tr(RBT_NOTICE_NAME), ITEM_DATATYPE_USERNAME);
+                sessionName = tr(RBT_NOTICE_NAME);
                 item->setData(noticehead, ITEM_DATATYPE_HEADPATH);
                 item->setData(true, ITEM_DATATYPE_ISONLINE);
             } else if(RBT_QIANGDAN == QTalk::Entity::JID(sessionInfo->XmppId.c_str()).username()){
                 QString qhead = ":/UINavigationPlug/image1/atom_ui_robot_qiangdan.png";
-                item->setData(tr(RBT_QIANGDAN_NAME), ITEM_DATATYPE_USERNAME);
+                sessionName = tr(RBT_QIANGDAN_NAME);
                 item->setData(qhead, ITEM_DATATYPE_HEADPATH);
                 item->setData(true, ITEM_DATATYPE_ISONLINE);
             } else {
                 if (name.isEmpty())
                     name = getUserName(xmppId, sessionInfo->ChatType == QTalk::Enum::GroupChat);
-                item->setToolTip(name);
-                item->setData(name.isEmpty() ? QString::fromStdString(xmppId) : name, ITEM_DATATYPE_USERNAME);
+                sessionName = name.isEmpty() ? QString::fromStdString(xmppId) : name;
+
                 Q_ASSERT(!headPath.startsWith("http"));
                 item->setData(headPath, ITEM_DATATYPE_HEADPATH);
                 item->setData((sessionInfo->ChatType == QTalk::Enum::GroupChat), ITEM_DATATYPE_ISONLINE);
             }
+
+            item->setToolTip(sessionName);
+            item->setData(sessionName, ITEM_DATATYPE_USERNAME);
+
+            if(sessionInfo->UnreadCount > 0 && !unNotice)
+            {
+                emit _mainPanel->sgShowUnreadMessage(sessionInfo->ChatType,
+                                                     uid, sessionName, sessionInfo->LastUpdateTime, sessionInfo->UnreadCount);
+            }
+
             item->setData(GenerateContent(QString::fromStdString(sessionInfo->Content), sessionInfo->ChatType,
                                           sessionInfo->MessType, userName), ITEM_DATATYPE_MESSAGECONTENT);
             //is top
@@ -484,10 +507,15 @@ void SessionFrm::onItemSelectChanged(const QModelIndex &index) {
     if (!index.isValid()) {
         return;
     }
+
+    auto userId = index.data(ITEM_DATATYPE_USERID).toString();
+    auto relJid = index.data(ITEM_DATATYPE_REALJID).toString();
+    UID uid (userId, relJid);
+    //
     StSessionInfo sessionInfo;
     sessionInfo.chatType = static_cast<QUInt8>(index.data(ITEM_DATATYPE_CHATTYPE).toInt());
-    sessionInfo.userId = index.data(ITEM_DATATYPE_USERID).toString();
-    sessionInfo.realJid = index.data(ITEM_DATATYPE_REALJID).toString();
+    sessionInfo.userId = userId;
+    sessionInfo.realJid = relJid;
     sessionInfo.userName = index.data(ITEM_DATATYPE_USERNAME).toString();
     sessionInfo.headPhoto = index.data(ITEM_DATATYPE_HEADPATH).toString();
 
@@ -495,7 +523,6 @@ void SessionFrm::onItemSelectChanged(const QModelIndex &index) {
 //        QMutexLocker locker(&_mutex);
         _curUserId = UID(sessionInfo.userId, sessionInfo.realJid);
     }
-    UID uid(sessionInfo.userId, sessionInfo.realJid);
     if (sessionInfo.userName.isEmpty()) {
         std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = dbPlatForm::instance().getGroupInfo(
                 sessionInfo.userId.toStdString(),
@@ -515,17 +542,11 @@ void SessionFrm::onItemSelectChanged(const QModelIndex &index) {
     if (!unNotice) {
         _totalUnReadCount -= count;
         emit _mainPanel->updateTotalUnreadCount(_totalUnReadCount);
+        emit _mainPanel->sgShowUnreadMessage(0, uid, "", 0, 0);
     }
     _sessionMap[uid]->setData(0, ITEM_DATATYPE_ATCOUNT);
 
-    //抢单直接打开webview
-    if(sessionInfo.userId.startsWith(RBT_QIANGDAN)){
-        _pMultifunctionFrm->openQiangDan();
-    } else{
-        emit sgSessionInfo(sessionInfo);
-    }
-
-    auto func = [this, sessionInfo, index, count]() {
+    QtConcurrent::run([this, sessionInfo, index, count]() {
 #ifdef _MACOS
         pthread_setname_np("SessionFrm::onItemSelectChanged");
 #endif
@@ -545,10 +566,19 @@ void SessionFrm::onItemSelectChanged(const QModelIndex &index) {
                                                    sessionInfo.chatType);
             }
         }
-    };
+    });
 
-    std::thread t(func);
-    t.detach();
+    //
+    if(sessionInfo.userId.startsWith(RBT_QIANGDAN)){
+//        static UID static_uid;
+//        if(uid == static_uid)
+//            return;
+//        else
+//            static_uid = uid;
+        _pMultifunctionFrm->openQiangDan();
+    } else{
+        emit sgSessionInfo(sessionInfo);
+    }
 }
 
 /**
@@ -990,7 +1020,7 @@ QString SessionFrm::GenerateContent(const QString &content, const QUInt8 &chatTy
                 } else if ("image" == type) {
                     tmpContent.replace(pos, item.size(), tr("[图片]"));
                 } else if ("emoticon" == type) {
-                    return ret += tr("[表情]");
+                    tmpContent.replace(pos, item.size(), tr("[表情]"));
                 } else {
                     tmpContent.replace(pos, item.size(), tr("[未知]"));
                 }
@@ -1010,11 +1040,14 @@ void SessionFrm::onUpdateReadedCount(const QTalk::Entity::UID &uid, const int &c
 
     if (_sessionMap.contains(uid) && nullptr != _sessionMap[uid]) {
         int chatType = _sessionMap[uid]->data(ITEM_DATATYPE_CHATTYPE).toInt();
+        QString name = _sessionMap[uid]->data(ITEM_DATATYPE_USERNAME).toString();
+        QInt64 lasTime = _sessionMap[uid]->data(ITEM_DATATYPE_LASTTIME).toLongLong();
 
         int tmpC = _sessionMap[uid]->data(ITEM_DATATYPE_UNREADCOUNT).toUInt();
         int minc = qMin(tmpC, count);
 
         _sessionMap[uid]->setData(tmpC - minc, ITEM_DATATYPE_UNREADCOUNT);
+        emit _mainPanel->sgShowUnreadMessage(chatType, uid, name, lasTime, tmpC - minc);
 
         bool unNotice = _mapNotice.find(uid.usrId()) != _mapNotice.end();
         if (!unNotice) {
@@ -1132,9 +1165,9 @@ void SessionFrm::onDestroyGroup(const QString &groupId) {
         emit removeSession(uid);
         _pSrcModel->removeRow((*itFind)->row());
         _sessionMap.remove(uid);
-        QModelIndex index = _pModel->index(0, 0);
-        _pSessionView->setCurrentIndex(index);
-        onItemSelectChanged(_pModel->mapToSource(index));
+//        QModelIndex index = _pModel->index(0, 0);
+//        _pSessionView->setCurrentIndex(index);
+//        onItemSelectChanged(_pModel->mapToSource(index));
     }
 }
 
@@ -1234,7 +1267,7 @@ void SessionFrm::jumpToNewMessage() {
 
 QString SessionFrm::getUserName(const std::string &id, bool isGroup) {
 
-    std::string userId = QTalk::Entity::JID(id.c_str()).username();
+    std::string userId = QTalk::Entity::JID(id).username();
     if (SYSTEM_XMPPID == userId ||
         RBT_SYSTEM == userId)
     {
@@ -1250,11 +1283,9 @@ QString SessionFrm::getUserName(const std::string &id, bool isGroup) {
             std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(id);
             if (userInfo)
                 return QString::fromStdString(QTalk::getUserName(userInfo));
-            else
-                warn_log("{0} -> no info", id);
         }
     }
-    return QString();
+    return userId.data();
 }
 
 /**
@@ -1327,6 +1358,7 @@ void SessionFrm::onClearUnreadAct(bool) {
         auto itr = mapUnreadIds.begin();
         for (; itr != mapUnreadIds.end(); itr++) {
             QString messageId = _sessionMap[itr.key()]->data(ITEM_DATATYPE_LAST_MESSAGE_ID).toString();
+            emit _mainPanel->sgShowUnreadMessage(0, itr.key(), "", 0, 0);
             _messageManager->sendReadedMessage(messageId.toStdString(), itr.key().realId(), *itr);
         }
     }).detach();
@@ -1423,10 +1455,25 @@ void SessionFrm::onAppActive() {
     auto index = _pSessionView->currentIndex();
     if(index.isValid())
     {
-//        auto userId = index.data(ITEM_DATATYPE_USERID).toString();
-//        auto readJid = index.data(ITEM_DATATYPE_REALJID).toString();
-//        _curUserId = UID(userId, readJid);
-        onItemSelectChanged(index);
+        unsigned int count = index.data(ITEM_DATATYPE_UNREADCOUNT).toUInt();
+        if (_messageManager && count > 0) {
+            auto chatType = index.data(ITEM_DATATYPE_CHATTYPE).toInt();
+            auto userId = index.data(ITEM_DATATYPE_USERID).toString();
+            auto realJid = index.data(ITEM_DATATYPE_REALJID).toString();
+            UID uid(userId, realJid);
+            _curUserId = uid;
+            QString messageId = index.data(ITEM_DATATYPE_LAST_MESSAGE_ID).toString();
+            _messageManager->sendReadedMessage(messageId.toStdString(), realJid.toStdString(),
+                                               chatType);
+            _sessionMap[uid]->setData(0, ITEM_DATATYPE_UNREADCOUNT);
+            _sessionMap[uid]->setData(0, ITEM_DATATYPE_ATCOUNT);
+            bool unNotice = _mapNotice.find(realJid.toStdString()) != _mapNotice.end();
+            if (!unNotice) {
+                _totalUnReadCount -= count;
+                emit _mainPanel->updateTotalUnreadCount(_totalUnReadCount);
+                emit _mainPanel->sgShowUnreadMessage(0, uid, "", 0, 0);
+            }
+        }
     }
 }
 

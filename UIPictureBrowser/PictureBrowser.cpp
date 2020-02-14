@@ -102,11 +102,11 @@ void PictureBrowser::showPicture(const QString &picPath, const QString& linkPath
 
 void PictureBrowser::keyPressEvent(QKeyEvent *e)
 {
-    if(e->key() == Qt::Key_Up || e->key() == Qt::Key_Right)
+    if(e->key() == Qt::Key_Down || e->key() == Qt::Key_Right)
     {
         turnNext();
     }
-    else if(e->key() == Qt::Key_Down || e->key() == Qt::Key_Left)
+    else if(e->key() == Qt::Key_Up || e->key() == Qt::Key_Left)
     {
         turnBefore();
     }

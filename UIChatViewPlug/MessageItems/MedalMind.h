@@ -13,7 +13,7 @@ class MedalMind : public MessageItemBase {
 
 Q_OBJECT
 public:
-    explicit MedalMind(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent = Q_NULLPTR);
+    explicit MedalMind(const StNetMessageResult &msgInfo, QWidget *parent = Q_NULLPTR);
     ~MedalMind() override = default;
 
 public:

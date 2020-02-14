@@ -26,7 +26,7 @@ void UserCardMsgManager::getUserCard(std::shared_ptr<QTalk::Entity::ImUserSupple
 void UserCardMsgManager::getUserPhoneNo(const std::string &userId, std::string &phoneNo) {
     UserPhoneNo e;
     e.userId = userId;
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
     phoneNo = e.phoneNo;
 }
 

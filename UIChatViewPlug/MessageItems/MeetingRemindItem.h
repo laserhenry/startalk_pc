@@ -12,7 +12,7 @@ class MeetingRemindItem : public MessageItemBase
 {
 Q_OBJECT
 public:
-    explicit MeetingRemindItem(const QTalk::Entity::ImMessageInfo &msgInfo,
+    explicit MeetingRemindItem(const StNetMessageResult &msgInfo,
                                QWidget *parent = nullptr);
 
     ~MeetingRemindItem() override;
@@ -25,6 +25,14 @@ protected:
     void resizeEvent(QResizeEvent *event) override;
 
     void mousePressEvent(QMouseEvent* e) override;
+
+private:
+    void init();
+    void initLayout();
+    void initSendLayout();
+    void initReceiveLayout();
+    void initContentLayout();
+    void loadUrl(const StNetMessageResult& msgInfo);
 
 private:
     QLabel *contentLabel;
@@ -41,12 +49,7 @@ private:
     int _rightSpacing;
     int _nameLabHeight;
 
-    void init();
-    void initLayout();
-    void initSendLayout();
-    void initReceiveLayout();
-    void initContentLayout();
-    void loadUrl(const QTalk::Entity::ImMessageInfo& msgInfo);
+
 };
 
 #endif //QTALK_V2_MEETINGREMINDITEM_H

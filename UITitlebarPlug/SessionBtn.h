@@ -25,7 +25,7 @@ protected:
     bool event(QEvent* e) override ;
 
 private:
-    int _unreadCount;
+    int _unreadCount{};
     bool _isPressed;
 };
 

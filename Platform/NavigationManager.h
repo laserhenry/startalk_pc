@@ -70,6 +70,9 @@ private:
     //login
     std::string loginType;
 
+    // client
+    bool        rollback{};
+
 public:
     NavigationManager();
 
@@ -143,6 +146,10 @@ public://ability
 	bool isShowmsgstat();
 	void setQcGrabOrder(const std::string qcGrabOrder);
 	std::string getQcGrabOrder();
+
+public: // client
+    void setRollbackFlag(bool flag);
+	bool getRollbackFlag();
 
 public://other
     std::string getHealthCheckUrl();

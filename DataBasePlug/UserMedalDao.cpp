@@ -121,7 +121,7 @@ void UserMedalDao::getMedalUsers(int medalId, std::vector<QTalk::StMedalUser> &m
     std::string sql =
             "select u.xmppId, u.Name, u.HeaderSrc from IM_User_Status_Medal m "
             "left join IM_User u on m.UserId = u.UserId "
-            "where m.medalId = ? and m.medalStatus <> 0 order by m.updatetime ";
+            "where m.medalId = ? and m.medalStatus <> 0 and u.XmppId <> '' order by m.updatetime ";
 
     qtalk::sqlite::statement query(*_pSqlDb, sql);
     query.bind(1, medalId);

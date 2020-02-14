@@ -67,7 +67,6 @@ template<int N>
 struct SFormatN {
     static std::string Format(const char *fmt) {
 //        static_assert(false, "");
-        int i = 10;
     }
 };
 

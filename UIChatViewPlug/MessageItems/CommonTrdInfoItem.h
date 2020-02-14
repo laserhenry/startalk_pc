@@ -26,7 +26,7 @@ class CommonTrdInfoItem : public MessageItemBase {
 
 Q_OBJECT
 public:
-    explicit CommonTrdInfoItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent = Q_NULLPTR);
+    explicit CommonTrdInfoItem(const StNetMessageResult &msgInfo, QWidget *parent = Q_NULLPTR);
 
 public:
     QSize itemWdtSize() override;

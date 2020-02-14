@@ -21,7 +21,7 @@ namespace QTalk {
 	public:
 		static qimage& instance();
     public:
-        QPixmap loadPixmap(const QString& srcPath, bool save, bool scaled = false, int width = 0, int height = 0);
+        QPixmap loadImage(const QString& srcPath, bool save, bool scaled = false, int width = 0, int height = 0);
         QPixmap loadCirclePixmap(const QString &srcPath, const int& radius, bool isGrey = false);
         QPixmap generateGreyPixmap(const QPixmap &src);
         QString  getRealImageSuffix(const QString &filePath);

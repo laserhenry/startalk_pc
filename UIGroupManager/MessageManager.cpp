@@ -22,20 +22,20 @@ GroupManagerMsgManager::~GroupManagerMsgManager()
 
 void GroupManagerMsgManager::getStructure(std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>>& structure)
 {
-    StructureMessage e(*this, structure);
+    StructureMessage e(structure);
     e.structure = structure;
     EventBus::FireEvent(e);
 }
 
 void GroupManagerMsgManager::addGroupMember(const std::vector<std::string>& members, const std::string& groupId)
 {
-    AddGroupMember e(*this, members, groupId);
+    AddGroupMember e(members, groupId);
     EventBus::FireEvent(e);
 }
 
 void GroupManagerMsgManager::creatGroup(const std::string &groupId, const std::string& groupName)
 {
-    CreatGroup e(*this, groupId);
+    CreatGroup e(groupId);
 	e.groupName = groupName;
     EventBus::FireEvent(e);
 }

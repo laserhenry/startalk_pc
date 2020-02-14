@@ -25,12 +25,14 @@
 #include "MainWindow.h"
 #include "../CustomUi/QtMessageBox.h"
 #include "MessageManager.h"
+#include "../EventBus/EventBus.h"
 
 #ifdef _WINDOWS
 #define UNICODE
 #else
 #ifdef _MACOS
 #include "MacApp.h"
+
 #endif
 #endif
 
@@ -224,6 +226,7 @@ QTalkApp::QTalkApp(int argc, char *argv[])
 }
 
 QTalkApp::~QTalkApp() {
+    EventBus::clearHandle();
     if (_pLogicManager) {
         delete _pLogicManager;
         _pLogicManager = nullptr;
@@ -369,23 +372,37 @@ void QTalkApp::initLogSys() {
 bool QTalkApp::notify(QObject *receiver, QEvent *e) {
     try {
         auto t = QDateTime::currentMSecsSinceEpoch();
-        if (e->type() == QEvent::MouseButtonPress) {
-            auto *mouseEvent = dynamic_cast<QMouseEvent *>(e);
-            if (_pUiManager)
-                emit _pUiManager->sgMousePressGlobalPos(mouseEvent->globalPos());
-
-            if(_pMainWnd)
-                emit _pMainWnd->sgResetOperator();
-
-        } else if (e->type() == QEvent::ApplicationActivate) {
-            if (nullptr != _pMainWnd) {
-                _pMainWnd->onAppActive();
+        switch (e->type())
+        {
+            case QEvent::MouseButtonPress:
+            {
+                auto *mouseEvent = dynamic_cast<QMouseEvent *>(e);
+                if (_pUiManager)
+                        emit _pUiManager->sgMousePressGlobalPos(mouseEvent->globalPos());
+                if(_pMainWnd)
+                        emit _pMainWnd->sgResetOperator();
+                break;
             }
-        } else if (e->type()  == QEvent::ApplicationDeactivate) {
-            if (nullptr != _pMainWnd) {
-                _pMainWnd->onAppDeactivate();
+            case QEvent::ApplicationActivate:
+            {
+                if (nullptr != _pMainWnd) {
+                    _pMainWnd->onAppActive();
+                }
+                break;
             }
+            case QEvent::ApplicationDeactivate:
+            {
+                if (nullptr != _pMainWnd) {
+                    _pMainWnd->onAppDeactivate();
+                }
+                break;
+            }
+            case QEvent::Timer:
+                break;
+            default:
+                break;
         }
+
         auto ret = QApplication::notify(receiver, e);
 
         t = QDateTime::currentMSecsSinceEpoch() - t;
@@ -404,7 +421,6 @@ bool QTalkApp::notify(QObject *receiver, QEvent *e) {
         return ret;
     }
     catch (const std::bad_alloc &) {
-//        qDebug() << "std::bad_alloc" << t << receiver;
         return false;
     }
     catch (const std::exception &e) {

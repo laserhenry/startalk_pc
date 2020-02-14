@@ -20,6 +20,11 @@
 
 Platform* Platform::_platform = nullptr;
 
+
+Platform::Platform()
+    : _mapUserStatus(5000) {
+}
+
 Platform& Platform::instance() {
     if (nullptr == _platform)
     {
@@ -94,7 +99,7 @@ std::string Platform::getEmoticonIconPath() const {
     return AppSetting::instance().getUserDirectory() + "/emoticon/icon";
 }
 
-std::string Platform::getTempEmoticonPath(const std::string &packegId) const {
+std::string Platform::getTempEmoticonPath(const std::string &packegId) {
     return AppSetting::instance().getUserDirectory() + "/emoticon/temp/" + packegId;
 }
 
@@ -189,8 +194,15 @@ std::string Platform::getClientAuthKey() const {
         throw std::runtime_error("getClientAuthKey failed: key is empty");
     }
     std::transform(key.begin(), key.end(), key.begin(), ::toupper);
-    std::string content = "u=" + this->_strUserId + "&k=" + key
-                          + "&t=" + std::to_string(time) + "&d=" + this->_strDomain;
+
+    std::stringstream ss;
+    ss << "u=" << _strUserId
+       << "&k=" << key
+       << "&t=" << time
+       << "&d=" << _strDomain
+       << "&r=" << _strResource;
+
+    std::string content = ss.str();
     std::string result = base64_encode((unsigned char *) content.c_str(), (unsigned int) content.length());
     return result;
 }
@@ -243,11 +255,32 @@ bool Platform::isOnline(const std::string &xmppId) {
     bool isOnline = false;
     {
         std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-        if(_mapUserStatus.find(xmppId) != _mapUserStatus.end())
-            isOnline = _mapUserStatus[xmppId] != "offline";
+        if(_mapUserStatus.contains(xmppId))
+        {
+            isOnline = _mapUserStatus.get(xmppId) != "offline";
+            _mapUserStatus.update(xmppId);
+        }
+        else
+            _mapUserStatus.insert(xmppId, "offline");
     }
     return isOnline;
+}
 
+//
+std::string Platform::getUserStatus(const std::string& userId)
+{
+    std::string status = "offline";
+    {
+        std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+        if(_mapUserStatus.contains(userId))
+        {
+            status = _mapUserStatus.get(userId);
+            _mapUserStatus.update(userId);
+        }
+        else
+            _mapUserStatus.insert(userId, "offline");
+    }
+    return status;
 }
 
 /**
@@ -257,9 +290,11 @@ void Platform::loadOnlineData(const std::map<std::string, std::string>& userStat
 {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
     for(const auto& state : userStatus)
-    {
-        _mapUserStatus[state.first] = state.second;
-    }
+        _mapUserStatus.insert(state.first, state.second);
+}
+
+std::vector<std::string> Platform::getInterestUsers() {
+    return _mapUserStatus.keys();
 }
 
 std::string Platform::getConfigPath() const {
@@ -515,7 +550,7 @@ namespace QTalk {
             if(ret.empty())
                 ret = userInfo->Name;
             if(ret.empty())
-                ret = QTalk::Entity::JID(userInfo->XmppId.data()).username();
+                ret = QTalk::Entity::JID(userInfo->XmppId).username();
         }
 
         return ret;
@@ -541,7 +576,7 @@ namespace QTalk {
             if(ret.empty())
                 ret = userInfo->Name;
             if(ret.empty())
-                ret = QTalk::Entity::JID(userInfo->XmppId.data()).username();
+                ret = QTalk::Entity::JID(userInfo->XmppId).username();
         }
 
         return ret;
@@ -576,7 +611,7 @@ namespace QTalk {
         {
             ret = groupInfo->Name;
             if(ret.empty())
-                ret = QTalk::Entity::JID(groupInfo->GroupId.data()).username();
+                ret = QTalk::Entity::JID(groupInfo->GroupId).username();
         }
         return ret;
     }

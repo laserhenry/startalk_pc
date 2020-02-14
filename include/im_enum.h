@@ -1,5 +1,6 @@
 ﻿#ifndef IM_ENUM_H
 #define IM_ENUM_H
+
 namespace QTalk {
     namespace Enum {
         enum ChatType

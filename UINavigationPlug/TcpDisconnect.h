@@ -12,21 +12,22 @@ class TcpDisconnect : public QFrame
 	Q_OBJECT
 
 public:
-	TcpDisconnect(NavigationMianPanel* pMainPanel, QWidget *parent = nullptr);
-	~TcpDisconnect();
+	explicit TcpDisconnect(NavigationMianPanel* pMainPanel, QWidget *parent = nullptr);
+	~TcpDisconnect() override;
 
 public:
 	void onRetryConnected();
 	void setText(const QString& text);
 
 private:
-	void mousePressEvent(QMouseEvent *e);
+	void mousePressEvent(QMouseEvent *e) override;
+
+Q_SIGNALS:
+    void sgSetText(const QString&);
 
 private:
 	NavigationMianPanel* _pMainPanel;
 	QLabel*              _pTextLabel;
-	bool                 _isRetryConnect;
-
 };
 
 #endif // _TCPDISCONNECT_H_

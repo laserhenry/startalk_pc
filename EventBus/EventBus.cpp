@@ -37,7 +37,7 @@ EventBus * const EventBus::GetInstance()
 }
 
 // asynchronous 异步请求
-void EventBus::FireEvent(Event & e, bool asynchronous)
+void EventBus::FireEvent(Event & e)
 {
     EventBus *instance = GetInstance();
 
@@ -64,4 +64,9 @@ void EventBus::FireEvent(Event & e, bool asynchronous)
 EventBus::EventBus()
 {
 
+}
+
+void EventBus::clearHandle() {
+    EventBus *pBus = GetInstance();
+    pBus->handlers.clear();
 }

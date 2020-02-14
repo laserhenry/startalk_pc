@@ -14,7 +14,7 @@ class NoticeMessageItem : public MessageItemBase
 {
 Q_OBJECT
 public:
-    explicit NoticeMessageItem(const QTalk::Entity::ImMessageInfo &msgInfo,
+    explicit NoticeMessageItem(const StNetMessageResult &msgInfo,
                              QWidget *parent = nullptr);
 
     ~NoticeMessageItem() override;
@@ -48,7 +48,7 @@ private:
     void initSendLayout();
     void initReceiveLayout();
     void initContentLayout();
-    void loadUrl(const QTalk::Entity::ImMessageInfo& msgInfo);
+    void loadUrl(const StNetMessageResult& msgInfo);
 };
 
 #endif //QTALK_V2_NOTICEMESSAGEITEM_H

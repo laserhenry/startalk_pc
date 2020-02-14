@@ -206,17 +206,16 @@ bool MessageDao::bulkInsertMessageInfo(const std::vector<QTalk::Entity::ImMessag
     if (!_pSqlDb) {
         return false;
     }
-    std::string sql = "INSERT OR REPLACE INTO IM_Message(MsgId, XmppId, `ChatType`, Platform, `From`, "
+    std::string sql = "INSERT INTO IM_Message(MsgId, XmppId, `ChatType`, Platform, `From`, "
                       "`To`, Content, Type, State, Direction, ReadedTag, LastUpdateTime, "
                       "MessageRaw, RealJid, ExtendedInfo, ExtendedFlag, `BackupInfo` ) "
                       "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
                       "ON CONFLICT(MsgId) DO "
-                      "update set Content = ?,Type = ?, Direction = ?, ExtendedInfo = ? where MsgId = ?";
+                      "update set Content = ?,Type = ?, Direction = ?, ExtendedInfo = ?, `BackupInfo` = ?";
     qtalk::sqlite::statement query(*_pSqlDb, sql);
     try {
         _pSqlDb->exec("begin immediate;");
         for (const QTalk::Entity::ImMessageInfo &imMessageInfo : msgList) {
-
             {
                 std::string key = imMessageInfo.XmppId;
                 std::string realJid = imMessageInfo.RealJid.empty() ? key : imMessageInfo.RealJid;
@@ -284,7 +283,7 @@ bool MessageDao::bulkInsertMessageInfo(const std::vector<QTalk::Entity::ImMessag
             query.bind(19,imMessageInfo.Type);
             query.bind(20,imMessageInfo.Direction);
             query.bind(21,imMessageInfo.ExtendedInfo);
-            query.bind(22,imMessageInfo.MsgId);
+            query.bind(22,imMessageInfo.BackupInfo);
 
             bool sqlResult = query.executeStep();
             query.resetBindings();
@@ -322,7 +321,7 @@ bool MessageDao::getUserMessage(const long long &time, const std::string &userNa
         lastT = LLONG_MAX;
 
     std::string sql = "SELECT M.`XmppId`, M.`ChatType`, U.`Name`, M.`Content`, M.`State`, M.`Direction`, M.`ReadedTag`, M.`LastUpdateTime`, "
-                      "U.`HeaderSrc`, M.`From`, M.`Type`, M.`ExtendedFlag`, M.`MsgId`, M.`ExtendedInfo`,M.`RealJid` "
+                      "U.`HeaderSrc`, M.`From`, M.`Type`, M.`ExtendedFlag`, M.`MsgId`, M.`ExtendedInfo`,M.`RealJid`, M.`BackupInfo` "
                       "from IM_Message AS M "
                       "left join  IM_User AS U "
                       "on M.`From` = U.`XmppId` "
@@ -356,6 +355,7 @@ bool MessageDao::getUserMessage(const long long &time, const std::string &userNa
             msgInfo.MsgId = query.getColumn(12).getString();
             msgInfo.ExtendedInfo = query.getColumn(13).getString();
             msgInfo.RealJid = query.getColumn(14).getString();
+            msgInfo.BackupInfo = query.getColumn(15).getString();
 
             msgList.insert(msgList.begin(), msgInfo);
         }
@@ -400,6 +400,27 @@ long long MessageDao::getMaxTimeStampByChatType(QTalk::Enum::ChatType chatType) 
     return 0;
 }
 
+long long MessageDao::getMaxTimeStamp() {
+    if (!_pSqlDb) {
+        return 0;
+    }
+
+    std::string sql;
+    sql = "SELECT max(`LastUpdateTime`) from IM_Message";
+
+    try {
+        qtalk::sqlite::statement query(*_pSqlDb, sql);
+        long long timeStamp = 0;
+        if (query.executeNext()) {
+            timeStamp = query.getColumn(0).getInt64();
+        }
+        return timeStamp;
+    }
+    catch (std::exception &e) {
+        warn_log("MessageDao getMaxTimeStampByChatType exception : {0}", e.what());
+    }
+    return 0;
+}
 
 /**
   * @函数名   updateMState
@@ -1152,5 +1173,21 @@ void MessageDao::updateMessageExtendInfo(const std::string &msgId, const std::st
     bool sqlResult = query.executeStep();
     if (!sqlResult) {
         warn_log("excute failed {0}, {1}", msgId, info);
+    }
+}
+
+void MessageDao::addMessageFlag() {
+    if(!_pSqlDb){
+        return;
+    }
+
+    // MessageFlag false - new | true - old
+    std::string sql = "ALTER TABLE IM_Message ADD COLUMN MessageFlag Boolean DEFAULT false;";
+
+    try{
+        qtalk::sqlite::statement query(*_pSqlDb, sql);
+        query.executeStep();
+    }catch (std::exception &e) {
+        error_log(e.what());
     }
 }

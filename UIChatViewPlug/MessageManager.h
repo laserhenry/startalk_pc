@@ -21,78 +21,47 @@ class ChatMsgManager : public Object
 {
 public:
 
-	std::string getNetFilePath(const std::string& localFilePath);
-
-	std::string getLocalFilePath(const std::string& netFilePath);
-
-	std::string getSouceImagePath(const std::string& netFilePath);
-
-	std::string getLocalHeadPath(const std::string& netHeadPath);
-
-	VectorMessage getUserHistoryMessage(const QInt64& time, const QUInt8& chatType, const QTalk::Entity::UID& uid);
+	static std::string getNetFilePath(const std::string& localFilePath);
+	static std::string getLocalFilePath(const std::string& netFilePath);
+	static std::string getSouceImagePath(const std::string& netFilePath);
+	static std::string getLocalHeadPath(const std::string& netHeadPath);
+	static VectorMessage getUserHistoryMessage(const QInt64& time, const QUInt8& chatType, const QTalk::Entity::UID& uid);
 	static VectorMessage getNetHistoryMessage(const QInt64& time, int chatType, const QTalk::Entity::UID& uid, int direction);
-
-	VectorMessage getUserLocalHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
-	VectorMessage getUserFileHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
-	VectorMessage getUserImageHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
-	VectorMessage getUserLinkHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
-	VectorMessage getSearchMessage(const QInt64& time, const QTalk::Entity::UID& uid, const std::string& text);
-	VectorMessage getAfterMessage(const QInt64& time, const QTalk::Entity::UID& uid);
-
-	void getGroupInfo(const std::string& groupId);
-	
-	void sendMessage(S_Message& e);
-
-	void preSendMessage(const QTalk::Entity::ImMessageInfo &message);
-
-    void sendDownLoadFile(const std::string &strLocalPath, const std::string &strUri, const std::string& processKey);
-
-    void sendRevokeMessage(const QTalk::Entity::UID& uid, const std::string& from, const std::string& messageId, const QInt8& chatType);
-    //
-	void setUserSetting(bool isSetting, const std::string& key, const std::string& subKey, const std::string& value);
-	//
-	void sendLogReport(const std::string& desc, const std::string& logPath);
-
-	void setGroupAdmin(const std::string& groupId, const std::string& nick, const std::string& memberJid, bool isAdmin);
-
-	void removeGroupMember(const std::string& groupId, const std::string& nick, const std::string& memberJid);
-
-	void getUserInfo(std::shared_ptr<QTalk::Entity::ImUserInfo>& info);
-
-	std::string uploadFile(const std::string& localFile, bool = false, const std::string& processKey = std::string());
-
-	void getRecentSession(std::vector<QTalk::StShareSession> &ss);
-	//
-	void getContactsSession(std::vector<QTalk::StShareSession> &ss);
-	//
-    void forwardMesssage(const std::string& messsageId, const std::map<std::string, int>& users);
-    //
-    void addGroupMember(const std::vector<std::string>& members, const std::string& groupId);
-    //qchat 客服挂断
-    void serverCloseSession(const std::string& username, const std::string& virtualname);
-    //qchat 发送产品卡片
-    void sendProduct(const std::string& userQName, const std::string& virtualId,const std::string &product,const std::string &type);
-    //qchat 会话转移
-    void getSeatList(const QTalk::Entity::UID uid);
-    void sessionTransfer(const QTalk::Entity::UID uid, const std::string newCsrName, const std::string reason);
-    void sendWechat(const QTalk::Entity::UID uid);
-	//
-	void getQuickGroups(std::vector<QTalk::Entity::ImQRgroup> &groups);
-	void getQuickContentByGroup(std::vector<QTalk::Entity::IMQRContent> &contents, int id);
-	//
-	void hotLineMessageList(const std::string& xmppId);
-	//
-    void postInterface(const std::string& url, const std::string& params);
-    //
-    std::string sendGetRequest(const std::string& url);
-    //
-    void updateMessageExtendInfo(const std::string& msgId, const std::string& info);
-    //
-    void sendWebRtcCommand(int msgType, const std::string& json, const std::string& id);
-
-    void getUserMedal(const std::string& xmppId, std::set<QTalk::StUserMedal>& medal);
-
-    void sendSearch(SearchInfoEvent &event);
+	static VectorMessage getUserLocalHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
+	static VectorMessage getUserFileHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
+	static VectorMessage getUserImageHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
+	static VectorMessage getUserLinkHistoryMessage(const QInt64& time, const QTalk::Entity::UID& uid);
+	static VectorMessage getSearchMessage(const QInt64& time, const QTalk::Entity::UID& uid, const std::string& text);
+	static VectorMessage getAfterMessage(const QInt64& time, const QTalk::Entity::UID& uid);
+	static void getGroupInfo(const std::string& groupId);
+	static void sendMessage(S_Message& e);
+	static void preSendMessage(const QTalk::Entity::ImMessageInfo &message);
+    static void sendDownLoadFile(const std::string &strLocalPath, const std::string &strUri, const std::string& processKey);
+    static void sendRevokeMessage(const QTalk::Entity::UID& uid, const std::string& from, const std::string& messageId, const QInt8& chatType);
+	static void setUserSetting(bool isSetting, const std::string& key, const std::string& subKey, const std::string& value);
+	static void sendLogReport(const std::string& desc, const std::string& logPath);
+	static void setGroupAdmin(const std::string& groupId, const std::string& nick, const std::string& memberJid, bool isAdmin);
+	static void removeGroupMember(const std::string& groupId, const std::string& nick, const std::string& memberJid);
+	static void getUserInfo(std::shared_ptr<QTalk::Entity::ImUserInfo>& info);
+	static std::string uploadFile(const std::string& localFile, bool = false, const std::string& processKey = std::string());
+	static void getRecentSession(std::vector<QTalk::StShareSession> &ss);
+	static void getContactsSession(std::vector<QTalk::StShareSession> &ss);
+    static void forwardMesssage(const std::string& messsageId, const std::map<std::string, int>& users);
+    static void addGroupMember(const std::vector<std::string>& members, const std::string& groupId);
+    static void serverCloseSession(const std::string& username, const std::string& virtualname);
+    static void sendProduct(const std::string& userQName, const std::string& virtualId,const std::string &product,const std::string &type);
+    static void getSeatList(const QTalk::Entity::UID& uid);
+    static void sessionTransfer(const QTalk::Entity::UID& uid, const std::string& newCsrName, const std::string &reason);
+    static void sendWechat(const QTalk::Entity::UID &uid);
+	static void getQuickGroups(std::vector<QTalk::Entity::ImQRgroup> &groups);
+	static void getQuickContentByGroup(std::vector<QTalk::Entity::IMQRContent> &contents, int id);
+	static void hotLineMessageList(const std::string& xmppId);
+    static void postInterface(const std::string& url, const std::string& params);
+    static std::string sendGetRequest(const std::string& url);
+    static void updateMessageExtendInfo(const std::string& msgId, const std::string& info);
+    static void sendWebRtcCommand(int msgType, const std::string& json, const std::string& id);
+    static void getUserMedal(const std::string& xmppId, std::set<QTalk::StUserMedal>& medal);
+    static void sendSearch(SearchInfoEvent &event);
 };
 
 // 消息接收
@@ -109,10 +78,11 @@ class ChatMsgListener : public EventHandler<R_Message>, public EventHandler<Grou
 					  , public EventHandler<RecvVideoMessage>, public EventHandler<GroupMemberChangeRet>
 					  , public EventHandler<ChangeHeadRetMessage>, public EventHandler<UpdateMoodRet>
 					  , public EventHandler<FeedBackLogEvt> , public EventHandler<GetSeatListRet>
-					  , public EventHandler<IncrementConfig>, public EventHandler<GroupReadMState>
+					  , public EventHandler<IncrementConfig>
 					  , public EventHandler<MStateEvt>
 					  , public EventHandler<WebRtcCommand>
 					  , public EventHandler<UserMedalChangedEvt>
+					  , public EventHandler<LoginProcessMessage>
 {
 public:
 	ChatMsgListener();
@@ -146,9 +116,9 @@ public:
     void onEvent(FeedBackLogEvt& e) override;
     void onEvent(GetSeatListRet& e) override;
     void onEvent(IncrementConfig& e) override;
-    void onEvent(GroupReadMState& e) override;
     void onEvent(WebRtcCommand& e) override;
     void onEvent(UserMedalChangedEvt& e) override;
+    void onEvent(LoginProcessMessage& e) override;
 
 private:
 

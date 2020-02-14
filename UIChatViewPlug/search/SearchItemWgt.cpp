@@ -28,7 +28,7 @@
 
 extern ChatViewMainPanel *g_pMainPanel;
 /** SearchItemBase **/
-SearchItemBase::SearchItemBase(const StNetSearchResult &info, QWidget *parent)
+SearchItemBase::SearchItemBase(const StNetMessageResult &info, QWidget *parent)
     :QFrame(parent)
 {
     QString name = QTalk::getUserName(info.from.toStdString()).data();
@@ -63,7 +63,7 @@ void SearchItemBase::setDetailButtonVisible(bool visible)
 }
 
 /** SearchTextItem **/
-SearchTextItem::SearchTextItem(const StNetSearchResult& info, QWidget *parent)
+SearchTextItem::SearchTextItem(const StNetMessageResult& info, QWidget *parent)
     :SearchItemBase(info, parent)
 {
     _pBrowser = new TextBrowser(this);
@@ -208,10 +208,10 @@ void SearchTextItem::downloadImage(const QString &imageLink) {
 
     QPointer<SearchTextItem> pThis(this);
     QtConcurrent::run([pThis, imageLink](){
-        auto imagePath = g_pMainPanel->getMessageManager()->getLocalFilePath(imageLink.toStdString());
+        auto imagePath = ChatMsgManager::getLocalFilePath(imageLink.toStdString());
         if(pThis)
         {
-            auto image = QTalk::qimage::instance().loadPixmap(imagePath.data(), false);
+            auto image = QTalk::qimage::instance().loadImage(imagePath.data(), false);
             pThis->_pBrowser->document()->addResource(QTextDocument::ImageResource,
                                                imageLink, image);
         }
@@ -225,7 +225,7 @@ void SearchTextItem::downloadEmoticon(const QString& pkgid, const QString& short
         QString localPath = EmoticonMainWgt::getInstance()->downloadEmoticon(pkgid, shortCut);
         if(pThis)
         {
-            auto image = QTalk::qimage::instance().loadPixmap(localPath, false);
+            auto image = QTalk::qimage::instance().loadImage(localPath, false);
             pThis->_pBrowser->document()->addResource(QTextDocument::ImageResource,
                                                       pkgid+shortCut, image);
         }
@@ -233,7 +233,7 @@ void SearchTextItem::downloadEmoticon(const QString& pkgid, const QString& short
 }
 
 /*** tip item ***/
-SearchTipITem::SearchTipITem(const StNetSearchResult &info, QWidget *parent)
+SearchTipITem::SearchTipITem(const StNetMessageResult &info, QWidget *parent)
     :SearchItemBase(info, parent)
 {
     auto* label = new QLabel(this);
@@ -245,7 +245,7 @@ SearchTipITem::SearchTipITem(const StNetSearchResult &info, QWidget *parent)
 }
 
 /*** file item ***/
-SearchFileITem::SearchFileITem(const StNetSearchResult &info, QWidget *parent)
+SearchFileITem::SearchFileITem(const StNetMessageResult &info, QWidget *parent)
     :SearchItemBase(info, parent)
 {
     auto* contentFrm = new QFrame(this);
@@ -254,7 +254,7 @@ SearchFileITem::SearchFileITem(const StNetSearchResult &info, QWidget *parent)
 
     auto* iconLabel = new QLabel(this);
     iconLabel->setFixedSize(36, 36);
-    QPixmap pixmap = QTalk::qimage::instance().loadPixmap(info.file_info.fileIcon, true, true, 36);
+    QPixmap pixmap = QTalk::qimage::instance().loadImage(info.file_info.fileIcon, true, true, 36);
     iconLabel->setPixmap(pixmap);
 
     auto* fileNameLabel = new QLabel(info.file_info.fileName, this);
@@ -308,13 +308,13 @@ SearchFileITem::SearchFileITem(const StNetSearchResult &info, QWidget *parent)
             QTalk::File::openFileFolder(localPath);
         }
     });
-    connect(downloadBtn, &QToolButton::clicked, [this, info](){
+    connect(downloadBtn, &QToolButton::clicked, [info](){
         QDesktopServices::openUrl(QUrl(info.file_info.fileLink));
     });
 }
 
 /** CommonTrd item **/
-SearchCommonTrdItem::SearchCommonTrdItem(const StNetSearchResult &info, QWidget *parent)
+SearchCommonTrdItem::SearchCommonTrdItem(const StNetMessageResult &info, QWidget *parent)
     :SearchItemBase(info, parent), _link(info.common_trd.link), _xmppId(info.xmpp_id)
 {
     contentFrm = new QFrame(this);
@@ -385,11 +385,11 @@ void SearchCommonTrdItem::mousePressEvent(QMouseEvent *e) {
 }
 
 /** code item **/
-SearchCodeItem::SearchCodeItem(const StNetSearchResult& info, QWidget* parent)
+SearchCodeItem::SearchCodeItem(const StNetMessageResult& info, QWidget* parent)
     :SearchItemBase(info, parent)
     , _codeStyle(info.code.codeStyle)
-    , _code(info.code.code)
     , _codeLanguage(info.code.language)
+    , _code(info.code.code)
 {
     contentFrm = new QFrame(this);
     lay->addWidget(contentFrm);
@@ -430,7 +430,7 @@ void SearchCodeItem::mousePressEvent(QMouseEvent *e) {
 }
 
 /** audio video item **/
-SearchAudioVideoItem::SearchAudioVideoItem(const StNetSearchResult& info, QWidget* parent)
+SearchAudioVideoItem::SearchAudioVideoItem(const StNetMessageResult& info, QWidget* parent)
     :SearchItemBase(info, parent)
 {
     QString content = tr("视频通话");
@@ -475,7 +475,7 @@ SearchAudioVideoItem::SearchAudioVideoItem(const StNetSearchResult& info, QWidge
     contentLay->addWidget(pIconLabel, 0);
     contentLay->addWidget(contentLab, 1);
 
-    QPixmap icon = QTalk::qimage::instance().loadPixmap(":/chatview/image1/messageItem/AudioVideo.png", true);
+    QPixmap icon = QTalk::qimage::instance().loadImage(":/chatview/image1/messageItem/AudioVideo.png", true);
     icon = icon.scaled(25, 25, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     pIconLabel->setPixmap(icon);
     contentLab->adjustSize();
@@ -484,7 +484,7 @@ SearchAudioVideoItem::SearchAudioVideoItem(const StNetSearchResult& info, QWidge
 }
 
 /** search item **/
-SearchVideoItem::SearchVideoItem(const StNetSearchResult &info, QWidget *parent)
+SearchVideoItem::SearchVideoItem(const StNetMessageResult &info, QWidget *parent)
     :SearchItemBase(info, parent)
 {
     imageLabel = new NetImageLabel(info.video.thumbUrl, this);

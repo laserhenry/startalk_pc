@@ -50,6 +50,7 @@ public:
 
 public:
     long long getMaxTimeStampByChatType(QTalk::Enum::ChatType chatType) override;
+    long long getMaxTimeStamp();
     bool setUserCardInfo(const std::vector<QTalk::StUserCard> &userInfos) override;
     bool insertOrUpdateUserMood(const std::string &userId, const std::string &userMood, const int &version) ;
     bool insertOrUpdateUserSuppl(std::shared_ptr<QTalk::Entity::ImUserSupplement> imUserSup) ;

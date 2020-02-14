@@ -383,7 +383,7 @@ bool user_card::showUserCard(std::shared_ptr<QTalk::Entity::ImUserSupplement> im
         if(strName.empty())
             strName = info->Name;
         if(strName.empty())
-            strName = QTalk::Entity::JID(imuserSup->XmppId.data()).username();
+            strName = QTalk::Entity::JID(imuserSup->XmppId).username();
 		_strUserName = QString::fromStdString(strName);
         if(!info->HeaderSrc.empty())
         {
@@ -485,8 +485,8 @@ void user_card::onLeaderBtnClick()
     {
         if(!_strLeaderId.isEmpty())
         {
-            _pMainPanel->shwoUserCard(_strLeaderId);
             this->deleteLater();
+            _pMainPanel->shwoUserCard(_strLeaderId);
         }
         else
         {

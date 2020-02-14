@@ -11,7 +11,7 @@
 #include "../ChatViewMainPanel.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
-HotLineTipItem::HotLineTipItem(const QTalk::Entity::ImMessageInfo& info, QWidget* parent)
+HotLineTipItem::HotLineTipItem(const StNetMessageResult& info, QWidget* parent)
     :QFrame(parent)
 {
     auto* mainFrm = new QFrame(this);
@@ -20,7 +20,7 @@ HotLineTipItem::HotLineTipItem(const QTalk::Entity::ImMessageInfo& info, QWidget
     mainLay->setMargin(3);
     mainLay->setSpacing(1);
     //
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(info.ExtendedInfo.data());
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(info.extend_info.toUtf8());
     if (!jsonDocument.isNull()) {
         QJsonObject jsonObject = jsonDocument.object();
         QJsonArray hints = jsonObject.value("hints").toArray();
@@ -46,7 +46,7 @@ HotLineTipItem::HotLineTipItem(const QTalk::Entity::ImMessageInfo& info, QWidget
 
                 connect(link, &LinkButton::clicked, [url, strParams](){
                     if(g_pMainPanel)
-                        g_pMainPanel->postInterface(url.toStdString(), strParams.data());
+                        ChatViewMainPanel::postInterface(url.toStdString(), strParams.data());
                 });
 
             }  else if("text" == type) {
@@ -59,7 +59,7 @@ HotLineTipItem::HotLineTipItem(const QTalk::Entity::ImMessageInfo& info, QWidget
     }
     else
     {
-        auto* label = new QLabel(_msgInfo.Content.data(), this);
+        auto* label = new QLabel(_msgInfo.body, this);
         mainLay->addWidget(label);
     }
     //

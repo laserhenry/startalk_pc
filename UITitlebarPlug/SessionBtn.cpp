@@ -31,6 +31,8 @@ SessionBtn::~SessionBtn()
 void SessionBtn::setUnreadCount(int count)
 {
    _unreadCount = count;
+//   assert(count >= 0);
+
 #ifdef _MACOS
    if(count > 0)
        QtMac::setBadgeLabelText(QString::number(count));

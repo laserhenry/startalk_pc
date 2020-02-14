@@ -523,7 +523,8 @@ bool MainPanel::eventFilter(QObject *o, QEvent *e) {
     if (o == _userBtn && e->type() == QEvent::MouseButtonPress) {
         if (_dropMenu) {
             QPoint pos = _userBtn->geometry().bottomLeft();
-            _dropMenu->move(mapToGlobal(QPoint(pos.x() - _dropMenu->width() / 2, pos.y() - 8)));
+            auto x = qMin(pos.x() - _dropMenu->width() / 2, this->geometry().right() - _dropMenu->width() - 15);
+            _dropMenu->move(mapToGlobal(QPoint(x, this->geometry().bottom())));
             _dropMenu->show();
         }
     }

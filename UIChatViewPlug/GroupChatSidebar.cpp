@@ -12,10 +12,9 @@
 extern ChatViewMainPanel* g_pMainPanel;
 
 using namespace QTalk;
-GroupChatSidebar::GroupChatSidebar(QWidget* parent, const QString& groupId)
+GroupChatSidebar::GroupChatSidebar(QWidget* parent)
 	:QFrame(parent), _pGroupTopic(nullptr), _pGroupMember(nullptr)
 {
-	_groupId = groupId.toStdString();
 	initUi();
 }
 
@@ -60,7 +59,7 @@ void GroupChatSidebar::updateGroupMember(const GroupMemberMessage& e)
 	for (; it != members.cend(); it++)
 	{
 		//
-		bool isOnline = Platform::instance().isOnline(Entity::JID(it->first.c_str()).basename());
+		bool isOnline = Platform::instance().isOnline(Entity::JID(it->first).basename());
 		if (isOnline)
 		{
 			onlineUserSize++;
@@ -79,7 +78,7 @@ void GroupChatSidebar::updateGroupMember(const GroupMemberMessage& e)
                 if(name.empty())
                     name = it->second.userName;
                 if(name.empty())
-                    name = QTalk::Entity::JID(it->first.data()).username();
+                    name = QTalk::Entity::JID(it->first).username();
 
                 emit _pGroupMember->addMemberSignal(it->first, name, QString(headSrc.c_str()), userRole[it->first],
                                                     isOnline, QString::fromStdString(it->second.searchKey));
@@ -114,8 +113,7 @@ void GroupChatSidebar::initUi()
 	setObjectName("GroupChatSidebar");
 	//
 	_pGroupTopic = new GroupTopic();
-	_pGroupMember = new GroupMember(this,QString::fromStdString(_groupId));
-
+	_pGroupMember = new GroupMember();
 	setFixedWidth(164);
 	_pGroupTopic->setFixedHeight(135);
 
@@ -132,4 +130,10 @@ void GroupChatSidebar::initUi()
 
 	connect(this, &GroupChatSidebar::deleteMember, _pGroupMember, &GroupMember::deleteMember);
 	connect(this, &GroupChatSidebar::updateGroupTopic, _pGroupTopic, &GroupTopic::setTopic);
+}
+
+void GroupChatSidebar::clearData() {
+//    _pGroupTopic->setTopic("");
+//    _arMembers.clear();
+//    _pGroupMember->clearData();
 }

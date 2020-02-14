@@ -18,7 +18,7 @@
 #include "../VoiceHelper.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
-VoiceMessageItem::VoiceMessageItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent)
+VoiceMessageItem::VoiceMessageItem(const StNetMessageResult &msgInfo, QWidget *parent)
     :MessageItemBase(msgInfo, parent),
      _spaceFrm(nullptr),
      mainLay(nullptr){
@@ -34,7 +34,7 @@ void VoiceMessageItem::initLayout() {
     _contentSize = QSize(370, 160);
     _mainMargin = QMargins(15, 0, 20, 0);
     _mainSpacing = 10;
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         _headPixSize = QSize(0, 0);
         _nameLabHeight = 0;
         _leftMargin = QMargins(0, 0, 0, 0);
@@ -42,7 +42,7 @@ void VoiceMessageItem::initLayout() {
         _leftSpacing = 0;
         _rightSpacing = 0;
         initSendLayout();
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         _headPixSize = QSize(28, 28);
         _nameLabHeight = 16;
         _leftMargin = QMargins(0, 10, 0, 0);
@@ -51,7 +51,7 @@ void VoiceMessageItem::initLayout() {
         _rightSpacing = 4;
         initReceiveLayout();
     }
-    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.type) {
         _nameLabHeight = 0;
     }
     setContentsMargins(0, 5, 0, 5);
@@ -86,7 +86,7 @@ void VoiceMessageItem::initSendLayout() {
     mainLay->addWidget(_btnShareCheck);
     auto *horizontalSpacer = new QSpacerItem(40, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
     mainLay->addItem(horizontalSpacer);
-    mainLay->addWidget(secondsLabel);
+//    mainLay->addWidget(secondsLabel);
     auto *rightLay = new QVBoxLayout;
     rightLay->setContentsMargins(_rightMargin);
     mainLay->addLayout(rightLay);
@@ -100,6 +100,7 @@ void VoiceMessageItem::initSendLayout() {
     tmpLay->setMargin(0);
     tmpLay->setSpacing(5);
     tmpLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
+    tmpLay->addWidget(secondsLabel);
     if(nullptr != _sending && nullptr != _resending)
     {
         tmpLay->addWidget(_sending);
@@ -115,7 +116,7 @@ void VoiceMessageItem::initSendLayout() {
         rsLay->setAlignment(_readStateLabel, Qt::AlignRight);
         rightLay->addLayout(rsLay);
     }
-    mainLay->setAlignment(secondsLabel, Qt::AlignRight | Qt::AlignTop);
+    mainLay->setAlignment(secondsLabel, Qt::AlignTop);
     secondsLabel->setContentsMargins(0, 10, 0, 0);
     mainLay->setStretch(0, 1);
     mainLay->setStretch(1, 0);
@@ -147,7 +148,7 @@ void VoiceMessageItem::initReceiveLayout() {
         _headLab = new HeadPhotoLab;
     }
     _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(QString::fromStdString(_msgInfo.HeadSrc), HEAD_RADIUS);
+    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
     _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -161,8 +162,8 @@ void VoiceMessageItem::initReceiveLayout() {
     rightLay->setSpacing(_rightSpacing);
     mainLay->addLayout(rightLay);
 
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
         auto* nameLay = new QHBoxLayout;
         nameLay->setMargin(0);
         nameLay->setSpacing(5);
@@ -206,18 +207,18 @@ void VoiceMessageItem::initContentLayout() {
     //
 
     //
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         contentLay->addWidget(_spaceFrm);
         contentLay->addWidget(pixLabel);
         pixLabel->setHead(":chatview/image1/messageItem/voice_message_3_s.png", 10, false, false, true);
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         contentLay->addWidget(pixLabel);
         contentLay->addWidget(_spaceFrm);
         pixLabel->setHead(":chatview/image1/messageItem/voice_message_3.png", 10, false, false, true);
     }
     pixLabel->setAlignment(Qt::AlignVCenter);
     //
-    cJSON* json = cJSON_Parse(_msgInfo.Content.data());
+    cJSON* json = cJSON_Parse(_msgInfo.body.toUtf8());
     if(nullptr == json)
     {
         _contentFrm->setFixedWidth(50);
@@ -225,7 +226,7 @@ void VoiceMessageItem::initContentLayout() {
     else
     {
         std::string _voicePath = QTalk::JSON::cJSON_SafeGetStringValue(json, "HttpUrl");
-        local_path = _msgInfo.MsgId;
+        local_path = _msgInfo.msg_id.toStdString();
         int seconds = QTalk::JSON::cJSON_SafeGetIntValue(json, "Seconds");
         secondsLabel->setText(QString("%1''").arg(seconds));
         _spaceFrm->setFixedWidth(qMin(seconds * 15, 300));
@@ -238,7 +239,7 @@ void VoiceMessageItem::initContentLayout() {
             if(g_pMainPanel)
             {
                 if(pThis) {
-                    g_pMainPanel->getMessageManager()->sendDownLoadFile(pThis->local_path, _voicePath, pThis->_msgInfo.MsgId);
+                    ChatMsgManager::sendDownLoadFile(pThis->local_path, _voicePath, pThis->_msgInfo.msg_id.toStdString());
 #ifdef Q_NO_AMR
 				bool isok = QTalk::VoiceHelper::amrToWav(pThis->local_path + ".amr", pThis->local_path + ".wav");
 				if (isok)
@@ -258,9 +259,9 @@ void VoiceMessageItem::initContentLayout() {
 
         int index = num++ % 3 + 1;
         QString fileName;
-        if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+        if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
             fileName = QString(":chatview/image1/messageItem/voice_message_%1_s.png").arg(index);
-        } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+        } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
             fileName = QString(":chatview/image1/messageItem/voice_message_%1.png").arg(index);
         }
         pixLabel->setHead(fileName, 10, false, false, true);
@@ -308,9 +309,9 @@ bool VoiceMessageItem::eventFilter(QObject* o, QEvent* e)
 void VoiceMessageItem::stopVoice()
 {
     _pTimer->stop();
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         pixLabel->setHead(":chatview/image1/messageItem/voice_message_3_s.png", 10, false, false, true);
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         pixLabel->setHead(":chatview/image1/messageItem/voice_message_3.png", 10, false, false, true);
     }
 }

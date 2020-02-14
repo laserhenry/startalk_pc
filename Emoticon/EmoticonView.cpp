@@ -43,7 +43,7 @@ void EmoticonView::paintEvent(QPaintEvent *e)
             pix = QTalk::qimage::instance().scaledPixmap(pix, _width * dpi, _width * dpi);
     }
     if(pix.isNull())
-        pix = QTalk::qimage::instance().loadPixmap(_imagePath, false, true, _width * dpi, _width * dpi);
+        pix = QTalk::qimage::instance().loadImage(_imagePath, false, true, _width * dpi, _width * dpi);
 
     int w = pix.width() / dpi;
     int h = pix.height() / dpi;
@@ -94,7 +94,7 @@ void EmoticonView::setImagePath(const QString &imgPath)
         }
     }
 
-    QPixmap img = QTalk::qimage::instance().loadPixmap(_imagePath, true);
+    QPixmap img = QTalk::qimage::instance().loadImage(_imagePath, true);
     _width = qMin((int)img.height(), (int)img.width());
     _width = qMin(100, _width);
 

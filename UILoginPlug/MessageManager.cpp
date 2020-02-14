@@ -26,7 +26,7 @@ bool UILoginMsgManager::SendLoginMessage(const std::string& userName, const std:
 bool UILoginMsgManager::getNavInfo(const std::string &navAddr)
 {
 	GetNavAddrInfo e(navAddr);
-	EventBus::FireEvent(e, false);
+	EventBus::FireEvent(e);
 	return e.ret;
 }
 
@@ -39,7 +39,7 @@ bool UILoginMsgManager::getNavInfo(const std::string &navAddr)
 std::string UILoginMsgManager::getNavDomain(const std::string &addr)
 {
     GetNavDomain e(addr);
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
     return e.doamin;
 }
 
@@ -50,7 +50,7 @@ std::string UILoginMsgManager::getNavDomain(const std::string &addr)
  */
 bool UILoginMsgManager::saveQvtToDB(const std::string &qvt) {
     SaveQchatQVTToDB e(qvt);
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
     return true;
 }
 
@@ -60,7 +60,7 @@ bool UILoginMsgManager::saveQvtToDB(const std::string &qvt) {
  */
 std::string UILoginMsgManager::getQchatQvt() {
     GetQchatQVTFromDB e;
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
     return e.strQVT;
 }
 
@@ -214,6 +214,6 @@ void UILoginMsgListener::onEvent(LoginProcessMessage& e)
     if(nullptr != _pLoginPanel)
     {
         debug_log("-------------- {0} --------------", e.message);
-        _pLoginPanel->onGotLoginstauts(e.message.data());
+        _pLoginPanel->onGotLoginStatus(e.message.data());
     }
 }

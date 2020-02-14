@@ -10,6 +10,7 @@
 #include <QSystemTrayIcon>
 #include <QTimer>
 #include "../include/CommonStrcut.h"
+#include "SystemTrayPopWnd.h"
 
 class MainWindow;
 class SystemTray : public QObject
@@ -20,8 +21,11 @@ public:
     ~SystemTray() override;
 
 public slots:
-    void onRecvMessage();
     void onShowNotify(const QTalk::StNotificationParam&);
+    void onAppDeactivated();
+
+Q_SIGNALS:
+    void sgShowUnreadMessage(int, const QTalk::Entity::UID&, const QString&, qint64, int);
 
 public:
     void onWndActived();
@@ -39,6 +43,8 @@ private:
     MainWindow*      _pMainWindow;
     QSystemTrayIcon* _pSysTrayIcon;
     QTimer*          _timer;
+
+    SystemTrayPopWnd *_popWnd;
 
 private:
     unsigned short  _timerCount;

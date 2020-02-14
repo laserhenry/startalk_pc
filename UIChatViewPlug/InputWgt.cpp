@@ -123,27 +123,26 @@ void InputWgt::dealFile(const QString &filePath, bool isFile, const QString& ima
                     return;
                 }
                 //
-                qreal fixw = img.width();
-                qreal fixh = img.height(); //  最宽150 最高100 算纵横比
+                qreal width = img.width();
+                qreal height = img.height(); //  最宽150 最高100 算纵横比
 
-                auto scaleRate = qMax(fixh / 100, fixw / 150);
+                auto scaleRate = qMax(height / 100, width / 150);
                 if (scaleRate > 1.0) {
                     // 计算缩放
-                    fixw = img.width() / scaleRate;
-                    fixh = img.height() / scaleRate;
+                    width = img.width() / scaleRate;
+                    height = img.height() / scaleRate;
                 }
 
                 QTextImageFormat imageFormat;
-                imageFormat.setWidth(fixw);
-                imageFormat.setHeight(fixh);
+                imageFormat.setWidth(width);
+                imageFormat.setHeight(height);
                 if(fileInfo.suffix().toLower() != format.toLower())
                 {
-                    QString suffix = QTalk::qimage::instance().getRealImageSuffix(filePath);
-                    if (suffix.isEmpty())
+                    if (format.isEmpty())
                         imageFormat.setName(filePath);
                     else
                     {
-                        QString newPath = QString("%1/%2.%3").arg(fileInfo.absolutePath()).arg(fileInfo.baseName()).arg(suffix);
+                        QString newPath = QString("%1/%2.%3").arg(fileInfo.absolutePath()).arg(fileInfo.baseName()).arg(format);
                         if (!QFile::exists(newPath))
                             QFile::copy(filePath, newPath);
                         imageFormat.setName(newPath);
@@ -204,7 +203,8 @@ void InputWgt::keyPressEvent(QKeyEvent *e) {
         int key = (sendMessageKeySeq[0] & ~Qt::KeyboardModifierMask);
         if(((e->modifiers() & 0x0E000000) == (mod & 0x0E000000)))
         {
-            bool bSend = key == e->key();
+            bool bSend = key != 0 && (key == e->key());
+			auto ekey = e->key();
             // 忽略 Key_Return 和 Key_Enter
             bSend |= !bSend &&
                      (key == Qt::Key_Return || key == Qt::Key_Enter)
@@ -352,8 +352,8 @@ void InputWgt::initUi() {
 //    this->setPlaceholderText(DEM_PLACEHODER);
     this->setAlignment(Qt::AlignVCenter);
 
-    if(_pChatView->_chatType == QTalk::Enum::GroupChat)
-        _atView = new AtMessageView(this);
+//    if(_pChatView->_chatType == QTalk::Enum::GroupChat)
+    _atView = new AtMessageView(this);
 
     setContextMenuPolicy(Qt::CustomContextMenu);
     _pMenu = new QMenu(this);
@@ -627,7 +627,7 @@ QString InputWgt::getNetImgPath(const QString &localPath) {
 
     QFile f(localPath);
     if (f.exists() && _pChatView) {
-        std::string netFilePath = g_pMainPanel->getMessageManager()->getNetFilePath(
+        std::string netFilePath = ChatMsgManager::getNetFilePath(
                 std::string((const char *) localPath.toLocal8Bit()));
         retPath = QString(netFilePath.c_str());
         //
@@ -708,7 +708,7 @@ void InputWgt::updateGroupMember(const std::map<std::string, QTalk::StUserCard> 
         if(name.empty())
             name = it->second.userName;
         if(name.empty())
-            name = QTalk::Entity::JID(it->first.data()).username();
+            name = QTalk::Entity::JID(it->first).username();
 
         _atView->addItem(QString::fromStdString(it->second.headerSrc), QString::fromStdString(it->first),
                          QString::fromStdString(name), QString::fromStdString(it->second.searchKey));
@@ -735,7 +735,7 @@ void InputWgt::onTextChanged() {
 
 //#ifndef _WINDOWS
 //            if(_showAtView)
-//            {
+//            {_pChatView
 //                _showAtView = false;
 //                showAtView();
 //            }

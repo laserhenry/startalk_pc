@@ -11,7 +11,7 @@
 * @create: 2019-06-18 10:46
 **/
 
-#include "../QtUtil/Enum/im_enum.h"
+#include "../include/im_enum.h"
 #include "../QtUtil/Utils/Log.h"
 #include "ChatViewMainPanel.h"
 #include "../Platform/Platform.h"

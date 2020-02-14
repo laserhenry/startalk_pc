@@ -1,7 +1,7 @@
 ﻿#include "SearchItemDelegate.h"
 #include "../UICom/qimage/qimage.h"
 #include "../QtUtil/Utils/Log.h"
-#include "../QtUtil/Enum/im_enum.h"
+#include "../include/im_enum.h"
 #include "../UICom/StyleDefine.h"
 #include "../Platform/Platform.h"
 
@@ -145,7 +145,7 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
                 else
                     iconPath = ":/QTalk/image1/file_type/unknown.png";
 
-                QPixmap pixmap = QTalk::qimage::instance().loadPixmap(iconPath, true, true, HEAD_WIDTH * dpi);
+                QPixmap pixmap = QTalk::qimage::instance().loadImage(iconPath, true, true, HEAD_WIDTH * dpi);
                 int w = pixmap.width() / dpi;
                 int h = pixmap.height() / dpi;
                 painter->drawPixmap((HEAD_WIDTH - w) / 2 + headRect.x(),
@@ -163,7 +163,7 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
                     icon = ":/QTalk/image1/headPortrait.png";
 #endif
                 }
-                QPixmap pixmap = QTalk::qimage::instance().loadPixmap(icon, true, true, HEAD_WIDTH * dpi);
+                QPixmap pixmap = QTalk::qimage::instance().loadImage(icon, true, true, HEAD_WIDTH * dpi);
                 QPainterPath path;
                 painter->setBrush(QColor(240, 240, 240, 200));
                 painter->drawEllipse(headRect);
@@ -262,7 +262,7 @@ bool SearchItemDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
                             case QTalk::Search::EM_ACTION_MUC:
                             case QTalk::Search::EM_ACTION_COMMON_MUC:
                             case (QTalk::Search::EM_ACTION_COMMON_MUC | QTalk::Search::EM_ACTION_MUC):
-
+                                emit sgSwitchFun(REQ_TYPE_GROUP);
                                 break;
                             case QTalk::Search::EM_ACTION_HS_SINGLE:
                             case QTalk::Search::EM_ACTION_HS_MUC:

@@ -17,7 +17,7 @@ void sendTextMessage(const std::string &text,
         const std::string& realJid,
         const std::string& loginUser) {
 
-    if (g_pMainPanel && g_pMainPanel->getMessageManager() && loginUser == g_pMainPanel->getSelfUserId()) {
+    if (g_pMainPanel && loginUser == g_pMainPanel->getSelfUserId()) {
         // 发送消息
         long long sendtime;
         sendtime = QDateTime::currentDateTime().toMSecsSinceEpoch() - Platform::instance().getServerDiffTime() * 1000;
@@ -42,7 +42,7 @@ void sendTextMessage(const std::string &text,
         e.chatType = chatType;
 
         emit g_pMainPanel->sgUserSendMessage();
-        g_pMainPanel->getMessageManager()->sendMessage(e);
+        ChatMsgManager::sendMessage(e);
 //        showMessageSlot(message, false);
     }
 }
@@ -80,8 +80,8 @@ void sendTextMessage(const std::string &text,
     [notification setContentImage:headerImage];   //用户头像
 
     // sound
-    if(param->playSound)
-        [notification setSoundName:@"sound/msg.wav"];
+//    if(param->playSound)
+//        [notification setSoundName:@"sound/msg.wav"];
     // quick reply
     if ([notification respondsToSelector:@selector(setHasReplyButton:)])
     {

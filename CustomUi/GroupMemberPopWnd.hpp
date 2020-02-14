@@ -115,7 +115,7 @@ protected:
 
             if (!QFile(headPath).isOpen()) {
                 int dpi = QTalk::qimage::instance().dpi();
-                QPixmap pixmap = QTalk::qimage::instance().loadPixmap(headPath, true, true, 22 * dpi);
+                QPixmap pixmap = QTalk::qimage::instance().loadImage(headPath, true, true, 22 * dpi);
                 QPainterPath path;
                 QRect headRect(rect.x(), rect.y() + 8, 22, 22);
                 path.addEllipse(headRect);

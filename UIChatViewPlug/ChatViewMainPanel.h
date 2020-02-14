@@ -7,6 +7,7 @@
 #include <QMap>
 #include <QMutexLocker>
 #include <QLabel>
+#include <QMediaPlayer>
 #include <QRcode/QRcode.h>
 #include <QPointer>
 #include "search/FileRecordWnd.h"
@@ -15,7 +16,7 @@
 #include "NativeChatStruct.h"
 #include "../Message/ChatMessage.h"
 #include "../include/ThreadPool.h"
-#include "../QtUtil/Enum/im_enum.h"
+#include "../include/im_enum.h"
 #include "../QtUtil/lib/ini/ConfigLoader.h"
 #include "../Message/GroupMessage.h"
 #include "VideoPlayWnd.h"
@@ -25,89 +26,15 @@
 #include "../include/STLazyQueue.h"
 #include "../WebService/AudioVideo.h"
 #include "search/MessageRecordManager.h"
-
-class StatusWgt;
-class ChatMainWgt;
-class GroupChatSidebar;
-class ToolWgt;
-class InputWgt;
-class QHBoxLayout;
-class QStackedLayout;
-class ChatViewMainPanel;
-class MessagePrompt;
-class QMediaPlayer;
-class SendCodeWnd;
-class CodeShowWnd;
-class VoiceMessageItem;
-
-// Item
-class QSplitter;
-class ShareMessageFrm;
-class LocalSearchMainWgt;
-class ChatViewItem : public QFrame
-{
-	Q_OBJECT
-public:
-	ChatViewItem(const QUInt8& chatType, const QString& userName, const QTalk::Entity::UID& uid, ChatViewMainPanel* panel);
-    ~ChatViewItem() override;
-
-Q_SIGNALS:
-	void showMessage(const QTalk::Entity::ImMessageInfo&, bool);
-	void sgRemoveGroupMember(const std::string&);
-	void sgUpdateUserStatus(const QString& sts);
-	void sgShowSeats(std::vector<QTalk::Entity::ImTransfer>);
-	void sgDeleteLater();
-
-public:
-    void sendEmoticonMessage(const QString& id, const QString& messageContent, bool isShowAll
-            , const std::string& messageId = std::string());
-    //
-    void sendCollectionMessage(const QString& id, const QString& imagePath, const QString& imgLink);
-    //
-	QTalk::Entity::UID getPeerId();
-	QString conversionId();
-	void onRecvAddGroupMember(const std::string& memberId, const std::string& nick, int affiliation);
-	void onRecvRemoveGroupMember(const std::string& memberId);
-	void onShowSearchWnd();
-
-public:
-    void setShareMessageState(bool flag);
-
-private:
-    void keyPressEvent(QKeyEvent* e) override;
-
-private:
-	void   initUi();
-
-private slots:
-	void showMessageSlot(const QTalk::Entity::ImMessageInfo& msg, bool isHis);
-
-public:
-	QTalk::Entity::UID     _uid;
-	QTalk::Enum::ChatType  _chatType; // 是否为群组聊天
-    ChatMainWgt*      _pChatMainWgt = nullptr;
-	GroupChatSidebar* _pGroupSidebar = nullptr;
-    InputWgt*         _pInputWgt = nullptr;
-    ToolWgt*          _pToolWgt = nullptr;
-	StatusWgt*        _pStatusWgt = nullptr;
-    QSplitter*        splitter = nullptr;
-
-    LocalSearchMainWgt*    _pSearchMainWgt = nullptr;
-    ShareMessageFrm*   _pShareMessageFrm = nullptr;
-
-private:
-	QString            _strConversionId;
-    QVBoxLayout*       _leftLay  = nullptr;
-    QHBoxLayout*       _sendBtnLay = nullptr;
-    QPushButton*       _sendBtn = nullptr;
-    QFrame *_pInputFrm = nullptr;
-};
-
+#include "ChatViewItem.h"
+#include "../include/FrequencyMap.h"
 
 //
 class SnipScreenTool;
 class SelectUserWnd;
 class MessageItemBase;
+class MessagePrompt;
+class VoiceMessageItem;
 class ChatViewMainPanel : public QFrame
 {
     Q_OBJECT
@@ -156,24 +83,23 @@ Q_SIGNALS:
     void sgShowNotify(const QTalk::StNotificationParam&);
     void sgShowDraft(const QTalk::Entity::UID&, const QString&);
     void sgShowUserCard(const QString&);
+    void sgUpdateGroupMember(const std::string&, const std::vector<QTalk::StUserCard>&);
 
 public:
 	void setConnectStatus(bool isConnect);
 	bool getConnectStatus();
-	ChatMsgManager* getMessageManager();
 	std::string getSelfUserId();
 
 public:
     ThreadPool &pool() { return _pool; }
 
 public:
-	void onRecvMessage(R_Message& e);
+	void onRecvMessage(R_Message& e, bool isCarbon);
 	void onRecvFileProcessMessage(const FileProcessMessage& e);
 	void updateGroupMember(const GroupMemberMessage& e);
 	void updateHead();
 	void updateUserHeadPath(const std::vector<QTalk::StUserCard>& users);
 	void updateGroupTopic(const std::string& groupId, const std::string& topic);
-	void getOfflineMessage();
 	void updateGroupMemberInfo(const std::string& groupId, const std::vector<QTalk::StUserCard>& userCards);
 	void getHistoryMsg(const QInt64& t, const QUInt8& chatType, const QTalk::Entity::UID& uid);
 	void gotReadState(const QTalk::Entity::UID& uid, const std::map<std::string, QInt32>& msgMasks);
@@ -193,6 +119,7 @@ public:
 	void onUpdateMoodSuccess(const std::string& userId, const std::string& mood);
 	void onDisConnected();
 	void onRecvWebRtcCommand(int msgType, const std::string& peerId, const std::string& cmd, bool isCarbon);
+	void onRecvLoginProcessMessage(const char* message);
 
 public:
 	void setFileMsgLocalPath(const std::string &key, const std::string &val);
@@ -200,10 +127,10 @@ public:
 	std::string uploadFile(const std::string& localFile);
 
 public:
+	void insertAt(const QString& groupId, const QString& userId);
 	void showUserCard(const QString& userId);
 	void removePrompt(MessagePrompt* prompt);
     //
-    void setNoticeMap(const std::map<std::string, std::string>& mapNotice);
     void updateUserConfig(const std::vector<QTalk::Entity::ImConfig> &configs);
     void updateUserConfig(const std::map<std::string, std::string> &deleteData,
                           const std::vector<QTalk::Entity::ImConfig>& arImConfig);
@@ -219,15 +146,14 @@ public:
     void forwardMessage(const std::string& messageId);
     void playVoice(const std::string& localFile, VoiceMessageItem* msgItem);
     void setSeatList(const QTalk::Entity::UID& uid, const std::vector<QTalk::Entity::ImTransfer>& transfers);
-    void updateGroupReadMState(const std::string &groupId, const std::vector<std::string>& ids);
     //
     void resendMessage(MessageItemBase* item);
     //
     void scanQRcCodeImage(const QString& imgPath);
     //
-    void postInterface(const std::string& url, const std::string& params);
+    static void postInterface(const std::string& url, const std::string& params);
     //
-    void sendGetRequest(const std::string& url);
+    static void sendGetRequest(const std::string& url);
     //
     void updateMessageExtendInfo(const std::string& msgId, const std::string& info);
 
@@ -255,9 +181,12 @@ public:
                          const QString& fileSize,
                          const std::string& messageId = std::string());
     void sendAudioVideoMessage(const QTalk::Entity::UID& uid, int chatType, bool isVideo = false, const QString& json = QString());
-    void sendStartAudioVideoMessage(const QTalk::Entity::UID& uid, bool isVideo);
     void sendShockMessage(const QTalk::Entity::UID& uid, int chatType);
-    //
+	void sendEmoticonMessage(const QString& id, const QString& messageContent, bool isShowAll
+			, const std::string& messageId = std::string());
+	void sendCollectionMessage(const QString& id, const QString& imagePath, const QString& imgLink);
+
+	//
     void onUserMadelChanged(const std::vector<QTalk::Entity::ImUserStatusMedal> &userMedals);
 
 public:
@@ -265,7 +194,6 @@ public:
     void getUserMedal(const std::string& xmppId, std::set<QTalk::StUserMedal>& medal);
 
 protected:
-	void addItem(const QUInt8& chatType, const QString& userName, const QTalk::Entity::UID& uid);
 	void initPlug(); // 加载截屏 表情插件
 	void showPrompt(const QTalk::Entity::ImMessageInfo &msg);
 	void showEmptyLabel();
@@ -276,7 +204,6 @@ protected:
 	void showInfoMessageBox(const QString& message);
 	void initSound();
 	void playSound();
-	void onActiveMainWindow();
     void onShowVideoWnd(const std::string& caller, const std::string& callee, bool isVideo);
     void sendAutoPeplyMessage(const std::string& receiver, const std::string& messageId);
 
@@ -296,7 +223,6 @@ public:
     void onSendSignal(const QString& json, const QString& id);
 
 public:
-    VideoPlayWnd*     _pVideoPlayWnd;
     GIFManager*       gifManager;
 
 private:
@@ -304,14 +230,16 @@ private:
 	bool              _isConnected = true;
 
 private:
-	ChatMsgManager*   _pMessageManager;
-	ChatMsgListener*  _pMessageListener;
-	QStackedLayout*              _pStackedLayout; 
-	QMap<QTalk::Entity::UID, QPointer<ChatViewItem>> _mapSession; //
+	ChatViewItem     *_pViewItem{};
+    FrequencyMap<QTalk::Entity::UID, ChatViewItem*> _mapItems; // items
+
+private:
+	QStackedLayout*              _pStackedLayout;
 	QMap<QTalk::Entity::UID, QString> _his_input_data;
 	QMap<QString, QString>       _mapHeadPath;//头像路径
 	QVector<MessagePrompt*>      _arMessagePrompt;
 	QLabel*                     _pEmptyLabel;
+	QLabel*                     _pLoadingLabel{};
 	SnipScreenTool*              _pSnipScreenTool;
     CodeShowWnd*      _pCodeShowWnd;
     SendCodeWnd*      _pSendCodeWnd;
@@ -341,17 +269,15 @@ private:
 private:
     ThreadPool _pool;
 
-    STLazyQueue<ChatViewItem*> *_deleteItemQueue;
-
 private:
-    AudioVideoManager* _pAudioVideoManager;
+    AudioVideoManager* _pAudioVideoManager{};
 
 private:
     std::map<std::string, std::set<QTalk::StUserMedal>> _user_medals;
 
 private:
     MessageRecordManager* _pMsgRecordManager{};
-    FileRecordWnd* _pFileRecordWnd{};
+    FileRecordWnd*        _pFileRecordWnd{};
 };
 
 #endif // CHATVIEWMIANPANEL_H

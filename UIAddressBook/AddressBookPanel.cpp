@@ -605,7 +605,6 @@ void AddressBookPanel::onCreatGroupRet(const std::string &groupId) {
  */
 void AddressBookPanel::jumpToUserStructre(const QString &useId) {
     //_mapItemWidgets[EM_ITEM_TYPE_STAFF];
-#ifdef _STARTALK
     if (_mapNavItems.contains(EM_ITEM_TYPE_STAFF) && _mapNavItems[EM_ITEM_TYPE_STAFF]) {
         onNavItemClicked(EM_ITEM_TYPE_STAFF);
         _mapNavItems[EM_ITEM_TYPE_STAFF]->setSelectState(true);
@@ -633,7 +632,6 @@ void AddressBookPanel::jumpToUserStructre(const QString &useId) {
             }
         }
     }
-#endif
 }
 
 /**

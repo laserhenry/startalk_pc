@@ -13,36 +13,11 @@
 #include "../NativeChatStruct.h"
 #include "../MessageItems/TextBrowser.h"
 
-struct StNetSearchResult {
-    QString     msg_id;
-    int         msg_type;
-    int         type;
-    qint64      time;
-    QString     from;
-    QString     to;
-    QString     body;
-    QString     extend_info;
-
-    QString     xmpp_id;
-
-    // text message
-    std::vector<StTextMessage> text_messages;
-    // file info
-    StFileMessage file_info;
-    // common_trd
-    StCommonTrdMessage common_trd;
-    // code
-    StCodeMessage code;
-    // video
-    StVideoMessage video;
-};
-Q_DECLARE_METATYPE(StNetSearchResult)
-
 /** SearchItemBase **/
 class SearchItemBase : public QFrame {
     Q_OBJECT
 public:
-    explicit SearchItemBase(const StNetSearchResult& info, QWidget* parent = nullptr);
+    explicit SearchItemBase(const StNetMessageResult& info, QWidget* parent = nullptr);
 
 public:
     void setDetailButtonVisible(bool);
@@ -62,7 +37,7 @@ class SearchTextItem : public SearchItemBase
 {
     Q_OBJECT
 public:
-    explicit SearchTextItem(const StNetSearchResult& info, QWidget* parent = nullptr);
+    explicit SearchTextItem(const StNetMessageResult& info, QWidget* parent = nullptr);
 
 public:
     QSize getContentSize(qreal width);
@@ -89,7 +64,7 @@ private:
 class SearchTipITem : public SearchItemBase {
     Q_OBJECT
 public:
-    explicit SearchTipITem(const StNetSearchResult& info, QWidget* parent = nullptr);
+    explicit SearchTipITem(const StNetMessageResult& info, QWidget* parent = nullptr);
 
 };
 
@@ -97,7 +72,7 @@ public:
 class SearchFileITem : public SearchItemBase {
 Q_OBJECT
 public:
-    explicit SearchFileITem(const StNetSearchResult& info, QWidget* parent = nullptr);
+    explicit SearchFileITem(const StNetMessageResult& info, QWidget* parent = nullptr);
 
 };
 
@@ -105,7 +80,7 @@ public:
 class SearchCommonTrdItem : public SearchItemBase {
     Q_OBJECT
 public:
-    explicit SearchCommonTrdItem(const StNetSearchResult& info, QWidget* parent = nullptr);
+    explicit SearchCommonTrdItem(const StNetMessageResult& info, QWidget* parent = nullptr);
 
 protected:
     void mousePressEvent(QMouseEvent* e) override ;
@@ -122,7 +97,7 @@ private:
 class SearchCodeItem : public SearchItemBase {
     Q_OBJECT
 public:
-    explicit SearchCodeItem(const StNetSearchResult& info, QWidget* parent = nullptr);
+    explicit SearchCodeItem(const StNetMessageResult& info, QWidget* parent = nullptr);
 
 protected:
     void mousePressEvent(QMouseEvent* e) override ;
@@ -140,7 +115,7 @@ private:
 class SearchAudioVideoItem : public SearchItemBase {
     Q_OBJECT
 public:
-    explicit SearchAudioVideoItem(const StNetSearchResult& info, QWidget* parent = nullptr);
+    explicit SearchAudioVideoItem(const StNetMessageResult& info, QWidget* parent = nullptr);
 };
 
 /** video item **/
@@ -148,7 +123,7 @@ class NetImageLabel;
 class SearchVideoItem : public SearchItemBase {
     Q_OBJECT
 public:
-    explicit SearchVideoItem(const StNetSearchResult& info, QWidget* parent = nullptr);
+    explicit SearchVideoItem(const StNetMessageResult& info, QWidget* parent = nullptr);
 
 protected:
     void mousePressEvent(QMouseEvent* e) override ;

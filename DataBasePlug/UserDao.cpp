@@ -2,7 +2,7 @@
 #include "../entity/im_user.h"
 #include "../QtUtil/Utils/Log.h"
 #include "../QtUtil/Utils/utils.h"
-#include "../QtUtil/Enum/im_enum.h"
+#include "../include/im_enum.h"
 
 #include <sstream>
 

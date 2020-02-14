@@ -18,7 +18,7 @@ SearchItemBase* MessageDelegate::creatWgt(const QStyleOptionViewItem &option, co
 {
     auto msg_type = index.data(SEARCH_USER_MSG_TYPE).toInt();
 
-    StNetSearchResult info = index.data(SEARCH_USER_INFO).value<StNetSearchResult>();
+    StNetMessageResult info = index.data(SEARCH_USER_INFO).value<StNetMessageResult>();
     switch (msg_type)
     {
         case QTalk::Entity::MessageTypeRevoke:
@@ -143,7 +143,7 @@ QSize MessageDelegate::sizeHint(const QStyleOptionViewItem &option, const QModel
         }
         case QTalk::Entity::MessageTypeSmallVideo:
         {
-            StNetSearchResult info = index.data(SEARCH_USER_INFO).value<StNetSearchResult>();
+            StNetMessageResult info = index.data(SEARCH_USER_INFO).value<StNetMessageResult>();
             return {_parentWgt->width(), (int)info.video.height + 20 + 20};
         }
         case QTalk::Entity::MessageTypeText:

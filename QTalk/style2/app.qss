@@ -482,3 +482,45 @@ QLabel#TitleBarLabel {
 QComboBox#NoSlidingHandoverComboBox {
     width:200px;
 }
+
+
+QFrame#SystemTrayMainFrm {
+    background:rgba(255,255,255,1);
+    border-top-left-radius:6px;
+    border-top-right-radius:6px;
+    border-bottom-right-radius:6px;
+    border-bottom-left-radius:6px;
+    border-width:0px;
+    border-style:outset;
+}
+
+QFrame#SystemTrayTitleFrm {
+    border-top-left-radius:6px;
+    border-top-right-radius:6px;
+    background:rgba(249,249,248,1);
+}
+
+QLabel#cancelAlert {
+    font-size:14px;
+    font-weight:400;
+    color:rgba(102,102,102,1);
+    line-height:20px;
+}
+
+QFrame#SystemTrayBottomFrm {
+    background:rgba(255,255,255,1);
+    border-bottom-right-radius:6px;
+    border-bottom-left-radius:6px;
+    border-top: 1px solid rgba(238, 238, 238, 1);
+}
+
+QLabel#SystemTrayEmptyLabel {
+    font-size:14px;
+    font-weight:400;
+    color:rgba(153,153,153,1);
+    line-height:14px;
+}
+
+QFrame#wLine {
+    background:rgba(237,237,237,1);
+}

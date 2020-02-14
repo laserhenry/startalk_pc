@@ -78,7 +78,7 @@ void HeadPhotoLab::paintEvent(QPaintEvent *e)
     {
         if(_pixmap.empty())
         {
-            pixmap = QTalk::qimage::instance().loadPixmap(_imagePath, true, true, _radius * 2 * dpi);
+            pixmap = QTalk::qimage::instance().loadImage(_imagePath, true, true, _radius * 2 * dpi);
             _pixmap.push_back(pixmap);
         }
         else

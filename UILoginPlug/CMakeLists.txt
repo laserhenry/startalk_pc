@@ -23,7 +23,6 @@ endif ()
 
 find_package(Qt5Core)
 find_package(Qt5Widgets)
-find_package(Qt5WebEngineWidgets)
 find_package(Qt5Concurrent)
 #
 set(SOURCE_FILES
@@ -42,8 +41,7 @@ set(SOURCE_FILES
         NavView.h
         AddNavWnd.cpp
         AddNavWnd.h
-        QWebLogin.cpp
-        QWebLogin.h)
+        )
 
 
 set(LIBRARY_OUTPUT_PATH ../bin)
@@ -57,12 +55,10 @@ ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME}
         Qt5::Core
         Qt5::Widgets
-        Qt5::WebEngineWidgets
         Qt5::Concurrent
         EventBus
         CustomUi
         UICom
         QtUtil
         Platform
-        qzxing
-        WebService)
+        qzxing)

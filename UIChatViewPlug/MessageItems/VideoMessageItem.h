@@ -12,7 +12,7 @@ class VideoMaskFrame;
 class VideoMessageItem : public MessageItemBase {
 	Q_OBJECT
 public:
-    explicit VideoMessageItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent = Q_NULLPTR);
+    explicit VideoMessageItem(const StNetMessageResult &msgInfo, QWidget *parent = Q_NULLPTR);
     ~VideoMessageItem() override = default;;
 
 public:

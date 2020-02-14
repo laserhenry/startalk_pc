@@ -7,11 +7,10 @@
 #include <QHBoxLayout>
 #include <QPainter>
 #include <QModelIndex>
-#include <QGridLayout>
 #include <QEvent>
-#include <QtGui/QList>
+#include <QList>
+#include <QMouseEvent>
 #include <QUrlQuery>
-#include <QDesktopServices>
 
 #include "../qzxing/QZXing.h"
 #include "../UICom/StyleDefine.h"

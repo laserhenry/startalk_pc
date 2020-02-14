@@ -12,10 +12,10 @@ class ImageMessItem : public MessageItemBase
 {
     Q_OBJECT
 public:
-    explicit ImageMessItem(const QTalk::Entity::ImMessageInfo &msgInfo,
+    explicit ImageMessItem(const StNetMessageResult &msgInfo,
             const QString& link,
             const QString& path,
-            const QSize& size,
+            const QSizeF& size,
             QWidget *parent = nullptr);
     ~ImageMessItem() override;
     // MessageItemBase interface

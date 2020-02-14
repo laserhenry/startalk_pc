@@ -272,7 +272,7 @@ bool UserCard::showUserCard(const std::shared_ptr<QTalk::Entity::ImUserSupplemen
         if(strName.empty())
             strName = info->Name;
         if(strName.empty())
-            strName = QTalk::Entity::JID(imuserSup->XmppId.data()).username();
+            strName = QTalk::Entity::JID(imuserSup->XmppId).username();
         _strUserName = QString::fromStdString(strName);
 
         QString headSrc = QString(QTalk::GetHeadPathByUrl(info->HeaderSrc).c_str());

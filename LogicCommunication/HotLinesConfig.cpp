@@ -169,7 +169,7 @@ void HotLinesConfig::getTransferSeatsList(const QTalk::Entity::UID& uid) {
     std::string strUrl = url.str();
     //
     cJSON* obj = cJSON_CreateObject();
-    cJSON_AddStringToObject(obj, "customerName", QTalk::Entity::JID(uid.realId().data()).username().data());
+    cJSON_AddStringToObject(obj, "customerName", QTalk::Entity::JID(uid.realId()).username().data());
     cJSON_AddStringToObject(obj, "hotlineName", shopJId.data());
     std::string postDta = QTalk::JSON::cJSON_to_string(obj);
     cJSON_Delete(obj);

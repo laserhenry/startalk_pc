@@ -476,7 +476,7 @@ void LocalSearchMainWgt::showAllMessage(const QTalk::Entity::UID& uid)
     }
     //
     dealAllMessages(true,
-            std::bind(&ChatMsgManager::getUserLocalHistoryMessage, g_pMainPanel->getMessageManager(), 0, uid));
+            std::bind(&ChatMsgManager::getUserLocalHistoryMessage, 0, uid));
     _hasNew[EM_ALL] = false;
     //
     if(_pLoadingContent)
@@ -489,8 +489,8 @@ void LocalSearchMainWgt::showAllMessage(const QTalk::Entity::UID& uid)
 bool LocalSearchMainWgt::dealMessages(const std::function<std::vector<QTalk::Entity::ImMessageInfo>()> &func,
                                       QStandardItemModel *model, QSortFilterProxyModel* sortModel) {
 
-    std::vector<StNetSearchResult> _messages;
-    auto future =  QtConcurrent::run([this, func, &_messages](){
+    std::vector<StNetMessageResult> _messages;
+    auto future =  QtConcurrent::run([ func, &_messages](){
 
         auto allMessage = func();
 
@@ -498,7 +498,7 @@ bool LocalSearchMainWgt::dealMessages(const std::function<std::vector<QTalk::Ent
         {
             if(message.Type == INT_MIN)
                 continue;
-            StNetSearchResult info;
+            StNetMessageResult info;
             info.msg_id = message.MsgId.data();
             info.msg_type = message.Type;
             info.type = message.ChatType ;
@@ -568,7 +568,7 @@ void LocalSearchMainWgt::onGetBeforeAllMessage(qint64 time)
         _pLoadingMoreR_T->movie()->start();
         _pLoadingMoreR_T->setVisible(true);
     }
-    dealAllMessages(true, std::bind(&ChatMsgManager::getUserLocalHistoryMessage, g_pMainPanel->getMessageManager(), time, _uid));
+    dealAllMessages(true, std::bind(&ChatMsgManager::getUserLocalHistoryMessage, time, _uid));
     //
     if(_pLoadingMoreR_T)
     {
@@ -602,7 +602,7 @@ void LocalSearchMainWgt::onPositionMessage(qint64 time, bool clearData)
         _pStackedWidget->setCurrentWidget(_pLoadingContent);
     }
     //
-    dealAllMessages(false, std::bind(&ChatMsgManager::getAfterMessage, g_pMainPanel->getMessageManager(), time, _uid));
+    dealAllMessages(false, std::bind(&ChatMsgManager::getAfterMessage, time, _uid));
     //
     if(clearData && _pLoadingContent)
     {
@@ -661,7 +661,7 @@ void LocalSearchMainWgt::onSearch(qint64 time, const QString &text)
         _pStackedWidget->setCurrentWidget(_pLoadingContent);
     }
     //
-    dealSearchMessages(std::bind(&ChatMsgManager::getSearchMessage, g_pMainPanel->getMessageManager(),
+    dealSearchMessages(std::bind(&ChatMsgManager::getSearchMessage,
             time, _uid, text.toLower().toStdString()));
     //
     if(_pLoadingContent)
@@ -705,7 +705,7 @@ void LocalSearchMainWgt::onGetBeforeFileMessage(qint64 time)
     }
 
     //
-    dealFileMessages(std::bind(&ChatMsgManager::getUserFileHistoryMessage, g_pMainPanel->getMessageManager(),
+    dealFileMessages(std::bind(&ChatMsgManager::getUserFileHistoryMessage,
                                  time, _uid));
     //
     if(_pLoadingContent)
@@ -729,7 +729,7 @@ void LocalSearchMainWgt::onGetImageMessage(qint64 time) {
     std::vector<StImageResult> _messages;
     auto future =  QtConcurrent::run([this, time, &_messages](){
 
-        auto allMessage = g_pMainPanel->getMessageManager()->getUserImageHistoryMessage(time, _uid);
+        auto allMessage = ChatMsgManager::getUserImageHistoryMessage(time, _uid);
 
         for(const auto& message : allMessage)
         {
@@ -823,9 +823,9 @@ void LocalSearchMainWgt::onGetLinkMessage(qint64 time) {
         _pLoadingContent->movie()->start();
         _pStackedWidget->setCurrentWidget(_pLoadingContent);
     }
-    auto func = std::bind(&ChatMsgManager::getUserLinkHistoryMessage, g_pMainPanel->getMessageManager(), time, _uid);
-    std::vector<StNetSearchResult> _messages;
-    auto future =  QtConcurrent::run([this, func, &_messages](){
+    auto func = std::bind(&ChatMsgManager::getUserLinkHistoryMessage, time, _uid);
+    std::vector<StNetMessageResult> _messages;
+    auto future =  QtConcurrent::run([ func, &_messages](){
         auto allMessage = func();
         for(const auto& message : allMessage)
         {
@@ -837,7 +837,7 @@ void LocalSearchMainWgt::onGetLinkMessage(qint64 time) {
 
             for(const auto& link : links)
             {
-                StNetSearchResult info;
+                StNetMessageResult info;
                 info.msg_id = message.MsgId.data();
                 info.msg_type = QTalk::Entity::MessageTypeText;
                 info.type = message.ChatType ;

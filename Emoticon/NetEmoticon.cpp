@@ -292,7 +292,7 @@ void NetEmoticon::onEmoLstItemClick(QListWidgetItem *item)
 	if (_mapEmoItemWgt.contains(item) && _mapEmoDetailWgt.contains(item))
 	{
 		EmoLstItemWgt *lstWgt = _mapEmoItemWgt[item];
-        foreach (EmoLstItemWgt* w, _mapEmoItemWgt)
+        for (EmoLstItemWgt* w : _mapEmoItemWgt)
 		{
 			w->setCheckState(w == lstWgt);
 		}

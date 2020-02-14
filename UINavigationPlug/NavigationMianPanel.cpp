@@ -46,10 +46,10 @@ void NavigationMianPanel::receiveSession(R_Message mess)
 	info.chatType = (QTalk::Enum::ChatType)message.ChatType;
 	info.messageId = QString::fromStdString(message.MsgId);
 	info.messageContent = QString::fromStdString(message.Content);
-	info.xmppId = QString::fromStdString(QTalk::Entity::JID(message.SendJid.c_str()).basename());
-	info.realJid = QString::fromStdString(QTalk::Entity::JID(message.RealJid.c_str()).basename());
+	info.xmppId = QString::fromStdString(QTalk::Entity::JID(message.SendJid).basename());
+	info.realJid = QString::fromStdString(QTalk::Entity::JID(message.RealJid).basename());
 	info.messageRecvTime = message.LastUpdateTime;
-	std::string from = QTalk::Entity::JID(message.From.c_str()).basename();
+	std::string from = QTalk::Entity::JID(message.From).basename();
 	info.sendJid = QString::fromStdString(from);
 	info.messtype = message.Type;
 
@@ -91,9 +91,9 @@ void NavigationMianPanel::init() {
         connect(this, SIGNAL(connToServerTimerSignal(bool)), this, SLOT(connToServerTimerSlot(bool)));
     }
     //
-    if (_messageManager) {
-        _messageManager->getSessionData();
-    }
+    QtConcurrent::run([](){
+        NavigationMsgManager::getSessionData();
+    });
 //
 //
 //    //Set Internet Access Point
@@ -302,15 +302,21 @@ void NavigationMianPanel::onTcpDisconnect() {
   */
 void NavigationMianPanel::retryToConnect() {
 
+    static qint64 call_time = 0;
+    qint64 now = QDateTime::currentDateTime().toMSecsSinceEpoch();
+    if(now - call_time < 5000)
+        return;
+    call_time = now;
+
     if (Platform::instance().isMainThread() &&
         nullptr != _pConnToServerTimer &&
         _pConnToServerTimer->isActive()) {
 
-        info_log("retryToConnect by timer");
+        info_log("retryToConnect ...");
+        _pTcpDisconnect->setText("正在重连");
         _pConnToServerTimer->stop();
     }
 
-    emit connToServerTimerSignal(false);
     // check server host
     const std::string host = NavigationManager::instance().getXmppHost();
     const int port = NavigationManager::instance().getProbufPort();
@@ -330,6 +336,8 @@ void NavigationMianPanel::retryToConnect() {
                 info_log("connect refuse by socket");
                 tcpSocket->abort();
                 emit connToServerTimerSignal(true);
+                if(_pTcpDisconnect)
+                    emit _pTcpDisconnect->sgSetText(tr("当前网络不可用"));
                 return;
             }
             tcpSocket->close();
@@ -435,6 +443,7 @@ void NavigationMianPanel::onUpdateUserConfig(const std::vector<QTalk::Entity::Im
         _pSessionFrm->_mapNotice = tmpNotice;
         _pSessionFrm->_arSatr = arSatr;
         _pSessionFrm->_arBlackList = arBlackList;
+        //
         if(nullptr == _pSessionFrm->pSessions)
             _pSessionFrm->pSessions = dbPlatForm::instance().QueryImSessionInfos();
         else

@@ -17,12 +17,12 @@ enum Status
 	EM_STS_OFFLINE,
 };
 
-class StautsLabel : public QLabel
+class StatusLabel : public QLabel
 {
     Q_OBJECT
 public:
-    explicit StautsLabel(QWidget* parent);
-	~StautsLabel() override;
+    explicit StatusLabel(QWidget* parent);
+	~StatusLabel() override;
 
 public:
 	void setStatus(Status sts);
@@ -62,7 +62,7 @@ private:
 	QLabel*      _pLabelChatUser{};
     HeadPhotoLab*      _pLabelPlat{};
 	QLabel*      _pmood{};
-	StautsLabel*  _pStsLabel{};
+	StatusLabel*  _pStsLabel{};
 	QPushButton* _pBtnStructure{}; // 组织架构
 	QPushButton* _pBtnAddGroup{};  // 增加群聊/邀请加入群
 	QPushButton* _pBtnLock{};      //锁

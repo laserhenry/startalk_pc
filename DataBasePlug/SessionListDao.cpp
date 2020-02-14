@@ -106,9 +106,11 @@ bool SessionListDao::bulkInsertSessionInfo(const std::vector<QTalk::Entity::ImSe
         return false;
     }
 
-    std::string sql = "INSERT OR REPLACE INTO IM_SessionList(XmppId, RealJid, UserId, LastMessageId, "
+    std::string sql = "INSERT INTO IM_SessionList(XmppId, RealJid, UserId, LastMessageId, "
                       "LastUpdateTime, ChatType, ExtendedFlag, UnreadCount, MessageState ) "
-                      "VALUES(?,?,?,?,?,?,?,?,?)";
+                      "VALUES(?,?,?,?,?,?,?,?,?) "
+                      "ON CONFLICT(XmppId, RealJid) DO "
+                      "update set LastMessageId = ?, LastUpdateTime = ?, MessageState = ?";
 
     try {
         qtalk::sqlite::statement query(*_pSqlDb, sql);
@@ -123,6 +125,10 @@ bool SessionListDao::bulkInsertSessionInfo(const std::vector<QTalk::Entity::ImSe
             query.bind(7, imSessionInfo.ExtendedFlag);
             query.bind(8, imSessionInfo.UnreadCount);
             query.bind(9, imSessionInfo.MessageState);
+
+            query.bind(10, imSessionInfo.LastMessageId);
+            query.bind(11, imSessionInfo.LastUpdateTime);
+            query.bind(12, imSessionInfo.MessageState);
             bool sqlResult = query.executeStep();
             query.resetBindings();
             if (!sqlResult) {

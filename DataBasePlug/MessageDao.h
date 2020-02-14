@@ -6,7 +6,7 @@
 #endif
 
 #include "DaoInterface.h"
-#include "../QtUtil/Enum/im_enum.h"
+#include "../include/im_enum.h"
 #include "../entity/IM_Session.h"
 #include <vector>
 #include <string>
@@ -43,6 +43,7 @@ public:
                         std::vector<QTalk::Entity::ImMessageInfo> &msgList);
 
     long long getMaxTimeStampByChatType(QTalk::Enum::ChatType chatType);
+    long long getMaxTimeStamp();
 
     bool updateMState(const std::string &messageId, const QInt64 &time);
 
@@ -103,10 +104,12 @@ public:
     void updateMessageExtendInfo(const std::string& msgId, const std::string& info);
 
 public:
-    // 修正消息type
+    // fix type
     void fixMessageType();
     //
     void updateMessageReadFlags(const std::map<std::string, int>& readFlags);
+    // add flag (new / old by rool_back flag)
+    void addMessageFlag();
 };
 
 #endif // MESSAGEDAO_H

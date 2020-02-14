@@ -3,41 +3,11 @@
 
 #include <QColor>
 #include <QFont>
+#include <QMap>
 #include <QString>
-#include "../QtUtil/Enum/im_enum.h"
+#include "../include/im_enum.h"
 #include "../include/CommonDefine.h"
 
-enum MsgMask
-{
-	EM_MSGMASK_SENDING,
-	EM_MSGMASK_UNREAD,
-	EM_MSGMASK_READ,
-};
-
-// 宽高信息
-struct DstItemWH
-{
-	//
-	const int nRadius          = 3;	 // 圆角
-	const int nMarginLeft      = 5;	 // 左边距
-	const int nMarginRight     = 20; // 右边距
-	const int nMarginTopBottom = 9; //  上下边距
-	const int nIconWidth       = 30; // 头像大小
-	const int nSpace           = 6;	 //  通用间隔值
-	const int nLodingWidth     = 20; //  加载动画大小
-	const int nLineSpace       = 2; //   行间距
-	
-	int nContentHeight   = 0;	   //
-	int nContentWidth    = 0;	   //
-};
-
-// 
-struct PainterInfo
-{
-	QFont  font;
-	QColor penColor;
-	QColor backColor;
-};
 
 class QVBoxLayout;
 class StatusWgt;
@@ -61,6 +31,14 @@ struct StSubWgt
 	{
 
 	}
+};
+
+enum {
+    Type_Invalid,
+    Type_Text,
+    Type_Image,
+    Type_At,
+    Type_Url,
 };
 
 struct StTextMessage
@@ -109,5 +87,40 @@ struct StVideoMessage {
     qreal height {};
     bool newVideo{};
 };
+
+
+struct StNetMessageResult {
+    QString     msg_id{};
+    int         msg_type{};
+    int         type{};    //chat type
+    int         direction{};
+    int         state{}; // message state (0 unSend 1 send)
+    int         read_flag{}; // 0 default 1 send 2 read
+    qint64      time;
+    QString     from;
+    QString     to;
+    QString     body;
+    QString     extend_info;
+    QString     backup_info;
+    QString     xmpp_id;
+    QString     real_id;
+
+    QString     user_name;
+    QString     user_head;
+
+    // text message
+    std::vector<StTextMessage> text_messages;
+    // file info
+    StFileMessage file_info;
+    // common_trd
+    StCommonTrdMessage common_trd;
+    // code
+    StCodeMessage code;
+    // video
+    StVideoMessage video;
+    //
+    std::map<QString, QString> at_users; // id, name
+};
+Q_DECLARE_METATYPE(StNetMessageResult)
 
 #endif//_NATIVECHATSTRUCT_H_

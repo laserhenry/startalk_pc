@@ -118,7 +118,7 @@ private:
     QMap<QTalk::Entity::UID, QStandardItem *> _sessionMap; //
     NavigationMsgManager *_messageManager;
 private:
-    unsigned int _totalUnReadCount;
+    unsigned int _totalUnReadCount{};
 
 private:
 //    QVector<QString> _historyMessageId;

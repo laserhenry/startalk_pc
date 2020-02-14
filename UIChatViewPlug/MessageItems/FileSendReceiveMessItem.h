@@ -12,7 +12,7 @@ class FileSendReceiveMessItem : public MessageItemBase
 {
     Q_OBJECT
 public:
-    explicit FileSendReceiveMessItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent = Q_NULLPTR);
+    explicit FileSendReceiveMessItem(const StNetMessageResult &msgInfo, QWidget *parent = Q_NULLPTR);
     ~FileSendReceiveMessItem() override = default;
     // QWidget interface
 public:

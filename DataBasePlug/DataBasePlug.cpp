@@ -266,6 +266,12 @@ long long DataBasePlug::getMaxTimeStampByChatType(QTalk::Enum::ChatType chatType
     return ret;
 }
 
+long long DataBasePlug::getMaxTimeStamp()
+{
+    MessageDao dao(_dataBass);
+    return dao.getMaxTimeStamp();
+}
+
 /**
   * @函数名   
   * @功能描述 
@@ -719,6 +725,17 @@ void DataBasePlug::modifyDbByVersion() {
     {
         CacheDataDao dao(_dataBass);
         dao.clear_data_01();
+    }
+    // message 表增加字段
+    if(dbVersion <= 100011)
+    {
+        // time
+        QInt64 time = getMaxTimeStamp();
+        CacheDataDao cache(_dataBass);
+        cache.insertNewMessageTimestamp(time);
+        //
+        MessageDao dao(_dataBass);
+        dao.addMessageFlag();
     }
     //
     dbConfig.setDbVersion(Platform::instance().getDbVersion());

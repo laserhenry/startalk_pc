@@ -6,6 +6,7 @@
 #define QTALK_V2_LITEMESSAGEBOX_H
 
 #include <QFrame>
+#include <set>
 #include "customui_global.h"
 
 /**
@@ -30,6 +31,7 @@ public:
 public:
     static void success(const QString& message, int duration = 3000, QWidget* = nullptr);
     static void failed(const QString& message, int duration = 3000, QWidget* = nullptr);
+
 };
 
 

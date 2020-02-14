@@ -5,7 +5,7 @@
 #include "../entity/IM_Session.h"
 #include "../LogicManager/LogicManager.h"
 #include "../QtUtil/Entity/JID.h"
-#include "../QtUtil/Enum/im_enum.h"
+#include "../include/im_enum.h"
 #include "FileHelper.h"
 #include "OfflineMessageManager.h"
 #include "../Platform/Platform.h"
@@ -314,6 +314,14 @@ bool Communication::getNavInfo(const std::string &navAddr, QTalk::StNav &nav) {
                     nav.loginType = cJSON_SafeGetStringValue(login, "loginType");
                 }
             }
+            // client
+            if(cJSON_HasObjectItem(data, "client"))
+            {
+                cJSON *login = cJSON_GetObjectItem(data, "client");
+                if(cJSON_HasObjectItem(login,"rollback")){
+                    nav.rollback = cJSON_SafeGetBoolValue(login, "rollback");
+                }
+            }
             ret = true;
 
             cJSON_Delete(data);
@@ -362,6 +370,8 @@ void Communication::setLoginNav(const QTalk::StNav &nav) {
     NavigationManager::instance().setLoginType(nav.loginType);
     // video
     NavigationManager::instance().setVideoUrl(nav.videoUrl);
+    //
+    NavigationManager::instance().setRollbackFlag(nav.rollback);
 }
 
 /**
@@ -486,15 +496,12 @@ void Communication::synUsersUserStatus() {
 #endif
             std::set<std::string> users;
             LogicManager::instance()->getDatabase()->getCareUsers(users);
-
-            debug_log("will get user states count:{0}", users.size());
-
             std::set<std::string> tmpUsers;
             for(const auto& u : users)
             {
                 tmpUsers.insert(u);
 
-                if(tmpUsers.size() >= 300)
+                if(tmpUsers.size() >= 200)
                 {
                     if(_pOnLineManager)
                         _pOnLineManager->OnGetOnLineUser(tmpUsers);
@@ -821,7 +828,7 @@ void Communication::getNetEmoticon(GetNetEmoticon &e) {
     << "p=qtalk";
 #endif // _QCHAT
 
-    auto callback = [this, &e](int code, const std::string &responseData) {
+    auto callback = [&e](int code, const std::string &responseData) {
         if (code == 200) {
             cJSON *msgList = cJSON_Parse(responseData.c_str());
 
@@ -1108,7 +1115,10 @@ bool Communication::geiOaUiData(std::vector<QTalk::StOAUIData> &arOAUIData) {
                     for (; j < memberSize; j++) {
                         cJSON *memItem = cJSON_GetArrayItem(memberItems, j);
                         QTalk::StOAUIData::StMember member;
+
                         member.memberId = JSON::cJSON_SafeGetIntValue(memItem, "memberId");
+                        member.action_type = JSON::cJSON_SafeGetIntValue(memItem, "actionType");
+                        member.native_action_type = JSON::cJSON_SafeGetIntValue(memItem, "nativeAction");
                         member.memberName = JSON::cJSON_SafeGetStringValue(memItem, "memberName");
                         member.memberAction = JSON::cJSON_SafeGetStringValue(memItem, "memberAction");
                         member.memberIcon = JSON::cJSON_SafeGetStringValue(memItem, "memberIcon");
@@ -1209,6 +1219,7 @@ std::string Communication::getQchatQvt(const std::string &userName, const std::s
 }
 
 void Communication::getQchatTokenByQVT(const std::string &qvt,std::map<std::string,std::string> &userMap) {
+
 }
 
 void Communication::getNewLoginToken(const std::string u, const std::string p,std::map<std::string,std::string> &map) {
@@ -1264,7 +1275,7 @@ void Communication::getGroupCardInfo(std::shared_ptr<QTalk::Entity::ImGroupInfo>
     if (_pUserGroupManager) {
         std::string groupId = group->GroupId;
         // 获取最新
-        QTalk::Entity::JID jid(groupId.c_str());
+        QTalk::Entity::JID jid(groupId);
         std::string domian = jid.domainname();
         MapGroupCard mapGroupCard;
         mapGroupCard[domian].push_back(*group);
@@ -1729,7 +1740,12 @@ void Communication::updateTimeStamp()
         QInt64 timeStamp = 0;
         std::string configTimeStamp;
         //
-        LogicManager::instance()->getDatabase()->getConfig(DEM_MESSAGE_MAXTIMESTAMP, DEM_TWOPERSONCHAT, configTimeStamp);
+        auto* database = LogicManager::instance()->getDatabase();
+        if(!database) {
+            return;
+        }
+
+        database->getConfig(DEM_MESSAGE_MAXTIMESTAMP, DEM_TWOPERSONCHAT, configTimeStamp);
         if(configTimeStamp.empty())
             timeStamp = 0;
         else
@@ -1871,7 +1887,7 @@ void Communication::onUserJoinGroup(const std::string &groupId, const std::strin
     if (userInfo && !userInfo->Name.empty()) {
         member->nick = userInfo->Name;
     }
-    member->domain = QTalk::Entity::JID(memberId.data()).domainname();
+    member->domain = QTalk::Entity::JID(memberId).domainname();
     member->affiliation = affiliation;
     _pMsgManager->onGroupJoinMember(member);
 
@@ -1883,11 +1899,6 @@ void Communication::onStaffChanged()
     if (_pUserManager) {
         _pUserManager->getNewStructure(true);
     }
-}
-
-//
-std::string Communication::checkUpdater(int ver) {
-    return "";
 }
 
 //
@@ -1909,7 +1920,7 @@ void Communication::getMedalList()
     std::vector<QTalk::Entity::ImMedalList> medalList;
     std::set<std::string> imgs;
     int newVersion = 0;
-    auto call_back = [this, &medalList, &newVersion, &imgs](int code, const std::string& resData){
+    auto call_back = [ &medalList, &newVersion, &imgs](int code, const std::string& resData){
 
         if(resData.empty())
             return;
@@ -2011,7 +2022,7 @@ void Communication::getUserMedal(bool presence) {
     //
     std::vector<QTalk::Entity::ImUserStatusMedal> userMedals;
     int newVersion = 0;
-    auto call_back = [this, &userMedals, &newVersion](int code, const std::string& resData){
+    auto call_back = [ &userMedals, &newVersion](int code, const std::string& resData){
 
         if(resData.empty())
             return;
@@ -2105,7 +2116,7 @@ bool Communication::modifyUserMedalStatus(int medalId, bool wear) {
     cJSON_Delete(obj);
     //
     bool ret = false;
-    auto call_back = [this, &ret](int code, const std::string& resData){
+    auto call_back = [ &ret](int code, const std::string& resData){
 
         if(resData.empty())
             return;

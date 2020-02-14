@@ -102,13 +102,27 @@ namespace QTalk
         std::string qcGrabOrder;
 
         std::string loginType = "password";
+        //
+        bool rollback{};
     };
 
     struct StOAUIData
     {
         struct StMember
         {
-            int          memberId;
+            enum {
+                ACTION_TYPE_H5 = 0,
+                ACTION_TYPE_NATIVE = 1
+            };
+
+            enum {
+                NATIVE_TYPE_INVALID = 0,
+                NATIVE_TYPE_THROWING_SCREEN = 1
+            };
+
+            int          memberId{};
+            int          action_type{};
+            int          native_action_type{};
             std::string  memberName;
             std::string  memberIcon;
             std::string  memberAction;

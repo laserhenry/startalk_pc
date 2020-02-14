@@ -281,7 +281,7 @@ void FileRecordWnd::goSearch() {
             _pos += 15;
             searchInfo.key = _key;
             searchInfo.action = EM_ACTION_HS_FILE;
-            g_pMainPanel->getMessageManager()->sendSearch(searchInfo);
+            ChatMsgManager::sendSearch(searchInfo);
             _fileRecords.clear();
             for(const auto& it : searchInfo.searchRet)
             {

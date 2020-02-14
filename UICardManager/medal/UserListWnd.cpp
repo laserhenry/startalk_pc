@@ -58,7 +58,7 @@ void UserItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     QPainterPath path;
     path.addEllipse(headRect);
     painter->setClipPath(path);
-    auto image = QTalk::qimage::instance().loadPixmap(headPath, false);
+    auto image = QTalk::qimage::instance().loadImage(headPath, false);
     painter->drawPixmap(headRect, image);
 
     painter->restore();

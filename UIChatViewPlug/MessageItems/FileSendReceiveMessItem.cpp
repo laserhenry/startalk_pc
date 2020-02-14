@@ -47,7 +47,7 @@
 
 extern ChatViewMainPanel *g_pMainPanel;
 
-FileSendReceiveMessItem::FileSendReceiveMessItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent) :
+FileSendReceiveMessItem::FileSendReceiveMessItem(const StNetMessageResult &msgInfo, QWidget *parent) :
         MessageItemBase(msgInfo, parent),
         _contentTopFrm(Q_NULLPTR),
         _contentButtomFrm(Q_NULLPTR),
@@ -70,9 +70,9 @@ FileSendReceiveMessItem::FileSendReceiveMessItem(const QTalk::Entity::ImMessageI
     init();
     setData();
 
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         judgeFileIsUpLoad();
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         judgeFileIsDownLoad();
     }
 
@@ -106,7 +106,7 @@ QSize FileSendReceiveMessItem::itemWdtSize() {
 void FileSendReceiveMessItem::setProcess(double speed, double dtotal, double dnow, double utotal, double unow) {
 
     // 发送文件切换会话处理
-    if(QTalk::Entity::MessageDirectionSent == _msgDirection && utotal > 0)
+    if(QTalk::Entity::MessageDirectionSent == _msgInfo.direction && utotal > 0)
     {
         if(_resending && _resending->isVisible())
             _resending->setVisible(false);
@@ -150,11 +150,11 @@ void FileSendReceiveMessItem::setProcess(double speed, double dtotal, double dno
         isDownLoad = true;
         isUpLoad = true;
 
-        if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+        if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
             _contentButtomFrmMessLab->setText(tr("上传成功"));
             _contentButtomFrmProgressBar->hide();
             _contentButtomFrmOPenFileBtn->show();
-        } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+        } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
             _contentButtomFrmMessLab->setText(tr("已下载"));
             _contentButtomFrmDownLoadBtn->hide();
             _contentButtomFrmMenuBtn->show();
@@ -178,7 +178,7 @@ void FileSendReceiveMessItem::setProcess(double speed, double dtotal, double dno
             }
 
             if(pThis && !filePath.isEmpty())
-                g_pMainPanel->makeFileLink(filePath, pThis->_msgInfo.FileMd5.data());
+                g_pMainPanel->makeFileLink(filePath, pThis->_msgInfo.file_info.fileMd5.toStdString().data());
 
             if (pThis && (pThis->_openDir || pThis->_openFile)) {
                 if(!filePath.isEmpty())
@@ -279,7 +279,7 @@ void FileSendReceiveMessItem::initLayout() {
     _contentTopFrmFileNameLabHeight = 18;
     _contentTopFrmFileSizeLabHeight = 16;
     _contentTopFrmHlaySpacing = 19;
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         _headPixSize = QSize(0, 0);
         _nameLabHeight = 0;
         _leftMargin = QMargins(0, 0, 0, 0);
@@ -287,7 +287,7 @@ void FileSendReceiveMessItem::initLayout() {
         _leftSpacing = 0;
         _rightSpacing = 0;
         initSendLayout();
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         _headPixSize = QSize(28, 28);
         _nameLabHeight = 16;
         _leftMargin = QMargins(0, 10, 0, 0);
@@ -296,7 +296,7 @@ void FileSendReceiveMessItem::initLayout() {
         _rightSpacing = 4;
         initReceiveLayout();
     }
-    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.type) {
         _nameLabHeight = 0;
     }
     setContentsMargins(0, 5, 0, 5);
@@ -372,7 +372,7 @@ void FileSendReceiveMessItem::initReceiveLayout() {
         _headLab = new HeadPhotoLab;
     }
     _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(QString::fromStdString(_msgInfo.HeadSrc), HEAD_RADIUS);
+    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
     _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -385,8 +385,8 @@ void FileSendReceiveMessItem::initReceiveLayout() {
     rightLay->setContentsMargins(_rightMargin);
     rightLay->setSpacing(_rightSpacing);
     mainLay->addLayout(rightLay);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
         auto* nameLay = new QHBoxLayout;
         nameLay->setMargin(0);
         nameLay->setSpacing(5);
@@ -405,7 +405,7 @@ void FileSendReceiveMessItem::initReceiveLayout() {
 
     auto *horizontalSpacer = new QSpacerItem(40, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
     mainLay->addItem(horizontalSpacer);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type) {
         mainLay->setStretch(0, 0);
         mainLay->setStretch(1, 0);
         mainLay->setStretch(2, 1);
@@ -664,13 +664,13 @@ void FileSendReceiveMessItem::initReceiveContentButtomFrmLayout() {
   */
 void FileSendReceiveMessItem::setData() {
     if (_contentTopFrmFileNameLab) {
-        _contentTopFrmFileNameLab->setText(QString::fromStdString(_msgInfo.FileName));
+        _contentTopFrmFileNameLab->setText(_msgInfo.file_info.fileName);
     }
     if (_contentTopFrmFileSizeLab) {
-        _contentTopFrmFileSizeLab->setText(QString::fromStdString(_msgInfo.FileSize));
+        _contentTopFrmFileSizeLab->setText(_msgInfo.file_info.fileSize);
     }
 
-    QFileInfo fileinfo(QString::fromStdString(_msgInfo.FileName));
+    QFileInfo fileinfo(_msgInfo.file_info.fileName);
     QString suffix = fileinfo.suffix().toLower();
     if (!_fileIcons.value(suffix).isEmpty()) {
         _contentTopFrmIconLab->setHead(_fileIcons.value(suffix), _contentTopFrmIconLabSize.width() / 2, false, false, true);
@@ -678,7 +678,7 @@ void FileSendReceiveMessItem::setData() {
         _contentTopFrmIconLab->setHead(FILEICON_UNKNOWN, _contentTopFrmIconLabSize.width() / 2, false, false, true);
     }
     //
-    _contentTopFrmFileNameLab->setToolTip(QString::fromStdString(_msgInfo.FileName));
+    _contentTopFrmFileNameLab->setToolTip(_msgInfo.file_info.fileName);
 }
 
 /**
@@ -712,7 +712,7 @@ void FileSendReceiveMessItem::judgeFileIsDownLoad()
   * @date 2018.10.25
   */
 void FileSendReceiveMessItem::judgeFileIsUpLoad() {
-    if (!_msgInfo.FileUrl.empty()) {
+    if (!_msgInfo.file_info.fileLink.isEmpty()) {
         isUpLoad = true;
         _contentButtomFrmMessLab->setText(tr("上传成功"));
         _contentButtomFrmProgressBar->hide();
@@ -731,9 +731,7 @@ void FileSendReceiveMessItem::judgeFileIsUpLoad() {
   * @date 2018.10.22
   */
 void FileSendReceiveMessItem::sendDownLoadFile(const std::string &strLocalPath, const std::string &strUri) {
-    if (g_pMainPanel && g_pMainPanel->getMessageManager()) {
-        g_pMainPanel->getMessageManager()->sendDownLoadFile(strLocalPath, strUri, _msgInfo.MsgId);
-    }
+    ChatMsgManager::sendDownLoadFile(strLocalPath, strUri, _msgInfo.msg_id.toStdString());
 }
 
 /**
@@ -757,10 +755,10 @@ void FileSendReceiveMessItem::downLoadFile()
     _contentButtomFrmProgressBar->show();
     _contentButtomFrmOPenFileBtn->hide();
 
-    std::string localPath = g_pMainPanel->getFileMsgLocalPath(_msgInfo.MsgId);
-    std::string netPath = _msgInfo.FileUrl;
+    std::string localPath = g_pMainPanel->getFileMsgLocalPath(_msgInfo.msg_id.toStdString());
+    std::string netPath = _msgInfo.file_info.fileLink.toStdString();
     if (localPath.empty()) {
-        QString fileName = _msgInfo.FileName.data();
+        QString fileName = _msgInfo.file_info.fileName;
         fileName.replace(QRegExp("[\"|\\<|\\>|\\“|\\”|\\、|\\╲|\\/|\\\\|\\:|\\*|\\?]"), "");
         std::ostringstream src;
         src << AppSetting::instance().getFileSaveDirectory()
@@ -792,7 +790,7 @@ void FileSendReceiveMessItem::downLoadFile()
     localPath = qLocalFilePath.toStdString();
     sendDownLoadFile(localPath, netPath);
     // 回写配置文件
-    g_pMainPanel->setFileMsgLocalPath(_msgInfo.MsgId, localPath);
+    g_pMainPanel->setFileMsgLocalPath(_msgInfo.msg_id.toStdString(), localPath);
 }
 
 /**
@@ -804,10 +802,10 @@ void FileSendReceiveMessItem::downLoadFile()
   */
 QString FileSendReceiveMessItem::getLocalFilePath()
 {
-    QString fullFileName = QString::fromStdString(g_pMainPanel->getFileMsgLocalPath(_msgInfo.MsgId));
+    QString fullFileName = QString::fromStdString(g_pMainPanel->getFileMsgLocalPath(_msgInfo.msg_id.toStdString()));
 	if(fullFileName.isEmpty() || !QFile::exists(fullFileName))
     {
-	    QString linkFile = g_pMainPanel->getFileLink(_msgInfo.FileMd5.data());
+	    QString linkFile = g_pMainPanel->getFileLink(_msgInfo.file_info.fileMd5);
 #ifdef _WINDOWS
 		linkFile.append(".lnk");
 #endif
@@ -866,11 +864,11 @@ void FileSendReceiveMessItem::onSaveAsAct() {
     QString filePath = getLocalFilePath();
     QFileInfo fileInfo(filePath);
 
-	QString suffix = QFileInfo(_msgInfo.FileName.data()).suffix();
+	QString suffix = QFileInfo(_msgInfo.file_info.fileName).suffix();
 	QString historyPath = QString::fromStdString(Platform::instance().getHistoryDir());
 	QString fileName = QFileDialog::getSaveFileName(this,
 		tr("另存为"),
-		historyPath + "/" + QString::fromStdString(_msgInfo.FileName),
+		historyPath + "/" + _msgInfo.file_info.fileName,
 		tr("File (*.%1)").arg(suffix));
 	if (fileName.isEmpty())
 		return;
@@ -878,7 +876,7 @@ void FileSendReceiveMessItem::onSaveAsAct() {
     if(!filePath.isEmpty() && fileInfo.exists())
     {
         std::string fileMd5 = QTalk::utils::getFileMd5(filePath.toLocal8Bit().data());
-        if(_msgInfo.FileMd5 == fileMd5)
+        if(_msgInfo.file_info.fileMd5.toStdString() == fileMd5)
         {
             Platform::instance().setHistoryDir(QFileInfo(fileName).absoluteDir().absolutePath().toStdString());
 
@@ -888,7 +886,7 @@ void FileSendReceiveMessItem::onSaveAsAct() {
         }
     }
     // 下载文件
-	g_pMainPanel->setFileMsgLocalPath(_msgInfo.MsgId, fileName.toStdString());
+	g_pMainPanel->setFileMsgLocalPath(_msgInfo.msg_id.toStdString(), fileName.toStdString());
     downLoadFile();
 }
 

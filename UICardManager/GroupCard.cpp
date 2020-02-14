@@ -333,7 +333,7 @@ void GroupCard::showGroupMember(const std::map<std::string, QTalk::StUserCard>& 
         if(name.empty())
             name = it->second.userName;
         if(name.empty())
-            name = QTalk::Entity::JID(it->first.data()).username();
+            name = QTalk::Entity::JID(it->first).username();
 
         QString xmppId = QString::fromStdString(it->first);
         QString userName = QString::fromStdString(name);
@@ -344,11 +344,11 @@ void GroupCard::showGroupMember(const std::map<std::string, QTalk::StUserCard>& 
         if(userRole.find(it->first) != userRole.end())
             role = userRole.at(it->first);
         //
-        bool isOnline = Platform::instance().isOnline(QTalk::Entity::JID(it->first.c_str()).basename());
+        bool isOnline = Platform::instance().isOnline(QTalk::Entity::JID(it->first).basename());
 
         if(role == 1)
         {
-            std::string userId = QTalk::Entity::JID(it->first.c_str()).username();
+            std::string userId = QTalk::Entity::JID(it->first).username();
             std::string selfId = Platform::instance().getSelfUserId();
             _pDestroyGroupBtn->setVisible(userId == selfId);
         }

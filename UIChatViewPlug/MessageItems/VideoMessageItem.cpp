@@ -64,7 +64,7 @@ protected:
         painter.setClipPath(path);
         if(!_imgPath.isEmpty())
         {
-            QPixmap pix = QTalk::qimage::instance().loadPixmap(_imgPath, false);
+            QPixmap pix = QTalk::qimage::instance().loadImage(_imgPath, false);
             painter.drawPixmap(0, 0, this->width(), this->height(), pix);
         }
 
@@ -98,7 +98,7 @@ protected:
     }
 };
 
-VideoMessageItem::VideoMessageItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent)
+VideoMessageItem::VideoMessageItem(const StNetMessageResult &msgInfo, QWidget *parent)
         : MessageItemBase(msgInfo, parent),
           _videoImgLab(nullptr),
           _contentLab(nullptr) {
@@ -125,7 +125,7 @@ void VideoMessageItem::initLayout() {
     _contentSize = QSize(271, 84);
     _mainMargin = QMargins(15, 0, 20, 0);
     _mainSpacing = 10;
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         _headPixSize = QSize(0, 0);
         _nameLabHeight = 0;
         _leftMargin = QMargins(0, 0, 0, 0);
@@ -133,7 +133,7 @@ void VideoMessageItem::initLayout() {
         _leftSpacing = 0;
         _rightSpacing = 0;
         initSendLayout();
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         _headPixSize = QSize(28, 28);
         _nameLabHeight = 16;
         _leftMargin = QMargins(0, 10, 0, 0);
@@ -142,7 +142,7 @@ void VideoMessageItem::initLayout() {
         _rightSpacing = 4;
         initReceiveLayout();
     }
-    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.type) {
         _nameLabHeight = 0;
     }
     setContentsMargins(0, 5, 0, 5);
@@ -215,7 +215,7 @@ void VideoMessageItem::initReceiveLayout() {
         _headLab = new HeadPhotoLab;
     }
     _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(QString::fromStdString(_msgInfo.HeadSrc), HEAD_RADIUS);
+    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
     _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -228,8 +228,8 @@ void VideoMessageItem::initReceiveLayout() {
     rightLay->setContentsMargins(_rightMargin);
     rightLay->setSpacing(_rightSpacing);
     mainLay->addLayout(rightLay);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
         auto* nameLay = new QHBoxLayout;
         nameLay->setMargin(0);
         nameLay->setSpacing(5);
@@ -248,7 +248,7 @@ void VideoMessageItem::initReceiveLayout() {
 
     auto *horizontalSpacer = new QSpacerItem(40, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
     mainLay->addItem(horizontalSpacer);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type) {
         mainLay->setStretch(0, 0);
         mainLay->setStretch(1, 0);
         mainLay->setStretch(2, 1);
@@ -262,7 +262,7 @@ void VideoMessageItem::initReceiveLayout() {
 
 void VideoMessageItem::initContentLayout() {
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.ExtendedInfo.data());
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.extend_info.toUtf8());
     if (jsonDocument.isNull()) {
 
         auto *vBox = new QVBoxLayout;
@@ -273,7 +273,7 @@ void VideoMessageItem::initContentLayout() {
         _contentLab->setObjectName("contentLab");
         _contentLab->setWordWrap(true);
         _contentLab->setFixedWidth(_contentSize.width() - 20);
-        _contentLab->setText(QString::fromStdString(_msgInfo.Content));
+        _contentLab->setText(_msgInfo.body);
         _contentLab->adjustSize();
         vBox->addWidget(_contentLab);
 
@@ -297,7 +297,7 @@ void VideoMessageItem::initContentLayout() {
             cBox->setMargin(0);
             _contentFrm->setLayout(cBox);
 
-            maskFrame = new VideoMaskFrame(_msgInfo.Direction);
+            maskFrame = new VideoMaskFrame(_msgInfo.direction);
             maskFrame->setFixedSize(contentSize);
             cBox->addWidget(maskFrame);
 
@@ -347,7 +347,7 @@ void VideoMessageItem::initContentLayout() {
                     maskFrame->setImage(placeHolder);
                     QPointer<VideoMessageItem> pThis(this);
                     std::thread([pThis, thumbUrl](){
-                        std::string downloadFile = g_pMainPanel->getMessageManager()->getLocalFilePath(thumbUrl.toStdString());
+                        std::string downloadFile = ChatMsgManager::getLocalFilePath(thumbUrl.toStdString());
                         if(pThis && !downloadFile.empty())
                                 emit pThis->sgDownloadedIcon(QString::fromStdString(downloadFile));
                     }).detach();
@@ -373,7 +373,7 @@ void VideoMessageItem::initContentLayout() {
  */
 void VideoMessageItem::playVideo() {
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.ExtendedInfo.data());
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.extend_info.toUtf8());
     if (!jsonDocument.isNull()) {
         QJsonObject jsonObject = jsonDocument.object();
         QString videoUrl = jsonObject.value("FileUrl").toString();
@@ -407,8 +407,8 @@ void VideoMessageItem::playVideo() {
                 {
                     btnLable->setVisible(false);
                     maskFrame->setDownload(false);
-                    g_pMainPanel->getMessageManager()->sendDownLoadFile(localVideo.toStdString(),
-                                                                        videoUrl.toStdString(), _msgInfo.MsgId);
+                    ChatMsgManager::sendDownLoadFile(localVideo.toStdString(),
+                                                                        videoUrl.toStdString(), _msgInfo.msg_id.toStdString());
                 }
                 else
                 {

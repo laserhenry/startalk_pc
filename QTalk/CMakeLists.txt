@@ -82,7 +82,7 @@ set(SOURCE_FILES
         NoOperationThread.cpp
         NoOperationThread.h
         LocalServer.cpp
-        LocalServer.h)
+        LocalServer.h SystemTrayPopWnd.cpp SystemTrayPopWnd.h)
 
 set(EXECUTABLE_OUTPUT_PATH ../bin)
 set(CMAKE_DEBUG_POSTFIX "d")

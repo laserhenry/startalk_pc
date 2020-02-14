@@ -26,7 +26,7 @@ namespace QTalk {
 		return *_qimage;
 	}
     //
-    QPixmap qimage::loadPixmap(const QString &srcPath, bool save, bool scaled, int width, int height) {
+    QPixmap qimage::loadImage(const QString &srcPath, bool save, bool scaled, int width, int height) {
 
         if (srcPath.isEmpty())
             return QPixmap();
@@ -65,7 +65,7 @@ namespace QTalk {
 
     QPixmap qimage::loadCirclePixmap(const QString &srcPath, const int &radius, bool isGrey) {
 
-        QPixmap dest = loadPixmap(srcPath, true);
+        QPixmap dest = loadImage(srcPath, true);
         if (dest.isNull())
             return dest;
 

@@ -20,7 +20,7 @@
 
 extern ChatViewMainPanel *g_pMainPanel;
 
-NoteMessageItem::NoteMessageItem(const QTalk::Entity::ImMessageInfo &msgInfo,QWidget *parent):
+NoteMessageItem::NoteMessageItem(const StNetMessageResult &msgInfo, QWidget *parent):
         MessageItemBase(msgInfo,parent),
         titleLabel(Q_NULLPTR),
         iconLabel(Q_NULLPTR),
@@ -32,18 +32,19 @@ NoteMessageItem::~NoteMessageItem(){
 
 }
 
-void loadUrl(const QTalk::Entity::ImMessageInfo& msgInfo)
+void loadUrl(const StNetMessageResult& msgInfo)
 {
 
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(msgInfo.ExtendedInfo.data());
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(msgInfo.extend_info.toUtf8());
     if(jsonDocument.isNull()){
-        jsonDocument = QJsonDocument::fromJson(msgInfo.Content.data());
+        jsonDocument = QJsonDocument::fromJson(msgInfo.body.toUtf8());
     }
     if (!jsonDocument.isNull()) {
         QJsonObject jsonObject = jsonDocument.object();
         QJsonObject data = jsonObject.value("data").toObject();
         QString linkUrl = data.value("webDtlUrl").toString();
-        QDesktopServices::openUrl(QUrl(linkUrl));
+        QString touchDtlUrl = data.value("touchDtlUrl").toString();
+        QDesktopServices::openUrl(QUrl(linkUrl.isEmpty() ? touchDtlUrl : linkUrl));
     }
 }
 
@@ -55,7 +56,7 @@ void NoteMessageItem::initLayout() {
     _contentSize = QSize(350, 0);
     _mainMargin = QMargins(15, 0, 20, 0);
     _mainSpacing = 10;
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         _headPixSize = QSize(0, 0);
         _nameLabHeight = 0;
         _leftMargin = QMargins(0, 0, 0, 0);
@@ -63,7 +64,7 @@ void NoteMessageItem::initLayout() {
         _leftSpacing = 0;
         _rightSpacing = 0;
         initSendLayout();
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         _headPixSize = QSize(28, 28);
         _nameLabHeight = 16;
         _leftMargin = QMargins(0, 10, 0, 0);
@@ -72,16 +73,16 @@ void NoteMessageItem::initLayout() {
         _rightSpacing = 4;
         initReceiveLayout();
     }
-    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.type) {
         _nameLabHeight = 0;
     }
     setContentsMargins(0, 5, 0, 5);
 }
 
 void NoteMessageItem::initContentLayout() {
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.ExtendedInfo.data());
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.extend_info.toUtf8());
     if(jsonDocument.isNull()){
-        jsonDocument = QJsonDocument::fromJson(_msgInfo.Content.data());
+        jsonDocument = QJsonDocument::fromJson(_msgInfo.body.toUtf8());
     }
 
     if(!jsonDocument.isNull()){
@@ -125,21 +126,21 @@ void NoteMessageItem::initContentLayout() {
 
         connect(this, &NoteMessageItem::sgDownloadedIcon, this, &NoteMessageItem::setIcon, Qt::QueuedConnection);
         QString placeHolder = ":/chatview/image1/defaultShareIcon.png";
-        QPixmap defaultPix = QTalk::qimage::instance().loadPixmap(placeHolder, true, true, 80, 40);
+        QPixmap defaultPix = QTalk::qimage::instance().loadImage(placeHolder, true, true, 80, 40);
         if (imgUrl.isEmpty()) {
             iconLabel->setPixmap(defaultPix);
         } else {
             std::string imgPath = QTalk::GetImagePathByUrl(imgUrl.toStdString());
             if(QFile::exists(imgPath.data()))
             {
-                iconLabel->setPixmap(QTalk::qimage::instance().loadPixmap(imgPath.data(), false, true, 80, 40));
+                iconLabel->setPixmap(QTalk::qimage::instance().loadImage(imgPath.data(), false, true, 80, 40));
             }
             else
             {
                 iconLabel->setPixmap(defaultPix);
                 QPointer<NoteMessageItem> pThis(this);
                 std::thread([pThis, imgUrl](){
-                    std::string downloadFile = g_pMainPanel->getMessageManager()->getLocalFilePath(imgUrl.toStdString());
+                    std::string downloadFile = ChatMsgManager::getLocalFilePath(imgUrl.toStdString());
                     if(pThis && !downloadFile.empty())
                             emit pThis->sgDownloadedIcon(QString::fromStdString(downloadFile));
                 }).detach();
@@ -212,7 +213,7 @@ void NoteMessageItem::initReceiveLayout() {
         _headLab = new HeadPhotoLab;
     }
     _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(QString::fromStdString(_msgInfo.HeadSrc), HEAD_RADIUS);
+    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
     _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -225,8 +226,8 @@ void NoteMessageItem::initReceiveLayout() {
     rightLay->setContentsMargins(_rightMargin);
     rightLay->setSpacing(_rightSpacing);
     mainLay->addLayout(rightLay);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
         auto* nameLay = new QHBoxLayout;
         nameLay->setMargin(0);
         nameLay->setSpacing(5);
@@ -246,7 +247,7 @@ void NoteMessageItem::initReceiveLayout() {
 
     auto *horizontalSpacer = new QSpacerItem(40, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
     mainLay->addItem(horizontalSpacer);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type) {
         mainLay->setStretch(0, 0);
         mainLay->setStretch(1, 0);
         mainLay->setStretch(2, 1);
@@ -280,6 +281,6 @@ void NoteMessageItem::mousePressEvent(QMouseEvent *event) {
 }
 
 void NoteMessageItem::setIcon(const QString &iconPath) {
-    QPixmap pixmap = QTalk::qimage::instance().loadPixmap(iconPath, false, true, 80, 40);
+    QPixmap pixmap = QTalk::qimage::instance().loadImage(iconPath, false, true, 80, 40);
     iconLabel->setPixmap(pixmap);
 }

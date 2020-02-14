@@ -36,7 +36,7 @@ void PluginManager::Init() {
 void PluginManager::LoadPluginAllQt() {
     //
     QJsonObject obj = Get("PluginsQt").toObject();
-            foreach (QString plugkey, obj.keys()) {
+        for (const QString& plugkey : obj.keys()) {
 #ifdef _MACOS
 #ifdef QT_NO_DEBUG
             QString plugin = _pluginPath + "lib" + obj.value(plugkey).toString() + ".dylib";
@@ -60,16 +60,14 @@ void PluginManager::LoadPluginAllQt() {
 #endif
 
             QFileInfo file(plugin);
-            qDebug() << "plugin name:  " << plugin;
             QString filepath = file.absoluteFilePath();
             if (file.exists()) {
-                std::cout << "plugin has been found:  " << filepath.toStdString() << std::endl;
-                QPluginLoader *loader = new QPluginLoader(plugin);
-
+                qInfo() << "plugin has been found:  " << filepath;
+                auto *loader = new QPluginLoader(plugin);
                 _pluginRegisterQt.insert(plugkey, loader);
 
             } else {
-                std::cout << "plugin file is not exists... path: " << filepath.toStdString() << std::endl;
+                qInfo() << "plugin file is not exists... path: " << filepath;
             }
         }
 }
@@ -102,7 +100,7 @@ bool PluginManager::LoadPluginQt(const QString &key, const QString &PluginAllPat
   * @date 2018.9.11
   */
 void PluginManager::UnloadPluginAllQt() {
-            foreach (QPluginLoader *loader, _pluginRegisterQt.values()) {
+        for (QPluginLoader *loader: _pluginRegisterQt.values()) {
             loader->unload();
             delete loader;
         }
@@ -184,7 +182,7 @@ QObject *PluginManager::GetPluginInstanceQt(const QString &key) {
   */
 std::shared_ptr<QMap<QString, QObject *> > PluginManager::GetAllPluginInstanceQt() const {
     std::shared_ptr<QMap<QString, QObject *> > plugins(new QMap<QString, QObject *>);
-            foreach (QString pluginName, _pluginRegisterQt.keys()) {
+        for (QString pluginName : _pluginRegisterQt.keys()) {
             QPluginLoader *pluginloader = _pluginRegisterQt.value(pluginName);
             if (pluginloader->instance()) {
                 plugins->insert(pluginName, pluginloader->instance());

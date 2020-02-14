@@ -3,24 +3,34 @@
 //
 
 #include "MessageAnalysis.h"
-#include "../../Emoticon/EmoticonMainWgt.h"
-#include "../../Platform/Platform.h"
+#include "../Emoticon/EmoticonMainWgt.h"
+#include "../Platform/Platform.h"
 #include <QFileInfo>
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonObject>
+#include <QJsonArray>
 #include <ChatUtil.h>
 
 namespace QTalk {
 
-    void analysisMessage(StNetSearchResult &info)
+    void analysisMessage(StNetMessageResult &info)
     {
         switch (info.msg_type)
         {
             case QTalk::Entity::MessageTypeGroupNotify:
+
+            case QTalk::Entity::MessageTypeRobotTurnToUser:
+            case QTalk::Entity::MessageTypeRobotAnswerList:
+            {
+                break;
+            }
             case QTalk::Entity::MessageTypeRevoke:
             {
+
+                QString content = QObject::tr("%1撤回了一条消息").arg(info.from == Platform::instance().getSelfXmppId().data() ?
+                                                               QObject::tr("你") : info.user_name);
+                info.body = content;
                 break;
             }
             case QTalk::Entity::MessageTypeFile:
@@ -63,17 +73,57 @@ namespace QTalk {
             {
                 qWarning() << "------ default message type " << info.msg_type;
             }
+            case QTalk::Entity::MessageTypeGroupAt:
+            {
+                auto doc = QJsonDocument::fromJson(info.backup_info.toUtf8());
+                if(doc.isNull())
+                {
+
+                }
+                else
+                {
+                    auto ary = doc.array();
+                    for(const auto& item : ary)
+                    {
+                        auto obj = item.toObject();
+                        int objType = obj.value("type").toInt();
+                        if(objType == 10001 )
+                        {
+                            auto data = obj.value("data").toArray();
+                            for(const auto& at : data)
+                            {
+                                auto atObj = at.toObject();
+                                QString id = atObj.value("jid").toString();
+                                QString text = atObj.value("text").toString();
+                                info.at_users[id] = text;
+                            }
+                        }
+                    }
+                }
+            }
             case QTalk::Entity::MessageTypeText:
             case QTalk::Entity::MessageTypePhoto:
-            case QTalk::Entity::MessageTypeGroupAt:
             case QTalk::Entity::MessageTypeImageNew:
             case QTalk::Entity::MessageTypeRobotAnswer:
-                QTalk::analysisTextMessage(info.body, info.extend_info, info.text_messages);
+            {
+                bool isSendMessage = info.direction == QTalk::Entity::MessageDirectionSent && info.state == 0;
+                if(isSendMessage && info.body.isEmpty())
+                {
+                    analysisSendTextMessage(info.extend_info, info.text_messages);
+                }
+                else
+                {
+                    if(info.body.isEmpty() && !info.extend_info.isEmpty())
+                        analysisSendTextMessage(info.extend_info, info.text_messages);
+                    else
+                        analysisTextMessage(info.body,info.text_messages, info.at_users);
+                }
                 break;
+            }
         }
     }
 
-    void analysisTextMessage(const QString& content, const QString& extendInfo, std::vector<StTextMessage>& messages)
+    void analysisTextMessage(const QString& content, std::vector<StTextMessage>& messages, const std::map<QString, QString>& atUsers)
     {
         QRegExp regExp("\\[obj type=[\\\\]?\"([^\"]*)[\\\\]?\" value=[\\\\]?\"([^\"]*)[\\\\]?\"(.*)\\]");
         regExp.setMinimal(true);
@@ -84,7 +134,7 @@ namespace QTalk {
             // 前面的文本
             QString text = content.mid(prePos, pos - prePos); // 取匹配开始位置到匹配到的位置文本
             if (!text.isEmpty())
-                analysisLinkMessage(text, messages);
+                analysisLinkMessage(text, messages, atUsers);
 
             QString item = regExp.cap(0); // 符合条件的整个字符串
             QString type = regExp.cap(1); // 多媒体类型
@@ -115,7 +165,6 @@ namespace QTalk {
 
                         emoMsg.imageWidth = emoMsg.imageHeight = 50;
 //                        downloadEmoticon(msgId.data(), pkgid, shortCut);
-
                     }
                     else
                     {
@@ -156,10 +205,81 @@ namespace QTalk {
 
         QString lastStr = content.mid(prePos);
         if (!lastStr.isEmpty())
-            analysisLinkMessage(lastStr, messages);
+            analysisLinkMessage(lastStr, messages, atUsers);
     }
 
-    void analysisLinkMessage(const QString &text, std::vector<StTextMessage>& messages)
+    void  analysisSendTextMessage(const QString& extendInfo, std::vector<StTextMessage>& messages)
+    {
+        auto document = QJsonDocument::fromJson(extendInfo.toUtf8());
+        if(document.isNull()){
+
+        }
+        else
+        {
+            QJsonArray array = document.array();
+            for(auto && i : array)
+            {
+                QJsonObject obj = i.toObject();
+                int key = obj.value("key").toInt();
+                QString value = obj.value("value").toString();
+                switch (key)
+                {
+                    case Type_Text:
+                    {
+//                        analysisLinkMessage(value, messages);
+                        analysisTextMessage(value, messages);
+                        break;
+                    }
+                    case Type_Image:
+                    {
+                        StTextMessage imageMsg(StTextMessage::EM_IMAGE);
+                        QFileInfo info(value);
+                        if(!info.exists() || info.isDir())
+                        {
+                            imageMsg.content = ":/chatview/image1/default.png";
+                            imageMsg.imageWidth = imageMsg.imageHeight = 200;
+                        }
+                        else
+                        {
+                            imageMsg.content = value;
+                            QPixmap pixmap(value);
+                            imageMsg.imageWidth = pixmap.width();
+                            imageMsg.imageHeight = pixmap.height();
+                            QTalk::Image::scaImageSize(imageMsg.imageWidth, imageMsg.imageHeight);
+                        }
+
+                        messages.push_back(imageMsg);
+                        break;
+                    }
+                    case Type_At:
+                    {
+                        if ( Platform::instance().getSelfName().data() == value) {
+                            StTextMessage atMsg(StTextMessage::EM_ATMSG);
+                            atMsg.content = QString("@%1 ").arg(value);
+                            messages.push_back(atMsg);
+                        } else {
+                            StTextMessage textMsg(StTextMessage::EM_TEXT);
+                            textMsg.content = QString("@%1 ").arg(value);
+                            messages.push_back(textMsg);
+                        }
+                        break;
+                    }
+                    case Type_Url:
+                    {
+                        StTextMessage linkMsg(StTextMessage::EM_LINK);
+                        linkMsg.content = value;
+                        messages.push_back(linkMsg);
+                        break;
+                    }
+                    case Type_Invalid:
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
+    void analysisLinkMessage(const QString &text, std::vector<StTextMessage>& messages, const std::map<QString, QString>& atUsers)
     {
         if (!text.isEmpty()) {
             // 对于没有安装[obj]格式发送的链接 进行转换
@@ -172,9 +292,7 @@ namespace QTalk {
 
                 if (pos - prePos > 0) {
                     QString tmpText = text.mid(prePos, pos - prePos); // 取匹配开始位置到匹配到的位置文本
-                    StTextMessage textMsg(StTextMessage::EM_TEXT);
-                    textMsg.content = tmpText;
-                    messages.push_back(textMsg);
+                    analysisAtMessage(tmpText, messages, atUsers);
                 }
 
                 StTextMessage linkMsg(StTextMessage::EM_LINK);
@@ -188,10 +306,59 @@ namespace QTalk {
 
             if (prePos <= text.size() - 1) {
                 QString lastStr = text.mid(prePos);
-                StTextMessage textMsg(StTextMessage::EM_TEXT);
-                textMsg.content = lastStr;
-                messages.push_back(textMsg);
+                analysisAtMessage(lastStr, messages, atUsers);
             }
+        }
+    }
+
+    //
+    void analysisAtMessage(const QString& content, std::vector<StTextMessage>& messages, const std::map<QString, QString>& atUsers)
+    {
+        auto tmpStr = QString("@%1 ").arg(Platform::instance().getSelfName().data());
+        static QString allStr = "@all ";
+        // type groupAt
+        if((!atUsers.empty() &&
+           atUsers.find(Platform::instance().getSelfXmppId().data()) != atUsers.end()) || content.contains(tmpStr))
+        {
+            auto blocks = content.split(tmpStr);
+            for(auto it = blocks.begin(); it != blocks.end();)
+            {
+                StTextMessage textMsg(StTextMessage::EM_TEXT);
+                textMsg.content = *it;
+                messages.push_back(textMsg);
+                it++;
+
+                if(it != blocks.end())
+                {
+                    StTextMessage atMsg(StTextMessage::EM_ATMSG);
+                    atMsg.content = tmpStr;
+                    messages.push_back(atMsg);
+                }
+            }
+        }
+        else if(content.contains(allStr))
+        {
+            auto blocks = content.split(allStr);
+            for(auto it = blocks.begin(); it != blocks.end();)
+            {
+                StTextMessage textMsg(StTextMessage::EM_TEXT);
+                textMsg.content = *it;
+                messages.push_back(textMsg);
+                it++;
+
+                if(it != blocks.end())
+                {
+                    StTextMessage atMsg(StTextMessage::EM_ATMSG);
+                    atMsg.content = allStr;
+                    messages.push_back(atMsg);
+                }
+            }
+        }
+        else
+        {
+            StTextMessage textMsg(StTextMessage::EM_TEXT);
+            textMsg.content = content;
+            messages.push_back(textMsg);
         }
     }
 
@@ -279,7 +446,7 @@ namespace QTalk {
         }
     }
 
-    void analysisFileMessage(const QString& content, const QString& extendInfo, StNetSearchResult& ret)
+    void analysisFileMessage(const QString& content, const QString& extendInfo, StNetMessageResult& ret)
     {
         QString data = extendInfo;
         if(extendInfo.isEmpty())
@@ -305,7 +472,7 @@ namespace QTalk {
     }
 
     //
-    void analysisCommonTrdMessage(const QString& content, const QString& extendInfo, StNetSearchResult& ret)
+    void analysisCommonTrdMessage(const QString& content, const QString& extendInfo, StNetMessageResult& ret)
     {
         QString data = extendInfo;
         if(extendInfo.isEmpty())
@@ -331,7 +498,7 @@ namespace QTalk {
     }
 
     // code
-    void analysisCodeMessage(const QString& content, const QString& extendInfo, StNetSearchResult& ret)
+    void analysisCodeMessage(const QString& content, const QString& extendInfo, StNetMessageResult& ret)
     {
         QString data = extendInfo;
         if(extendInfo.isEmpty())
@@ -355,7 +522,7 @@ namespace QTalk {
     }
 
     //
-    void analysisVideoMessage(const QString& content, const QString& extendInfo, StNetSearchResult& ret)
+    void analysisVideoMessage(const QString& content, const QString& extendInfo, StNetMessageResult& ret)
     {
         QString data = extendInfo;
         if(extendInfo.isEmpty())

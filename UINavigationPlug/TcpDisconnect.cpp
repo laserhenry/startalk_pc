@@ -6,7 +6,7 @@
 
 
 TcpDisconnect::TcpDisconnect(NavigationMianPanel *pMainPanel, QWidget *parent)
-        : QFrame(parent), _pMainPanel(pMainPanel), _isRetryConnect(false) {
+        : QFrame(parent), _pMainPanel(pMainPanel) {
     setFrameShape(QFrame::NoFrame);
     setObjectName("TcpDisconnectWgt");
 
@@ -20,6 +20,8 @@ TcpDisconnect::TcpDisconnect(NavigationMianPanel *pMainPanel, QWidget *parent)
     layout->addWidget(_pTextLabel);
     layout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
     setLayout(layout);
+
+    connect(this, &TcpDisconnect::sgSetText, this, &TcpDisconnect::setText);
 }
 
 TcpDisconnect::~TcpDisconnect()
@@ -33,9 +35,6 @@ TcpDisconnect::~TcpDisconnect()
   * @date     2018/10/24
   */
 void TcpDisconnect::onRetryConnected() {
-    if (_isRetryConnect) {
-        _isRetryConnect = false;
-    }
     _pTextLabel->setText(tr("当前网络不可用"));
 }
 
@@ -52,10 +51,9 @@ void TcpDisconnect::setText(const QString& text)
   * @date     2018/10/24
   */
 void TcpDisconnect::mousePressEvent(QMouseEvent *e) {
-    if (_pMainPanel && !_isRetryConnect) {
-        _isRetryConnect = true;
-        _pTextLabel->setText(tr("正在重连"));
-//        _pMainPanel->retryToConnect();
+    if (_pMainPanel) {
+ //        _pTextLabel->setText(tr("正在重连"));
+        _pMainPanel->retryToConnect();
     }
     return QFrame::mousePressEvent(e);
 }

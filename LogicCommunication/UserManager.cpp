@@ -531,7 +531,7 @@ bool UserManager::getPhoneNo(const std::string &userId, std::string &phoneNo) {
 
     debug_log("请求PhoneNo userId: {0}", userId);
 
-    QTalk::Entity::JID *jid = new QTalk::Entity::JID(userId.c_str());
+    QTalk::Entity::JID *jid = new QTalk::Entity::JID(userId);
 
     std::ostringstream url;
     url << NavigationManager::instance().getPhoneNumAddr();

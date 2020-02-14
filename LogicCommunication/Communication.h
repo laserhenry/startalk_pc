@@ -158,8 +158,6 @@ public:
     void onUserJoinGroup(const std::string& groupId, const std::string& memberId, int affiliation);
     //
     void onStaffChanged();
-    //
-    std::string checkUpdater(int ver);
 
 private:
     // 获取好友列表

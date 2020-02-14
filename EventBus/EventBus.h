@@ -125,7 +125,8 @@ public:
 	 *
 	 * @param e The event to fire
 	 */
-    static void FireEvent(Event & e, bool asynchronous = true);
+    static void FireEvent(Event & e);
+    static void clearHandle();
 
 private:
     /**

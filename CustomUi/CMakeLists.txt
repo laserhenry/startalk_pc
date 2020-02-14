@@ -12,8 +12,6 @@ set(SOURCE_FILES
         customui_global.h
         HeadPhotoLab.cpp
         HeadPhotoLab.h
-        ShadowHeadPhoto.cpp
-        ShadowHeadPhoto.h
         UShadowWnd.cpp
         UShadowWnd.h
         ushadowdialog.qrc
@@ -32,7 +30,7 @@ set(SOURCE_FILES
         LiteMessageBox.cpp
         LiteMessageBox.h
         NavigationItem.cpp
-        NavigationItem.h MedalWgt.cpp MedalWgt.h TitleBar.cpp TitleBar.h)
+        NavigationItem.h MedalWgt.cpp MedalWgt.h TitleBar.cpp TitleBar.h ImageLabel.cpp ImageLabel.h)
 
 if (APPLE)
     ADD_DEFINITIONS(-D_MACOS)

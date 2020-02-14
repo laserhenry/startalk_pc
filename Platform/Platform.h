@@ -11,19 +11,17 @@
 #include <map>
 #include "../interface/logic/IDatabasePlug.h"
 #include "../LogicManager/LogicManager.h"
+#include "../include/FrequencyMap.h"
 #include "SystemDefine.h"
 #include <set>
 #include <thread>
 
 /**
- * @brief The Platfrom class
- * @author cyz
- * @date 2018.9.17
  */
 class PLATFORMSHARED_EXPORT Platform {
 
 public:
-    Platform() = default;
+    Platform();
 
 public:
 	void setExecutePath(const std::string& exePath);
@@ -46,7 +44,7 @@ public:
 
     std::string getEmoticonIconPath() const;
 
-    std::string getTempEmoticonPath(const std::string &packegId) const;
+    static std::string getTempEmoticonPath(const std::string &packegId);
 
     std::string getConfigPath() const;
 
@@ -105,8 +103,12 @@ public:
     void setHistoryDir(const std::string &dir);
 
     bool isOnline(const std::string &xmppId);
+
+    std::string getUserStatus(const std::string& userId);
     //
     void loadOnlineData(const std::map<std::string, std::string>& userStatus);
+    //
+    std::vector<std::string> getInterestUsers();
     //
     std::string getGlobalVersion() { return APPLICATION_VERSION; };
     //
@@ -157,7 +159,7 @@ private:
     std::string _q_ckey;         // 客户端根据服务端认证Key生成的客户端认证Key
     std::string _mainThreadId;   // 主线程id
 
-    std::map<std::string, std::string> _mapUserStatus;
+    FrequencyMap<std::string, std::string> _mapUserStatus;
 
     QTalk::util::spin_mutex sm;
     std::string beatUrl;

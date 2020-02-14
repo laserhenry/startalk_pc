@@ -15,7 +15,7 @@
 #include "ChatUtil.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
-EmojiMessItem::EmojiMessItem(const QTalk::Entity::ImMessageInfo &msgInfo,
+EmojiMessItem::EmojiMessItem(const StNetMessageResult &msgInfo,
                              QString path,
                              const QSizeF &size,
                              QWidget *parent) :
@@ -80,7 +80,7 @@ void EmojiMessItem::initLayout() {
     _contentMargin = QMargins(5, 5, 5, 5);
     _mainSpacing = 10;
     _contentSpacing = 0;
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         _headPixSize = QSize(0, 0);
         _nameLabHeight = 0;
         _leftMargin = QMargins(0, 0, 0, 0);
@@ -88,7 +88,7 @@ void EmojiMessItem::initLayout() {
         _leftSpacing = 0;
         _rightSpacing = 0;
         initSendLayout();
-    } else //if (QTalk::Entity::MessageDirectionReceive == _msgDirection)
+    } else //if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction)
     {
         _headPixSize = QSize(28, 28);
         _nameLabHeight = 16;
@@ -98,7 +98,7 @@ void EmojiMessItem::initLayout() {
         _rightSpacing = 4;
         initReceiveLayout();
     }
-    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat != _msgInfo.type) {
         _nameLabHeight = 0;
     }
     this->setContentsMargins(0, 0, 0, 5);
@@ -179,7 +179,7 @@ void EmojiMessItem::initReceiveLayout() {
     }
     _headLab->setFixedSize(_headPixSize);
     _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(QString::fromStdString(_msgInfo.HeadSrc), HEAD_RADIUS);
+    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
     _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -192,8 +192,8 @@ void EmojiMessItem::initReceiveLayout() {
     rightLay->setContentsMargins(_rightMargin);
     rightLay->setSpacing(_rightSpacing);
     mainLay->addLayout(rightLay);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType
-        && QTalk::Entity::MessageDirectionReceive == _msgInfo.Direction ) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type
+        && QTalk::Entity::MessageDirectionReceive == _msgInfo.direction ) {
         auto* nameLay = new QHBoxLayout;
         nameLay->setMargin(0);
         nameLay->setSpacing(5);
@@ -219,7 +219,7 @@ void EmojiMessItem::initReceiveLayout() {
     contentLay->setSpacing(_contentSpacing);
     auto *horizontalSpacer = new QSpacerItem(40, 1, QSizePolicy::Expanding, QSizePolicy::Fixed);
     mainLay->addItem(horizontalSpacer);
-    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.ChatType) {
+    if (QTalk::Enum::ChatType::GroupChat == _msgInfo.type) {
         mainLay->setStretch(0, 0);
         mainLay->setStretch(1, 0);
         mainLay->setStretch(2, 1);
@@ -238,16 +238,16 @@ void EmojiMessItem::initReceiveLayout() {
 void EmojiMessItem::setImage() {
     if (_imagePath.isEmpty() || !QFile::exists(_imagePath)) {
         //warn_log("load head failed, use default picture-> imagePath:{0}, realMessage:{1}", _imagePath,
-        //         _msgInfo.Content);
+        //         _msgInfo.body);
 
         _imagePath = ":/chatview/image1/defaultImage.png";
-        QPixmap image = QTalk::qimage::instance().loadPixmap(_imagePath, true, true, 80, 80);
+        QPixmap image = QTalk::qimage::instance().loadImage(_imagePath, true, true, 80, 80);
         _imageLab->setPixmap(image);
         _imageLab->setFixedSize(image.size());
     } else {
         QString suffix = QTalk::qimage::instance().getRealImageSuffix(_imagePath).toUpper();
         if ("GIF" == suffix) {
-            QPixmap image = QTalk::qimage::instance().loadPixmap(_imagePath, true);
+            QPixmap image = QTalk::qimage::instance().loadImage(_imagePath, true);
             if (image.isNull()) {
                 _imagePath = "";
                 setImage();
@@ -261,7 +261,7 @@ void EmojiMessItem::setImage() {
 //            _imageLab->setMovie(_movie);
             _imageLab->setFixedSize(_size.toSize());
         } else {
-            QPixmap pixmap = QTalk::qimage::instance().loadPixmap(_imagePath, true);
+            QPixmap pixmap = QTalk::qimage::instance().loadImage(_imagePath, true);
             if (pixmap.isNull()) {
                 _imagePath = "";
                 setImage();

@@ -61,7 +61,7 @@ void CellWgtItem::paintEvent(QPaintEvent* e)
 {
     QPainter painter(this);
     std::string localPath = QTalk::getOAIconPath(_icon.toStdString());
-    QPixmap pixmap = QTalk::qimage::instance().loadPixmap(QString::fromLocal8Bit(localPath.data()), false, true, 40, 40);
+    QPixmap pixmap = QTalk::qimage::instance().loadImage(QString::fromLocal8Bit(localPath.data()), false, true, 40, 40);
 
     painter.setRenderHints(QPainter::Antialiasing, true);
     painter.setRenderHints(QPainter::SmoothPixmapTransform, true);

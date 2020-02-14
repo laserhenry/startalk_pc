@@ -101,8 +101,8 @@ private:
     bool    _messageHasMore_a = true; // after
 
     std::vector<QTalk::Search::StHistory> _search_history_list; // 关键字结果
-    std::vector<StNetSearchResult> _search_user_search;  // 关键字 + 人 结果
-    std::vector<StNetSearchResult> _messages;  // all-message
+    std::vector<StNetMessageResult> _search_user_search;  // 关键字 + 人 结果
+    std::vector<StNetMessageResult> _messages;  // all-message
 
 private:
     std::string _key{};

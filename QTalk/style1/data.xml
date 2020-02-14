@@ -1,4 +1,5 @@
 <Style>
+    <_main_windows_color>255, 255, 255, 255</_main_windows_color>
     <_nav_normal_color>255, 255, 255, 255</_nav_normal_color>
     <_nav_select_color>213, 242, 240, 255</_nav_select_color>
     <_search_normal_color>255, 255, 255, 255</_search_normal_color>

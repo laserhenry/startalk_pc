@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include "../include/CommonDefine.h"
-#include "../QtUtil/Enum/im_enum.h"
+#include "../include/im_enum.h"
 #include "../QtUtil/lib/cjson/cJSON.h"
 #include "../entity/IM_Session.h"
 #include "../entity/im_message.h"

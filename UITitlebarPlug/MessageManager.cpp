@@ -41,7 +41,7 @@ std::string TitlebarMsgManager::uploadImage(const std::string& localFilePath)
 {
     LocalImgEvt e;
     e.localFilePath = localFilePath;
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
 
     return e.netFilePath;
 }
@@ -69,7 +69,7 @@ std::string TitlebarMsgManager::getHeadPath(const std::string& netPath)
 {
 	NetHeadImgEvt e;
 	e.netFilePath = netPath;
-	EventBus::FireEvent(e, false);
+	EventBus::FireEvent(e);
     return e.localFilePath;
 }
 

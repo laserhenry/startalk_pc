@@ -213,7 +213,7 @@ void MessageRecordManager::goSearchList() {
             _list_pos += 15;
             searchInfo.key = _key;
             searchInfo.action = EM_ACTION_HS_SINGLE | EM_ACTION_HS_MUC;
-            g_pMainPanel->getMessageManager()->sendSearch(searchInfo);
+            ChatMsgManager::sendSearch(searchInfo);
             _search_history_list.clear();
             for(const auto& it : searchInfo.searchRet)
             {
@@ -335,7 +335,7 @@ void MessageRecordManager::goSearchUser() {
             else if(EM_ACTION_HS_MUC == _user_type)
                 searchInfo.to_muc = _user_id.toStdString();
 
-            g_pMainPanel->getMessageManager()->sendSearch(searchInfo);
+            ChatMsgManager::sendSearch(searchInfo);
 
             for(const auto& it : searchInfo.searchRet)
             {
@@ -344,7 +344,7 @@ void MessageRecordManager::goSearchUser() {
 
                 for(const auto& his : history)
                 {
-                    StNetSearchResult info;
+                    StNetMessageResult info;
                     info.msg_id = his.msg_id.data();
                     info.msg_type = his.msg_type;
 
@@ -381,7 +381,7 @@ void MessageRecordManager::messageRequest(const QInt64 &time, int type, const QS
 
         for(const auto& message : messages)
         {
-            StNetSearchResult info;
+            StNetMessageResult info;
             info.msg_id = message.MsgId.data();
             info.msg_type = message.Type;
             info.type = message.ChatType ;
@@ -549,7 +549,7 @@ void MessageRecordManager::getMoreMessage(bool up) {
     if(!index.isValid())
         return;
 
-    StNetSearchResult data = index.data(SEARCH_USER_INFO).value<StNetSearchResult>();
+    StNetMessageResult data = index.data(SEARCH_USER_INFO).value<StNetMessageResult>();
 
     if(up)
     {

@@ -419,7 +419,6 @@ CommMsgListener::CommMsgListener(Communication *pComm)
 }
 
 CommMsgListener::~CommMsgListener() {
-
 }
 
 /**
@@ -1236,7 +1235,7 @@ void CommMsgListener::onEvent(RetryConnectToServerEvt& e)
 {
     if (nullptr != _pComm){
 #ifdef _QCHAT
-        _pComm->tryConneteToServerByQVT();
+        _pComm->tryConnectToServerByQVT();
 #else
         _pComm->tryConnectToServer();
 #endif
@@ -1271,8 +1270,6 @@ void CommMsgListener::onEvent(GetHotLines &e) {
 }
 
 void CommMsgListener::onEvent(CheckUpdaterEvt &e) {
-    if (nullptr != _pComm)
-        e.updater_link = _pComm->checkUpdater(e.version);
 }
 
 void CommMsgListener::onEvent(UserMedalEvt &e)

@@ -18,7 +18,7 @@ class QMediaPlayer;
 class VoiceMessageItem : public MessageItemBase {
     Q_OBJECT
 public:
-    explicit VoiceMessageItem(const QTalk::Entity::ImMessageInfo &msgInfo, QWidget *parent = nullptr);
+    explicit VoiceMessageItem(const StNetMessageResult &msgInfo, QWidget *parent = nullptr);
     ~VoiceMessageItem() override = default;;
 
 public:

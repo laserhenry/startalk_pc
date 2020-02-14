@@ -147,8 +147,8 @@ set(SOURCE_FILES
         search/MessageDelegate.h
         search/SearchItemWgt.cpp
         search/SearchItemWgt.h
-        search/MessageAnalysis.cpp
-        search/MessageAnalysis.h
+        MessageAnalysis.cpp
+        MessageAnalysis.h
         search/FileRecordWnd.cpp
         search/FileRecordWnd.h
         NetImageLabel.cpp NetImageLabel.h
@@ -159,7 +159,7 @@ set(SOURCE_FILES
         search/SearchUserView.cpp
         search/SearchUserView.h
         search/ImageDelegate.cpp
-        search/ImageDelegate.h)
+        search/ImageDelegate.h ChatViewItem.cpp ChatViewItem.h ChatMainDelegate.cpp ChatMainDelegate.h ChatMainSoreModel.cpp ChatMainSoreModel.h)
 
 
 set(LIBRARY_OUTPUT_PATH ../bin)

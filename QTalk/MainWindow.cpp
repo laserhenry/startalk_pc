@@ -383,7 +383,7 @@ void MainWindow::initChatView()
 void MainWindow::connectPlugs()
 {
     qRegisterMetaType<QVector<int>>("QVector<int>");
-    connect(_chatViewPanel, SIGNAL(recvMessageSignal()), _pSysTrayIcon, SLOT(onRecvMessage()));
+//    connect(_chatViewPanel, SIGNAL(recvMessageSignal()), _pSysTrayIcon, SLOT(onRecvMessage()));
     connect(_titleBar, SIGNAL(sgCurFunChanged(int)),
             this, SLOT(onCurFunChanged(int)));
     connect(_pAddressBook, SIGNAL(sgSwitchCurFun(int)),
@@ -397,6 +397,7 @@ void MainWindow::connectPlugs()
     connect(this, SIGNAL(appDeactivated()), _titleBar, SLOT(onAppDeactivated()));
     connect(this, SIGNAL(appDeactivated()), _chatViewPanel, SLOT(onAppDeactivated()));
     connect(this, SIGNAL(appDeactivated()), _navigationPanel, SLOT(onAppDeactivated()));
+    connect(this, SIGNAL(appDeactivated()), _pSysTrayIcon, SLOT(onAppDeactivated()));
 
     connect(_navigationPanel, SIGNAL(sgSessionInfo(const StSessionInfo&)),
             _chatViewPanel, SLOT(onChatUserChanged(const StSessionInfo&)), Qt::QueuedConnection);
@@ -417,6 +418,8 @@ void MainWindow::connectPlugs()
     connect(_navigationPanel, SIGNAL(removeSession(const QTalk::Entity::UID&)),
             _chatViewPanel, SLOT(onRemoveSession(const QTalk::Entity::UID&)));
     connect(_titleBar, SIGNAL(sgOpenNewSession(const StSessionInfo&)),
+            _navigationPanel, SLOT(onNewSession(const StSessionInfo&)));
+    connect(this, SIGNAL(sgJumtoSession(const StSessionInfo&)),
             _navigationPanel, SLOT(onNewSession(const StSessionInfo&)));
 	connect(_pCardManager, SIGNAL(sgOpenNewSession(const StSessionInfo&)),
 		_navigationPanel, SLOT(onNewSession(const StSessionInfo&)));
@@ -450,6 +453,9 @@ void MainWindow::connectPlugs()
 
 	connect(_chatViewPanel, SIGNAL(sgShortCutSwitchSession(int)),
 	        _navigationPanel, SLOT(onShortCutSwitchSession(int)));
+
+	connect(_navigationPanel, SIGNAL(sgShowUnreadMessage(int, const QTalk::Entity::UID&, const QString&, qint64, int)),
+	        _pSysTrayIcon, SIGNAL(sgShowUnreadMessage(int, const QTalk::Entity::UID&, const QString&, qint64, int)));
 	//
 	connect(_pCardManager, SIGNAL(sgJumpToStructre(const QString&)), _pAddressBook, SLOT(onJumpToStructre(const QString&)));
     connect(_pCardManager, SIGNAL(sgShowHeadWnd(const QString&, bool)),
@@ -657,8 +663,8 @@ void MainWindow::openMainWindow()
             switch (wndstate)
             {
                 case WND_MAXSIZE:
-                    showMaximized();
-                    break;
+                    //showMaximized();
+                    //break;
                 case WND_NORMAL:
                 default:
                 {
@@ -1012,16 +1018,25 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
 	UShadowDialog::keyPressEvent(e);
 }
 
-void MainWindow::wakeUpWindow()
-{
-
+QWidget * MainWindow::getActiveWnd() {
     QWidget* wakeUpWgt = nullptr;
     if(_initUi)
         wakeUpWgt = _logindlg;
     else
         wakeUpWgt = this;
 
+    return wakeUpWgt;
+}
+
+void MainWindow::wakeUpWindow()
+{
+    QWidget* wakeUpWgt = getActiveWnd();
+
 #ifdef _WINDOWS
+    if (wakeUpWgt->isActiveWindow())
+		return;
+
+	bool isMax = wakeUpWgt->isMaximized();
 	wakeUpWgt->setWindowState(Qt::WindowMinimized);
 #endif // _WINDOWS
 
@@ -1031,6 +1046,11 @@ void MainWindow::wakeUpWindow()
 	wakeUpWgt->setVisible(true);
     QApplication::setActiveWindow(wakeUpWgt);
     wakeUpWgt->raise();
+#ifdef _WINDOWS
+	if (isMax) {
+		wakeUpWgt->showMaximized();
+	}
+#endif // _WINDOWS
 }
 
 /**

@@ -16,6 +16,7 @@
 #include <QJsonArray>
 #include <ChatUtil.h>
 #include <QTextFormat>
+#include <MessageAnalysis.h>
 #include "blocks/block_define.h"
 #include "../../UICom/qimage/qimage.h"
 #include "TextBrowser.h"
@@ -87,8 +88,7 @@ bool HotLineTipDelegate::editorEvent(QEvent *event, QAbstractItemModel *model, c
         else
         {
             QString url = index.data(EM_ITEM_DATA_TYPE_ACTION_URL).toString();
-            if(g_pMainPanel)
-                g_pMainPanel->sendGetRequest(url.toStdString());
+            ChatViewMainPanel::sendGetRequest(url.toStdString());
         }
     }
     return QStyledItemDelegate::editorEvent(event, model, option, index);
@@ -101,15 +101,10 @@ QSize HotLineTipDelegate::sizeHint(const QStyleOptionViewItem &option, const QMo
 }
 
 /** **/
-HotLineAnswerItem::HotLineAnswerItem(const QTalk::Entity::ImMessageInfo &msgInfo, ChatMainWgt *parent) :
+HotLineAnswerItem::HotLineAnswerItem(const StNetMessageResult &msgInfo, ChatMainWgt *parent) :
         MessageItemBase(msgInfo, parent),
-        _textBrowser(nullptr),
-        _pTipListView(nullptr),
-        _pTipListModel(nullptr),
         _pMainWgt(parent) {
     init();
-    connect(_textBrowser, &TextBrowser::anchorClicked, this, &HotLineAnswerItem::onAnchorClicked);
-    connect(_textBrowser, &TextBrowser::sgImageClicked, this, &HotLineAnswerItem::onImageClicked);
 }
 
 HotLineAnswerItem::~HotLineAnswerItem() {
@@ -129,7 +124,7 @@ void HotLineAnswerItem::initLayout() {
     _contentSize = QSize(370, 160);
     _mainMargin = QMargins(15, 0, 20, 0);
     _mainSpacing = 10;
-    if (QTalk::Entity::MessageDirectionSent == _msgDirection) {
+    if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
         _headPixSize = QSize(0, 0);
         _nameLabHeight = 0;
         _leftMargin = QMargins(0, 0, 0, 0);
@@ -137,7 +132,7 @@ void HotLineAnswerItem::initLayout() {
         _leftSpacing = 0;
         _rightSpacing = 0;
         initSendLayout();
-    } else if (QTalk::Entity::MessageDirectionReceive == _msgDirection) {
+    } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
         _headPixSize = QSize(28, 28);
         _nameLabHeight = 16;
         _leftMargin = QMargins(0, 10, 0, 0);
@@ -229,7 +224,7 @@ void HotLineAnswerItem::initReceiveLayout() {
         _headLab = new HeadPhotoLab;
     }
     _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(QString::fromStdString(_msgInfo.HeadSrc), HEAD_RADIUS);
+    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
     _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
@@ -306,7 +301,7 @@ void HotLineAnswerItem::initContentLayout() {
     contentLay->setContentsMargins(0, 0, 0, 10);
     contentLay->setSpacing(0);
     //
-    QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.ExtendedInfo.data());
+    QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.extend_info.toUtf8());
     if (!jsonDocument.isNull()) {
         QJsonObject jsonObject = jsonDocument.object();
         //
@@ -336,13 +331,16 @@ void HotLineAnswerItem::initContentLayout() {
             contentLay->addWidget(frm);
             addLine = true;
             //
-            QVector<StTextMessage> msgs;
-            _pMainWgt->analysisMessage(msgs, content.toStdString(), _msgInfo.MsgId);
+            std::vector<StTextMessage> msgs;
+            QTalk::analysisTextMessage(content, msgs);
 
             if(nullptr == _textBrowser)
             {
                 _textBrowser = new TextBrowser;
                 lay->addWidget(_textBrowser);
+
+                connect(_textBrowser, &TextBrowser::anchorClicked, this, &HotLineAnswerItem::onAnchorClicked);
+                connect(_textBrowser, &TextBrowser::sgImageClicked, this, &HotLineAnswerItem::onImageClicked);
             }
 
             _textBrowser->setFixedWidth(width);
@@ -476,7 +474,7 @@ void HotLineAnswerItem::initContentLayout() {
                 item->setData(type, EM_ITEM_DATA_TYPE_ACTION_TYPE);
                 item->setData(url, EM_ITEM_DATA_TYPE_ACTION_URL);
                 item->setData(h, EM_ITEM_DATA_TYPE_ACTION_HEIGHT);
-                item->setData(_msgInfo.From.data(), EM_ITEM_DATA_TYPE_ACTION_UID);
+                item->setData(_msgInfo.from, EM_ITEM_DATA_TYPE_ACTION_UID);
 
                 _pTipListModel->appendRow(item);
                 listHeight += h;
@@ -553,9 +551,7 @@ void HotLineAnswerItem::initContentLayout() {
                         for(auto* tmpBtn : btns)
                             tmpBtn->setReqEnable(false);
 
-                        if(g_pMainPanel)
-                            g_pMainPanel->sendGetRequest(url.toStdString());
-
+                        ChatViewMainPanel::sendGetRequest(url.toStdString());
                         //
                         QJsonDocument newDoc;
                         QJsonObject newObj(jsonObject);
@@ -564,7 +560,7 @@ void HotLineAnswerItem::initContentLayout() {
                         QByteArray byteArray =newDoc.toJson(QJsonDocument::Compact);
 
                         if(g_pMainPanel)
-                            g_pMainPanel->updateMessageExtendInfo(_msgInfo.MsgId, byteArray.data());
+                            g_pMainPanel->updateMessageExtendInfo(_msgInfo.msg_id.toStdString(), byteArray.data());
                     });
                 }
             }
@@ -584,7 +580,7 @@ void HotLineAnswerItem::onImageDownloaded(const QString &link) {
 
     QString imagePath = QTalk::GetImagePathByUrl(link.toStdString()).data();
 
-    QPixmap pixmap = QTalk::qimage::instance().loadPixmap(imagePath, false);
+    QPixmap pixmap = QTalk::qimage::instance().loadImage(imagePath, false);
     _textBrowser->document()->addResource(QTextDocument::ImageResource,
                                           link, pixmap);
     _textBrowser->setLineWrapColumnOrWidth(_textBrowser->lineWrapColumnOrWidth());

@@ -392,6 +392,8 @@ void UIGolbalManager::initThemeConfig()
 
             if("_nav_normal_color" == tagName)
                 QTalk::StyleDefine::instance().setNavNormalColor(QColor(r, g, b, a));
+            else if("_main_windows_color" == tagName)
+                QTalk::StyleDefine::instance().setMainWindowColor(QColor(r, g, b, a));
             else if ("_nav_select_color" == tagName)
                 QTalk::StyleDefine::instance().setNavSelectColor(QColor(r, g, b, a));
             else if ("_search_normal_color" == tagName)

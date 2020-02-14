@@ -14,7 +14,7 @@ class SystemMessageItem : public MessageItemBase
 {
 Q_OBJECT
 public:
-    explicit SystemMessageItem(const QTalk::Entity::ImMessageInfo &msgInfo,
+    explicit SystemMessageItem(const StNetMessageResult &msgInfo,
                                QWidget *parent = nullptr);
 
     ~SystemMessageItem() override;
@@ -49,7 +49,7 @@ private:
     void initSendLayout();
     void initReceiveLayout();
     void initContentLayout();
-    void loadUrl(const QTalk::Entity::ImMessageInfo& msgInfo);
+    void loadUrl(const StNetMessageResult& msgInfo);
 };
 
 #endif //QTALK_V2_SYSTEMMESSAGEITEM_H

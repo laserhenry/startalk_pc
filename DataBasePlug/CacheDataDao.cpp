@@ -18,6 +18,9 @@
 #define GROUP_READMARK_LOGIN_BEFORE "GROUP_READMARK_LOGIN_BEFORE"
 #define GROUP_READMARK_LOGIN_BEFORE_TIME 12
 
+#define NEW_MESSAGE_FLAG "NEW_MESSAGE_FLAG"
+#define NEW_MESSAGE_FLAG_TYPE 1024
+
 
 CacheDataDao::CacheDataDao(qtalk::sqlite::database *sqlDb)
         : DaoInterface(sqlDb) {
@@ -122,7 +125,7 @@ void CacheDataDao::getHotLines(std::string &hotLines) {
     }
 }
 
-bool CacheDataDao::isHotlineMerchant(const std::string xmppid) {
+bool CacheDataDao::isHotlineMerchant(const std::string& xmppid) {
     std::string sql = "SELECT `value` FROM IM_Cache_Data WHERE `key` = ? AND `type` = ?;";
     qtalk::sqlite::statement query(*_pSqlDb, sql);
     try {
@@ -185,7 +188,7 @@ std::string CacheDataDao::getGroupReadMarkTime(){
         return "0";
     }
 }
-bool CacheDataDao::updateGroupReadMarkTime(const std::string time){
+bool CacheDataDao::updateGroupReadMarkTime(const std::string& time){
     if (!_pSqlDb) {
         return false;
     }
@@ -257,5 +260,46 @@ void CacheDataDao::clear_data_01() {
     }
     catch (const std::exception &e) {
         error_log("clear_data_01 exception : {0}", e.what());
+    }
+}
+
+//
+void CacheDataDao::insertNewMessageTimestamp(QInt64 time) {
+    if (!_pSqlDb) {
+        return;
+    }
+    std::string sql = "INSERT OR REPLACE INTO IM_Cache_Data (`key`, `type`, `value`) values (?, ?, ?);";
+    qtalk::sqlite::statement query(*_pSqlDb, sql);
+    try {
+        query.bind(1, NEW_MESSAGE_FLAG);
+        query.bind(2, NEW_MESSAGE_FLAG_TYPE);
+        query.bind(3, std::to_string(time));
+
+        query.executeStep();
+    }
+    catch (const std::exception &e) {
+        error_log("clear_data_01 exception : {0}", e.what());
+    }
+}
+
+QInt64 CacheDataDao::getNewMessageTimestamp() {
+    QInt64 time = 0 ;
+    if (!_pSqlDb) {
+        return time;
+    }
+    std::string sql = "SELECT `value` From IM_Cache_Data Where `key` = ? And `type` = ?";
+    qtalk::sqlite::statement query(*_pSqlDb, sql);
+    try {
+        query.bind(1, NEW_MESSAGE_FLAG);
+        query.bind(2, NEW_MESSAGE_FLAG_TYPE);
+        if(query.executeNext())
+        {
+            time = std::strtoll(query.getColumn(0).getString().data(), nullptr, 0);
+        }
+        return time;
+    }
+    catch (const std::exception &e) {
+        error_log("clear_data_01 exception : {0}", e.what());
+        return time;
     }
 }

@@ -112,7 +112,7 @@ void ScanQRcode::onScanSuccess(const QString& ret)
         //
         std::vector<std::string> members;
         members.push_back(selfId);
-        g_pMainPanel->getMessageManager()->addGroupMember(members, groupId.toStdString());
+        ChatMsgManager::addGroupMember(members, groupId.toStdString());
     }
     else
     {

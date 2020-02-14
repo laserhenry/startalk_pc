@@ -15,10 +15,8 @@
 #include "MessageManager.h"
 #include "../CustomUi/HeadPhotoLab.h"
 #include "../CustomUi/UShadowWnd.h"
-#include "../CustomUi/ShadowHeadPhoto.h"
 #include "NavManager.h"
 #include "../UICom/qconfig/qconfig.h"
-#include "QWebLogin.h"
 #include "../CustomUi/HeadPhotoLab.h"
 
 class LoginPanel : public QDialog
@@ -31,7 +29,7 @@ public:
 
 public:
     void loadConf();
-    void onGotLoginstauts(const QString& msg);
+    void onGotLoginStatus(const QString& msg);
     void authFailed();
     void loginSuccess();
     void enableAutoLogin(bool);

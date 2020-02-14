@@ -27,7 +27,7 @@ class GroupMember : public QFrame
 {
 	Q_OBJECT
 public:
-    explicit GroupMember(QWidget *parent = nullptr, const QString& groupId = nullptr);
+    explicit GroupMember(QWidget *parent = nullptr);
 	~GroupMember() override;
 
 Q_SIGNALS:
@@ -53,6 +53,10 @@ public:
 		EM_MENU_TYPE_REMOVEADMIN,
 		EM_MENU_TYPE_REMOVEGROUP,
 	};
+
+public:
+    void clearData();
+    void setGroupId(const std::string &groupId);
 
 protected:
 	void initUi();

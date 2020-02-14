@@ -20,7 +20,7 @@ QTextEdit#InputWgt
     margin-left: 15px;
 }
 
-QListWidget#ChatMainWgt {
+QListView#ChatMainWgt {
     background-color: rgb(53, 57, 61);
     color: rgba(225, 236, 239, 1);
     outline: 0px;
@@ -56,7 +56,7 @@ QPushButton#ScreenshotSet:hover {
 QPushButton#Shock {
     border-image: url(:/chatview/image1/toolBar/Shock_normal.png);
 }
-                                                            
+
 QPushButton#Shock:hover{
 	border-image:url(:/chatview/image1/toolBar/Shock_hover.png);
 }
@@ -918,18 +918,6 @@ QLabel#fileSizeLbl {
     font-weight:500;
 }
 
-QListWidget#AllListWgt, QListWidget#AllListWgt:item, QListWidget#AllListWgt:item:hover {
-    background:rgba(47,51,55,1);
-}
-
-QListWidget#FileListWgt, QListWidget#FileListWgt:item, QListWidget#FileListWgt:item:hover {
-    background:rgba(47,51,55,1);
-}
-
-QListWidget#SearchListWgt, QListWidget#SearchListWgt:item, QListWidget#SearchListWgt:item:hover {
-    background:rgba(47,51,55,1);
-}
-
 QFrame#MeetingRemindItem{
     background:rgba(69, 75, 82, 1);
     border-width:0px;
@@ -980,10 +968,6 @@ QToolButton#NoBtn:checked {
     border-image: url(:/chatview/image1/messageItem/no_chose_black.png);
 }
 
-QListWidget::item {
-    color:rgba(0,0,0,0);
-}
-
 QLabel#MessageItemTipLabel {
     font-size:13px;
     color:rgba(0,202,190,1);
@@ -1006,4 +990,10 @@ QPushButton#SearchBackButton:hover {
 
 QFrame#searchFrm  {
     background:rgba(39, 43, 48,1);
+}
+
+
+QListWidget#QuickReplyWndList {
+    background:rgba(39, 43, 48,1);
+    color:rgba(236,241,243,1);
 }

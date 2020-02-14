@@ -24,6 +24,7 @@
 #include "../CustomUi/QtMessageBox.h"
 #include "../Platform/AppSetting.h"
 #include "../Platform/NavigationManager.h"
+#include "../include/Line.h"
 
 #ifdef _WINDOWS
 #include <windows.h>
@@ -72,7 +73,7 @@ LoginPanel::~LoginPanel() {
     }
 }
 
-void LoginPanel::onGotLoginstauts(const QString &msg) {
+void LoginPanel::onGotLoginStatus(const QString &msg) {
 
     QString newMsg (msg);
     int language = AppSetting::instance().getLanguage();
@@ -371,8 +372,6 @@ bool LoginPanel::eventFilter(QObject *o, QEvent *e) {
             bool ret = _pManager->getNavInfo(nav);
             if (!ret)
                 emit AuthFailedSignal(tr("导航获取失败, 请检查网络连接!"));
-            else
-                QWebLogin::load(this);
         }
     }
     return QDialog::eventFilter(o, e);

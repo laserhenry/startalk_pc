@@ -22,7 +22,7 @@ std::string ChatMsgManager::getNetFilePath(const std::string& localFilePath)
 {
 	LocalImgEvt e;
 	e.localFilePath = localFilePath;
-	EventBus::FireEvent(e, false);
+	EventBus::FireEvent(e);
 
 	return e.netFilePath;
 }
@@ -38,7 +38,7 @@ std::string ChatMsgManager::getLocalFilePath(const std::string& netFilePath)
 {
 	NetImgEvt e;
 	e.netFilePath = netFilePath;
-	EventBus::FireEvent(e, false);
+	EventBus::FireEvent(e);
 
 	return e.localFilePath;
 }
@@ -47,7 +47,7 @@ std::string ChatMsgManager::getSouceImagePath(const std::string& netFilePath)
 {
     SourceNetImage e;
     e.netFilePath = netFilePath;
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
 
     return e.localFilePath;
 }
@@ -63,7 +63,7 @@ std::string ChatMsgManager::getLocalHeadPath(const std::string& netHeadPath)
 {
 	NetHeadImgEvt e;
 	e.netFilePath = netHeadPath;
-	EventBus::FireEvent(e, false);
+	EventBus::FireEvent(e);
 	return e.localFilePath;
 }
 
@@ -80,7 +80,7 @@ VectorMessage ChatMsgManager::getUserHistoryMessage(const QInt64& time, const QU
 	e.time = time;
 	e.uid = uid;
 	e.chatType = chatType;
-	EventBus::FireEvent(e, false);
+	EventBus::FireEvent(e);
 
 	return e.msgList;
 }
@@ -97,7 +97,7 @@ VectorMessage ChatMsgManager::getUserLocalHistoryMessage(const QInt64& time, con
     e.time = time;
     e.userid = uid.usrId();
     e.realJid = uid.realId();
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
 
     return e.msgList;
 }
@@ -241,7 +241,7 @@ void ChatMsgManager::forwardMesssage(const std::string &messsageId, const std::m
 
 void ChatMsgManager::addGroupMember(const std::vector<std::string>& members, const std::string& groupId)
 {
-    AddGroupMember e(*this, members, groupId);
+    AddGroupMember e(members, groupId);
     EventBus::FireEvent(e);
 }
 
@@ -250,7 +250,7 @@ void ChatMsgManager::serverCloseSession(const std::string &username, const std::
 	EventBus::FireEvent(e);
 }
 
-void ChatMsgManager::getSeatList(const QTalk::Entity::UID uid) {
+void ChatMsgManager::getSeatList(const QTalk::Entity::UID& uid) {
 	GetSeatListEvt e(uid);
 	EventBus::FireEvent(e);
 }
@@ -260,13 +260,13 @@ void ChatMsgManager::sendProduct(const std::string &userQName, const std::string
 	EventBus::FireEvent(e);
 }
 
-void ChatMsgManager::sessionTransfer(const QTalk::Entity::UID uid, const std::string newCsrName,
-									 const std::string reason) {
+void ChatMsgManager::sessionTransfer(const QTalk::Entity::UID& uid, const std::string &newCsrName,
+									 const std::string &reason) {
 	SessionTransferEvt e(uid,newCsrName,reason);
 	EventBus::FireEvent(e);
 }
 
-void ChatMsgManager::sendWechat(const QTalk::Entity::UID uid) {
+void ChatMsgManager::sendWechat(const QTalk::Entity::UID& uid) {
 	SendWechatEvt e(uid);
 	EventBus::FireEvent(e);
 }
@@ -289,7 +289,7 @@ VectorMessage ChatMsgManager::getUserFileHistoryMessage(const QInt64 &time, cons
     e.time = time;
     e.userid = uid.usrId();
     e.realJid = uid.realId();
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
 
     return e.msgList;
 }
@@ -300,7 +300,7 @@ VectorMessage ChatMsgManager::getUserImageHistoryMessage(const QInt64 &time, con
     e.time = time;
     e.userid = uid.usrId();
     e.realJid = uid.realId();
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
 
     return e.msgList;
 }
@@ -311,7 +311,7 @@ VectorMessage ChatMsgManager::getUserLinkHistoryMessage(const QInt64 &time, cons
     e.time = time;
     e.userid = uid.usrId();
     e.realJid = uid.realId();
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
 
     return e.msgList;
 }
@@ -324,7 +324,7 @@ ChatMsgManager::getSearchMessage(const QInt64 &time, const QTalk::Entity::UID &u
     e.userid = uid.usrId();
     e.realJid = uid.realId();
     e.searchKey = text;
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
 
     return e.msgList;
 }
@@ -336,7 +336,7 @@ ChatMsgManager::getAfterMessage(const QInt64 &time, const QTalk::Entity::UID &ui
     e.time = time;
     e.userid = uid.usrId();
     e.realJid = uid.realId();
-    EventBus::FireEvent(e, false);
+    EventBus::FireEvent(e);
 
     return e.msgList;
 }
@@ -460,10 +460,10 @@ ChatMsgListener::ChatMsgListener()
 	EventBus::AddHandler<FeedBackLogEvt>(*this);
 	EventBus::AddHandler<GetSeatListRet>(*this);
 	EventBus::AddHandler<IncrementConfig>(*this);
-	EventBus::AddHandler<GroupReadMState>(*this);
 	EventBus::AddHandler<MStateEvt>(*this);
 	EventBus::AddHandler<WebRtcCommand>(*this);
 	EventBus::AddHandler<UserMedalChangedEvt>(*this);
+	EventBus::AddHandler<LoginProcessMessage>(*this);
 }
 
 ChatMsgListener::~ChatMsgListener()
@@ -479,7 +479,7 @@ void ChatMsgListener::onEvent(R_Message& e)
 	}
 	if (g_pMainPanel)
 	{
-		g_pMainPanel->onRecvMessage(e);
+		g_pMainPanel->onRecvMessage(e, e.isCarbon);
 	}
 }
 
@@ -796,15 +796,6 @@ void ChatMsgListener::onEvent(IncrementConfig &e) {
     }
 }
 
-void ChatMsgListener::onEvent(GroupReadMState &e) {
-    if(e.getCanceled()) return;
-
-    if(g_pMainPanel)
-    {
-        g_pMainPanel->updateGroupReadMState(e.groupId, e.msgIds);
-    }
-}
-
 void ChatMsgListener::onEvent(WebRtcCommand &e) {
     if(g_pMainPanel)
         g_pMainPanel->onRecvWebRtcCommand(e.msgType, e.jid, e.cmd, e.isCarbon);
@@ -813,4 +804,9 @@ void ChatMsgListener::onEvent(WebRtcCommand &e) {
 void ChatMsgListener::onEvent(UserMedalChangedEvt &e) {
     if(g_pMainPanel)
         g_pMainPanel->onUserMadelChanged(e.userMedals);
+}
+
+void ChatMsgListener::onEvent(LoginProcessMessage &e) {
+    if(g_pMainPanel)
+        g_pMainPanel->onRecvLoginProcessMessage(e.message.data());
 }

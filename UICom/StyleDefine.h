@@ -23,6 +23,7 @@ namespace QTalk {
 
     public:
         //
+        inline QColor getMainWindowColor() { return  _main_windows_color;}
         inline QColor getNavNormalColor() { return _nav_normal_color; };
         inline QColor getNavSelectColor() { return _nav_select_color; };
         inline QColor getSearchNormalColor() { return _search_normal_color; };
@@ -79,6 +80,7 @@ namespace QTalk {
         inline QColor getHeadPhotoMaskColor() { return _head_photo_mask_color;}
 
     public:
+        inline void setMainWindowColor(const QColor& color) {  _main_windows_color = color;}
         inline void setNavNormalColor(const QColor& color) {  _nav_normal_color = color; };
         inline void setNavSelectColor(const QColor& color) {  _nav_select_color = color; };
         inline void setSearchNormalColor(const QColor& color) {  _search_normal_color = color; };
@@ -191,6 +193,8 @@ namespace QTalk {
 
         QColor _hot_line_tip_item_color = {242, 242, 242, 255};
         QColor _hot_line_tip_item_font_color = {51, 51, 51, 255};
+
+        QColor _main_windows_color = {255, 255, 255};
     };
 }
 

@@ -29,11 +29,11 @@ LiteMessageBox::LiteMessageBox(int type, const QString& message, QWidget* base)
         case EM_TYPE_SUCCESS:
 
             setObjectName("LiteMessageBoxSuccess");
-            iconLab->setPixmap(QTalk::qimage::instance().loadPixmap(":/success", true, true, 15, 15));
+            iconLab->setPixmap(QTalk::qimage::instance().loadImage(":/success", true, true, 15, 15));
             break;
         case EM_TYPE_FAILED:
             setObjectName("LiteMessageBoxFailed");
-            iconLab->setPixmap(QTalk::qimage::instance().loadPixmap(":/error", true, true, 15, 15));
+            iconLab->setPixmap(QTalk::qimage::instance().loadImage(":/error", true, true, 15, 15));
             break;
         case EM_TYPE_INVALID:
         default:
@@ -72,25 +72,38 @@ LiteMessageBox::~LiteMessageBox() = default;
 
 void LiteMessageBox::success(const QString& message, int duration, QWidget* base)
 {
+    static std::set<LiteMessageBox*> _arBox;
+    for(auto* box : _arBox)
+        box->setVisible(false);
+
     auto * box = new LiteMessageBox(EM_TYPE_SUCCESS, message, base);
+    _arBox.insert(box);
     box->setAttribute(Qt::WA_QuitOnClose, false);
     box->setVisible(true);
     if(duration <= 1000)
         duration = 1000;
     QTimer::singleShot(duration, [box](){
         box->setVisible(false);
+        _arBox.erase(box);
         box->deleteLater();
     });
 }
 
 void LiteMessageBox::failed(const QString &message, int duration, QWidget* base) {
+    static std::set<LiteMessageBox*> _arBox;
+
+    for(auto* box : _arBox)
+        box->setVisible(false);
+
     auto * box = new LiteMessageBox(EM_TYPE_FAILED, message, base);
+    _arBox.insert(box);
     box->setAttribute(Qt::WA_QuitOnClose, false);
     box->setVisible(true);
     if(duration <= 1000)
         duration = 1000;
     QTimer::singleShot(duration, [box](){
         box->setVisible(false);
+        _arBox.erase(box);
         delete box;
     });
 }

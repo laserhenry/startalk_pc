@@ -252,3 +252,10 @@ std::string NavigationManager::getLoginType() {
     return loginType;
 }
 
+void NavigationManager::setRollbackFlag(bool flag) {
+    rollback = flag;
+}
+
+bool NavigationManager::getRollbackFlag() {
+    return rollback;
+}

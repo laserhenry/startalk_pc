@@ -14,15 +14,6 @@
 #include "../include/CommonStrcut.h"
 #include "AtMessageView.h"
 
-
-enum {
-    Type_Invalid,
-    Type_Text,
-    Type_Image,
-    Type_At,
-    Type_Url,
-};
-
 class ChatMainWgt;
 
 class QMovie;

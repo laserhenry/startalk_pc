@@ -67,10 +67,11 @@ void LogicManager::loadLibrary() {
 #endif // _DEBUG
         strLibraryName += ".dylib";
         dll = dlopen(strLibraryName.c_str(), RTLD_NOW);
+
         if (!dll) {
+            auto err = dlerror();
             continue;
         }
-        dlerror();
         auto handle = (Handle) dlsym(dll, "Handle");
         if (handle == nullptr) {
             dlclose(dll);
@@ -186,7 +187,12 @@ void LogicManager::loadLibrary() {
 //}
 
 LogicManager::~LogicManager() {
-
+    for(const auto& pair : _logicPlugs)
+    {
+        if(pair.second)
+            delete pair.second;
+    }
+    _logicPlugs.clear();
 }
 
 
