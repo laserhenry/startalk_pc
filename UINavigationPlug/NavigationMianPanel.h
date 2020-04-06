@@ -70,7 +70,7 @@ public:
 	void onGotMState(const QTalk::Entity::UID& uid, const QString& messageId, const long long& time);
 
 public slots:
-	void retryToConnect();
+//	void retryToConnect();
     void onNewSession(const StSessionInfo &into);
 	void jumpToNewMessage();
     void onShortCutSwitchSession(int);
@@ -85,8 +85,7 @@ private:
 	void onSendShowCardSigal(const QString& userId);
 
 private slots:
-	void connToServerTimerSlot(bool);
-
+//	void connToServerTimerSlot(bool);
 	void removeSessionAction(const QTalk::Entity::UID&);
 
 Q_SIGNALS:
@@ -122,11 +121,10 @@ private:
     ContactFrm * _contactFrm;
     MultifunctionFrm * _multifunctionFrm;
 	TcpDisconnect*    _pTcpDisconnect;
-    NavigationMsgManager * _messageManager;
-    NavigationMsgListener * _messageListener;
+    NavigationMsgManager * _messageManager{};
+    NavigationMsgListener * _messageListener{};
 
 private:
-	QTimer*          _pConnToServerTimer;
 	bool             _conneted = false;
 };
 

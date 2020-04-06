@@ -51,7 +51,6 @@ GroupMember::addMember(const std::string &xmppid, const std::string &userName, c
 //        QApplication::processEvents(QEventLoop::AllEvents, 100);
 //        index = 0;
 //    }
-
     if (_pMemberList && !_mapMemberItem.contains(xmppid)) {
 
         auto *item = new QStandardItem();
@@ -110,9 +109,11 @@ void GroupMember::deleteMember(const std::string &xmppid) {
         //
         if (_mapMemberItem.contains(xmppid))
         {
-            _srcModel->removeRow(_mapMemberItem[xmppid]->row());
+            auto *pItem = _mapMemberItem[xmppid];
+            bool isOnline = pItem->data().toBool();
             _mapMemberItem.remove(xmppid);
-            setMemberCount(--groupMemberCount, --groupMemberOnlineCount);
+            _srcModel->removeRow(pItem->row());
+            setMemberCount(_srcModel->rowCount(), isOnline ? --groupMemberOnlineCount : groupMemberOnlineCount);
         }
         _pModel->sort(0);
     }

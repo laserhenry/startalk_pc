@@ -42,6 +42,7 @@
 
 #define ImageType_Image "ImageType_Image"
 #define ImageType_Emot "ImageType_Emot"
+#define DEM_EMOTICON_MODEL "[obj type=\"emoticon\" value=\"[%1]\" width=%2 height=%2 ]"
 
 extern ChatViewMainPanel *g_pMainPanel;
 InputWgt::InputWgt(ChatMainWgt *pMainWgt, ChatViewItem *parent)
@@ -165,6 +166,50 @@ void InputWgt::dealFile(const QString &filePath, bool isFile, const QString& ima
     else
     {
         QtMessageBox::warning(g_pMainPanel, tr("警告"), tr("无法找到该文件!"));
+    }
+}
+
+void InputWgt::insertEmotion(const QString &pkgId, const QString &shortCut, const QString &filePath) {
+    QFileInfo fileInfo(filePath);
+    QString format = QTalk::qimage::instance().getRealImageSuffix(filePath);
+    QRegExp imgReg("(JPEG|jpeg|JPG|jpg|GIF|gif|BMP|bmp|PNG|png|ico|ICO|WEBP|webp)$");
+    if (imgReg.exactMatch(format)) {
+        // load image
+        QImage img;
+        img.load(filePath, format.toStdString().c_str());
+        if (img.isNull()) {
+            insertPlainText(tr("[图片已损坏]"));
+            return;
+        }
+        //
+        qreal width = img.width();
+        qreal height = img.height(); //  最宽150 最高100 算纵横比
+
+        auto scaleRate = qMax(height / 100, width / 150);
+        if (scaleRate > 1.0) {
+            // 计算缩放
+            width = img.width() / scaleRate;
+            height = img.height() / scaleRate;
+        }
+
+        QTextImageFormat imageFormat;
+        imageFormat.setWidth(width);
+        imageFormat.setHeight(height);
+        if (format.isEmpty() || fileInfo.suffix().toLower() != format.toLower()) {
+            QString newPath = QString("%1/%2.%3").arg(fileInfo.absolutePath()).arg(fileInfo.baseName()).arg(format);
+            if (!QFile::exists(newPath))
+                QFile::copy(filePath, newPath);
+            imageFormat.setName(newPath);
+        } else
+            imageFormat.setName(filePath);
+
+        imageFormat.setProperty(EmotionUniqueKey, QTalk::utils::getMessageId().data());
+        imageFormat.setProperty(EmotionShortText, shortCut);
+        imageFormat.setProperty(EmotionPkgid, pkgId);
+        imageFormat.setProperty(ImagePath, filePath);
+        imageFormat.setProperty(ImageType, ImageType_Emot);
+
+        textCursor().insertImage(imageFormat);
     }
 }
 
@@ -525,6 +570,7 @@ QString InputWgt::translateText() {
                         imagePath = newImageFormat.name();
                         imageType = ImageType_Image;
                     }
+
                     //
                     if (imageType == ImageType_Image) {
                         QFileInfo imageInfo(imagePath);
@@ -537,7 +583,9 @@ QString InputWgt::translateText() {
                             continue;
                         }
                     } else if (imageType == ImageType_Emot) {
-
+                        auto pkgId = newImageFormat.stringProperty(EmotionPkgid);
+                        auto shortCut = newImageFormat.stringProperty(EmotionShortText);
+                        addJsonItem(array, Type_Text, QString(DEM_EMOTICON_MODEL).arg(shortCut, pkgId));
                     } else {
                         //
                     }
@@ -648,6 +696,11 @@ void InputWgt::onSnapFinish(const QString &id) {
 
     QString localPath = QString("%1/image/temp/").arg(Platform::instance().getAppdataRoamingUserPath().c_str());
     QString fileName = localPath + QDateTime::currentDateTime().toString("yyyyMMddhhmmsszzz.png");
+    if(!QFile::exists(localPath))
+    {
+        QDir dir;
+        dir.mkpath(localPath);
+    }
     bool bret = QApplication::clipboard()->pixmap().save(fileName, "PNG");
     if (bret) {
         // 将截图放到 剪切板

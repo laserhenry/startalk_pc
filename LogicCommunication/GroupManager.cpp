@@ -255,7 +255,7 @@ bool GroupManager::getGroupCard(const MapGroupCard &groups) {
 /**
  * 更新群资料
  */
-void GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupInfos) {
+bool GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupInfos) {
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/muc/set_muc_vcard.qunar"
@@ -289,7 +289,6 @@ void GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupIn
     std::string strUrl = url.str();
     std::vector<Entity::ImGroupInfo> groups;
     auto callback = [strUrl, &groups](int code, const string &data) {
-
         if (code == 200) {
 
             cJSON *resData = cJSON_Parse(data.c_str());
@@ -297,7 +296,7 @@ void GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupIn
                 error_log("upateGroupInfo json error {0}", data.data());
                 return;
             }
-            int ret = cJSON_GetObjectItem(resData, "ret")->valueint;
+            int ret = JSON::cJSON_SafeGetBoolValue(resData, "ret");
             if (ret) {
                 cJSON *data = cJSON_GetObjectItem(resData, "data");
                 int size = cJSON_GetArraySize(data);
@@ -314,14 +313,13 @@ void GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupIn
             } else {
                 if (cJSON_HasObjectItem(resData, "errmsg")) {
                     char *msg = cJSON_GetObjectItem(resData, "errmsg")->valuestring;
-                    debug_log(msg);
+                    info_log(msg);
                 }
             }
             cJSON_Delete(resData);
-            debug_log("update group info success {0}", data);
+            info_log("update group info success {0}", data);
         } else {
-            debug_log("请求失败  url:{0}", strUrl);
-            debug_log("update group info error");
+            info_log("update group info error {0}", data);
         }
     };
 
@@ -351,9 +349,10 @@ void GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupIn
                 params[jid.domainname()].push_back(it);
             }
             getGroupCard(params);
-//            LogicManager::instance()->GetDatabase()->updateGroupCard(groups);
         }
     }
+
+    return !groups.empty();
 }
 
 /**

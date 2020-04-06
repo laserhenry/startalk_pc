@@ -161,10 +161,8 @@ namespace QTalk {
                     QFileInfo info(localEmo);
                     if(localEmo.isEmpty() || !info.exists() || info.isDir())
                     {
-//                        emoMsg.content = ":/chatview/image1/default.png";
-
                         emoMsg.imageWidth = emoMsg.imageHeight = 50;
-//                        downloadEmoticon(msgId.data(), pkgid, shortCut);
+                        emoMsg.imageLink = QString("%1_%2").arg(pkgid, shortCut.replace("/", ""));
                     }
                     else
                     {

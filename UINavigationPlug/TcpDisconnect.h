@@ -19,8 +19,8 @@ public:
 	void onRetryConnected();
 	void setText(const QString& text);
 
-private:
-	void mousePressEvent(QMouseEvent *e) override;
+//private:
+//	void mousePressEvent(QMouseEvent *e) override;
 
 Q_SIGNALS:
     void sgSetText(const QString&);

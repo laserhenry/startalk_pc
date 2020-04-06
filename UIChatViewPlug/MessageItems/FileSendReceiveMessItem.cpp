@@ -145,59 +145,7 @@ void FileSendReceiveMessItem::setProcess(double speed, double dtotal, double dno
         QString sspeed = QString::number(speed, 10, 2) + unit;
         _contentButtomFrmMessLab->setText(sspeed);
     }
-    if (compare_doule_Equal(100, process) && _contentButtomFrmMessLab) //
-    {
-        isDownLoad = true;
-        isUpLoad = true;
 
-        if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
-            _contentButtomFrmMessLab->setText(tr("上传成功"));
-            _contentButtomFrmProgressBar->hide();
-            _contentButtomFrmOPenFileBtn->show();
-        } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
-            _contentButtomFrmMessLab->setText(tr("已下载"));
-            _contentButtomFrmDownLoadBtn->hide();
-            _contentButtomFrmMenuBtn->show();
-            _contentButtomFrmProgressBar->hide();
-            _contentButtomFrmOPenFileBtn->show();
-        }
-
-        QPointer<FileSendReceiveMessItem> pThis(this);
-        std::thread([pThis](){
-            int i = 0;
-            if(!pThis) return;
-
-            QString filePath(pThis->getLocalFilePath());
-            while (!QFile::exists(filePath) && i < 1000) {
-#ifdef _WINDOWS
-                Sleep(100);
-#else
-                usleep(100000);
-#endif
-                ++i;
-            }
-
-            if(pThis && !filePath.isEmpty())
-                g_pMainPanel->makeFileLink(filePath, pThis->_msgInfo.file_info.fileMd5.toStdString().data());
-
-            if (pThis && (pThis->_openDir || pThis->_openFile)) {
-                if(!filePath.isEmpty())
-                {
-                    if (pThis && pThis->_openDir)
-                        emit pThis->sgOpenDir();
-                    else if (pThis && pThis->_openFile)
-                        emit pThis->sgOpenFile(false);
-                }
-
-                if(pThis)
-                {
-                    pThis->_openDir = false;
-                    pThis->_openFile = false;
-                }
-            }
-
-        }).detach();
-    }
 }
 
 /**
@@ -734,6 +682,10 @@ void FileSendReceiveMessItem::sendDownLoadFile(const std::string &strLocalPath, 
     ChatMsgManager::sendDownLoadFile(strLocalPath, strUri, _msgInfo.msg_id.toStdString());
 }
 
+void FileSendReceiveMessItem::sendNDownLoadFile(const QString &strUri, const QString &strLocalPath) {
+    g_pMainPanel->downloadFileWithProcess(strUri, strLocalPath, _msgInfo.msg_id);
+}
+
 /**
   * @函数名
   * @功能描述
@@ -756,7 +708,8 @@ void FileSendReceiveMessItem::downLoadFile()
     _contentButtomFrmOPenFileBtn->hide();
 
     std::string localPath = g_pMainPanel->getFileMsgLocalPath(_msgInfo.msg_id.toStdString());
-    std::string netPath = _msgInfo.file_info.fileLink.toStdString();
+//    std::string netPath = _msgInfo.file_info.fileLink.toStdString();
+    QString netPath = _msgInfo.file_info.fileLink;
     if (localPath.empty()) {
         QString fileName = _msgInfo.file_info.fileName;
         fileName.replace(QRegExp("[\"|\\<|\\>|\\“|\\”|\\、|\\╲|\\/|\\\\|\\:|\\*|\\?]"), "");
@@ -780,15 +733,16 @@ void FileSendReceiveMessItem::downLoadFile()
         } while (QFile::exists(qLocalFilePath));
         //
     }
-    // 占个坑
-    {
-        QFile file(qLocalFilePath);
-        file.open(QIODevice::WriteOnly);
-        file.close();
-    }
+//    // 占个坑
+//    {
+//        QFile file(qLocalFilePath);
+//        file.open(QIODevice::WriteOnly);
+//        file.close();
+//    }
     //下载文件
     localPath = qLocalFilePath.toStdString();
-    sendDownLoadFile(localPath, netPath);
+//    sendDownLoadFile(localPath, netPath);
+    sendNDownLoadFile(netPath, qLocalFilePath);
     // 回写配置文件
     g_pMainPanel->setFileMsgLocalPath(_msgInfo.msg_id.toStdString(), localPath);
 }
@@ -907,7 +861,8 @@ void FileSendReceiveMessItem::onOpenFilePath()
             return;
         } else {
             _openDir = true;
-            g_pMainPanel->pool().enqueue(std::bind(&FileSendReceiveMessItem::downLoadFile, this));
+//            g_pMainPanel->pool().enqueue(std::bind(&FileSendReceiveMessItem::downLoadFile, this));
+            downLoadFile();
         }
     } else {
 
@@ -945,9 +900,52 @@ void FileSendReceiveMessItem::onOpenFile(bool) {
             return;
         } else {
             _openFile = true;
-            g_pMainPanel->pool().enqueue(std::bind(&FileSendReceiveMessItem::downLoadFile, this));
+//            g_pMainPanel->pool().enqueue(std::bind(&FileSendReceiveMessItem::downLoadFile, this));
+            downLoadFile();
         }
     } else {
         QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
+    }
+}
+
+void FileSendReceiveMessItem::onUploadFailed() {
+    _contentButtomFrmMessLab->setText(tr("上传失败"));
+    isUpLoad = false;
+}
+
+void FileSendReceiveMessItem::downloadSuccess() {
+//    if (compare_doule_Equal(100, process) && _contentButtomFrmMessLab) //
+    {
+        isDownLoad = true;
+        isUpLoad = true;
+
+        if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
+            _contentButtomFrmMessLab->setText(tr("上传成功"));
+            _contentButtomFrmProgressBar->hide();
+            _contentButtomFrmOPenFileBtn->show();
+        } else if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
+            _contentButtomFrmMessLab->setText(tr("已下载"));
+            _contentButtomFrmDownLoadBtn->hide();
+            _contentButtomFrmMenuBtn->show();
+            _contentButtomFrmProgressBar->hide();
+            _contentButtomFrmOPenFileBtn->show();
+        }
+
+        QString filePath(getLocalFilePath());
+        if(!filePath.isEmpty())
+            g_pMainPanel->makeFileLink(filePath, _msgInfo.file_info.fileMd5.toStdString().data());
+
+        if ((_openDir || _openFile)) {
+            if(!filePath.isEmpty())
+            {
+                if (_openDir)
+                    emit sgOpenDir();
+                else if (_openFile)
+                    emit sgOpenFile(false);
+            }
+
+            _openDir = false;
+            _openFile = false;
+        }
     }
 }

@@ -21,7 +21,6 @@ WebEnginePage::WebEnginePage(QObject *parent)
 //    void fullScreenRequested(QWebEngineFullScreenRequest fullScreenRequest);
 //    void quotaRequested(QWebEngineQuotaRequest quotaRequest);
 //    void registerProtocolHandlerRequested(QWebEngineRegisterProtocolHandlerRequest request);
-
 }
 
 WebEnginePage::~WebEnginePage() = default;
@@ -56,12 +55,29 @@ void WebEnginePage::onFeaturePermissionRequested(const QUrl &securityOrigin, QWe
 //        setFeaturePermission(securityOrigin, feature, PermissionGrantedByUser);
 //    else
 //        setFeaturePermission(securityOrigin, feature, PermissionDeniedByUser);
-    if (feature == QWebEnginePage::MediaAudioCapture
-        || feature == QWebEnginePage::MediaVideoCapture
-        || feature == QWebEnginePage::MediaAudioVideoCapture)
-        setFeaturePermission(securityOrigin, feature, QWebEnginePage::PermissionGrantedByUser);
-    else
-        setFeaturePermission(securityOrigin, feature, QWebEnginePage::PermissionDeniedByUser);
+
+    switch (feature) {
+        case QWebEnginePage::Geolocation:
+//            return (tr("允许 %1 访问您的位置信息？"));
+        case QWebEnginePage::MediaAudioCapture:
+//            return (tr("允许 %1 访问您的麦克风？"));
+        case QWebEnginePage::MediaVideoCapture:
+//            return (tr("允许 %1 访问您的摄像头？"));
+        case QWebEnginePage::MediaAudioVideoCapture:
+//            return (tr("允许 %1 访问您的麦克风和网络摄像头？"));
+        case QWebEnginePage::MouseLock:
+//            return (tr("允许 %1 锁定鼠标光标？"));
+#ifndef _LINUX
+        case QWebEnginePage::DesktopVideoCapture:
+//            return (tr("允许 %1 捕获桌面的视频？"));
+	case QWebEnginePage::DesktopAudioVideoCapture:
+//            return (tr("允许 %1 捕获桌面的音频和视频？"));
+#endif
+            setFeaturePermission(securityOrigin, feature, QWebEnginePage::PermissionGrantedByUser);
+        case QWebEnginePage::Notifications:
+        default:
+            setFeaturePermission(securityOrigin, feature, QWebEnginePage::PermissionDeniedByUser);
+    }
 }
 
 //void WebEnginePage::onQuotaRequested(QWebEngineQuotaRequest quotaRequest) {

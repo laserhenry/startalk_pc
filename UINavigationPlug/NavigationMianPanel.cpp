@@ -26,18 +26,16 @@ NavigationMianPanel::NavigationMianPanel(QWidget *parent) :
         _pSessionFrm(nullptr),
         _contactFrm(nullptr),
         _multifunctionFrm(nullptr),
-        _messageManager(nullptr),
-        _messageListener(nullptr),
-        _pTcpDisconnect(nullptr),
-        _pConnToServerTimer(nullptr){
+        _pTcpDisconnect(nullptr)
+//        _pConnToServerTimer(nullptr)
+        {
 
     qRegisterMetaType<ReceiveSession>("ReceiveSession");
     qRegisterMetaType<QTalk::Entity::UID>("QTalk::Entity::UID");
     init();
 }
 
-NavigationMianPanel::~NavigationMianPanel() {
-}
+NavigationMianPanel::~NavigationMianPanel() = default;
 
 void NavigationMianPanel::receiveSession(R_Message mess) 
 {
@@ -84,12 +82,12 @@ void NavigationMianPanel::init() {
     initLayout();
     initMessage();
     connects();
-    if (nullptr == _pConnToServerTimer) {
-        _pConnToServerTimer = new QTimer(this);
-        _pConnToServerTimer->setInterval(5000);
-        connect(_pConnToServerTimer, &QTimer::timeout, this, &NavigationMianPanel::retryToConnect);
-        connect(this, SIGNAL(connToServerTimerSignal(bool)), this, SLOT(connToServerTimerSlot(bool)));
-    }
+//    if (nullptr == _pConnToServerTimer) {
+//        _pConnToServerTimer = new QTimer(this);
+//        _pConnToServerTimer->setInterval(5000);
+//        connect(_pConnToServerTimer, &QTimer::timeout, this, &NavigationMianPanel::retryToConnect);
+//    }
+//        connect(this, SIGNAL(connToServerTimerSignal(bool)), this, SLOT(connToServerTimerSlot(bool)));
     //
     QtConcurrent::run([](){
         NavigationMsgManager::getSessionData();
@@ -220,19 +218,19 @@ void NavigationMianPanel::connects() {
     connect(this, &NavigationMianPanel::sgGotMState, _pSessionFrm, &SessionFrm::onGotMState);
 }
 
-/**
-  * @函数名   
-  * @功能描述 
-  * @参数
-  * @author   cc
-  * @date     2018/10/26
-  */
-void NavigationMianPanel::connToServerTimerSlot(bool sts) {
-    Q_ASSERT(Platform::instance().isMainThread());
-    if (nullptr != _pConnToServerTimer) {
-        sts ? _pConnToServerTimer->start() : _pConnToServerTimer->stop();
-    }
-}
+///**
+//  * @函数名
+//  * @功能描述
+//  * @参数
+//  * @author   cc
+//  * @date     2018/10/26
+//  */
+//void NavigationMianPanel::connToServerTimerSlot(bool sts) {
+//    Q_ASSERT(Platform::instance().isMainThread());
+//    if (nullptr != _pConnToServerTimer) {
+//        sts ? _pConnToServerTimer->start() : _pConnToServerTimer->stop();
+//    }
+//}
 
 /**
   * @函数名
@@ -290,7 +288,7 @@ void NavigationMianPanel::onTcpDisconnect() {
     emit setDisconnectWgtVisible(true);
 //    emit connToServerTimerSignal(true);
     // 立即重连一次
-    retryToConnect();
+//    retryToConnect();
 }
 
 /**
@@ -300,52 +298,52 @@ void NavigationMianPanel::onTcpDisconnect() {
   * @author   cc
   * @date     2018/10/24
   */
-void NavigationMianPanel::retryToConnect() {
-
-    static qint64 call_time = 0;
-    qint64 now = QDateTime::currentDateTime().toMSecsSinceEpoch();
-    if(now - call_time < 5000)
-        return;
-    call_time = now;
-
-    if (Platform::instance().isMainThread() &&
-        nullptr != _pConnToServerTimer &&
-        _pConnToServerTimer->isActive()) {
-
-        info_log("retryToConnect ...");
-        _pTcpDisconnect->setText("正在重连");
-        _pConnToServerTimer->stop();
-    }
-
-    // check server host
-    const std::string host = NavigationManager::instance().getXmppHost();
-    const int port = NavigationManager::instance().getProbufPort();
-    if (port == 0 || host.empty()) {
-        warn_log("nav info error (port == 0 || domain.empty())");
-        emit connToServerTimerSignal(true);
-        return;
-    }
-    //
-    if (nullptr != _messageManager) {
-        QtConcurrent::run([this, host, port](){
-            // try connect to server
-            std::unique_ptr<QTcpSocket> tcpSocket(new QTcpSocket);
-            tcpSocket->connectToHost(host.data(), port);
-            if(!tcpSocket->waitForConnected(5000))
-            {
-                info_log("connect refuse by socket");
-                tcpSocket->abort();
-                emit connToServerTimerSignal(true);
-                if(_pTcpDisconnect)
-                    emit _pTcpDisconnect->sgSetText(tr("当前网络不可用"));
-                return;
-            }
-            tcpSocket->close();
-            // 重连
-            _messageManager->retryConnecToServer();
-        });
-    }
-}
+//void NavigationMianPanel::retryToConnect() {
+//
+//    static qint64 call_time = 0;
+//    qint64 now = QDateTime::currentDateTime().toMSecsSinceEpoch();
+//    if(now - call_time < 5000)
+//        return;
+//    call_time = now;
+//
+//    if (Platform::instance().isMainThread() &&
+//        nullptr != _pConnToServerTimer &&
+//        _pConnToServerTimer->isActive()) {
+//
+//        info_log("retryToConnect ...");
+//        _pTcpDisconnect->setText("正在重连");
+//        _pConnToServerTimer->stop();
+//    }
+//
+//    // check server host
+//    const std::string host = NavigationManager::instance().getXmppHost();
+//    const int port = NavigationManager::instance().getProbufPort();
+//    if (port == 0 || host.empty()) {
+//        warn_log("nav info error (port == 0 || domain.empty())");
+////        emit connToServerTimerSignal(true);
+//        return;
+//    }
+//    //
+//    if (nullptr != _messageManager) {
+//        QtConcurrent::run([this, host, port](){
+//            // try connect to server
+//            std::unique_ptr<QTcpSocket> tcpSocket(new QTcpSocket);
+//            tcpSocket->connectToHost(host.data(), port);
+//            if(!tcpSocket->waitForConnected(5000))
+//            {
+//                info_log("connect refuse by socket");
+//                tcpSocket->abort();
+////                emit connToServerTimerSignal(true);
+//                if(_pTcpDisconnect)
+//                    emit _pTcpDisconnect->sgSetText(tr("当前网络不可用"));
+//                return;
+//            }
+//            tcpSocket->close();
+//            // 重连
+//            _messageManager->retryConnecToServer();
+//        });
+//    }
+//}
 
 /**
   * @函数名
@@ -392,7 +390,7 @@ void NavigationMianPanel::onLoginSuccess() {
         emit loadSession();
     }
     emit setDisconnectWgtVisible(false);
-    emit connToServerTimerSignal(false);
+//    emit connToServerTimerSignal(false);
 }
 
 void NavigationMianPanel::onSendShowCardSigal(const QString &userId) {

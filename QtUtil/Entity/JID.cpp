@@ -37,15 +37,10 @@ namespace QTalk {
                         resource = remain.substr(pos + 1, remain.size() - pos);
                     } else {
                         domain = remain;
-                        // resource todo
-                        char uuid[36] = {};
-                        memset(uuid, 0, strlen(uuid));
-                        QTalk::utils::generateUUID(uuid);
-
                         std::ostringstream stream;
                         stream << "V[" << clientVersion
                                << "]_P[" << platformStr
-                               << "]_ID[" << uuid
+                               << "]_ID[" << QTalk::utils::getMessageId()
                                << "]_C[" << channel
                                << "]_PB";
                         resource = stream.str();

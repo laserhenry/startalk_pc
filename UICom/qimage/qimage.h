@@ -32,6 +32,7 @@ namespace QTalk {
 
     private:
         QMap<QString, QPixmap> _allPixmap;
+        QMap<QString, QMap<QString, QPixmap>> _scanPixmap; // <path, <size, pixmap>>
 
     private:
         QMutex _mutex;

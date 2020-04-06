@@ -7,6 +7,7 @@
 #include "../Platform/Platform.h"
 #include "../CustomUi/QtMessageBox.h"
 #include "../UICom/uicom.h"
+#include "../Platform/NavigationManager.h"
 #include <QHBoxLayout>
 #include <QWindow>
 #include <QKeyEvent>
@@ -113,6 +114,43 @@ void PictureBrowser::keyPressEvent(QKeyEvent *e)
     UShadowDialog::keyPressEvent(e);
 }
 
+
+//
+QString getEmotionUrl(const QString& content)
+{
+    QRegExp regExp("\\[obj type=[\\\\]?\"([^\"]*)[\\\\]?\" value=[\\\\]?\"([^\"]*)[\\\\]?\"(.*)\\]");
+
+    QString url ;
+
+    if (regExp.indexIn(content) != -1) {
+
+        QString item = regExp.cap(0); // 符合条件的整个字符串
+        QString type = regExp.cap(1); // 多媒体类型
+        QString val = regExp.cap(2); // 路径
+        QString strWidth = regExp.cap(3); // 宽高
+
+        if ("image" == type) {
+        } else if ("emoticon" == type) {
+            QString shortCut = val, pkgid;
+            shortCut.remove("[").remove("]");
+            if (!strWidth.isEmpty()) {
+                QRegExp exp("width=(.+) height=(.+)");
+                if (exp.indexIn(strWidth) >= 0) {
+                    pkgid = exp.cap(1);
+                }
+            }
+
+            if(!shortCut.isEmpty() && !pkgid.isEmpty())
+            {
+                url = QString("%1/file/v2/emo/d/e/%2/%3/org").arg(NavigationManager::instance().getFileHttpHost().data())
+                        .arg(pkgid, shortCut);
+            }
+        }
+    }
+
+    return url;
+}
+
 /**
  * analyse message content
  * Don't lock it.
@@ -145,7 +183,17 @@ void PictureBrowser::analyseMessage(const std::string& msgId, const QString& msg
         }
         else if("emoticon" == type)
         {
-            // todo
+            // 暂不显示表情
+//            auto emoUrl = getEmotionUrl(item);
+//            if(!emoUrl.isEmpty())
+//            {
+//                QString rawUrl = QUrl(emoUrl).toEncoded();
+//                if(next)
+//                    _images.emplace_back(msgId, rawUrl.toStdString());
+//                else
+//                    tmpImages.insert(tmpImages.begin(),
+//                                     std::make_pair(msgId, rawUrl.toStdString()));
+//            }
         }
         //
         pos += item.length();

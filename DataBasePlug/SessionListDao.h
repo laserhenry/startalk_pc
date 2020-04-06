@@ -21,9 +21,9 @@ public:
     bool clearData() override;
 
 public:
-    bool insertSessionInfo(const QTalk::Entity::ImSessionInfo &imSessionInfo);
-
-    bool bulkInsertSessionInfo(const std::vector<QTalk::Entity::ImSessionInfo> &sessionList);
+//    bool insertSessionInfo(const QTalk::Entity::ImSessionInfo &imSessionInfo);
+//
+//    bool bulkInsertSessionInfo(const std::vector<QTalk::Entity::ImSessionInfo> &sessionList);
 
     bool bulkDeleteSession(const std::vector<std::string> &groupIds);
 
@@ -39,15 +39,17 @@ public:
     void updateRealJidForFixBug();
     // 修正消息type
     void fixMessageType();
+    //
+    void clearSelfUnRead(const std::string& xmppId);
 
 public:
     bool deleteAllSession();
 
-    bool initSession();
+//    bool initSession();
+//
+//    bool initConfigSessions();
 
-    bool initConfigSessions();
-
-    bool initSessionInfo(std::vector<std::string> *userList);
+//    bool initSessionInfo(std::vector<std::string> *userList);
 };
 
 #endif // SESSIONLISTDAO_H

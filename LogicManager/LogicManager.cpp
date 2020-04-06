@@ -67,11 +67,10 @@ void LogicManager::loadLibrary() {
 #endif // _DEBUG
         strLibraryName += ".dylib";
         dll = dlopen(strLibraryName.c_str(), RTLD_NOW);
-
         if (!dll) {
-            auto err = dlerror();
             continue;
         }
+        dlerror();
         auto handle = (Handle) dlsym(dll, "Handle");
         if (handle == nullptr) {
             dlclose(dll);

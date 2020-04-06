@@ -590,6 +590,7 @@ void MainWindow::InitLogin(bool _enable, const QString& loginMsg)
         {
             UIGolbalManager::GetUIGolbalManager()->setStyleSheetForPlugin("UILoginPlug");
             connect(_logindlg, SIGNAL(sgSynDataSuccess()), this, SLOT(openMainWindow()));
+            connect(_logindlg, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()));
             _logindlg->show();
         }
     }
@@ -780,6 +781,7 @@ void MainWindow::onCurFunChanged(int index)
 //
 void MainWindow::onAppActive()
 {
+    qInfo() << "--- app active ---";
     emit sgResetOperator();
 
     if(_initUi)
@@ -919,15 +921,15 @@ void MainWindow::systemQuit()
     _sys_run = false;
     _logout_t = QDateTime::currentMSecsSinceEpoch();
 #ifndef _LINUX
-    if(_pMessageManager)
-    {
-        _pMessageManager->sendOnlineState(_login_t, _logout_t, _ipv4Address.toStdString());
-
-        if(!_operators.empty())
-        {
-            _pMessageManager->sendOperatorStatistics(_ipv4Address.toStdString(), _operators);
-        }
-    }
+//    if(_pMessageManager)
+//    {
+//        _pMessageManager->sendOnlineState(_login_t, _logout_t, _ipv4Address.toStdString());
+//
+//        if(!_operators.empty())
+//        {
+//            _pMessageManager->sendOperatorStatistics(_ipv4Address.toStdString(), _operators);
+//        }
+//    }
 #endif
 	saveWndState();
 	QApplication::exit(0);

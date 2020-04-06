@@ -936,12 +936,15 @@ void SessionFrm::onUpdateGroupInfo(const QTalk::StGroupInfo &gInfo) {
     UID uid(gInfo.groupId);
     if (_sessionMap.contains(uid)) {
         QStandardItem *item = _sessionMap[uid];
-        QString name = QString::fromStdString(gInfo.name);
+        auto info = dbPlatForm::instance().getGroupInfo(gInfo.groupId, true);
+        if(nullptr == info)
+            return;
+        QString name = QString::fromStdString(info->Name);
         if (!name.isEmpty()) {
             item->setData(name, ITEM_DATATYPE_USERNAME);
             item->setToolTip(name);
 
-            QString headPath = QTalk::GetHeadPathByUrl(gInfo.headSrc).data();
+            QString headPath = QTalk::GetHeadPathByUrl(info->HeaderSrc).data();
             item->setData(headPath, ITEM_DATATYPE_HEADPATH);
         }
     }
@@ -1456,6 +1459,7 @@ void SessionFrm::onAppActive() {
     if(index.isValid())
     {
         unsigned int count = index.data(ITEM_DATATYPE_UNREADCOUNT).toUInt();
+//        qInfo() << "-------------" << count;
         if (_messageManager && count > 0) {
             auto chatType = index.data(ITEM_DATATYPE_CHATTYPE).toInt();
             auto userId = index.data(ITEM_DATATYPE_USERID).toString();

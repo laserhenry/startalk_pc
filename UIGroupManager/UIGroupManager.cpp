@@ -473,11 +473,7 @@ void UIGroupManager::creatGroup() {
         }
     }
 
-    char uuid[36];
-    QTalk::utils::generateUUID(uuid);
-    QString groupId = QString("%1@conference.%2").arg(uuid).arg(Platform::instance().getSelfDomain().c_str());
-    groupId.replace("-", "");
-    groupId = groupId.toLower();
+    QString groupId = QString("%1@conference.%2").arg(QTalk::utils::getMessageId().data()).arg(Platform::instance().getSelfDomain().c_str());
     _mapGroupMembers[groupId] = _mapLstWgtItem.keys();
     QString groupName = _pGroupNameEdit->text();
     if(groupName.isEmpty())

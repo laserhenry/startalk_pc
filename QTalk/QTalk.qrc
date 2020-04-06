@@ -30,6 +30,8 @@
         <file>config/widgets_zh_CN.qm</file>
         <file>config/english.qm</file>
         <file>config/qtalk_en.qm</file>
+        <file>config/qtalk_ko.qm</file>
+        <file>config/qt_ko.qm</file>
         <file>qml/main.qml</file>
         <file>image1/radio_icon_normal.png</file>
         <file>image1/radio_icon_selected.png</file>

@@ -116,13 +116,16 @@ SystemTray::SystemTray(MainWindow* mainWnd)
 		if ((!_popWnd->isVisible() && bSysTray) ||
                 (_popWnd->isVisible() && (bSysTray || bPopWnd))) {
 
-
-			static unsigned char flag = 0;
-			if (flag++ % 2)
-				return;
-
-			if (!pSysTrayMenu->isVisible() &&_popWnd->hasNewMessage() && !_popWnd->isVisible())
+			if (!pSysTrayMenu->isVisible() &&_popWnd->hasNewMessage())
 			{
+                if (!_popWnd->isVisible())
+                {
+                    _popWnd->show();
+                    //static unsigned char flag = 0;
+                    //if (flag++ % 2)
+                    //    return;
+                }
+
 				QRect rect = _pSysTrayIcon->geometry();
                 auto pos = QCursor::pos();
 #ifdef _LINUX
@@ -140,12 +143,16 @@ SystemTray::SystemTray(MainWindow* mainWnd)
 #else
                 QScreen *screen = QApplication::screenAt(pos);
 #endif
+				_popWnd->show();
 				auto screenRect = screen->availableGeometry();
 				auto x = qMin(screenRect.right() - _popWnd->width() - 10, rect.x());
-
-				_popWnd->show();
 #ifdef _WINDOWS
-                _popWnd->move(x, rect.y() - _popWnd->height() - 2);
+                auto y = rect.y() - _popWnd->height() - 5;
+                if (y < screenRect.top())
+                    y = screenRect.top() + 5;
+                else if (y + _popWnd->height() > screenRect.bottom())
+                    y -= (y + _popWnd->height() - screenRect.bottom()) + 5;
+                _popWnd->move(x, y);
 #else
                 _popWnd->move(x, rect.bottom());
 #endif

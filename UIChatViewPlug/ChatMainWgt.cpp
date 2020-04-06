@@ -103,14 +103,16 @@ ChatMainWgt::ChatMainWgt(ChatViewItem *pViewItem)
     //
     std::function<int(STLazyQueue<bool>*)> adjustItemsFunc = [this](STLazyQueue<bool> *q) ->int {
         int runningCount = 0;
+        bool isOk = true;
         if (q != nullptr && !q->empty()) {
             while (!q->empty()) {
+                isOk &= q->front();
                 q->pop();
                 runningCount++;
             }
             QPointer<ChatMainWgt> pThis(this);
             if(pThis)
-                emit adjustItems();
+                emit adjustItems(isOk);
         }
         return runningCount;
     };
@@ -151,6 +153,7 @@ void ChatMainWgt::connects() {
     connect(this, &ChatMainWgt::updateRevokeSignal, this, &ChatMainWgt::updateRevokeMessage);
     connect(this, &ChatMainWgt::sgImageDownloaded, this, &ChatMainWgt::onImageDownloaded, Qt::QueuedConnection);
     connect(this, &ChatMainWgt::customContextMenuRequested, this, &ChatMainWgt::onCustomContextMenuRequested);
+    connect(this, &ChatMainWgt::sgDownloadFileSuccess, this, &ChatMainWgt::onDownloadFile);
 
     connect(copyAct, &QAction::triggered, this, &ChatMainWgt::onCopyAction);
     connect(saveAsAct, &QAction::triggered, this, &ChatMainWgt::onSaveAsAction);
@@ -279,7 +282,7 @@ void ChatMainWgt::onCustomContextMenuRequested(const QPoint &pos) {
   */
 void ChatMainWgt::resizeEvent(QResizeEvent *e)
 {
-    _resizeQueue->push(true);
+    _resizeQueue->push(false);
     QListView::resizeEvent(e);
 }
 
@@ -450,13 +453,15 @@ void ChatMainWgt::onShowMessage(StNetMessageResult info, int jumType) {
         else
             item->setSizeHint({this->width(), 40});
     }
+
     {
         static unsigned char flag = 0;
         if(++flag % 2)
-            this->resize(this->width() - 1, this->height());
-        else
             this->resize(this->width() + 1, this->height());
+        else
+            this->resize(this->width() - 1, this->height());
     }
+
     //
     _jumType = jumType;
     if(_jumType == EM_JUM_INVALID)
@@ -484,10 +489,10 @@ void ChatMainWgt::onShowMessage(StNetMessageResult info, int jumType) {
     this->setRowHidden(index.row(), false);
 
     //
-    {
-        QApplication::processEvents(QEventLoop::AllEvents, 50);
+//    {
+//        QApplication::processEvents(QEventLoop::AllEvents, 50);
         jumTo();
-    }
+//    }
 }
 
 /**
@@ -544,7 +549,7 @@ void ChatMainWgt::setHasNotHistoryMsgFlag(bool hasHistory) {
     _hasnotHistoryMsg = hasHistory;
 
     if (!_hasnotHistoryMsg) {
-        showTipMessage(QTalk::utils::getMessageId().data(), QTalk::Entity::MessageTypeGroupNotify, tr("没有更多消息了"), 0);
+        emit showTipMessageSignal(QTalk::utils::getMessageId().data(), QTalk::Entity::MessageTypeGroupNotify, tr("没有更多消息了"), 0);
     }
 }
 
@@ -591,7 +596,7 @@ void ChatMainWgt::updateRevokeMessage(const QString &fromId, const QString &mess
         QString content = tr("%1撤回了一条消息").arg(fromId == Platform::instance().getSelfXmppId().data() ?
                 tr("你") : info.user_name);
 
-        showTipMessage(messageId, QTalk::Entity::MessageTypeRevoke, content, info.time);
+        emit showTipMessageSignal(messageId, QTalk::Entity::MessageTypeRevoke, content, info.time);
     }
 }
 
@@ -925,7 +930,7 @@ void ChatMainWgt::onScrollBarChanged(int val) {
     _oldScrollBarVal = val;
 }
 
-void ChatMainWgt::onAdjustItems() {
+void ChatMainWgt::onAdjustItems(bool isOk) {
     for (const auto& itemWgt : _mapItemWgt) {
         //
         if (itemWgt) {
@@ -935,7 +940,7 @@ void ChatMainWgt::onAdjustItems() {
                 QTalk::Entity::MessageTypeRobotAnswer == itemType) {
 
                 auto *chatItem = qobject_cast<TextMessItem *>( itemWgt);
-                chatItem->setMessageContent();
+                chatItem->setMessageContent(false);
             }
         }
     }
@@ -1198,7 +1203,11 @@ void ChatMainWgt::onDisconnected()
 void ChatMainWgt::onSendMessageFailed(const QString &msgId) {
     if(_mapItemWgt.contains(msgId))
     {
-        _mapItemWgt[msgId]->onDisconnected();
+        auto* wgt = _mapItemWgt[msgId];
+        wgt->onDisconnected();
+        auto* fileWgt = qobject_cast<FileSendReceiveMessItem*>(wgt);
+        if(fileWgt)
+            fileWgt->onUploadFailed();
     }
 }
 
@@ -1281,9 +1290,39 @@ void ChatMainWgt::jumTo() {
 
 void ChatMainWgt::showEvent(QShowEvent *e) {
     jumTo();
+    {
+        static unsigned char flag = 0;
+        if(++flag % 2)
+            this->resize(this->width() + 1, this->height());
+        else
+            this->resize(this->width() - 1, this->height());
+    }
     QWidget::showEvent(e);
 }
 
+//
 void ChatMainWgt::scrollToItem(QStandardItem *pItem) {
     this->scrollTo(_pModel->mapFromSource(pItem->index()), QAbstractItemView::PositionAtTop);
+}
+
+//
+void ChatMainWgt::onDownloadFile(const QString &key) {
+    if(!_mapItemWgt.contains(key))
+        return;
+
+    auto* item = _mapItemWgt[key];
+    {
+        auto* pFileItem = qobject_cast<FileSendReceiveMessItem*>(item);
+        if(pFileItem)
+        {
+            pFileItem->downloadSuccess();
+        }
+    }
+    //
+    {
+        auto* pVideoItem = qobject_cast<VideoMessageItem*>(item);
+        if(pVideoItem)
+            pVideoItem->downloadSuccess();
+    }
+
 }

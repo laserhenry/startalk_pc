@@ -37,8 +37,8 @@ private:
     // session info
 public:
     // add session
-    bool insertSessionInfo(const QTalk::Entity::ImSessionInfo &imSessionInfo) override ;
-    bool bulkInsertSessionInfo(const std::vector<QTalk::Entity::ImSessionInfo> &sessionList) override ;
+//    bool insertSessionInfo(const QTalk::Entity::ImSessionInfo &imSessionInfo) override ;
+//    bool bulkInsertSessionInfo(const std::vector<QTalk::Entity::ImSessionInfo> &sessionList) override ;
     // delete session
     bool bulkDeleteSessions(const std::vector<std::string> &peerIds) override ;
     // get session
@@ -134,10 +134,11 @@ public://group
     bool updateGroupCard(const std::vector<QTalk::Entity::ImGroupInfo> &groups) override ;
     // delete
     bool bulkDeleteGroup(const std::vector<std::string> &groupIds) override ;
+    bool bulkDeleteGroupMember(const std::vector<std::string> &groupIds) override ;
     // get group card info
     std::shared_ptr<QTalk::Entity::ImGroupInfo> getGroupInfoByXmppId(const std::string &xmppids) override ;
     // get group member by id
-    bool getGroupMemberById(const std::string &groupId, std::vector<QTalk::StUserCard> &member,
+    bool getGroupMemberById(const std::string &groupId, std::map<std::string, QTalk::StUserCard> &member,
                                     std::map<std::string, QUInt8> &userRole) override;
     //
     bool getGroupMemberInfo(const std::vector<std::string> &members, std::vector<QTalk::StUserCard> &userInfos) override;

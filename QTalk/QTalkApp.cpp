@@ -72,16 +72,31 @@ QTalkApp::QTalkApp(int argc, char *argv[])
     _pUiManager = UIGolbalManager::GetUIGolbalManager();
     int language = AppSetting::instance().getLanguage();
     if(QLocale::AnyLanguage == language)
+    {
         language = QLocale::system().language();
+        AppSetting::instance().setLanguage(language);
+    }
     switch (language)
     {
-
         case QLocale::English:
         {
             // 加载翻译文件
             static QTranslator wgtQm;
             wgtQm.load(":/QTalk/config/qtalk_en.qm");
             qApp->installTranslator(&wgtQm);
+            break;
+        }
+        case QLocale::Korean:
+        {
+            //
+            static QTranslator qtGloble;
+            qtGloble.load(":/QTalk/config/qt_ko.qm");
+            qApp->installTranslator(&qtGloble);
+
+            static QTranslator wgtQm;
+            wgtQm.load(":/QTalk/config/qtalk_ko.qm");
+            qApp->installTranslator(&wgtQm);
+
             break;
         }
         case QLocale::Chinese:

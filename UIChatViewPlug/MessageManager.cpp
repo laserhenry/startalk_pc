@@ -125,6 +125,8 @@ void ChatMsgManager::getGroupInfo(const std::string& groupId)
   */
 void ChatMsgManager::sendMessage(S_Message& e) {
 
+    g_pMainPanel->addSending(e.message.MsgId);
+
     std::thread([e](){
 #ifdef _MACOS
         pthread_setname_np("ChatMsgManager::sendMessage");
@@ -139,6 +141,8 @@ void ChatMsgManager::sendMessage(S_Message& e) {
 
 void ChatMsgManager::preSendMessage(const QTalk::Entity::ImMessageInfo &message)
 {
+    g_pMainPanel->addSending(message.MsgId);
+
     PreSendMessageEvt evt;
     evt.message = message;
     EventBus::FireEvent(evt);

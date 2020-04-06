@@ -268,11 +268,11 @@ void SystemSettingWnd::hideEvent(QHideEvent* e)
 
 void SystemSettingWnd::initMsgNotify(QVBoxLayout* vlayout) {
 
-	SettingCheckBox *msgAudioCK = new SettingCheckBox(tr("新消息声音提醒"), AppSetting::instance().getNewMsgAudioNotify(), this);
-	SettingCheckBox *nativeNotify = new SettingCheckBox(tr("使用系统提示窗"), AppSetting::instance().getUseNativeMessagePrompt(), this);
-	SettingCheckBox *msgNotifyCK = new SettingCheckBox(tr("显示新消息提示窗"), AppSetting::instance().getNewMsgTipWindowNotify(), this);
-	SettingCheckBox *msgPhonePushCK = new SettingCheckBox(tr("手机端随时接收推送"), AppSetting::instance().getPhoneAnyReceive(), this);
-	SettingCheckBox *strongWarn = new SettingCheckBox(tr("消息强提醒"), AppSetting::instance().getStrongWarnFlag(), this);
+	auto *msgAudioCK = new SettingCheckBox(tr("新消息声音提醒"), AppSetting::instance().getNewMsgAudioNotify(), this);
+	auto *nativeNotify = new SettingCheckBox(tr("使用系统提示窗"), AppSetting::instance().getUseNativeMessagePrompt(), this);
+	auto *msgNotifyCK = new SettingCheckBox(tr("显示新消息提示窗"), AppSetting::instance().getNewMsgTipWindowNotify(), this);
+	auto *msgPhonePushCK = new SettingCheckBox(tr("手机端随时接收推送"), AppSetting::instance().getPhoneAnyReceive(), this);
+	auto *strongWarn = new SettingCheckBox(tr("消息强提醒"), AppSetting::instance().getStrongWarnFlag(), this);
     nativeNotify->setEnabled(AppSetting::instance().getNativeMessagePromptEnable());
 
 #ifdef _MACOS
@@ -733,7 +733,7 @@ void SystemSettingWnd::initFriendAuthority(QVBoxLayout* vlayout) {
         questionLay->setMargin(0);
         vlayout->addLayout(questionLay);
 
-        QLabel *titleLbl = new QLabel;
+        auto *titleLbl = new QLabel;
         titleLbl->setFixedWidth(74);
         titleLbl->setFixedHeight(13);
         titleLbl->setText(tr("问题"));
@@ -786,14 +786,17 @@ void SystemSettingWnd::initFontSetting(QVBoxLayout* vlayout) {
     {
         auto* languageLabel = new QLabel(tr("语言"), this);
         auto* languageCombox = new NoSlidingHandoverComboBox(this);
-        languageCombox->addItem(tr("中文"));
-        languageCombox->addItem(tr("英文"));
+        languageCombox->addItem("中文");
+        languageCombox->addItem("English");
+        languageCombox->addItem("한국어");
         //
         int language = AppSetting::instance().getLanguage();
         if(language == QLocale::English)
-            languageCombox->setCurrentText(tr("英文"));
+            languageCombox->setCurrentText("English");
+        else if(language == QLocale::Korean)
+            languageCombox->setCurrentText("한국어");
         else
-            languageCombox->setCurrentText(tr("中文"));
+            languageCombox->setCurrentText("中文");
         auto* languageLay = new QHBoxLayout();
         languageLay->addWidget(languageLabel);
         languageLay->addWidget(languageCombox);
@@ -804,6 +807,8 @@ void SystemSettingWnd::initFontSetting(QVBoxLayout* vlayout) {
             QtMessageBox::information(this, tr("提示"), tr("外观设置重启后生效"));
             if(languageCombox->currentIndex() == 1)
                 AppSetting::instance().setLanguage(QLocale::English);
+            else if(languageCombox->currentIndex() == 2)
+                AppSetting::instance().setLanguage(QLocale::Korean);
             else
                 AppSetting::instance().setLanguage(QLocale::Chinese);
         });

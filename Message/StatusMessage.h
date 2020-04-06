@@ -17,7 +17,10 @@ public:
 };
 
 // 触发重连消息
-class RetryConnectToServerEvt : public Event {};
+class RetryConnectToServerEvt : public Event {
+public:
+    bool result = false;
+};
 
 // 重连结果消息
 //class RetryConnectRet : public Event{ };

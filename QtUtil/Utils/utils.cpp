@@ -383,12 +383,39 @@ namespace QTalk {
             uuid_unparse(uuid, str);
 #endif // _WINDOWS
         }
+        
+        std::vector<std::string> split(const std::string& s, char delimiter)
+        {
+            std::vector<std::string> dst;
+            std::string temp;
+            std::istringstream tokenStream(s);
+            while (std::getline(tokenStream, temp, delimiter)) {
+                dst.push_back(temp);
+            }
+            return dst;
+        }
+        
+        std::string replaceAll(const std::string& srcStr, char matStr, const std::string& dstStr)
+        {
+            auto splitRet = split(srcStr, matStr);
+            std::stringstream ss;
+            auto index = 0;
+            for(const auto& str : splitRet)
+            {
+                ss << str;
+                if(index != splitRet.size() - 1)
+                    ss << dstStr;
+            }
+            return ss.str();
+        }
 
         std::string getMessageId() {
             char str[36];
             generateUUID(str);
 
             std::string msgId(str);
+            msgId = replaceAll(msgId, '-', "");
+            std::transform(msgId.begin(), msgId.end(), msgId.begin(), ::tolower);
             return msgId;
         }
 

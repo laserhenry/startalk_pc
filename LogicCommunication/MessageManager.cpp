@@ -1235,9 +1235,9 @@ void CommMsgListener::onEvent(RetryConnectToServerEvt& e)
 {
     if (nullptr != _pComm){
 #ifdef _QCHAT
-        _pComm->tryConnectToServerByQVT();
+        e.result = _pComm->tryConnectToServerByQVT();
 #else
-        _pComm->tryConnectToServer();
+        e.result = _pComm->tryConnectToServer();
 #endif
     }
 }

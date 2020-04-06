@@ -180,8 +180,10 @@ SystemTrayPopWnd::SystemTrayPopWnd(QWidget *parent)
     auto* mainFrm = new QFrame(this);
     auto* bodyLay = new QVBoxLayout(mainFrm);
     bodyLay->setMargin(0);
-    bodyLay->addWidget(titleFrm);
-    bodyLay->addWidget(_pStackedWidget);
+    bodyLay->setSpacing(0);
+    bodyLay->addWidget(titleFrm, 0);
+    bodyLay->addWidget(_pStackedWidget, 0);
+    this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
 //    bodyLay->addWidget(bottomFrm);
 
     mainFrm->setObjectName("SystemTrayMainFrm");
@@ -239,7 +241,7 @@ void SystemTrayPopWnd::onNewMessage(int chatType, const QTalk::Entity::UID& uid,
             _pNewMessageModel->insertRow(0, item);
         else
             _pNewMessageModel->appendRow(item);
-
+        _pNewMessageModel->sort(0);
         _pStackedWidget->setCurrentWidget(_pNewMessageView);
         _items[data.uid] = item;
     };
@@ -250,6 +252,7 @@ void SystemTrayPopWnd::onNewMessage(int chatType, const QTalk::Entity::UID& uid,
         {
             _pNewMessageModel->removeRow((itemFind->second->row()));
             _items.erase(itemFind);
+            _pNewMessageModel->sort(0);
         }
         //
         if(_data.empty())
@@ -279,6 +282,7 @@ void SystemTrayPopWnd::onNewMessage(int chatType, const QTalk::Entity::UID& uid,
         else
         {
             _pStackedWidget->setFixedHeight(_items.size() * 48);
+            this->setFixedHeight(_items.size() * 48 + 40);
         }
     };
 

@@ -50,6 +50,10 @@ public:
                                 const std::string& strSub,
                                 const std::string& body,
                                 bool isHtml, std::string& error) = 0;
+
+public:
+    // 开启自动重连
+    virtual void startAutoReconnectToServer() = 0;
 };
 
 #endif //QTALK_V2_ILOGICBASE_H

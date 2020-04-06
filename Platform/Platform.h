@@ -68,15 +68,15 @@ public:
 
     void setSelfResource(const std::string &resource);
 
-    long long getServerDiffTime() const;
+    long long getServerDiffTime();
 
     void setServerDiffTime(long long serverDiffTime);
 
-    std::string getServerAuthKey() const;
+    std::string getServerAuthKey();
 
     void setServerAuthKey(const std::string &authKey);
 
-    std::string getClientAuthKey() const;
+    std::string getClientAuthKey();
 
     void setClientAuthKey(const std::string &clientAuthKey);
 
@@ -162,6 +162,7 @@ private:
     FrequencyMap<std::string, std::string> _mapUserStatus;
 
     QTalk::util::spin_mutex sm;
+    QTalk::util::spin_mutex cKeySm;
     std::string beatUrl;
     int APPLICATION_NET_VERSION = 0;
     std::string loginNav;

@@ -107,8 +107,9 @@ void TextBrowser::mousePressEvent(QMouseEvent *e)
             cursor.movePosition(QTextCursor::Right);
 
         auto fmt = cursor.charFormat();
-        bool type = fmt.isImageFormat();
-        if(type)
+        bool isImage = fmt.isImageFormat();
+        int type = fmt.property(imagePropertyType).toInt();
+        if(isImage && type == 2) // StTextMessage::EM_IMAGE
         {
             QString imageLink = fmt.property(imagePropertyLink).toString();
             QString imagePath = fmt.property(imagePropertyPath).toString();

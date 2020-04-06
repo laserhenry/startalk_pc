@@ -222,6 +222,8 @@ elseif (WIN32)
             Qt5::MultimediaWidgets
             Qt5::Network
             Qt5::Concurrent
+            libssl
+            libcrypto
             Platform
             QtUtil
             EventBus

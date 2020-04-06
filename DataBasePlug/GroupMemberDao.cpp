@@ -70,7 +70,7 @@ bool GroupMemberDao::clearData() {
   * @author   cc
   * @date     2018/10/03
   */
-bool GroupMemberDao::getGroupMemberById(const std::string &groupId, std::vector<QTalk::StUserCard> &members,
+bool GroupMemberDao::getGroupMemberById(const std::string &groupId, std::map<std::string, QTalk::StUserCard> &members,
                                         std::map<std::string, QUInt8> &userRole) {
     if (!_pSqlDb) {
         return false;
@@ -92,9 +92,8 @@ bool GroupMemberDao::getGroupMemberById(const std::string &groupId, std::vector<
             QUInt8 affiliation = atoi(query.getColumn(3).getText());
             std::string xmppId = member.xmppId;
             userRole[xmppId] = affiliation;
-            QUInt8 aaa = userRole[xmppId];
             member.searchKey = query.getColumn(4).getString();
-            members.push_back(member);
+            members[member.xmppId] = member;
         }
         return true;
     }
@@ -161,7 +160,7 @@ bool GroupMemberDao::bulkDeleteGroupMember(const std::vector<std::string> &group
     qtalk::sqlite::statement query(*_pSqlDb, sql);
     try {
         _pSqlDb->exec("begin immediate;");
-        for (std::string id : groupIds) {
+        for (const std::string& id : groupIds) {
             query.bind(1, id);
 
             query.executeStep();

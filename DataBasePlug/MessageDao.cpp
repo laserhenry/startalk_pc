@@ -501,7 +501,7 @@ bool MessageDao::updateReadMask(const std::map<std::string, QInt64> &readMasks) 
     getMinUnReadTimeStamp(readMasks, minUnReadTimes);
 
     std::string sql = "UPDATE IM_Message SET `ReadedTag` = (`ReadedTag`| 3 ) "
-                      "WHERE `XmppId` = ? and `LastUpdateTime` <= ? and `LastUpdateTime` >= ?";
+                      "WHERE `XmppId` = ? and `LastUpdateTime` <= ? and `LastUpdateTime` >= ? and Direction = 0";
 
     qtalk::sqlite::statement query(*_pSqlDb, sql);
     try {

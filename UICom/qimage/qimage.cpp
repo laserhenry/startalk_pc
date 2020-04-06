@@ -38,6 +38,20 @@ namespace QTalk {
         if (_allPixmap.contains(srcPath)) {
             QMutexLocker locker(&_mutex);
             dest = _allPixmap[srcPath];
+
+            if (scaled)
+            {
+                QString key = QString("%1-%2").arg(width).arg(height);
+                if(_scanPixmap.contains(srcPath) && _scanPixmap[srcPath].contains(key))
+                {
+                    dest = _scanPixmap[srcPath][key];
+                }
+                else
+                {
+                    dest = scaledPixmap(dest, width, height);
+                    _scanPixmap[srcPath][key] = dest;
+                }
+            }
         } else {
             dest = QPixmap(srcPath);
             if (dest.isNull()) {
@@ -51,15 +65,20 @@ namespace QTalk {
                 if (dest.isNull())
                     return QPixmap();
             }
-            if (save) {
+            if (save)
+            {
                 QMutexLocker locker(&_mutex);
                 _allPixmap[srcPath] = dest;
             }
+
+            if (scaled)
+            {
+                QString key = QString("%1-%2").arg(width).arg(height);
+                dest = scaledPixmap(dest, width, height);
+                if (save)
+                    _scanPixmap[srcPath][key] = dest;
+            }
         }
-
-        if (scaled)
-            dest = scaledPixmap(dest, width, height);
-
         return dest;
     }
 

@@ -22,7 +22,7 @@ public:
 
 public:
     QSize itemWdtSize() override;
-    void setMessageContent();
+    void setMessageContent(bool delMov = true);
     void copyText();
     // 右键是否在图片上
     bool isImageContext();

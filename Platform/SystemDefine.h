@@ -10,17 +10,17 @@
 #include <iostream>
 #include "platform_global.h"
 
-#define DB_VERSION 100012
+#define DB_VERSION 100014
 
 #if defined(_STARTALK)
-#define GLOBAL_INTERNAL_VERSION 200001
-#define GLOBAL_VERSION "build-2.0.001"
+#define GLOBAL_INTERNAL_VERSION 200006
+#define GLOBAL_VERSION "build-2.0.006"
 #elif defined(_QCHAT)
-#define GLOBAL_INTERNAL_VERSION  200010
-#define GLOBAL_VERSION  "2.0.010W"
+#define GLOBAL_INTERNAL_VERSION  200011
+#define GLOBAL_VERSION  "2.0.01qW"
 #else
-#define GLOBAL_INTERNAL_VERSION 19009087
-#define GLOBAL_VERSION "build-1.9.987"
+#define GLOBAL_INTERNAL_VERSION 19009092
+#define GLOBAL_VERSION "build-1.9.992"
 #endif // !QCHAT
 
 #ifndef _WINDOWS

@@ -3,6 +3,7 @@
 //
 
 #include "QtMessageBox.h"
+#include "../UICom/uicom.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
@@ -15,6 +16,9 @@ QtMessageBox::QtMessageBox(QWidget* parent, int type, const QString& message, co
     : UShadowDialog(parent, true), _retButton(EM_BUTTON_INVALID)
 {
     setFixedWidth(380);
+
+    if(parent == nullptr)
+        this->setParent(UICom::getInstance()->getAcltiveMainWnd());
 
     QLabel* pixLabel = new QLabel(this);
     mainMessageLabel = new QLabel(this);

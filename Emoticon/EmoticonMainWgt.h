@@ -72,6 +72,7 @@ Q_SIGNALS:
     void readLocalEmoticons();
 
     void sendEmoticon(const QString &, const QString &, bool, const std::string&);
+    void sgInsertEmoticon(const QString &, const QString &, const QString&, const QString&);
     //
     void sendCollectionImage(const QString &, const QString &, const QString);
 

@@ -48,12 +48,13 @@ private:
 
 Q_SIGNALS:
 	void showTipMessageSignal(const QString&, int, const QString&, QInt64);
-	void adjustItems();
+	void adjustItems(bool);
 	void sgSelectItem();
 	void sgSelectedSize(unsigned int);
 	void sgUploadShareMsgSuccess(const QString&, int type, const QString&);
 	void sgImageDownloaded(const QString&, const QString&);
 	void sgJumTo();
+	void sgDownloadFileSuccess(const QString&);
 
 public:
     void setShareMessageState(bool flag);
@@ -76,6 +77,7 @@ private slots:
 	void onScrollBarChanged(int val);
 	void onImageDownloaded(const QString& msgId, const QString& path);
 	void onCustomContextMenuRequested(const QPoint &pos);
+	void onDownloadFile(const QString&);
 
 private:
     void showTipMessage(const QString& messageId, int type, const QString& content, QInt64 t);
@@ -88,7 +90,7 @@ private:
     void onQuoteAct(bool);
     void onCollectionAct(bool);
     void onQRCodeAct(bool);
-    void onAdjustItems();
+    void onAdjustItems(bool);
     void selectionChanged(const QItemSelection &, const QItemSelection &) override;
     void onItemChanged();
     void onDisconnected();

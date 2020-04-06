@@ -40,8 +40,8 @@ public:
     void
     AsyncConnect(const std::string &userName, const std::string &password, const std::string &host, int port);
 
-    void tryConnectToServer();
-    void tryConnectToServerByQVT();
+    bool tryConnectToServer();
+    bool tryConnectToServerByQVT();
 
 public:
     void addHttpRequest(const QTalk::HttpRequest &req,

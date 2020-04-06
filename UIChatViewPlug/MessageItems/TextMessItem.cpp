@@ -33,7 +33,7 @@ TextMessItem::TextMessItem(const StNetMessageResult &msgInfo,
         _textBrowser(Q_NULLPTR){
     _msgs = QVector<StTextMessage>::fromStdVector(msgInfo.text_messages);
     init();
-    setMessageContent();
+    setMessageContent(false);
     _textBrowser->installEventFilter(this);
     connect(_textBrowser, &TextBrowser::anchorClicked, this, &TextMessItem::onAnchorClicked);
     connect(_textBrowser, &TextBrowser::imageClicked, this, &TextMessItem::onImageClicked);
@@ -143,7 +143,7 @@ void deleteMovies(std::map<QString, QMovie*> &_mapMovies)
   * @参数
   * @date 2018.10.16
   */
-void TextMessItem::setMessageContent() {
+void TextMessItem::setMessageContent(bool delMov) {
     QTextCharFormat f;
     f.setFontLetterSpacingType(QFont::AbsoluteSpacing);
     f.setFontWordSpacing(0);
@@ -151,8 +151,11 @@ void TextMessItem::setMessageContent() {
     _textBrowser->setCurrentCharFormat(f);
     _textBrowser->setText("");
     //
-    deleteMovies(_mapMovies);
-    _mapMovies.clear();
+    if(delMov)
+    {
+        deleteMovies(_mapMovies);
+        _mapMovies.clear();
+    }
 
     if (_textBrowser) {
         int width = g_pMainPanel->width() - _headPixSize.width();
@@ -228,6 +231,7 @@ void TextMessItem::setMessageContent() {
                     imageFormat.setName(imagePath);
                     imageFormat.setProperty(imagePropertyPath, msg.content);
                     imageFormat.setProperty(imagePropertyLink, msg.imageLink);
+                    imageFormat.setProperty(imagePropertyType, msg.type);
                     imageFormat.setProperty(imagePropertyIndex, imgIndex++);
                     _textBrowser->textCursor().insertImage(imageFormat);
                     _textBrowser->setCurrentCharFormat(f);
@@ -610,7 +614,7 @@ void TextMessItem::copyText() {
         mimeData->setData("userData", userData.data());
         QApplication::clipboard()->setMimeData(mimeData);
     }
-    _textBrowser->moveCursor(QTextCursor::End);
+
 }
 
 /**
@@ -654,12 +658,15 @@ bool TextMessItem::eventFilter(QObject *o, QEvent *e) {
 bool TextMessItem::isImageContext() {
 
     auto fmt = _textBrowser->getCurrentCursor().charFormat();
-    if(fmt.isImageFormat())
+    bool ret = fmt.isImageFormat();
+    auto type = fmt.property(imagePropertyType).toInt();
+    ret = type == StTextMessage::EM_IMAGE;
+    if(ret)
         _strImagePath = fmt.property(imagePropertyLink).toString();
     else
         _strImagePath = QString();
 
-    return fmt.isImageFormat();
+    return ret;
 }
 
 QString TextMessItem::getImageLink() {

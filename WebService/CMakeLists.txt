@@ -34,7 +34,7 @@ set(SOURCE_FILES
         WebEnginePage.cpp
         WebEnginePage.h
         AudioVideo.cpp
-        AudioVideo.h WebJsObj.cpp WebJsObj.h)
+        AudioVideo.h WebJsObj.cpp WebJsObj.h WebEngineUrlRequestInterceptor.cpp WebEngineUrlRequestInterceptor.h)
 
 
 set(LIBRARY_OUTPUT_PATH ../bin)

@@ -95,19 +95,19 @@ private slots:
     void onFontLevelChanged(int);
 
 private:
-    QListWidget *_settingListWidget;
-    QVBoxLayout * _pNavlayout;
-    QMap<QListWidgetItem*, ActionLabel*> _mapSettingItems;
-    QMap<QFrame*, ActionLabel*> _mapSettingWgt;
+    QListWidget *_settingListWidget{};
+    QVBoxLayout * _pNavlayout{};
+    QMap<QListWidgetItem*, ActionLabel*> _mapSettingItems{};
+    QMap<QFrame*, ActionLabel*> _mapSettingWgt{};
 
 private:
-    QTextEdit* _pAutoReplyEdit;
-    QComboBox* _pAutoPeplyCombobox;
+    QTextEdit* _pAutoReplyEdit{};
+    QComboBox* _pAutoPeplyCombobox{};
 
-    SettingCheckBox* blackTheme;
+    SettingCheckBox* blackTheme{};
 
 private:
-    TitlebarMsgManager *_pMessageManager;
+    TitlebarMsgManager *_pMessageManager{};
 
 private:
 

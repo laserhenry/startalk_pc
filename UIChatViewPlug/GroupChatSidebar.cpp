@@ -87,10 +87,6 @@ void GroupChatSidebar::updateGroupMember(const GroupMemberMessage& e)
 		}
 	}
 
-	//
-	if(_pGroupMember)
-        emit _pGroupMember->sgUpdateMemberCount(members.size(), onlineUserSize);
-
 	// 删除
 	for (const std::string& id : deletedMembers)
 	{
@@ -99,6 +95,8 @@ void GroupChatSidebar::updateGroupMember(const GroupMemberMessage& e)
 			emit deleteMember(id);
 		}
 	}
+    if(_pGroupMember)
+        emit _pGroupMember->sgUpdateMemberCount(members.size(), onlineUserSize);
 }
 
 /**

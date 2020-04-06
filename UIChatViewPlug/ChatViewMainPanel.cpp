@@ -59,7 +59,7 @@ using namespace QTalk::Entity;
 extern ChatViewMainPanel *g_pMainPanel = nullptr;
 
 void deleteViewItem(const QTalk::Entity::UID& uid, ChatViewItem* viewItem) {
-    delete viewItem;
+    viewItem->deleteLater();
 }
 
 ChatViewMainPanel::ChatViewMainPanel(QWidget *parent) :
@@ -67,7 +67,9 @@ ChatViewMainPanel::ChatViewMainPanel(QWidget *parent) :
         _strSelfId(""),
         _pool("ChatViewMainPanel pool"),
         _pEmptyLabel(nullptr),
-        _mapItems(50, deleteViewItem) {
+        _mapItems(10, deleteViewItem) {
+
+    _netManager = new QNetworkAccessManager(this);
 
     g_pMainPanel = this;
     setObjectName("ChatViewMainPanel");
@@ -127,6 +129,15 @@ ChatViewMainPanel::ChatViewMainPanel(QWidget *parent) :
     });
 
     connect(EmoticonMainWgt::getInstance(), &EmoticonMainWgt::sendEmoticon, this, &ChatViewMainPanel::sendEmoticonMessage);
+    connect(EmoticonMainWgt::getInstance(), &EmoticonMainWgt::sgInsertEmoticon,
+            [this](const QString &id, const QString &pkgId, const QString&shortCut, const QString& localPath){
+        if ( _pViewItem && id != _pViewItem->conversionId()) return;
+
+        if (_pViewItem && _pViewItem->_pInputWgt) {
+            _pViewItem->_pInputWgt->insertEmotion(pkgId, shortCut, localPath);
+            return;
+        }
+    });
     connect(EmoticonMainWgt::getInstance(), &EmoticonMainWgt::sendCollectionImage, this,
             &ChatViewMainPanel::sendCollectionMessage);
     //
@@ -216,11 +227,13 @@ void ChatViewMainPanel::onChatUserChanged(const StSessionInfo &info) {
             }
         }
 
-
         //
         if (_mapItems.contains(uid)) {
             _pViewItem = _mapItems.get(uid);
             _mapItems.update(uid);
+
+            _pStackedLayout->setCurrentWidget(_pViewItem);
+            func();
         }
         else
         {
@@ -236,80 +249,79 @@ void ChatViewMainPanel::onChatUserChanged(const StSessionInfo &info) {
                     _pViewItem->_pInputWgt->setContentByJson(_his_input_data[uid]);
                 _his_input_data.remove(uid);
             }
-        }
-        _pStackedLayout->setCurrentWidget(_pViewItem);
-        //
-        func();
-        //
-        auto functor = QtConcurrent::run([this, info, uid, chatType]() {
+
+            _pStackedLayout->setCurrentWidget(_pViewItem);
+            func();
+
+            auto functor = QtConcurrent::run([this, info, uid, chatType]() {
 #ifdef _MACOS
-            pthread_setname_np("ChatViewMainPanel::onChatUserChanged");
+                pthread_setname_np("ChatViewMainPanel::onChatUserChanged");
 #endif
-            // 获取历史消息
-            QInt64 t = 0;
-            debug_log("onChatUserChanged time:{0}", t);
-            std::vector<QTalk::Entity::ImMessageInfo> msgLst = ChatMsgManager::getUserHistoryMessage(t, info.chatType, uid);
-            auto it = msgLst.begin();
-            for (; it != msgLst.end(); it++) {
-                QTalk::Entity::ImMessageInfo msg = *it;
-                if (it->ChatType == Enum::GroupChat) {
-                    if (it->HeadSrc.empty())
-                    {
+                // 获取历史消息
+                QInt64 t = 0;
+                debug_log("onChatUserChanged time:{0}", t);
+                std::vector<QTalk::Entity::ImMessageInfo> msgLst = ChatMsgManager::getUserHistoryMessage(t, info.chatType, uid);
+                auto it = msgLst.begin();
+                for (; it != msgLst.end(); it++) {
+                    QTalk::Entity::ImMessageInfo msg = *it;
+                    if (it->ChatType == Enum::GroupChat) {
+                        if (it->HeadSrc.empty())
+                        {
 #ifdef _STARTALK
-                        msg.HeadSrc = ":/QTalk/image1/StarTalk_defaultHead.png";
+                            msg.HeadSrc = ":/QTalk/image1/StarTalk_defaultHead.png";
 #else
-                        msg.HeadSrc = ":/QTalk/image1/headPortrait.png";
+                            msg.HeadSrc = ":/QTalk/image1/headPortrait.png";
 #endif
-                    }
-                    else
-                        msg.HeadSrc = ChatMsgManager::getLocalHeadPath(it->HeadSrc);
-                } else {
-                    msg.HeadSrc = info.headPhoto.toStdString();
-                }
-
-                {
-                    QMutexLocker locker(&_mutex);
-                    _mapHeadPath[QString::fromStdString(it->From)] = QString::fromStdString(msg.HeadSrc);
-                }
-
-                switch (it->Type) {
-                    case -1: {
-                        cJSON *extend = cJSON_Parse(it->ExtendedInfo.c_str());
-                        if (cJSON_HasObjectItem(extend, "fromId")) {
-                            char *fromId = cJSON_GetObjectItem(extend, "fromId")->valuestring;
-                            msg.XmppId = fromId;
                         }
-                        cJSON_Delete(extend);
-                        break;
+                        else
+                            msg.HeadSrc = ChatMsgManager::getLocalHeadPath(it->HeadSrc);
+                    } else {
+                        msg.HeadSrc = info.headPhoto.toStdString();
                     }
-                    default:
-                        break;
+
+                    {
+                        QMutexLocker locker(&_mutex);
+                        _mapHeadPath[QString::fromStdString(it->From)] = QString::fromStdString(msg.HeadSrc);
+                    }
+
+                    switch (it->Type) {
+                        case -1: {
+                            cJSON *extend = cJSON_Parse(it->ExtendedInfo.c_str());
+                            if (cJSON_HasObjectItem(extend, "fromId")) {
+                                char *fromId = cJSON_GetObjectItem(extend, "fromId")->valuestring;
+                                msg.XmppId = fromId;
+                            }
+                            cJSON_Delete(extend);
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+
+                    if(msg.ChatType == QTalk::Enum::GroupChat)
+                    {
+                        auto uinfo = dbPlatForm::instance().getUserInfo(msg.From);
+                        if(nullptr == uinfo)
+                            msg.UserName = QTalk::Entity::JID(msg.From).username();
+                        else
+                            msg.UserName = QTalk::getUserName(uinfo);
+                    }
+
+                    if (SYSTEM_XMPPID == QTalk::Entity::JID(it->XmppId).username()) {
+                        msg.HeadSrc = ":/chatview/image1/system.png";
+                        _mapHeadPath[QString::fromStdString(it->XmppId)] = QString::fromStdString(msg.HeadSrc);
+                    }
+                    if(_pViewItem)
+                        _pViewItem->showMessage(msg, ChatMainWgt::EM_JUM_BOTTOM);
+                }
+                // 获取群信息
+                if (chatType == Enum::GroupChat) {
+                    ChatMsgManager::getGroupInfo(info.userId.toStdString());
                 }
 
-                if(msg.ChatType == QTalk::Enum::GroupChat)
-                {
-                    auto uinfo = dbPlatForm::instance().getUserInfo(msg.From);
-                    if(nullptr == uinfo)
-                        msg.UserName = QTalk::Entity::JID(msg.From).username();
-                    else
-                        msg.UserName = QTalk::getUserName(uinfo);
-                }
+            });
+        }
 
-                if (SYSTEM_XMPPID == QTalk::Entity::JID(it->XmppId).username()) {
-                    msg.HeadSrc = ":/chatview/image1/system.png";
-                    _mapHeadPath[QString::fromStdString(it->XmppId)] = QString::fromStdString(msg.HeadSrc);
-                }
-                if(_pViewItem)
-                    _pViewItem->showMessage(msg, ChatMainWgt::EM_JUM_BOTTOM);
-            }
-            // 获取群信息
-            if (chatType == Enum::GroupChat) {
-                ChatMsgManager::getGroupInfo(info.userId.toStdString());
-            }
-
-        });
-
-        _pStackedLayout->setCurrentWidget(_pViewItem);
         if(_pViewItem->_pInputWgt->isVisible())
             _pViewItem->_pInputWgt->setFocus();
     }
@@ -663,10 +675,14 @@ void ChatViewMainPanel::getHistoryMsg(const QInt64 &t, const QUInt8 &chatType, c
             }
             else
                 it.HeadSrc = ChatMsgManager::getLocalHeadPath(it.HeadSrc);
-        } else
-            it.HeadSrc = _mapHeadPath[uid.qUsrId()].toStdString();
-
-        _mapHeadPath[QString::fromStdString(it.From)] = QString::fromStdString(it.HeadSrc);
+        }
+        else
+        {
+            if(_mapHeadPath.contains(uid.qReadJid()))
+                it.HeadSrc = _mapHeadPath[uid.qReadJid()].toStdString();
+        }
+        if(!it.HeadSrc.empty())
+            _mapHeadPath[uid.qReadJid()] = QString::fromStdString(it.HeadSrc);
 
         switch (it.Type) {
             case -1: {
@@ -717,6 +733,9 @@ void ChatViewMainPanel::gotReadState(const UID &uid, const map<string, QInt32> &
 
 //
 void ChatViewMainPanel::gotMState(const QTalk::Entity::UID &uid, const std::string &messageId, const QInt64 &time) {
+    //
+    eraseSending(messageId);
+
     if(!_mapItems.contains(uid))
         return;
     auto* pViewItem = _mapItems.get(uid);
@@ -1391,6 +1410,11 @@ void ChatViewMainPanel::reloadChatView() {
     QMutexLocker locker(&_mutex);
     //
     showEmptyLabel();
+    //
+    auto keys = _mapItems.keys();
+    for(const auto &id : keys)
+        _mapItems.remove(id);
+    _pViewItem = nullptr;
 }
 
 //
@@ -1915,6 +1939,10 @@ void ChatViewMainPanel::setSearchStyle(const QString& qss)
 
 void ChatViewMainPanel::onDisConnected()
 {
+    {
+        QMutexLocker locker(&_sendingMutex);
+        _sending.clear();
+    }
     for(const auto& it : _mapItems)
     {
         auto* pViewItem = it.second;
@@ -1943,6 +1971,10 @@ void ChatViewMainPanel::resendMessage(MessageItemBase* item)
     else if(message.type == QTalk::Enum::Consult)
     {
         uid = UID(message.from, message.real_id);
+    }
+    else if(message.type == QTalk::Enum::ConsultServer)
+    {
+        uid = UID(message.xmpp_id, message.real_id);
     }
 
     {
@@ -2804,4 +2836,73 @@ void ChatViewMainPanel::insertAt(const QString& groupId, const QString& userId) 
     if(pViewItem) {
         pViewItem->_pInputWgt->insertAt(userId.toStdString());
     }
+}
+
+void ChatViewMainPanel::addSending(const std::string &msgId) {
+    QMutexLocker locker(&_sendingMutex);
+    _sending.insert(msgId);
+}
+
+void ChatViewMainPanel::eraseSending(const std::string &msgId) {
+    QMutexLocker locker(&_sendingMutex);
+    if(_sending.find(msgId) != _sending.end())
+        _sending.erase(msgId);
+}
+
+bool ChatViewMainPanel::isSending(const std::string &msgId) {
+    QMutexLocker locker(&_sendingMutex);
+    return _sending.find(msgId) != _sending.end();
+}
+
+
+//
+void ChatViewMainPanel::downloadFileWithProcess(const QString &url, const QString &path, const QString& key) {
+
+    auto *file = new QFile(path + ".downloading");
+    if(!file->open(QIODevice::ReadWrite))
+        return;
+    QString nUrl(url);
+    if (url.startsWith("file/") || url.startsWith("/file")) {
+        nUrl = QString("%1/%2").arg(NavigationManager::instance().getFileHttpHost().data(), url);
+    }
+    QNetworkReply* reply = _netManager->get(QNetworkRequest(nUrl));
+    reply->ignoreSslErrors();
+    qint64 *t = new qint64 ;
+    qint64 *last = new qint64;
+    *t = QDateTime::currentMSecsSinceEpoch();
+    *last = 0;
+    connect(reply, &QNetworkReply::downloadProgress, [this, key, t, last](qint64 bytesReceived, qint64 bytesTotal){
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        if(now != * t)
+        {
+            FileProcessMessage e;
+            e.key = key.toStdString();
+            e.downloadTotal = bytesTotal;
+            e.downloadNow = bytesReceived;
+            e.speed = ((bytesReceived - *last) / (now - *t)) * 1000;
+            onRecvFileProcessMessage(e);
+        }
+
+        *t = now;
+        *last = bytesReceived;
+    });
+
+    connect(reply, &QNetworkReply::readyRead, [file, reply](){
+        file->write(reply->readAll());
+        file->flush();
+    });
+
+    connect(reply, &QNetworkReply::finished, [this, file, t, last, path, key](){
+        file->flush();
+        file->close();
+        file->rename(path);
+        file->deleteLater();
+        delete t;
+        delete last;
+
+        if (_pViewItem && _pViewItem->_pChatMainWgt && _pViewItem->_pSearchMainWgt) {
+            emit _pViewItem->_pChatMainWgt->sgDownloadFileSuccess(key);
+        }
+    });
+
 }

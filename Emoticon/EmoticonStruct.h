@@ -26,7 +26,7 @@ public:
 
 struct StEmoticon
 {
-    bool    isShowALl;
+    int     isShowALl;
 	QString pkgid;
 	QString name;
 	QString iconPath;

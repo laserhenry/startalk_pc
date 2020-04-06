@@ -14,6 +14,9 @@ public:
     bool  createUnreadUpdateTrigger();
     bool  createUnreadInserttrigger();
 
+public:
+    void modifyUnreadCountTrigger();
+
 private:
     qtalk::sqlite::database *_sqlDb;
 };

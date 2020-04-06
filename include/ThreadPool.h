@@ -16,6 +16,8 @@
 #include <functional>
 #include <stdexcept>
 #include <sstream>
+#include <atomic>
+#include <iostream>
 
 
 class ThreadPool {
@@ -39,7 +41,7 @@ private:
     // synchronization
     std::mutex queue_mutex;
     std::condition_variable condition;
-    bool stop;
+    std::atomic<bool> stop;
 };
 
 inline ThreadPool::ThreadPool(const char *threadName) : stop(false) {
@@ -48,14 +50,14 @@ inline ThreadPool::ThreadPool(const char *threadName) : stop(false) {
 #ifdef _MACOS
         pthread_setname_np(threadName);
 #endif
-        for (;;) {
+        while(!this->stop) {
 
             std::function<void()> task;
 
             {
                 std::unique_lock<std::mutex> lock(this->queue_mutex);
                 this->condition.wait(lock,
-                                     [this] { return this->stop || !this->tasks.empty(); });
+                                     [this] { return this->stop.load() || !this->tasks.empty(); });
                 if (this->stop && this->tasks.empty())
                     return;
                 task = std::move(this->tasks.front());
@@ -85,13 +87,13 @@ inline ThreadPool::ThreadPool(size_t threads, const char *threadName)
 #ifdef _MACOS
                     pthread_setname_np(yourName.c_str());
 #endif
-                    for (;;) {
+                    while(!this->stop) {
                         std::function<void()> task;
 
                         {
                             std::unique_lock<std::mutex> lock(this->queue_mutex);
                             this->condition.wait(lock,
-                                                 [this] { return this->stop || !this->tasks.empty(); });
+                                                 [this] { return this->stop.load() || !this->tasks.empty(); });
                             if (this->stop && this->tasks.empty())
                                 return;
                             task = std::move(this->tasks.front());
@@ -132,10 +134,7 @@ auto ThreadPool::enqueue(F &&f, Args &&... args)
 
 // the destructor joins all threads
 inline ThreadPool::~ThreadPool() {
-    {
-        std::unique_lock<std::mutex> lock(queue_mutex);
-        stop = true;
-    }
+    stop.store(true);
     condition.notify_all();
     for (std::thread &worker: workers) {
         worker.join();

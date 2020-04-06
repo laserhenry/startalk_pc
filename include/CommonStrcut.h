@@ -104,6 +104,8 @@ namespace QTalk
         std::string loginType = "password";
         //
         bool rollback{};
+
+        std::string videoConference;
     };
 
     struct StOAUIData

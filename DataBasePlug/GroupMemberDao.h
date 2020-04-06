@@ -15,7 +15,7 @@ public:
 	bool clearData();
 
 public:
-	bool getGroupMemberById(const std::string& groupId, std::vector<QTalk::StUserCard>& member, std::map<std::string, QUInt8>& userRole);
+	bool getGroupMemberById(const std::string& groupId, std::map<std::string, QTalk::StUserCard>& member, std::map<std::string, QUInt8>& userRole);
 
 	bool bulkInsertGroupMember(const std::string& groupId, const std::map<std::string, QUInt8>& member);
 

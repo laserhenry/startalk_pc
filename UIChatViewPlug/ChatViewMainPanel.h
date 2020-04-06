@@ -7,6 +7,7 @@
 #include <QMap>
 #include <QMutexLocker>
 #include <QLabel>
+#include <set>
 #include <QMediaPlayer>
 #include <QRcode/QRcode.h>
 #include <QPointer>
@@ -28,6 +29,8 @@
 #include "search/MessageRecordManager.h"
 #include "ChatViewItem.h"
 #include "../include/FrequencyMap.h"
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 //
 class SnipScreenTool;
@@ -223,6 +226,9 @@ public:
     void onSendSignal(const QString& json, const QString& id);
 
 public:
+    void downloadFileWithProcess(const QString& url, const QString& path, const QString& key);
+
+public:
     GIFManager*       gifManager;
 
 private:
@@ -278,6 +284,18 @@ private:
 private:
     MessageRecordManager* _pMsgRecordManager{};
     FileRecordWnd*        _pFileRecordWnd{};
+
+private:
+    QMutex _sendingMutex;
+    std::set<std::string >    _sending;
+
+public:
+    void addSending(const std::string& msgId);
+    void eraseSending(const std::string& msgId);
+    bool isSending(const std::string& msgId);
+
+private:
+    QNetworkAccessManager* _netManager;
 };
 
 #endif // CHATVIEWMIANPANEL_H

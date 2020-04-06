@@ -9,8 +9,10 @@
 #include "WebJsObj.h"
 #include <QWebEngineProfile>
 #include <QWebEngineCookieStore>
+#include <QWebEngineUrlRequestInterceptor>
 #include <QFileDialog>
 #include "../QtUtil/Utils/Log.h"
+#include "WebEngineUrlRequestInterceptor.h"
 #include <QWebEngineHistory>
 
 WebView::WebView(QWidget* parent)
@@ -37,7 +39,7 @@ WebView::WebView(QWidget* parent)
 
     _pWebView->settings()->setAttribute(QWebEngineSettings::FullScreenSupportEnabled, true);
     _pWebPage->profile()->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
-
+    _pWebPage->profile()->setRequestInterceptor(new WebEngineUrlRequestInterceptor(this));
     _pWebPage->setWebChannel(_pWebCannel);
     connect(_pWebPage, &WebEnginePage::contentsSizeChanged, [this](const QSizeF &size){
 

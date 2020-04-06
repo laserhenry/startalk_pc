@@ -50,10 +50,10 @@ void TcpDisconnect::setText(const QString& text)
   * @author   cc
   * @date     2018/10/24
   */
-void TcpDisconnect::mousePressEvent(QMouseEvent *e) {
-    if (_pMainPanel) {
- //        _pTextLabel->setText(tr("正在重连"));
-        _pMainPanel->retryToConnect();
-    }
-    return QFrame::mousePressEvent(e);
-}
+//void TcpDisconnect::mousePressEvent(QMouseEvent *e) {
+//    if (_pMainPanel) {
+// //        _pTextLabel->setText(tr("正在重连"));
+////        _pMainPanel->retryToConnect();
+//    }
+//    return QFrame::mousePressEvent(e);
+//}

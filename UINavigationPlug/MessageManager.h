@@ -34,7 +34,7 @@ public:
 
     void sendGetUserStatus(const std::set<std::string> &users);
 
-    void retryConnecToServer();
+//    void retryConnecToServer();
 
     void sendReadedMessage(const std::string &messageId, const std::string& userId, QUInt8 chatType);
 

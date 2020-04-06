@@ -23,7 +23,7 @@ public:
     //
     bool getGroupCard(const MapGroupCard &groups);
     //
-    void upateGroupInfo(const std::vector<QTalk::StGroupInfo>& groupInfos);
+    bool upateGroupInfo(const std::vector<QTalk::StGroupInfo>& groupInfos);
     //
     void getUserIncrementMucVcard();
 

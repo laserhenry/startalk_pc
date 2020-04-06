@@ -21,6 +21,8 @@ public:
 public slots:
     void setProcess(double speed, double dtotal, double dnow, double utotal, double unow);
     void onSaveAsAct();
+    void onUploadFailed();
+    void downloadSuccess();
 
 Q_SIGNALS:
     void sgOpenDir();
@@ -43,6 +45,7 @@ private:
     void judgeFileIsDownLoad();
     void judgeFileIsUpLoad();
     void sendDownLoadFile(const std::string &strLocalPath, const std::string &strUri);
+    void sendNDownLoadFile(const QString &strUri, const QString &strLocalPath);
     void downLoadFile();
     QString getLocalFilePath();
 

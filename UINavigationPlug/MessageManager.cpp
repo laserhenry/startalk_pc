@@ -52,10 +52,10 @@ void NavigationMsgManager::sendGetUserStatus(const std::set<std::string> &users)
   * @author   cc
   * @date     2018/10/24
   */
-void NavigationMsgManager::retryConnecToServer() {
-    RetryConnectToServerEvt e;
-    EventBus::FireEvent(e);
-}
+//void NavigationMsgManager::retryConnecToServer() {
+//    RetryConnectToServerEvt e;
+//    EventBus::FireEvent(e);
+//}
 
 //
 void NavigationMsgManager::sendReadedMessage(const std::string &messageId, const std::string& userId, QUInt8 chatType) {

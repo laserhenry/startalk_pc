@@ -167,13 +167,11 @@ bool Communication::OnLogin(const std::string& userName, const std::string& pass
         if(!u.empty() && !p.empty()){
             // 设置当前登录的userid
             Platform::instance().setSelfUserId(u);
-            char uuid[36];
-            utils::generateUUID(uuid);
             cJSON *nauth = cJSON_CreateObject();
             cJSON *gObj = cJSON_CreateObject();
             cJSON_AddStringToObject(gObj, "u", userName.c_str());
             cJSON_AddStringToObject(gObj, "p", p.c_str());
-            cJSON_AddStringToObject(gObj, "mk", uuid);
+            cJSON_AddStringToObject(gObj, "mk", QTalk::utils::getMessageId().data());
             cJSON_AddItemToObject(nauth,"nauth",gObj);
             std::string pp = QTalk::JSON::cJSON_to_string(nauth);
             cJSON_Delete(nauth);
@@ -222,21 +220,21 @@ void Communication::AsyncConnect(const std::string &userName, const std::string 
 }
 
 //
-void Communication::tryConnectToServer()
+bool Communication::tryConnectToServer()
 {
     bool isNewLogin = (LOGIN_TYPE_NEW_PASSWORD == NavigationManager::instance().getLoginType());
-    LogicManager::instance()->getLogicBase()->tryConnectToServer(_userName, _password, _host, _port,isNewLogin);
+    return LogicManager::instance()->getLogicBase()->tryConnectToServer(_userName, _password, _host, _port, isNewLogin);
 }
 
 /**
  * qchat断线重连 需要根据qvt重新获取token
  */
-void Communication::tryConnectToServerByQVT()
+bool Communication::tryConnectToServerByQVT()
 {
     std::string qvt = Platform::instance().getQvt();
     std::map<std::string,std::string> userMap;
     getQchatTokenByQVT(qvt,userMap);
-    LogicManager::instance()->getLogicBase()->tryConnectToServer(_userName, userMap["password"], _host, _port, false);
+    return LogicManager::instance()->getLogicBase()->tryConnectToServer(_userName, userMap["password"], _host, _port, false);
 }
 
 /**
@@ -278,6 +276,7 @@ bool Communication::getNavInfo(const std::string &navAddr, QTalk::StNav &nav) {
             nav.leaderUrl = cJSON_SafeGetStringValue(baseAddress, "leaderurl");
             nav.shareUrl = cJSON_SafeGetStringValue(baseAddress, "shareurl");
             nav.videoUrl = cJSON_SafeGetStringValue(baseAddress, "videourl");
+            nav.videoConference = cJSON_SafeGetStringValue(baseAddress, "videoConference");
 
             //imcofig
             if (cJSON_HasObjectItem(data, "imConfig")) {
@@ -370,6 +369,7 @@ void Communication::setLoginNav(const QTalk::StNav &nav) {
     NavigationManager::instance().setLoginType(nav.loginType);
     // video
     NavigationManager::instance().setVideoUrl(nav.videoUrl);
+    NavigationManager::instance().setvideoConference(nav.videoConference);
     //
     NavigationManager::instance().setRollbackFlag(nav.rollback);
 }
@@ -591,7 +591,7 @@ void Communication::onCreateGroupComplete(const std::string &groupId, bool ret) 
         groupInfo.groupId = groupId;
         if (_mapGroupIdName.find(groupId) != _mapGroupIdName.end() && !_mapGroupIdName[groupId].empty()) {
             groupInfo.name = _mapGroupIdName[groupId];
-            _mapGroupIdName.erase(groupId);
+
         } else
             groupInfo.name = "新建群聊...";
 
@@ -603,7 +603,9 @@ void Communication::onCreateGroupComplete(const std::string &groupId, bool ret) 
 
         std::vector<QTalk::StGroupInfo> arInfos;
         arInfos.push_back(groupInfo);
-        _pUserGroupManager->upateGroupInfo(arInfos);
+        bool ret = _pUserGroupManager->upateGroupInfo(arInfos);
+        if(ret)
+            _mapGroupIdName.erase(groupId);
     }
 }
 
@@ -619,7 +621,10 @@ void Communication::onRecvGroupMembers(const std::string &groupId, const std::ma
     std::map<std::string, QTalk::StUserCard> mapStUsers;
     // 存储数据库
     if (!mapUserRole.empty())
+    {
+        LogicManager::instance()->getDatabase()->bulkDeleteGroupMember({groupId});
         LogicManager::instance()->getDatabase()->bulkInsertGroupMember(groupId, mapUserRole);
+    }
     else
         return;
 
@@ -737,16 +742,16 @@ void Communication::getGroupMemberById(const std::string &groupId) {
     debug_log("请求群成员 群Id:{0}", groupId);
     //
     // 获取本地群成员
-//    std::vector<QTalk::StUserCard> arGroupMembers;
-//    std::map<std::string, QUInt8> userRole;
-//    LogicManager::instance()->GetDatabase()->getGroupMemberById(groupId, arGroupMembers, userRole);
-//    if (!arGroupMembers.empty() && _pMsgManager) {
-//        GroupMemberMessage e(*_pMsgManager);
-//        e.groupId = groupId;
-//        e.userRole = userRole;
-//        e.members = arGroupMembers;
-//        _pMsgManager->gotGroupMember(e);
-//    }
+    std::map<std::string, QTalk::StUserCard> arGroupMembers;
+    std::map<std::string, QUInt8> userRole;
+    LogicManager::instance()->getDatabase()->getGroupMemberById(groupId, arGroupMembers, userRole);
+    if (!arGroupMembers.empty() && _pMsgManager) {
+        GroupMemberMessage e;
+        e.groupId = groupId;
+        e.userRole = userRole;
+        e.members = arGroupMembers;
+        _pMsgManager->gotGroupMember(e);
+    }
 
     // 从网络获取数据
     LogicManager::instance()->getLogicBase()->getGroupMemberById(groupId);
@@ -785,6 +790,8 @@ void Communication::dealBindMsg() {
     if (_pMsgManager) {
         _pMsgManager->sendDataBaseOpen();
     }
+    //
+    LogicManager::instance()->getLogicBase()->startAutoReconnectToServer();
 }
 
 /**
@@ -877,7 +884,52 @@ void Communication::getStructure(std::vector<std::shared_ptr<QTalk::Entity::ImUs
 }
 
 void Communication::onInviteGroupMembers(const std::string &groupId) {
+    if(Platform::instance().isMainThread())
+    {
+        std::thread([this, groupId](){
+            onInviteGroupMembers(groupId);
+        }).detach();
+        return;
+    }
     getGroupMemberById(groupId);
+
+    if (_mapGroupIdName.find(groupId) != _mapGroupIdName.end() && !_mapGroupIdName[groupId].empty()) {
+        info_log("update group name ");
+        QTalk::StGroupInfo groupInfo;
+        groupInfo.desc = "";
+        groupInfo.groupId = groupId;
+
+        groupInfo.name = _mapGroupIdName[groupId];
+        _mapGroupIdName.erase(groupId);
+
+        groupInfo.title = "";
+
+        QTalk::Entity::ImGroupInfo im_gInfo;
+        im_gInfo.GroupId = groupInfo.groupId;
+        LogicManager::instance()->getDatabase()->insertGroupInfo(im_gInfo);
+
+        std::vector<QTalk::StGroupInfo> arInfos;
+        arInfos.push_back(groupInfo);
+        auto retry = 3;
+        while (retry > 0)
+        {
+            bool ret = _pUserGroupManager->upateGroupInfo(arInfos);
+            if(ret)
+                break;
+            else
+            {
+#ifdef _WINDOWS
+                Sleep(3000);
+#else
+                struct timespec tim {};
+                tim.tv_sec = 0;
+                tim.tv_nsec = 3000000;
+                nanosleep(&tim, nullptr);
+#endif // _WINDOWS
+                retry--;
+            }
+        }
+    }
 }
 
 // 发送http 请求
@@ -1117,8 +1169,10 @@ bool Communication::geiOaUiData(std::vector<QTalk::StOAUIData> &arOAUIData) {
                         QTalk::StOAUIData::StMember member;
 
                         member.memberId = JSON::cJSON_SafeGetIntValue(memItem, "memberId");
-                        member.action_type = JSON::cJSON_SafeGetIntValue(memItem, "actionType");
-                        member.native_action_type = JSON::cJSON_SafeGetIntValue(memItem, "nativeAction");
+                        if(cJSON_HasObjectItem(memItem, "actionType"))
+                            member.action_type = JSON::cJSON_SafeGetIntValue(memItem, "actionType");
+                        if(cJSON_HasObjectItem(memItem, "nativeAction"))
+                            member.native_action_type = JSON::cJSON_SafeGetIntValue(memItem, "nativeAction");
                         member.memberName = JSON::cJSON_SafeGetStringValue(memItem, "memberName");
                         member.memberAction = JSON::cJSON_SafeGetStringValue(memItem, "memberAction");
                         member.memberIcon = JSON::cJSON_SafeGetStringValue(memItem, "memberIcon");
@@ -1219,7 +1273,60 @@ std::string Communication::getQchatQvt(const std::string &userName, const std::s
 }
 
 void Communication::getQchatTokenByQVT(const std::string &qvt,std::map<std::string,std::string> &userMap) {
+//    std::map<std::string,std::string> userMap;
+    std::ostringstream url;
+    url <<  NavigationManager::instance().getApiUrl()
+        << "/http_gettk";
+    auto uuid = utils::getMessageId();
+    cJSON *gObj = cJSON_CreateObject();
+    cJSON_AddStringToObject(gObj, "macCode", uuid.data());
+    cJSON_AddStringToObject(gObj, "plat", "pc");
+    std::string postData = QTalk::JSON::cJSON_to_string(gObj);
+    cJSON_Delete(gObj);
 
+    auto callback = [&userMap, uuid](int code, const std::string &responseData) {
+        if (code == 200) {
+
+            cJSON *retDta = cJSON_Parse(responseData.c_str());
+            if (nullptr == retDta) {
+                error_log("json 解析失败");
+                cJSON_Delete(retDta);
+                return;
+            }
+            int errCode = cJSON_GetObjectItem(retDta, "errcode")->valueint;
+            if(errCode == 0){
+                cJSON *data = cJSON_GetObjectItem(retDta,"data");
+                std::string userName = cJSON_GetObjectItem(data,"username")->valuestring;
+                std::string token = cJSON_GetObjectItem(data,"token")->valuestring;
+                std::string password = "{\"token\":{\"plat\":\"pc\", \"macCode\":\""+ uuid + "\", \"token\":\""+ token + "\"}}";
+                userMap["name"] = userName;
+                userMap["password"] = password;
+            } else{
+                error_log(cJSON_GetObjectItem(retDta, "errmsg")->valuestring);
+            }
+            cJSON_Delete(retDta);
+        }
+    };
+
+    QTalk::HttpRequest req(url.str(), QTalk::RequestMethod::POST);
+    if(qvt.empty()){
+        return;
+    }
+    cJSON *qvtJson = cJSON_GetObjectItem(cJSON_Parse(qvt.data()),"data");
+    if(nullptr == qvtJson)
+        return;
+    std::string qcookie = cJSON_GetObjectItem(qvtJson,"qcookie")->valuestring;
+    std::string vcookie = cJSON_GetObjectItem(qvtJson,"vcookie")->valuestring;
+    std::string tcookie = cJSON_GetObjectItem(qvtJson,"tcookie")->valuestring;
+    cJSON_Delete(qvtJson);
+    std::string requestHeaders = std::string("_q=") + qcookie + ";_v=" + vcookie + ";_t=" + tcookie;
+    req.header["Content-Type"] = "application/json;";
+    req.header["Cookie"] = requestHeaders;
+    req.body = postData;
+
+    addHttpRequest(req, callback);
+
+//    return userMap;
 }
 
 void Communication::getNewLoginToken(const std::string u, const std::string p,std::map<std::string,std::string> &map) {
@@ -1227,13 +1334,11 @@ void Communication::getNewLoginToken(const std::string u, const std::string p,st
     url << NavigationManager::instance().getHttpHost()
         << "/nck/qtlogin.qunar";
     std::string plaint = LogicManager::instance()->getLogicBase()->normalRsaEncrypt(p);
-    char uuid[36];
-    utils::generateUUID(uuid);
     cJSON *gObj = cJSON_CreateObject();
     cJSON_AddStringToObject(gObj, "u", u.c_str());
     cJSON_AddStringToObject(gObj, "p", plaint.c_str());
     cJSON_AddStringToObject(gObj, "h", NavigationManager::instance().getDomain().c_str());
-    cJSON_AddStringToObject(gObj, "mk", uuid);
+    cJSON_AddStringToObject(gObj, "mk", utils::getMessageId().data());
     std::string postData = QTalk::JSON::cJSON_to_string(gObj);
     cJSON_Delete(gObj);
 

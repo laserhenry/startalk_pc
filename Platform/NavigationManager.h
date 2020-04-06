@@ -43,6 +43,7 @@ private:
     std::string foundConfigUrl;
     //
     std::string videoUrl;
+    std::string videoConference;
 
     // 请求地址
     std::string healthcheckUrl; //网络检测地址
@@ -116,6 +117,9 @@ public: // base address
 
     void setVideoUrl(const std::string& videoUrl);
     std::string getVideoUrl();
+
+    void setvideoConference(const std::string& videoConference);
+    std::string getvideoConference();
 
 public:// imconfig
 	void setRsaEncodeType(int t);

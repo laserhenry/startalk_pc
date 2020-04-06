@@ -220,6 +220,14 @@ std::string NavigationManager::getVideoUrl() {
     return videoUrl;
 }
 
+void NavigationManager::setvideoConference(const std::string &videoUrl) {
+    this->videoConference = videoUrl;
+}
+
+std::string NavigationManager::getvideoConference() {
+    return videoConference;
+}
+
 void NavigationManager::setQcadminHost(const std::string &adminHost) {
     this->qcadminHost = adminHost;
 }

@@ -9,6 +9,7 @@
 #include <QStackedLayout>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QDir>
 #include "../../Platform/Platform.h"
 #include "../../UICom/qimage/qimage.h"
 #include <QTime>
@@ -373,6 +374,8 @@ void VideoMessageItem::initContentLayout() {
  */
 void VideoMessageItem::playVideo() {
 
+
+
     QJsonDocument jsonDocument = QJsonDocument::fromJson(_msgInfo.extend_info.toUtf8());
     if (!jsonDocument.isNull()) {
         QJsonObject jsonObject = jsonDocument.object();
@@ -405,10 +408,15 @@ void VideoMessageItem::playVideo() {
                 QFileInfo info(localVideo);
                 if(!info.exists() || info.isDir())
                 {
+                    if(!QFile::exists(info.absolutePath()))
+                    {
+                        QDir dir;
+                        dir.mkpath(info.absolutePath());
+                    }
+
                     btnLable->setVisible(false);
                     maskFrame->setDownload(false);
-                    ChatMsgManager::sendDownLoadFile(localVideo.toStdString(),
-                                                                        videoUrl.toStdString(), _msgInfo.msg_id.toStdString());
+                    g_pMainPanel->downloadFileWithProcess(videoUrl, localVideo, _msgInfo.msg_id);
                 }
                 else
                 {
@@ -428,7 +436,13 @@ void VideoMessageItem::playVideo() {
 void VideoMessageItem::mousePressEvent(QMouseEvent *event) {
 
     if (event->button() == Qt::LeftButton && _contentFrm->geometry().contains(event->pos())) {
-        playVideo();
+        static qint64 t = 0;
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        if(now - t > 1000)
+        {
+            t = now;
+            playVideo();
+        }
     }
     QFrame::mousePressEvent(event);
 }
@@ -450,20 +464,26 @@ void VideoMessageItem::setProcess(double speed, double dtotal, double dnow, doub
         return;
     }
 
-    if(abs((int) process - 100) < 0.001)
-    {
-        maskFrame->setDownload(true);
-        //
-        QFileInfo info(localVideo);
-        while (!info.exists() || info.isDir())
-        {
-            QApplication::processEvents(QEventLoop::AllEvents, 100);
-        }
-        playVideo();
-        btnLable->setVisible(true);
-    }
+//    if(abs((int) process - 100) < 0.00001)
+//    {
+//
+//        //
+//        QFileInfo info(localVideo);
+//        while (!info.exists() || info.isDir())
+//        {
+//            QApplication::processEvents(QEventLoop::AllEvents, 100);
+//        }
+//        playVideo();
+//
+//    }
 
     if (maskFrame) {
         maskFrame->setCurValue(process);
     }
+}
+
+void VideoMessageItem::downloadSuccess() {
+    maskFrame->setDownload(true);
+    btnLable->setVisible(true);
+    playVideo();
 }

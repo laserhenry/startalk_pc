@@ -137,15 +137,15 @@ void DataBasePlug::ClearDBData() {
   * @参数
   * @date 2018.9.21
   */
-bool DataBasePlug::insertSessionInfo(const QTalk::Entity::ImSessionInfo &imSessionInfo) {
-    bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, imSessionInfo]() {
-        SessionListDao dao(_dataBass);
-        ret = dao.insertSessionInfo(imSessionInfo);
-    });
-    func.get();
-    return ret;
-}
+//bool DataBasePlug::insertSessionInfo(const QTalk::Entity::ImSessionInfo &imSessionInfo) {
+//    bool ret = false;
+//    auto func = _dbPool.enqueue([this, &ret, imSessionInfo]() {
+//        SessionListDao dao(_dataBass);
+//        ret = dao.insertSessionInfo(imSessionInfo);
+//    });
+//    func.get();
+//    return ret;
+//}
 
 
 bool DataBasePlug::bulkDeleteSessions(const std::vector<std::string> &peerIds) {
@@ -168,16 +168,16 @@ bool DataBasePlug::bulkDeleteSessions(const std::vector<std::string> &peerIds) {
  * @param sessionList
  * @return
  */
-bool DataBasePlug::bulkInsertSessionInfo(const std::vector<QTalk::Entity::ImSessionInfo> &sessionList) {
-    bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, sessionList]() {
-        perf_counter("bulkInsertSessionInfo size is {0}", sessionList.size());
-        SessionListDao dao(_dataBass);
-        ret = dao.bulkInsertSessionInfo(sessionList);
-    });
-    func.get();
-    return ret;
-}
+//bool DataBasePlug::bulkInsertSessionInfo(const std::vector<QTalk::Entity::ImSessionInfo> &sessionList) {
+//    bool ret = false;
+//    auto func = _dbPool.enqueue([this, &ret, sessionList]() {
+//        perf_counter("bulkInsertSessionInfo size is {0}", sessionList.size());
+//        SessionListDao dao(_dataBass);
+//        ret = dao.bulkInsertSessionInfo(sessionList);
+//    });
+//    func.get();
+//    return ret;
+//}
 
 /**
   * @函数名
@@ -405,15 +405,16 @@ std::shared_ptr<QTalk::Entity::ImGroupInfo> DataBasePlug::getGroupInfoByXmppId(c
   * @author   cc
   * @date     2018/10/03
   */
-bool DataBasePlug::getGroupMemberById(const std::string &groupId, std::vector<QTalk::StUserCard> &member,
+bool DataBasePlug::getGroupMemberById(const std::string &groupId, std::map<std::string , QTalk::StUserCard> &member,
                                       std::map<std::string, QUInt8> &userRole) {
-    bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, groupId, &member, &userRole]() {
+//    bool ret = false;
+//    auto func = _dbPool.enqueue([this, &ret, groupId, &member, &userRole]() {
         GroupMemberDao dao(_dataBass);
-        ret = dao.getGroupMemberById(groupId, member, userRole);
-    });
-    func.get();
-    return ret;
+//        ret =
+        dao.getGroupMemberById(groupId, member, userRole);
+//    });
+//    func.get();
+    return true;
 }
 
 /**
@@ -737,6 +738,16 @@ void DataBasePlug::modifyDbByVersion() {
         MessageDao dao(_dataBass);
         dao.addMessageFlag();
     }
+
+    if(dbVersion <= 100013)
+    {
+        // 自己发给自己的未读数清零
+        SessionListDao sessionListDao(_dataBass);
+        sessionListDao.clearSelfUnRead(Platform::instance().getSelfXmppId());
+        // 修改阅读状态 触发器
+        TriggerConfig tridao(_dataBass);
+        tridao.modifyUnreadCountTrigger();
+    }
     //
     dbConfig.setDbVersion(Platform::instance().getDbVersion());
 }
@@ -930,6 +941,20 @@ bool DataBasePlug::bulkDeleteGroup(const std::vector<std::string> &groupIds) {
         SessionListDao sessionDao(_dataBass);
         sessionDao.bulkDeleteSession(groupIds);
 
+        ret = true;
+    });
+    func.get();
+    return ret;
+}
+
+bool DataBasePlug::bulkDeleteGroupMember(const std::vector<std::string> &groupIds) {
+    if (groupIds.empty()) {
+        return true;
+    }
+    bool ret = false;
+    auto func = _dbPool.enqueue([this, &ret, groupIds]() {
+        GroupMemberDao gMemberDao(_dataBass);
+        gMemberDao.bulkDeleteGroupMember(groupIds);
         ret = true;
     });
     func.get();

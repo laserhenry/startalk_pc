@@ -170,7 +170,7 @@ std::string Platform::getSelfName() {
     return _strSelfName;
 }
 
-long long Platform::getServerDiffTime() const {
+long long Platform::getServerDiffTime() {
     return this->_serverTimeDiff;
 }
 
@@ -178,15 +178,18 @@ void Platform::setServerDiffTime(long long serverDiffTime) {
     this->_serverTimeDiff = serverDiffTime;
 }
 
-std::string Platform::getServerAuthKey() const {
+std::string Platform::getServerAuthKey() {
+    std::lock_guard<QTalk::util::spin_mutex> lock(cKeySm);
     return this->_serverAuthKey;
 }
 
 void Platform::setServerAuthKey(const std::string &authKey) {
+    std::lock_guard<QTalk::util::spin_mutex> lock(cKeySm);
     this->_serverAuthKey = authKey;
 }
 
-std::string Platform::getClientAuthKey() const {
+std::string Platform::getClientAuthKey() {
+    std::lock_guard<QTalk::util::spin_mutex> lock(cKeySm);
     time_t now = time(nullptr);
     long long time = now - this->_serverTimeDiff;
     std::string key = MD5(this->_serverAuthKey + std::to_string(time)).toString();

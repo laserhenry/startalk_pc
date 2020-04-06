@@ -69,14 +69,14 @@ MessageItemBase::MessageItemBase(const StNetMessageResult &msgInfo, QWidget *par
         _resending->installEventFilter(this);
 
         _sending = new HeadPhotoLab(":/QTalk/image1/loading.gif", 10, false, false, true, this);
-        bool unSend = (0 == _msgInfo.read_flag && 0 == _msgInfo.state);
-        bool isConnect = g_pMainPanel->getConnectStatus();
+        bool unSend = ( 0 == _msgInfo.state);
+        bool isSending = g_pMainPanel->isSending(msgInfo.msg_id.toStdString());
         if(unSend)
         {
-            _sending->setVisible(isConnect);
-            if(isConnect)
+            _sending->setVisible(isSending);
+            if(isSending)
                 _sending->startMovie();
-            _resending->setVisible(!isConnect);
+            _resending->setVisible(!isSending);
         }
         else
         {

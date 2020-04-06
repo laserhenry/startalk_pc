@@ -39,6 +39,7 @@ public:
 
 public:
     void dealFile(const QString &filePath, bool isFile, const QString& imageLink = QString());
+    void insertEmotion(const QString &pkgId, const QString&shortCut, const QString& localPath);
     void onSnapFinish(const QString &);
     void onSnapCancel(const QString &);
     void insertAt(const int& pos, const QString& name, const QString& XmppId);

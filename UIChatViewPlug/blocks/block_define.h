@@ -18,6 +18,7 @@ enum {
     imagePropertyWidth,
     imagePropertyHeight,
     imagePropertyIndex,
+    imagePropertyType,
 };
 
 #endif //QTALK_V2_BLOCK_DEFINE_H

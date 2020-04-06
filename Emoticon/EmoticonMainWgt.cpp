@@ -329,7 +329,7 @@ bool EmoticonMainWgt::readEmoticonXml(const QString &xmlPath, StEmoticon &stEmot
                 QDomElement dft_e = dft_n.toElement();
                 if ("DEFAULTFACE" == dft_e.tagName()) {
                     stEmoticon.name = dft_e.attribute("emotionName");
-                    stEmoticon.isShowALl = dft_e.attribute("showall") == "1";
+                    stEmoticon.isShowALl = dft_e.attribute("showall").toInt();
 
                     QDomNode face_n = dft_e.firstChild();
                     while (!face_n.isNull()) {
@@ -373,18 +373,23 @@ void EmoticonMainWgt::onEmoticonItemClick(int row, int col) {
             if (pkgId.isEmpty() || shortCut.isEmpty()) {
                 return;
             }
-            bool isShowAll = false;
+            int isShowAll = 0;
             QString emoticonContent = QString(DEM_EMOTICON_MODEL).arg(shortCut, pkgId);
             if(_mapEmoticonInfos.contains(pkgId))
-            {
                 isShowAll = _mapEmoticonInfos[pkgId].isShowALl;
-                if(isShowAll)
-                {
-                    emoticonContent = getEmoticonLocalFilePath(pkgId, shortCut);
-                }
-            }
 
-            emit sendEmoticon(_strConversionId, emoticonContent, isShowAll, "");
+            if(isShowAll == 1)
+            {
+                emoticonContent = getEmoticonLocalFilePath(pkgId, shortCut);
+                emit sgInsertEmoticon(_strConversionId, pkgId, shortCut, emoticonContent);
+            }
+            else if(isShowAll == 2)
+            {
+                emoticonContent = getEmoticonLocalFilePath(pkgId, shortCut);
+                emit sendEmoticon(_strConversionId, emoticonContent, isShowAll, "");
+            }
+            else
+                emit sendEmoticon(_strConversionId, emoticonContent, isShowAll, "");
         }
     }
     this->setVisible(false);

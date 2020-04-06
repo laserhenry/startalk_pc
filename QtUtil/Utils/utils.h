@@ -46,6 +46,8 @@ namespace QTalk {
 
         std::string QTALK_UTIL_EXPORT getMessageId();
 
+        std::string QTALK_UTIL_EXPORT replaceAll(const std::string& srcStr, char matStr, const std::string& dstStr);
+
         std::string QTALK_UTIL_EXPORT getFileMd5(const std::string& filePath);
 
         std::string QTALK_UTIL_EXPORT getFileSuffix(const std::string& filePath);

@@ -50,6 +50,7 @@ Q_SIGNALS:
     void showStatusMessage(const QString&);
     void sgSynDataSuccess();
     void AuthFailedSignal(const QString& msg);
+    void systemQuitSignal();
 
 protected:
     void init();

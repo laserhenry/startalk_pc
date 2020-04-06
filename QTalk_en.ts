@@ -219,11 +219,11 @@
     </message>
     <message>
         <source>抖了他一下</source>
-        <translation>Give him a shake</translation>
+        <translation type="vanished">Give him a shake</translation>
     </message>
     <message>
         <source>收到一个窗口抖动</source>
-        <translation> Receive Shake Screen</translation>
+        <translation type="vanished"> Receive Shake Screen</translation>
     </message>
     <message>
         <source>没有更多消息了</source>
@@ -736,6 +736,15 @@ the current number:%1</translation>
         <source>销毁群</source>
         <translation>Destroy group</translation>
     </message>
+    <message>
+        <source>%1 即将打开您的默认邮箱客户端 
+</source>
+        <translation>%1 about to open your default mailbox client </translation>
+    </message>
+    <message>
+        <source>此操作可能导致邮箱客户端崩溃( 取决于邮件客户端和群发人数 )</source>
+        <translation>This operation may cause the mailbox client to crash</translation>
+    </message>
 </context>
 <context>
     <name>GroupItemPopDelegate</name>
@@ -1019,6 +1028,54 @@ the current number:%1</translation>
         <source>登录超时</source>
         <translation>Timeout</translation>
     </message>
+    <message>
+        <source>正在打开数据库</source>
+        <translation>opening database</translation>
+    </message>
+    <message>
+        <source>正在获取用户信息</source>
+        <translation>getting user information</translation>
+    </message>
+    <message>
+        <source>正在获取群信息</source>
+        <translation>getting group information</translation>
+    </message>
+    <message>
+        <source>正在初始化配置</source>
+        <translation>initializing configuration</translation>
+    </message>
+    <message>
+        <source>正在获取单人信息</source>
+        <translation>getting user message</translation>
+    </message>
+    <message>
+        <source>正在更新单人阅读状态</source>
+        <translation>updating message read mask</translation>
+    </message>
+    <message>
+        <source>正在获取系统信息</source>
+        <translation>getting notice message</translation>
+    </message>
+    <message>
+        <source>正在获取用户状态</source>
+        <translation>getting user state</translation>
+    </message>
+    <message>
+        <source>登录成功 正在启动</source>
+        <translation>login success</translation>
+    </message>
+    <message>
+        <source>正在获取单人消息: </source>
+        <translation>getting user message:</translation>
+    </message>
+    <message>
+        <source>正在获取群消息: </source>
+        <translation>getting group message:</translation>
+    </message>
+    <message>
+        <source>正在获取系统消息: </source>
+        <translation>getting system message:</translation>
+    </message>
 </context>
 <context>
     <name>MainPanel</name>
@@ -1210,7 +1267,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>「 %1 」</source>
-        <translation>「 %1 」</translation>
+        <translation type="vanished">「 %1 」</translation>
     </message>
 </context>
 <context>
@@ -1379,7 +1436,7 @@ the current number:%1</translation>
     <name>NavigationMianPanel</name>
     <message>
         <source>正在重连</source>
-        <translation>Reconnect</translation>
+        <translation type="vanished">Reconnect</translation>
     </message>
     <message>
         <source>当前网络不可用</source>
@@ -1563,6 +1620,10 @@ the current number:%1</translation>
     <message>
         <source>来自：%1</source>
         <translation>From: %1</translation>
+    </message>
+    <message>
+        <source>%1撤回了一条消息</source>
+        <translation>%1 recalled a message</translation>
     </message>
 </context>
 <context>
@@ -2090,6 +2151,25 @@ or ID</translation>
     </message>
 </context>
 <context>
+    <name>StatusLabel</name>
+    <message>
+        <source>在线</source>
+        <translation>online</translation>
+    </message>
+    <message>
+        <source>繁忙</source>
+        <translation>busy</translation>
+    </message>
+    <message>
+        <source>离开</source>
+        <translation>away</translation>
+    </message>
+    <message>
+        <source>离线</source>
+        <translation>offline</translation>
+    </message>
+</context>
+<context>
     <name>StatusWgt</name>
     <message>
         <source>组织架构</source>
@@ -2112,19 +2192,19 @@ or ID</translation>
     <name>StautsLabel</name>
     <message>
         <source>在线</source>
-        <translation>online</translation>
+        <translation type="vanished">online</translation>
     </message>
     <message>
         <source>繁忙</source>
-        <translation>busy</translation>
+        <translation type="vanished">busy</translation>
     </message>
     <message>
         <source>离开</source>
-        <translation>away</translation>
+        <translation type="vanished">away</translation>
     </message>
     <message>
         <source>离线</source>
-        <translation>offline</translation>
+        <translation type="vanished">offline</translation>
     </message>
 </context>
 <context>
@@ -2438,11 +2518,11 @@ or ID</translation>
     </message>
     <message>
         <source>中文</source>
-        <translation>Chinese</translation>
+        <translation type="vanished">Chinese</translation>
     </message>
     <message>
         <source>英文</source>
-        <translation>English</translation>
+        <translation type="vanished">English</translation>
     </message>
 </context>
 <context>
@@ -2467,6 +2547,21 @@ or ID</translation>
         <source>取消自动登录</source>
         <translation>Cancel automatic login</translation>
     </message>
+    <message>
+        <source>提醒</source>
+        <translation>Warning</translation>
+    </message>
+</context>
+<context>
+    <name>SystemTrayPopWnd</name>
+    <message>
+        <source>取消闪动</source>
+        <translation>Cancel alert</translation>
+    </message>
+    <message>
+        <source>暂时没有未读消息</source>
+        <translation>No unread messages for now</translation>
+    </message>
 </context>
 <context>
     <name>TcpDisconnect</name>
@@ -2476,7 +2571,7 @@ or ID</translation>
     </message>
     <message>
         <source>正在重连</source>
-        <translation>Reconnect</translation>
+        <translation type="vanished">Reconnect</translation>
     </message>
 </context>
 <context>
@@ -2751,7 +2846,7 @@ or ID</translation>
     </message>
     <message>
         <source>ATalk ID</source>
-        <translation>ATalk ID</translation>
+        <translation type="vanished">ATalk ID</translation>
     </message>
     <message>
         <source>StarTalk ID</source>
@@ -2946,7 +3041,7 @@ or ID</translation>
     </message>
     <message>
         <source>ATalk ID</source>
-        <translation>ATalk ID</translation>
+        <translation type="vanished">ATalk ID</translation>
     </message>
     <message>
         <source>StarTalk ID</source>

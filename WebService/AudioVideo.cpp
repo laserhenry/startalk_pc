@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include <QFile>
 #include <QNetworkCookie>
+#include <QJsonDocument>
 #include <mutex>
 #include <QUrlQuery>
 #include "../Platform/Platform.h"
@@ -15,7 +16,10 @@
 #include <QCloseEvent>
 #include "../Platform/dbPlatForm.h"
 #include "../Platform/NavigationManager.h"
+#include "../QtUtil/Utils/utils.h"
+#include "../CustomUi/QtMessageBox.h"
 #include <QTimer>
+#include <QJsonObject>
 
 std::function<void(const std::string&, const std::string&)> _sendMsgFunc;
 
@@ -122,6 +126,10 @@ AudioVideo::AudioVideo()
         this->close();
     });
 
+    connect(_webView, &WebView::sgCookieAdded, [this](const QNetworkCookie &cookie){
+        qInfo() << "add cookie" << cookie    ;
+    });
+
     connect(obj, &WebJsObj::sgCloseRtcWindow, [this](const QString& id, long long occupied_time){
         if(id == _conversationId)
         {
@@ -221,7 +229,9 @@ void AudioVideoManager::start2Talk_old(const QString& json, const std::string& p
     if(isBusy())
     {
         if(isCall)
-            QMessageBox::information(nullptr, tr("提醒"), tr("当前正在通话中..."));
+        {
+            QtMessageBox::warning(nullptr, tr("提醒"), tr("当前正在通话中..."));
+        }
         else
             emit sgSendSignal("{\"type\":\"busy\"}", peerId.data());
         return;
@@ -328,7 +338,7 @@ void AudioVideoManager::startGroupTalk(const QString& id, const QString &name)
 {
     if(isBusy())
     {
-        QMessageBox::information(nullptr, tr("提醒"), tr("当前正在通话中..."));
+        QtMessageBox::warning(nullptr, tr("提醒"), tr("当前正在通话中..."));
         return;
     }
 
@@ -348,23 +358,64 @@ void AudioVideoManager::startGroupTalk(const QString& id, const QString &name)
     pAudioVideo->isGroupVideo = true;
     QWebEngineHttpRequest req;
 
-    QString url = QString("%4/conference#/login?userId=%1&roomId=%2&topic=%3")
-            .arg(Platform::instance().getSelfXmppId().data())
-            .arg(id)
-            .arg(QUrl(name.toUtf8()).toEncoded().data())
-            .arg(NavigationManager::instance().getVideoUrl().data());
-    qInfo() << url;
+    QString url = NavigationManager::instance().getvideoConference().data();
+    if(url.isEmpty())
+    {
+        url = QString("%4/conference#/login?userId=%1&roomId=%2&topic=%3")
+                .arg(Platform::instance().getSelfXmppId().data())
+                .arg(id)
+                .arg(QUrl(name.toUtf8()).toEncoded().data())
+                .arg(NavigationManager::instance().getVideoUrl().data());
+    }
+    else
+    {
+        url = QString("%4?userId=%1&roomId=%2&topic=%3")
+                .arg(Platform::instance().getSelfXmppId().data())
+                .arg(id)
+                .arg(QUrl(name.toUtf8()).toEncoded().data())
+                .arg(url);
+    }
+
     req.setUrl(QUrl(url));
 
     std::string ckey = Platform::instance().getClientAuthKey();
+    ckey = QTalk::utils::UrlEncode(ckey);
     if(ckey.empty())
     {
-        QMessageBox::information(nullptr, tr("警告"), tr("获取群信息失败, 请重试!"));
+//        QMessageBox::information(nullptr, tr("警告"), tr("获取群信息失败, 请重试!"));
         return;
     }
     qInfo() << "AudioVideoManager cookie ckey" << ckey.data();
     QNetworkCookie ckeyCookie("q_ckey", QByteArray(ckey.data(), ckey.size()));
     pAudioVideo->_webView->setCookie(ckeyCookie, url);
+    ckeyCookie.setPath("/");
+    pAudioVideo->_webView->setCookie(ckeyCookie, url);
+
+#ifdef _QCHAT
+    auto qvt = Platform::instance().getQvt();
+    QJsonDocument document = QJsonDocument::fromJson(qvt.data());
+    if(!document.isNull())
+    {
+        auto data = document.object().value("data").toObject();
+        auto q = data.value("qcookie").toString();
+        auto v = data.value("vcookie").toString();
+        auto t = data.value("tcookie").toString();
+
+        QNetworkCookie qcookie("_q", q.toUtf8());
+        QNetworkCookie vcookie("_v", v.toUtf8());
+        QNetworkCookie tcookie("_t", t.toUtf8());
+        qcookie.setDomain("qunar.com");
+        vcookie.setDomain("qunar.com");
+        tcookie.setDomain("qunar.com");
+        qcookie.setPath("/");
+        vcookie.setPath("/");
+        tcookie.setPath("/");
+        pAudioVideo->_webView->setCookie(qcookie, url);
+        pAudioVideo->_webView->setCookie(vcookie, url);
+        pAudioVideo->_webView->setCookie(tcookie, url);
+    }
+#endif
+
     pAudioVideo->_webView->setAgent(agent);
     pAudioVideo->_webView->startReq(req);
     pAudioVideo->resize(1000, 750);

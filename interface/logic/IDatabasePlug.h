@@ -33,8 +33,8 @@ public:
     // session
 public:
     // add session
-    virtual bool insertSessionInfo(const QTalk::Entity::ImSessionInfo &imSessionInfo) = 0;
-    virtual bool bulkInsertSessionInfo(const std::vector<QTalk::Entity::ImSessionInfo> &sessionList) = 0;
+//    virtual bool insertSessionInfo(const QTalk::Entity::ImSessionInfo &imSessionInfo) = 0;
+//    virtual bool bulkInsertSessionInfo(const std::vector<QTalk::Entity::ImSessionInfo> &sessionList) = 0;
     // delete session
     virtual bool bulkDeleteSessions(const std::vector<std::string> &peerIds) = 0;
     // recent session contains user and group
@@ -149,6 +149,7 @@ public:
     virtual bool getGroupTopic(const std::string &groupId, std::string &groupTopic) = 0;
     // 批量删除群
     virtual bool bulkDeleteGroup(const std::vector<std::string> &groupIds) = 0;
+    virtual bool bulkDeleteGroupMember(const std::vector<std::string> &groupIds) = 0;
     // all group
     virtual bool getAllGroup(std::vector<QTalk::Entity::ImGroupInfo> &groups) = 0;
 
@@ -159,7 +160,7 @@ public:
     //
     virtual bool bulkInsertGroupMember(const std::string &groupId, const std::map<std::string, QUInt8> &member) = 0;
     // get group card
-    virtual bool getGroupMemberById(const std::string &groupId, std::vector<QTalk::StUserCard> &member,
+    virtual bool getGroupMemberById(const std::string &groupId, std::map<std::string, QTalk::StUserCard> &member,
                                     std::map<std::string, QUInt8> &userRole) = 0;
     virtual bool
     getGroupMemberInfo(const std::vector<std::string> &members, std::vector<QTalk::StUserCard> &userInfos) = 0;
