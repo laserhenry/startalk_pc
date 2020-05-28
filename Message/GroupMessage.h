@@ -88,7 +88,7 @@ class CreatGroupRet : public Event
 {
 public:
     CreatGroupRet(std::string groupId, bool ret)
-    : groupId(std::move(groupId)), ret(ret) { }
+    : ret(ret), groupId(std::move(groupId)) { }
 
 public:
     bool ret;
@@ -193,7 +193,7 @@ public:
 class RemoveGroupMemberRet : public Event {
 public:
     RemoveGroupMemberRet(std::string groupId, std::string  memberId)
-    : memberId(std::move(memberId)), groupId(std::move(groupId)) {}
+    : groupId(std::move(groupId)), memberId(std::move(memberId)) {}
 
 public:
     std::string groupId;

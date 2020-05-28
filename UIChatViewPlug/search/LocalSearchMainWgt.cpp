@@ -73,7 +73,11 @@ LocalSearchMainWgt::LocalSearchMainWgt(QWidget* parent)
 
 }
 
-LocalSearchMainWgt::~LocalSearchMainWgt() = default;
+LocalSearchMainWgt::~LocalSearchMainWgt()
+{
+    if(_lazyQueue)
+        delete _lazyQueue;
+}
 
 void LocalSearchMainWgt::initStyle(const QString& qss)
 {

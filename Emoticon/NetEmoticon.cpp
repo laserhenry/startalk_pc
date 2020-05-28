@@ -233,7 +233,7 @@ void NetEmoticon::initUi()
 	layout->addWidget(_pNetEmoLst);
 	layout->addWidget(_pStackedNetDetailWgt);
 	layout->setStretch(1, 45);
-	setLayout(layout);
+//	setLayout(layout);
 
 	connect(_pNetEmoLst, &QListWidget::itemClicked, this, &NetEmoticon::onEmoLstItemClick);
 	connect(EmoticonMainWgt::getInstance(), &EmoticonMainWgt::sgGotNetEmo, this, &NetEmoticon::initItems);

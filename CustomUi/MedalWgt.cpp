@@ -99,8 +99,8 @@ void MedalWgt::paintEvent(QPaintEvent *e) {
         QPainter painter(this);
         painter.setRenderHints(QPainter::Antialiasing, true);
         painter.setRenderHints(QPainter::SmoothPixmapTransform, true);
-        auto dpi = QTalk::qimage::instance().dpi();
-        QPixmap image = QTalk::qimage::instance().loadImage(imgPath, true, true, dpi * _icon_width);
+        auto dpi = QTalk::qimage::dpi();
+        QPixmap image = QTalk::qimage::loadImage(imgPath, true, true, dpi * _icon_width);
         painter.drawPixmap(x, y, _icon_width, _icon_width, image);
 
         if(++col >= DEM_MAX_COL)

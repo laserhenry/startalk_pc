@@ -34,6 +34,7 @@ Q_SIGNALS:
 	void addMemberSignal(const std::string& xmppid, const std::string& userName,
 	        const QString& headSrc, QInt8 userType, bool isOnline, const QString&);
     void sgUpdateMemberCount(unsigned int, unsigned int);
+    void sgUpdateUserRole(const QString& xmppId, int role);
 
 public:
 	void addMember(const std::string& xmppid, const std::string& userName,
@@ -65,6 +66,7 @@ protected:
 	void setAdminByJid(const std::string& nick,const std::string& xmppId);
 	void removeAdminByJid(const std::string& nick,const std::string& xmppId);
 	void removeGroupByJid(const std::string& nick,const std::string& xmppId);
+	void updateUserRole(const QString& xmppId, int role);
 
 private:
 	QMap<std::string, QStandardItem*> _mapMemberItem;

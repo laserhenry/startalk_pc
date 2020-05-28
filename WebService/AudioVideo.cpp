@@ -404,9 +404,6 @@ void AudioVideoManager::startGroupTalk(const QString& id, const QString &name)
         QNetworkCookie qcookie("_q", q.toUtf8());
         QNetworkCookie vcookie("_v", v.toUtf8());
         QNetworkCookie tcookie("_t", t.toUtf8());
-        qcookie.setDomain("qunar.com");
-        vcookie.setDomain("qunar.com");
-        tcookie.setDomain("qunar.com");
         qcookie.setPath("/");
         vcookie.setPath("/");
         tcookie.setPath("/");

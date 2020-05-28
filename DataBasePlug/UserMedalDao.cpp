@@ -96,7 +96,7 @@ void UserMedalDao::insertMedals(const std::vector<QTalk::Entity::ImUserStatusMed
 
 void UserMedalDao::getUserMedal(const std::string &xmppId, std::set<QTalk::StUserMedal>& stMedals) {
 
-    QTalk::Entity::JID jid(xmppId.data());
+    QTalk::Entity::JID jid(xmppId);
     std::string sql =
         "select u.medalId, u.medalStatus from IM_User_Status_Medal u "
         "left join IM_Medal_List l on u.medalId = l.medalId "
@@ -138,7 +138,7 @@ void UserMedalDao::getMedalUsers(int medalId, std::vector<QTalk::StMedalUser> &m
 }
 
 void UserMedalDao::modifyUserMedalStatus(const std::string& userId, int medalId, int status) {
-    QTalk::Entity::JID jid(userId.data());
+    QTalk::Entity::JID jid(userId);
 
     std::string sql =
             "update IM_User_Status_Medal set `medalStatus` = ? where medalId = ? and userId = ? and `host` = ?";

@@ -38,11 +38,7 @@
 #define CONFIG_KEY_PASSWORD    "config_key_password"
 #define CONFIG_KEY_HEADPATH    "config_key_head"
 #define CONFIG_KEY_DOMAIN      "config_key_domain"
-#ifdef _QCHAT
-#define DEM_DEFAULT_NAV ""
-#else
-#define DEM_DEFAULT_NAV ""
-#endif
+
 
 LoginPanel::LoginPanel(QWidget *parent) :
         QDialog(parent), _pStLoginConfig(nullptr), _pDefaultConfig(nullptr), _pLocalServer(nullptr)
@@ -82,31 +78,31 @@ void LoginPanel::onGotLoginStatus(const QString &msg) {
     if(language != QLocale::English)
     {
         if(msg == "opening database")
-            newMsg = "正在打开数据库";
+            newMsg = tr("正在打开数据库");
         else if(msg == "getting user information")
-            newMsg = "正在获取用户信息";
+            newMsg = tr("正在获取用户信息");
         else if(msg == "getting group information")
-            newMsg = "正在获取群信息";
+            newMsg = tr("正在获取群信息");
         else if(msg == "initializing configuration")
-            newMsg = "正在初始化配置";
+            newMsg = tr("正在初始化配置");
         else if(msg == "getting user message")
-            newMsg = "正在获取单人信息";
+            newMsg = tr("正在获取单人信息");
         else if(msg == "updating message read mask")
-            newMsg = "正在更新单人阅读状态";
+            newMsg = tr("正在更新单人阅读状态");
         else if(msg == "getting group message")
-            newMsg = "正在获取群信息";
+            newMsg = tr("正在获取群信息");
         else if(msg == "getting notice message")
-            newMsg = "正在获取系统信息";
+            newMsg = tr("正在获取系统信息");
         else if(msg == "getting user state")
-            newMsg = "正在获取用户状态";
+            newMsg = tr("正在获取用户状态");
         else if(msg == "login success")
-            newMsg = "登录成功 正在启动";
+            newMsg = tr("登录成功 正在启动");
         else if(msg.contains("getting user message:"))
-            newMsg = newMsg.replace("getting user message:", "正在获取单人消息: ");
+            newMsg = newMsg.replace("getting user message:", tr("正在获取单人消息: "));
         else if(msg.contains("getting group message:"))
-            newMsg = newMsg.replace("getting group message:", "正在获取群消息: ");
+            newMsg = newMsg.replace("getting group message:", tr("正在获取群消息: "));
         else if(msg.contains("getting system message:"))
-            newMsg = newMsg.replace("getting system message:", "正在获取系统消息: ");
+            newMsg = newMsg.replace("getting system message:", tr("正在获取系统消息: "));
     }
 
     emit showStatusMessage(newMsg);
@@ -131,6 +127,8 @@ void LoginPanel::init() {
 void LoginPanel::initLayout() {
 
     // load tips xml
+    qsrand(QTime(0, 0, 0).secsTo(QTime::currentTime()));
+
     QTalk::StConfig config;
     QTalk::qConfig::loadConfig(":/login/tips.xml", false, &config);
     QVector<QString> tips;
@@ -269,7 +267,9 @@ void LoginPanel::initLayout() {
  */
 void LoginPanel::connects() {
     connect(_loginBtn, &QPushButton::clicked, this, &LoginPanel::onLoginBtnClicked);
-    connect(_closeBtn, &QPushButton::clicked, []() { exit(0); });
+    connect(_closeBtn, &QPushButton::clicked, [this]() {
+        emit systemQuitSignal();
+    });
     connect(this, &LoginPanel::sgSynDataSuccess, _pTimer, &QTimer::stop);
     connect(_severBtn, &QPushButton::clicked, [this](bool) {
         _pNavManager->showCenter(true, this);
@@ -372,6 +372,10 @@ bool LoginPanel::eventFilter(QObject *o, QEvent *e) {
             bool ret = _pManager->getNavInfo(nav);
             if (!ret)
                 emit AuthFailedSignal(tr("导航获取失败, 请检查网络连接!"));
+#ifdef _QCHAT
+            else
+                QWebLogin::load(this);
+#endif
         }
     }
     return QDialog::eventFilter(o, e);
@@ -415,6 +419,9 @@ void LoginPanel::loadConf() {
 
     //
     _strConfPath = QString("%1/login.data").arg(Platform::instance().getConfigPath().c_str());
+    if(nullptr != _pStLoginConfig)
+        delete _pStLoginConfig;
+
     _pStLoginConfig = new QTalk::StConfig;
 
     if (QFile::exists(_strConfPath)) {
@@ -773,6 +780,7 @@ void LoginPanel::onLoginBtnClicked()
             return;
         }
         // try connect to server
+        if(0)
         {
             auto future = QtConcurrent::run([this, host, port](){
                 _pStsLabel->setText(tr("正在尝试连接服务器"));

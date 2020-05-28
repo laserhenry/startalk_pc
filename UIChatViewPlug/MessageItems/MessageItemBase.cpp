@@ -12,6 +12,7 @@
 #include "../../Platform/NavigationManager.h"
 #include "../../Platform/Platform.h"
 #include "../../CustomUi/QtMessageBox.h"
+#include "../../UICom/qimage/qimage.h"
 #include "TextMessItem.h"
 
 extern ChatViewMainPanel* g_pMainPanel;
@@ -38,6 +39,25 @@ MessageItemBase::MessageItemBase(const StNetMessageResult &msgInfo, QWidget *par
         // 勋章状态
         updateUserMedal();
     }
+    //
+    if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction && nullptr == _headLab) {
+        _headLab = new HeadPhotoLab;
+        _headLab->setParent(this);
+
+        QFileInfo imageInfo(_msgInfo.user_head);
+        if(imageInfo.suffix().toLower() == "gif")
+        {
+            auto headPath = QTalk::qimage::getGifImagePathNoMark(_msgInfo.user_head);
+            _headLab->setHead(headPath, HEAD_RADIUS);
+        }
+        else
+        {
+            _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
+        }
+
+        _headLab->installEventFilter(this);
+        _headLab->setFixedSize(28, 28);
+    }
 
 	QFileInfo fInfo(_msgInfo.user_head);
 	if (_msgInfo.user_head.isEmpty() || !fInfo.exists() || fInfo.isDir())
@@ -61,7 +81,7 @@ MessageItemBase::MessageItemBase(const StNetMessageResult &msgInfo, QWidget *par
 		_readStateLabel->setObjectName("ReadStateLabel");
 	}
 
-	if(QTalk::Entity::MessageDirectionSent == _msgInfo.direction)
+	if(_msgInfo.state == 0 && QTalk::Entity::MessageDirectionSent == _msgInfo.direction)
     {
         _resending = new HeadPhotoLab;
         _resending->setParent(this);
@@ -69,20 +89,20 @@ MessageItemBase::MessageItemBase(const StNetMessageResult &msgInfo, QWidget *par
         _resending->installEventFilter(this);
 
         _sending = new HeadPhotoLab(":/QTalk/image1/loading.gif", 10, false, false, true, this);
-        bool unSend = ( 0 == _msgInfo.state);
+//        bool unSend = ( 0 == _msgInfo.state);
         bool isSending = g_pMainPanel->isSending(msgInfo.msg_id.toStdString());
-        if(unSend)
+//        if(unSend)
         {
             _sending->setVisible(isSending);
             if(isSending)
                 _sending->startMovie();
             _resending->setVisible(!isSending);
         }
-        else
-        {
-            _sending->setVisible(false);
-            _resending->setVisible(false);
-        }
+//        else
+//        {
+//            _sending->setVisible(false);
+//            _resending->setVisible(false);
+//        }
     }
 
 	qRegisterMetaType<std::string>("std::string");

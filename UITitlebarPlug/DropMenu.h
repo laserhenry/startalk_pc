@@ -230,6 +230,7 @@ Q_SIGNALS:
 private:
     void initUi();
     void switchUserStatus();
+    void restartApp();
 
 private:
     QLabel* _pNameLabel;

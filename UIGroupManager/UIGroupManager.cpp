@@ -13,6 +13,7 @@
 #include <QSplitter>
 #include <QJsonDocument>
 #include <QApplication>
+#include <QtConcurrent>
 #include "../CustomUi/QtMessageBox.h"
 
 #include "../UICom/uicom.h"
@@ -44,7 +45,11 @@ UIGroupManager::UIGroupManager()
         , _pItemDelegate(nullptr)
         , _pRecentItem(nullptr){
 
-    setWindowFlags(this->windowFlags() | Qt::Tool);
+#ifndef _LINUX
+    auto flags = Qt::X11BypassWindowManagerHint | Qt::WindowStaysOnTopHint | Qt::Tool;
+    setWindowFlags(this->windowFlags() | flags);
+#endif
+
     initUi();
     //
     _pMsgManager = new GroupManagerMsgManager;
@@ -147,7 +152,7 @@ void UIGroupManager::initUi() {
     _pSearchView->setItemDelegate(_pSearchItemDelegate);
     _pSearchView->setFrameShape(QFrame::NoFrame);
     // group
-    auto *item = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
+//    auto *item = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     //
     QFrame *leftFrm = new QFrame(this);
     auto *leftLayout = new QVBoxLayout(leftFrm);
@@ -344,6 +349,8 @@ void UIGroupManager::initUi() {
             _pTreeWgt->setExpanded(index, extend);
         }
     });
+    qRegisterMetaType<std::vector<QTalk::StShareSession>>("std::vector<QTalk::StShareSession>");
+    connect(this, &UIGroupManager::sgUpdateSession, this, &UIGroupManager::onUpdateSession);
 }
 
 //
@@ -416,6 +423,8 @@ void UIGroupManager::resetUi(const QString &memberId) {
     {
         for(const auto& item : mapItem.second)
         {
+            if(item.first == EM_RECENT)
+                continue;
             auto *tmpItem = item.second;
             if(item.first == EM_STRUCTURE)
                 tmpItem->setData(false, EM_SEARCH_DATATYPE_CHECKSTATE);
@@ -594,7 +603,7 @@ QStandardItem* UIGroupManager::creatItem(QStandardItem *item, const std::string 
 
     auto* mainItem = new QStandardItem;
     mainItem->setData(EM_ROW_TYPE_ITEM, EM_STAFF_DATATYPE_ROW_TYPE);
-    mainItem->setData(xmppId.data(), EM_STAFF_DATATYPE_TEXT);
+    mainItem->setData(QString(xmppId.data()).section("@", 0, 0), EM_STAFF_DATATYPE_TEXT);
     mainItem->setData(xmppId.data(), EM_STAFF_DATATYPE_XMPPID);
     mainItem->setData(false, EM_DATATYPE_CHECKSTATE);
 
@@ -615,26 +624,25 @@ QStandardItem* UIGroupManager::creatItem(QStandardItem *item, const std::string 
     else
         userinfo = _structure[xmppId];
 
+    QString defaultPath;
+#ifdef _STARTALK
+    defaultPath = ":/QTalk/image1/StarTalk_defaultHead.png";
+#else
+    defaultPath = ":/QTalk/image1/headPortrait.png";
+#endif
+
+    QString iconPath = defaultPath;
     if(nullptr != userinfo)
     {
-        QString defaultPath;
-#ifdef _STARTALK
-        defaultPath = ":/QTalk/image1/StarTalk_defaultHead.png";
-#else
-        defaultPath = ":/QTalk/image1/headPortrait.png";
-#endif
-        QString iconPath = userinfo->HeaderSrc.empty() ? defaultPath :
+        iconPath = userinfo->HeaderSrc.empty() ? defaultPath :
                            QString::fromStdString(QTalk::GetHeadPathByUrl(userinfo->HeaderSrc));
-
         if (!QFile::exists(iconPath) || QFileInfo(iconPath).isDir())
-        {
             iconPath = defaultPath;
-        }
-
         std::string name = _mapUserName[xmppId.data()].toStdString();
         mainItem->setData(_mapUserName[xmppId.data()], EM_STAFF_DATATYPE_TEXT);
-        mainItem->setData(iconPath, EM_STAFF_DATATYPE_ICONPATH);
+
     }
+    mainItem->setData(iconPath, EM_STAFF_DATATYPE_ICONPATH);
     item->appendRow(mainItem);
 
     return mainItem;
@@ -752,6 +760,22 @@ void UIGroupManager::updateUi()
     initStructure();
 }
 
+void UIGroupManager::onUpdateSession(const std::vector<QTalk::StShareSession> & ss) {
+    std::set<std::string> recent = _arTopUsers;
+
+    for(const auto& s : ss)
+    {
+        if(s.chatType == QTalk::Enum::TwoPersonChat && recent.find(s.xmppId) == recent.end())
+            recent.insert(s.xmppId);
+    }
+    for(const auto& id : recent)
+    {
+        auto* item = creatItem(_pRecentItem, id);
+        _mapItems[id][EM_RECENT] = item;
+        recentItems.push_back(item);
+    }
+}
+
 void UIGroupManager::initFriends()
 {
     _pFriendItem = new QStandardItem;
@@ -865,8 +889,6 @@ void UIGroupManager::initRecentSessionData()
 {
     if(_pRecentItem)
     {
-        static std::vector<QStandardItem*> recentItems;
-
         for(auto *item : recentItems)
         {
             // 移除缓冲数据
@@ -883,26 +905,14 @@ void UIGroupManager::initRecentSessionData()
         }
         recentItems.clear();
         //
-        if(_pMsgManager)
+//        if(_pMsgManager)
         {
-            std::vector<QTalk::StShareSession> ss;
-            _pMsgManager->getRecentSession(ss);
 
-            std::set<std::string> recent = _arTopUsers;
-
-            for(const auto& s : ss)
-            {
-                if(s.chatType == QTalk::Enum::TwoPersonChat && recent.find(s.xmppId) == recent.end())
-                    recent.insert(s.xmppId);
-            }
-            //
-            int r = 0;
-            for(const auto& id : recent)
-            {
-                auto* item = creatItem(_pRecentItem, id);
-                _mapItems[id][EM_RECENT] = item;
-                recentItems.push_back(item);
-            }
+            auto result = QtConcurrent::run([this](){
+                std::vector<QTalk::StShareSession> ss;
+                GroupManagerMsgManager::getRecentSession(ss);
+                emit sgUpdateSession(ss);
+            });
         }
     }
 }

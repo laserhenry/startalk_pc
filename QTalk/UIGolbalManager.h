@@ -13,16 +13,13 @@ public:
     ~UIGolbalManager() override;
 
 public:
-    static UIGolbalManager *GetUIGolbalManager();//获取单例对象指针的静态方法
-    static QJsonDocument LoadJsonConfig(const QString &path);
-    static void SaveJsonConfig(const QJsonDocument &doc, const QString &filepath, const QString &defaultpath);
-    void SaveUIGolbalManager();
-    void SavePluginManager();
+    static UIGolbalManager *getUIGolbalManager();//获取单例对象指针的静态方法
+    static QJsonDocument loadJsonConfig(const QString &path);
 
-    QObject *GetPluginInstanceQt(const QString &key)const;
+    QObject *getPluginInstanceQt(const QString &key)const;
     bool UnloadPluginQt(const QString &key);
-    std::shared_ptr<QMap<QString, QObject *> > GetAllPluginInstanceQt() const;
-    void Init();
+    std::shared_ptr<QMap<QString, QObject *> > getAllPluginInstanceQt() const;
+    void init();
     void InitPluginManager();
     void InitStyleManager();
 

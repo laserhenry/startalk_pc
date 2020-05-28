@@ -15,7 +15,6 @@
 #include "../../QtUtil/lib/cjson/cJSON_inc.h"
 #include "../../Platform/NavigationManager.h"
 #include "../../Platform/Platform.h"
-#include "../VoiceHelper.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
 VoiceMessageItem::VoiceMessageItem(const StNetMessageResult &msgInfo, QWidget *parent)
@@ -144,12 +143,6 @@ void VoiceMessageItem::initReceiveLayout() {
     leftLay->setContentsMargins(_leftMargin);
     leftLay->setSpacing(_leftSpacing);
     mainLay->addLayout(leftLay);
-    if (!_headLab) {
-        _headLab = new HeadPhotoLab;
-    }
-    _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
-    _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     leftLay->addItem(vSpacer);
@@ -240,11 +233,6 @@ void VoiceMessageItem::initContentLayout() {
             {
                 if(pThis) {
                     ChatMsgManager::sendDownLoadFile(pThis->local_path, _voicePath, pThis->_msgInfo.msg_id.toStdString());
-#ifdef Q_NO_AMR
-				bool isok = QTalk::VoiceHelper::amrToWav(pThis->local_path + ".amr", pThis->local_path + ".wav");
-				if (isok)
-                    pThis->local_path = pThis->local_path + ".wav";
-#endif // Q_NO_AMR
                 }
             }
         }).detach();

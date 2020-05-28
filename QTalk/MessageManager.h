@@ -12,17 +12,16 @@
 class QTalkMsgManager : public Object
 {
 public:
-	QTalkMsgManager();
-	~QTalkMsgManager() override;
+	QTalkMsgManager(){};
 
 public:
-    void sendHearBeat();
-    void sendOnlineState(const QInt64& login_t, const QInt64& logout_t, const std::string& ip);
-    void sendOperatorStatistics(const std::string& ip, const std::vector<QTalk::StActLog>& operators);
-    void sendLogReport(const std::string& desc, const std::string &logPath);
-    void chanegUserStatus(const std::string &status);
-    static  void reportDump(const std::string& ip, const std::string& id, const std::string & dump, QInt64 crashTime);
-    std::string checkUpdater(int version);
+    static void sendHearBeat();
+    static void sendOnlineState(const QInt64& login_t, const QInt64& logout_t, const std::string& ip);
+    static void sendOperatorStatistics(const std::string& ip, const std::vector<QTalk::StActLog>& operators);
+    static void sendLogReport(const std::string& desc, const std::string &logPath);
+    static void chanegUserStatus(const std::string &status);
+    static void reportDump(const std::string& ip, const std::string& id, const std::string & dump, QInt64 crashTime);
+    static std::string checkUpdater(int version);
 };
 
 //

@@ -10,21 +10,17 @@
 #include <iostream>
 #include <QImageReader>
 #include <QBuffer>
+#include <QDebug>
 #include "../../QtUtil/Utils/utils.h"
 #include "../../QtUtil/Utils/Log.h"
 
 namespace QTalk {
 
-	qimage* qimage::_qimage = nullptr;
-	qimage & qimage::instance()
-	{
-		if (nullptr == _qimage)
-		{
-			static qimage img;
-			_qimage = &img;
-		}
-		return *_qimage;
-	}
+    static QMap<QString, QPixmap>                _allPixmap;
+    static QMap<QString, QMap<QString, QPixmap>> _scanPixmap;
+    static QMutex _mutex{};
+    static int    _dpi = 0;
+
     //
     QPixmap qimage::loadImage(const QString &srcPath, bool save, bool scaled, int width, int height) {
 
@@ -195,5 +191,57 @@ namespace QTalk {
 
             return newPath;
         }
+    }
+
+    QString qimage::getGifImagePath(const QString &srcPath, qreal &width, qreal &height) {
+	    if(srcPath.isEmpty())
+            return srcPath;
+
+        QFileInfo imageInfo(srcPath);
+        QString dstPath = QString("%1/%2_gif.png").arg(imageInfo.absolutePath(), imageInfo.baseName());
+        if(!QFile::exists(dstPath))
+        {
+            if(width < 50 || height < 30)
+            {
+                width = height = 50;
+            }
+
+
+            QPixmap pixmap(srcPath);
+            QPixmap dest(width, height);
+            dest.fill(Qt::transparent);
+            QPainter painter(&dest);
+            painter.setRenderHints(QPainter::Antialiasing, true);
+            painter.setRenderHints(QPainter::SmoothPixmapTransform, true);
+            painter.drawPixmap(0, 0, width, height, pixmap);
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(QColor(100, 100, 100, 200));
+            QRect rect(width - 45, height - 30, 40, 24);
+            painter.drawRoundedRect(rect, 12, 12);
+            painter.setPen(QColor(255, 255, 255));
+            QFont font(painter.font());
+//            font.setBold(true);
+            font.setPixelSize(13);
+            painter.setFont(font);
+            painter.drawText(rect, Qt::AlignCenter, "GIF");
+            if(!dest.save(dstPath, "PNG"))
+                return srcPath;
+        }
+        return dstPath;
+    }
+
+    QString qimage::getGifImagePathNoMark(const QString &srcPath) {
+        if(srcPath.isEmpty())
+            return srcPath;
+
+        QFileInfo imageInfo(srcPath);
+        QString dstPath = QString("%1/%2.png").arg(imageInfo.absolutePath(), imageInfo.baseName());
+        if(!QFile::exists(dstPath))
+        {
+            QPixmap pixmap(srcPath);
+            if(!pixmap.isNull() && !pixmap.save(dstPath, "PNG"))
+                return srcPath;
+        }
+        return dstPath;
     }
 }

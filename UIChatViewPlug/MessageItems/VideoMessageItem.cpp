@@ -41,17 +41,22 @@ public:
         update();
     }
 
-    void setDownload(bool downloaded)
+    void setDownloading(bool downloaded)
     {
-        _downloaded = downloaded;
+        _downloading = downloaded;
         update();
     }
 
+    bool downloading()
+    {
+        return _downloading;
+    }
+
 private:
-    int _direction;
+    int _direction{};
     QString _imgPath;
     int _cur_val = 0;
-    bool _downloaded = true;
+    bool _downloading = false;
 
 protected:
     void paintEvent(QPaintEvent *event) override {
@@ -65,26 +70,21 @@ protected:
         painter.setClipPath(path);
         if(!_imgPath.isEmpty())
         {
-            QPixmap pix = QTalk::qimage::instance().loadImage(_imgPath, false);
+            QPixmap pix = QTalk::qimage::loadImage(_imgPath, false);
             painter.drawPixmap(0, 0, this->width(), this->height(), pix);
         }
 
         painter.save();
         painter.restore();
 
-        if(!_downloaded)
+        qreal radius = 15;
+        QRectF prect(width() / 2.0 - radius, height() / 2.0 - radius, 2 * radius, 2 * radius);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(0,0,0, 200));
+        painter.drawEllipse(prect);
+        if(_downloading)
         {
             double degrees = _cur_val * double(360.0 / 100.0);
-            qreal radius = 15;
-            QRectF prect(width() / 2 - radius, height() / 2 - radius, 2 * radius, 2 * radius);
-            //
-            painter.setPen(Qt::NoPen);
-            painter.setBrush(QColor(240,246,245, 200));
-            painter.drawEllipse(prect);
-            //
-            painter.setBrush(QTalk::StyleDefine::instance().getFileProcessBarLine());
-            painter.setPen(Qt::NoPen);
-            painter.drawEllipse(prect);
             //
             QPainterPath dataPath;
             dataPath.setFillRule(Qt::WindingFill);
@@ -95,6 +95,12 @@ protected:
             painter.setPen(Qt::NoPen);
             painter.drawPath(dataPath);
         }
+        else
+        {
+            QPixmap p(":/chatview/image1/messageItem/video_play_icon.png");
+            painter.drawPixmap(prect.toRect(), p);
+        }
+
         QFrame::paintEvent(event);
     }
 };
@@ -212,12 +218,6 @@ void VideoMessageItem::initReceiveLayout() {
     leftLay->setContentsMargins(_leftMargin);
     leftLay->setSpacing(_leftSpacing);
     mainLay->addLayout(leftLay);
-    if (!_headLab) {
-        _headLab = new HeadPhotoLab;
-    }
-    _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
-    _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     leftLay->addItem(vSpacer);
@@ -306,32 +306,32 @@ void VideoMessageItem::initContentLayout() {
             vBox->setAlignment(Qt::AlignmentFlag::AlignCenter);
             maskFrame->setLayout(vBox);
 
-            QFrame *btnContentFrame = new QFrame(this);
-            btnContentFrame->setFixedSize(46, 36);
-            vBox->addWidget(btnContentFrame);
-
-            auto *vBox1 = new QVBoxLayout;
-            vBox1->setContentsMargins(10, 0, 0, 0);
-            vBox1->setSpacing(0);
-            btnContentFrame->setLayout(vBox1);
-
-            QFrame *btnFrame = new QFrame(this);
-            btnFrame->setFixedSize(36, 36);
-            btnFrame->setObjectName("BtnBgFrame");
-            vBox1->addWidget(btnFrame);
-
-            auto *vBox2 = new QVBoxLayout;
-            vBox2->setAlignment(Qt::AlignmentFlag::AlignCenter);
-            vBox2->setMargin(0);
-            vBox2->setSpacing(0);
-            btnFrame->setLayout(vBox2);
-
-            btnLable = new QLabel(this);
-            btnLable->setAttribute(Qt::WA_TranslucentBackground, true);
-            QPixmap p(":/chatview/image1/messageItem/video_play_icon.png");
-            btnLable->setPixmap(p);
-            btnLable->setFixedSize(32, 32);
-            vBox2->addWidget(btnLable);
+//            QFrame *btnContentFrame = new QFrame(this);
+//            btnContentFrame->setFixedSize(46, 36);
+//            vBox->addWidget(btnContentFrame);
+//
+//            auto *vBox1 = new QVBoxLayout;
+//            vBox1->setContentsMargins(10, 0, 0, 0);
+//            vBox1->setSpacing(0);
+//            btnContentFrame->setLayout(vBox1);
+//
+//            QFrame *btnFrame = new QFrame(this);
+//            btnFrame->setFixedSize(36, 36);
+//            btnFrame->setObjectName("BtnBgFrame");
+//            vBox1->addWidget(btnFrame);
+//
+//            auto *vBox2 = new QVBoxLayout;
+//            vBox2->setAlignment(Qt::AlignmentFlag::AlignCenter);
+//            vBox2->setMargin(0);
+//            vBox2->setSpacing(0);
+//            btnFrame->setLayout(vBox2);
+//
+//            btnLable = new QLabel(this);
+//            btnLable->setAttribute(Qt::WA_TranslucentBackground, true);
+//            QPixmap p(":/chatview/image1/messageItem/video_play_icon.png");
+//            btnLable->setPixmap(p);
+//            btnLable->setFixedSize(32, 32);
+//            vBox2->addWidget(btnLable);
 
             connect(this, &VideoMessageItem::sgDownloadedIcon, this, &VideoMessageItem::setIcon, Qt::QueuedConnection);
             QString placeHolder = ":/chatview/image1/defaultShareIcon.png";
@@ -355,14 +355,14 @@ void VideoMessageItem::initContentLayout() {
                 }
             }
 
-            QString strDuration;
-            if (duration < 3600)
-                strDuration = QTime::fromMSecsSinceStartOfDay(duration * 1000).toString("mm:ss");
-            else
-                strDuration = QTime::fromMSecsSinceStartOfDay(duration * 1000).toString("hh:mm:ss");
-            if (duration > 0) {
-
-            }
+//            QString strDuration;
+//            if (duration < 3600)
+//                strDuration = QTime::fromMSecsSinceStartOfDay(duration * 1000).toString("mm:ss");
+//            else
+//                strDuration = QTime::fromMSecsSinceStartOfDay(duration * 1000).toString("hh:mm:ss");
+//            if (duration > 0) {
+//
+//            }
         }
 
         _contentFrm->setFixedSize(contentSize);
@@ -414,9 +414,12 @@ void VideoMessageItem::playVideo() {
                         dir.mkpath(info.absolutePath());
                     }
 
-                    btnLable->setVisible(false);
-                    maskFrame->setDownload(false);
-                    g_pMainPanel->downloadFileWithProcess(videoUrl, localVideo, _msgInfo.msg_id);
+//                    btnLable->setVisible(false);
+                    if(!maskFrame->downloading())
+                    {
+                        maskFrame->setDownloading(true);
+                        g_pMainPanel->downloadFileWithProcess(videoUrl, localVideo, _msgInfo.msg_id);
+                    }
                 }
                 else
                 {
@@ -483,7 +486,7 @@ void VideoMessageItem::setProcess(double speed, double dtotal, double dnow, doub
 }
 
 void VideoMessageItem::downloadSuccess() {
-    maskFrame->setDownload(true);
-    btnLable->setVisible(true);
+    maskFrame->setDownloading(false);
+//    btnLable->setVisible(true);
     playVideo();
 }

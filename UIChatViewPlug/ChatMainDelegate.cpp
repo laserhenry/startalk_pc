@@ -202,7 +202,7 @@ void ChatMainDelegate::dealWidget(const QModelIndex &index)
         {
             auto time = index.data(EM_USER_MSG_TIME).toLongLong();
             auto* timeItem = qobject_cast<TipMessageItem*>(indexWgt);
-            timeItem->setText(getStrTime(time));
+            if(timeItem) timeItem->setText(getStrTime(time));
         }
 
 		indexWgt->setFixedWidth(_parentWgt->width());
@@ -255,7 +255,7 @@ QSize getsize(const std::vector<StTextMessage>& messages, qreal width)
                 }
 
                 if (QPixmap(imagePath).isNull()) {
-                    QString realPath = QTalk::qimage::instance().getRealImagePath(imagePath);
+                    QString realPath = QTalk::qimage::getRealImagePath(imagePath);
                     if (QPixmap(realPath).isNull()) {
                         imagePath = ":/chatview/image1/defaultImage.png";
                         imageWidth = imageHeight = 80;

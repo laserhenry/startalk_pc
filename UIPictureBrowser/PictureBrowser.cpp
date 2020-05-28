@@ -403,3 +403,11 @@ void PictureBrowser::changeEvent(QEvent *event)
 
     UShadowDialog::changeEvent(event);
 }
+
+void PictureBrowser::onCloseWnd() {
+    _hasBefore = false;
+    _hasNext = false;
+    _images.clear();
+    if(_pPicFrm)
+        _pPicFrm->onCloseWnd();
+}

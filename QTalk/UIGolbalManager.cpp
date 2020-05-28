@@ -5,13 +5,14 @@
 #include <QDebug>
 #include <QStandardPaths>
 #include <QDir>
+#include <QJsonArray>
 #include "../Platform/Platform.h"
 #include "../QtUtil/Utils/Log.h"
 #include "../UICom/qconfig/qconfig.h"
 #include "../UICom/StyleDefine.h"
 
 // 下面路径可以根据ConfigDataDir定位目录然后拼接成文件位置
-const QString UIGolbalManager::DEFAULT_PluginManagerPath = ":/QTalk/config/PluginManager.json";
+const QString UIGolbalManager::DEFAULT_PluginManagerPath = ":/QTalk/config/pluginManager.json";
 const QString UIGolbalManager::DEFAULT_PluginPath = "./";
 
 UIGolbalManager *UIGolbalManager::_pInstance = nullptr;
@@ -36,7 +37,7 @@ UIGolbalManager::~UIGolbalManager() {
     }
 }
 
-UIGolbalManager *UIGolbalManager::GetUIGolbalManager() {
+UIGolbalManager *UIGolbalManager::getUIGolbalManager() {
     if (_pInstance == nullptr) {
         _pInstance = new UIGolbalManager;
 
@@ -49,7 +50,7 @@ UIGolbalManager *UIGolbalManager::GetUIGolbalManager() {
   * @参数
   * @date 2018.9.17
   */
-QJsonDocument UIGolbalManager::LoadJsonConfig(const QString &path) {
+QJsonDocument UIGolbalManager::loadJsonConfig(const QString &path) {
     if (path.isEmpty()) {
         return QJsonDocument();
     }
@@ -70,61 +71,14 @@ QJsonDocument UIGolbalManager::LoadJsonConfig(const QString &path) {
     }
 }
 
-/**
-  * @功能描述
-  * @参数
-  * @date 2018.9.17
-  */
-void UIGolbalManager::SaveJsonConfig(const QJsonDocument &doc, const QString &filepath, const QString &defaultpath) {
-    if (doc.isEmpty() || doc == QJsonDocument(QJsonObject()))//如果是空的不写入，防止清空原有文档
-    {
-        return;
-    }
-    QString path;
-    if (filepath.isEmpty()) {
-        path = defaultpath;
-    } else {
-        path = filepath;
-    }
-    QFile file(path);
-    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QByteArray str = doc.toJson(QJsonDocument::Indented);
-        file.write(str);
-    } else {
-        qWarning() << "open json file fail" << path;
-        return;
-    }
-}
 
 /**
   * @功能描述
   * @参数
   * @date 2018.9.17
   */
-void UIGolbalManager::SaveUIGolbalManager() {
-    QJsonDocument jsonDoc(ToJson());
-    //SaveJsonConfig(jsonDoc, QString(), _ConfigDataDir + DEFAULT_UIGolbalManagerPath);
-}
-
-/**
-  * @功能描述
-  * @参数
-  * @date 2018.9.17
-  */
-void UIGolbalManager::SavePluginManager() {
-    if (_pluginManager) {
-        QJsonDocument jsonDoc(_pluginManager->ToJson());
-        SaveJsonConfig(jsonDoc, Get("ManagerFilePath").toString(), DEFAULT_PluginManagerPath);
-    }
-}
-
-/**
-  * @功能描述
-  * @参数
-  * @date 2018.9.17
-  */
-QObject *UIGolbalManager::GetPluginInstanceQt(const QString &key) const {
-    qDebug() << "GetPluginInstanceQt" << key;
+QObject *UIGolbalManager::getPluginInstanceQt(const QString &key) const {
+    qInfo() << "GetPluginInstanceQt" << key;
     if (_pluginManager) {
         return _pluginManager->GetPluginInstanceQt(key);
     }
@@ -137,7 +91,7 @@ QObject *UIGolbalManager::GetPluginInstanceQt(const QString &key) const {
   * @参数
   * @date 2018.9.27
   */
-std::shared_ptr<QMap<QString, QObject *> > UIGolbalManager::GetAllPluginInstanceQt() const {
+std::shared_ptr<QMap<QString, QObject *> > UIGolbalManager::getAllPluginInstanceQt() const {
     if (_pluginManager) {
         return _pluginManager->GetAllPluginInstanceQt();
     }
@@ -149,7 +103,7 @@ std::shared_ptr<QMap<QString, QObject *> > UIGolbalManager::GetAllPluginInstance
   * @参数
   * @date 2018.9.17
   */
-void UIGolbalManager::Init() {
+void UIGolbalManager::init() {
     // init setting
     _ConfigDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     std::string userPath, fileSavePath, historyPath, coEdit;
@@ -232,6 +186,7 @@ void UIGolbalManager::Init() {
     saveSysConfig();
     //
     InitPluginManager();
+    //
     InitStyleManager();
     //
     initThemeConfig();
@@ -284,20 +239,23 @@ void UIGolbalManager::saveSysConfig() {
 void UIGolbalManager::InitPluginManager() {
     if (!_pluginManager) {
         _pluginManager = new PluginManager;
-        qDebug() << "InitPluginManager " << DEFAULT_PluginManagerPath;
-        QJsonDocument doc = LoadJsonConfig(DEFAULT_PluginManagerPath);
-        if (doc.isObject()) {
-            _pluginManager->FromJson(doc.object());
-        } else {
+        QJsonDocument doc = loadJsonConfig(DEFAULT_PluginManagerPath);
+        if (!doc.isNull() && doc.isArray()) {
 
+            QVector<QString> arPlugs;
+            auto allPlug  = doc.array();
+            for(const auto& plug : allPlug)
+                arPlugs.push_back(plug.toString());
+//#ifdef TSCREEN
+//            arPlugs.push_back("TScreen");
+//#endif
+            //
+            _pluginManager->setPlugNames(arPlugs);
         }
-        QString pluginPath;
-        pluginPath = DEFAULT_PluginPath;
-
+        QString pluginPath = DEFAULT_PluginPath;
         _pluginManager->setPluginPath(pluginPath);
         _pluginManager->LoadPluginAllQt();
-
-        qDebug() << "InitPluginManager done.";
+        qInfo() << "InitPluginManager done.";
     }
 }
 
@@ -349,7 +307,7 @@ UIGolbalManager::UIGolbalManager() {
     _pluginManager = nullptr;
     _pstyleSheetManager = nullptr;
     _pSystemConfig = nullptr;
-    Init();
+    init();
 }
 
 bool UIGolbalManager::UnloadPluginQt(const QString &key) {
@@ -476,4 +434,6 @@ void UIGolbalManager::initThemeConfig()
                 QTalk::StyleDefine::instance().setHotLineTipItemFontColor(QColor(r, g, b, a));
         }
     }
+
+    delete config;
 }

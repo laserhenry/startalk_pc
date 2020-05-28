@@ -113,7 +113,7 @@ void InputWgt::dealFile(const QString &filePath, bool isFile, const QString& ima
             sendFile(_pChatView, fileInfo);
         else
         {
-            QString format = QTalk::qimage::instance().getRealImageSuffix(filePath);
+            QString format = QTalk::qimage::getRealImageSuffix(filePath);
             QRegExp imgReg("(JPEG|jpeg|JPG|jpg|GIF|gif|BMP|bmp|PNG|png|ico|ICO|WEBP|webp)$");
             if (imgReg.exactMatch(format)) {
                 // load image
@@ -171,7 +171,7 @@ void InputWgt::dealFile(const QString &filePath, bool isFile, const QString& ima
 
 void InputWgt::insertEmotion(const QString &pkgId, const QString &shortCut, const QString &filePath) {
     QFileInfo fileInfo(filePath);
-    QString format = QTalk::qimage::instance().getRealImageSuffix(filePath);
+    QString format = QTalk::qimage::getRealImageSuffix(filePath);
     QRegExp imgReg("(JPEG|jpeg|JPG|jpg|GIF|gif|BMP|bmp|PNG|png|ico|ICO|WEBP|webp)$");
     if (imgReg.exactMatch(format)) {
         // load image
@@ -403,11 +403,11 @@ void InputWgt::initUi() {
     setContextMenuPolicy(Qt::CustomContextMenu);
     _pMenu = new QMenu(this);
     _pMenu->setAttribute(Qt::WA_TranslucentBackground, true);
-    QAction *selectAllAct = new QAction(tr("全选"));
-    QAction *copyAct = new QAction(tr("复制"));
-    QAction *pasteAct = new QAction(tr("粘贴"));
-    QAction *pasteTextAct = new QAction(tr("粘贴为文本"));
-    QAction *pasteImageAct = new QAction(tr("粘贴为图片"));
+    auto *selectAllAct = new QAction(tr("全选"), this);
+    auto *copyAct = new QAction(tr("复制"), this);
+    auto *pasteAct = new QAction(tr("粘贴"), this);
+    auto *pasteTextAct = new QAction(tr("粘贴为文本"), this);
+    auto *pasteImageAct = new QAction(tr("粘贴为图片"), this);
 
     _pMenu->addAction(selectAllAct);
     _pMenu->addAction(copyAct);

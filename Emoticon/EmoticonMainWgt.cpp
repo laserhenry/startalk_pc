@@ -609,7 +609,6 @@ void EmoticonMainWgt::initUi() {
     layout->addWidget(topFrame);
     layout->addWidget(bottomFrame);
     layout->setStretch(0, 8);
-    setLayout(layout);
 
     setFixedSize(DEM_FIXED_WIDTH, DEM_FIXED_HEIGHT);
 #ifdef _MACOS
@@ -877,6 +876,16 @@ void EmoticonMainWgt::initDefaultEmo()
     {
         QDir userDir(userDirPath);
         userDir.mkpath(emoDirPath);
+    }
+
+    if(QFile::exists(emojiPath))
+    {
+        auto tmpFilePath = QString("%1/0106@2x.png").arg(emojiPath);
+        if(QFile::exists(tmpFilePath))
+        {
+            QDir dir(emojiPath);
+            dir.removeRecursively();
+        }
     }
 
     if(!QFile::exists(emojiPath))

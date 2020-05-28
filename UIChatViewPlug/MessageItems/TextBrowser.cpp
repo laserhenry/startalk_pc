@@ -19,10 +19,10 @@ TextBrowser::TextBrowser(QWidget *parent) :
     setStyleSheet(QString("background-color:rgba(0,0,0,0)"));
     setContextMenuPolicy(Qt::NoContextMenu);
 
-    auto *imageBlock = new ImageBlock;
-    auto* linkBlock = new LinkBlock;
-    document()->documentLayout()->registerHandler(imageObjectType, imageBlock);
-    document()->documentLayout()->registerHandler(linkObjectType, linkBlock);
+//    auto *imageBlock = new ImageBlock;
+//    auto* linkBlock = new LinkBlock;
+//    document()->documentLayout()->registerHandler(imageObjectType, imageBlock);
+//    document()->documentLayout()->registerHandler(linkObjectType, linkBlock);
 
 //    connect(this, &TextBrowser::cursorPositionChanged, [this](){
 //        if(_pressed)

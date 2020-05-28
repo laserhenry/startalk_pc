@@ -11,6 +11,7 @@
 #include <QMediaPlayer>
 #include <QRcode/QRcode.h>
 #include <QPointer>
+#include <QFuture>
 #include "search/FileRecordWnd.h"
 #include "../UICom/UIEntity.h"
 #include "MessageManager.h"
@@ -31,6 +32,12 @@
 #include "../include/FrequencyMap.h"
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QtConcurrent>
+
+
+#include "sound/amr/WavOutput.h"
+
+#define QT_CONCURRENT_FUNC QtConcurrent::run
 
 //
 class SnipScreenTool;
@@ -92,9 +99,6 @@ public:
 	void setConnectStatus(bool isConnect);
 	bool getConnectStatus();
 	std::string getSelfUserId();
-
-public:
-    ThreadPool &pool() { return _pool; }
 
 public:
 	void onRecvMessage(R_Message& e, bool isCarbon);
@@ -245,7 +249,7 @@ private:
 	QMap<QString, QString>       _mapHeadPath;//头像路径
 	QVector<MessagePrompt*>      _arMessagePrompt;
 	QLabel*                     _pEmptyLabel;
-	QLabel*                     _pLoadingLabel{};
+//	QLabel*                     _pLoadingLabel{};
 	SnipScreenTool*              _pSnipScreenTool;
     CodeShowWnd*      _pCodeShowWnd;
     SendCodeWnd*      _pSendCodeWnd;
@@ -264,16 +268,15 @@ private:
 
 private:
     QMediaPlayer* _pPlayer;
+#ifndef _WINDOWS
     QMediaPlayer* _pVoicePlayer = nullptr;
+#endif // !_WINDOWS
 
 private:
     bool _autoReply = false;
 
-private:
+public:
     QString _qss;
-
-private:
-    ThreadPool _pool;
 
 private:
     AudioVideoManager* _pAudioVideoManager{};
@@ -295,7 +298,7 @@ public:
     bool isSending(const std::string& msgId);
 
 private:
-    QNetworkAccessManager* _netManager;
+    QNetworkAccessManager* _netManager{};
 };
 
 #endif // CHATVIEWMIANPANEL_H

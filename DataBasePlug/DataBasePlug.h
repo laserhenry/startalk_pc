@@ -213,7 +213,7 @@ public:
     void modifyUserMedalStatus(const std::string& userId, int medalId, int status) override ;
 
 private:
-    qtalk::sqlite::database *_dataBass;
+    qtalk::sqlite::database *_dataBass {};
     ThreadPool _dbPool;
 };
 

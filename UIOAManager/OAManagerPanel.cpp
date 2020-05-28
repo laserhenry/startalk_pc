@@ -15,15 +15,14 @@ OAManagerPanel::OAManagerPanel()
     getLayoutData();
 }
 
-OAManagerPanel::~OAManagerPanel() {
-}
+OAManagerPanel::~OAManagerPanel() = default;
 
 void OAManagerPanel::initUi() {
     setObjectName("OAManagerPanel");
 
     _pSplitter = new QSplitter(this);
     // left frame
-    QFrame *leftFrame = new QFrame(this);
+    auto *leftFrame = new QFrame(this);
     leftFrame->setObjectName("OAManagerLeftFrm");
     leftFrame->setMinimumWidth(260);
     _pLeftLay = new QVBoxLayout(leftFrame);
@@ -31,7 +30,7 @@ void OAManagerPanel::initUi() {
     _pLeftLay->setSpacing(0);
 
     // right frame
-    QFrame *rightFrm = new QFrame(this);
+    auto *rightFrm = new QFrame(this);
     rightFrm->setObjectName("OAManagerRightFrm");
     _pRightLay = new QStackedLayout(rightFrm);
     _pRightLay->setSpacing(0);
@@ -116,7 +115,8 @@ void OAManagerPanel::updateUi() {
         QString path = QString::fromStdString(QTalk::getOAIconPath(it->groupIcon));
 
         _mapNavItems[id] = new OANavigationItem(id, name, path, this);
-        _mapMainWgt[id] = new OaMainWgt(id, name, it->members, this);
+        auto* tmpOaWgt = new OaMainWgt(id, name, it->members, this);
+        _mapMainWgt[id] = tmpOaWgt;
 
         _pRightLay->addWidget(_mapMainWgt[id]);
         if (_mapNavItems.size() == 1) {

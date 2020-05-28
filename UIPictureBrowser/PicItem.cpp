@@ -16,10 +16,8 @@ PicItem::PicItem(int &scaleVal)
 }
 
 PicItem::~PicItem() {
-    if (nullptr != _pMovie) {
-        _pMovie->stop();
-        delete _pMovie;
-    }
+    _pixmap = QPixmap();
+    _pMovie->deleteLater();
 }
 
 QRectF PicItem::boundingRect() const {

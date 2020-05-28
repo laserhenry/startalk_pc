@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QMovie>
 #include <QFile>
+#include <QDateTime>
 #include <QFileInfo>
 #include "../CustomUi/HeadPhotoLab.h"
 #include "../../QtUtil/Utils/Log.h"
@@ -174,13 +175,6 @@ void EmojiMessItem::initReceiveLayout() {
     leftLay->setContentsMargins(_leftMargin);
     leftLay->setSpacing(_leftSpacing);
     mainLay->addLayout(leftLay);
-    if (!_headLab) {
-        _headLab = new HeadPhotoLab;
-    }
-    _headLab->setFixedSize(_headPixSize);
-    _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
-    _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     leftLay->addItem(vSpacer);
@@ -241,13 +235,13 @@ void EmojiMessItem::setImage() {
         //         _msgInfo.body);
 
         _imagePath = ":/chatview/image1/defaultImage.png";
-        QPixmap image = QTalk::qimage::instance().loadImage(_imagePath, true, true, 80, 80);
+        QPixmap image = QTalk::qimage::loadImage(_imagePath, true, true, 80, 80);
         _imageLab->setPixmap(image);
         _imageLab->setFixedSize(image.size());
     } else {
-        QString suffix = QTalk::qimage::instance().getRealImageSuffix(_imagePath).toUpper();
+        QString suffix = QTalk::qimage::getRealImageSuffix(_imagePath).toUpper();
         if ("GIF" == suffix) {
-            QPixmap image = QTalk::qimage::instance().loadImage(_imagePath, true);
+            QPixmap image = QTalk::qimage::loadImage(_imagePath, true);
             if (image.isNull()) {
                 _imagePath = "";
                 setImage();
@@ -261,7 +255,7 @@ void EmojiMessItem::setImage() {
 //            _imageLab->setMovie(_movie);
             _imageLab->setFixedSize(_size.toSize());
         } else {
-            QPixmap pixmap = QTalk::qimage::instance().loadImage(_imagePath, true);
+            QPixmap pixmap = QTalk::qimage::loadImage(_imagePath, true);
             if (pixmap.isNull()) {
                 _imagePath = "";
                 setImage();
@@ -312,24 +306,47 @@ void EmojiMessItem::onImageDownloaded(const QString& path)
 
 bool EmojiMessItem::event(QEvent* e)
 {
-    if(e->type() == QEvent::Show && nullptr == _movie)
+    switch (e->type())
     {
-        if(_isGIF)
+        case QEvent::Show:
         {
-            _movie = g_pMainPanel->gifManager->getMovie(_imagePath);
-            _movie->setSpeed(80);
-            _movie->setScaledSize(_size.toSize());
-            _movie->start();
-            _imageLab->setMovie(_movie);
+            if(_isGIF)
+            {
+                _movie = g_pMainPanel->gifManager->getMovie(_imagePath);
+                QObject::connect(_movie, SIGNAL(frameChanged(int)), this, SLOT(onMovieChanged(int)));
+                _movie->setSpeed(80);
+                _movie->setScaledSize(_size.toSize());
+                _movie->start();
+                _imageLab->setMovie(_movie);
+            }
+            break;
         }
-    }
-    else if(e->type() == QEvent::Hide && _movie)
-    {
-        if(_isGIF)
+        case QEvent::Hide:
         {
-            g_pMainPanel->gifManager->removeMovie(_movie);
-            _movie = nullptr;
+            if(_isGIF && _movie)
+            {
+                g_pMainPanel->gifManager->removeMovie(_movie);
+                _movie = nullptr;
+            }
+            break;
         }
+        case QEvent::Paint:
+        {
+            _paintTime = QDateTime::currentMSecsSinceEpoch();
+            if(_isGIF && _movie)
+            {
+                if(_movie->state() == QMovie::NotRunning || _movie->state() == QMovie::Paused)
+                    _movie->start();
+            }
+            break;
+        }
+        default:
+            break;
     }
     return QFrame::event(e);
+}
+
+void EmojiMessItem::onMovieChanged(int cur) {
+    if(_movie && QDateTime::currentMSecsSinceEpoch() - _paintTime > 3000)
+        _movie->stop();
 }

@@ -30,11 +30,16 @@ namespace QTalk
 
             width = factor * width;
             height = factor * height;
+
+            if(factor == 1 && (width < 50 && height < 50))
+            {
+                width = height = 50;
+            }
         }
 
         void scaImageSizeByPath(const QString &imagePath, qreal &width, qreal &height)
         {
-            QPixmap pix = qimage::instance().loadImage(imagePath, false);
+            QPixmap pix = qimage::loadImage(imagePath, false);
             width = pix.width();
             height = pix.height();
 
@@ -124,7 +129,8 @@ namespace QTalk
     QLabel* makeLoadingLabel(bool scale, QSize size, QWidget* parent)
     {
         auto* label = new QLabel(parent);
-        auto* mov = new QMovie(":/QTalk/image1/loading.gif");
+        auto* mov = new QMovie(label);
+        mov->setFileName(":/QTalk/image1/loading.gif");
         if (scale)
         {
             mov->setScaledSize(size);

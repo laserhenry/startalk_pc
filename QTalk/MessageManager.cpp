@@ -5,15 +5,6 @@
 #include "../Message/ChatMessage.h"
 #include "../Message/UserMessage.h"
 
-QTalkMsgManager::QTalkMsgManager()
-{
-}
-
-
-QTalkMsgManager::~QTalkMsgManager()
-{
-}
-
 void QTalkMsgManager::sendHearBeat()
 {
     HeartBeat e;

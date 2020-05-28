@@ -13,10 +13,8 @@
 typedef int(*CallbackFunc)(void *, double, double, double, double);
 
 struct curl_slist;
-
+struct StProcessData;
 namespace QTalk {
-
-
 
     class QTALK_UTIL_EXPORT QtHttpRequest : public QTalk::http::HttpRequest {
 
@@ -53,6 +51,8 @@ namespace QTalk {
         std::string buffer;
         curl_slist *_headers;
 
+
+        StProcessData *_processData = nullptr;
     };
 };
 

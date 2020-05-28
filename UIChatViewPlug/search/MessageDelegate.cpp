@@ -119,32 +119,32 @@ QSize MessageDelegate::sizeHint(const QStyleOptionViewItem &option, const QModel
         case QTalk::Entity::MessageTypeGroupNotify:
         case QTalk::Entity::MessageTypeShock:
         {
-            return {_parentWgt->width(), 80};
+            return {0, 80};
         }
         case QTalk::Entity::MessageTypeFile:
         {
-            return {_parentWgt->width(), 100};
+            return {0, 100};
         }
         case QTalk::Entity::MessageTypeCommonTrdInfo:
         case QTalk::Entity::MessageTypeCommonTrdInfoV2:
         {
-            return {_parentWgt->width(), 100};
+            return {0, 100};
         }
         case QTalk::Entity::MessageTypeSourceCode:
         {
-            return {_parentWgt->width(), 120};
+            return {0, 120};
         }
         case QTalk::Entity::WebRTC_MsgType_VideoCall:
         case QTalk::Entity::WebRTC_MsgType_AudioCall:
         case QTalk::Entity::WebRTC_MsgType_Video:
         case QTalk::Entity::WebRTC_MsgType_Video_Group:
         {
-            return {_parentWgt->width(), 80};
+            return {0, 80};
         }
         case QTalk::Entity::MessageTypeSmallVideo:
         {
             StNetMessageResult info = index.data(SEARCH_USER_INFO).value<StNetMessageResult>();
-            return {_parentWgt->width(), (int)info.video.height + 20 + 20};
+            return {0, (int)info.video.height + 20 + 20};
         }
         case QTalk::Entity::MessageTypeText:
         case QTalk::Entity::MessageTypePhoto:
@@ -159,5 +159,5 @@ QSize MessageDelegate::sizeHint(const QStyleOptionViewItem &option, const QModel
     }
 
     size = QSize(_parentWgt->width(), size.height());
-    return {_parentWgt->width(), qMax(size.height(), 40)};
+    return {0, qMax(size.height(), 40)};
 }

@@ -46,7 +46,7 @@ void ChoseItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
     {
         QString head = index.data(EM_ITEM_DATA_HEAD).toString();
         QString text = index.data(EM_ITEM_DATA_NAME).toString();
-        QPixmap headPix = QTalk::qimage::instance().loadCirclePixmap(head, 11 * QTalk::qimage::instance().dpi());
+        QPixmap headPix = QTalk::qimage::loadCirclePixmap(head, 11 * QTalk::qimage::dpi());
         painter->setRenderHints(QPainter::Antialiasing, true);
         painter->setRenderHints(QPainter::SmoothPixmapTransform, true);
         painter->drawPixmap(rect.x() + 9, rect.y() + 9, 22, 22, headPix);

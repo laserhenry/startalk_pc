@@ -25,8 +25,8 @@ public:
     void removeMovie(QMovie *mov);
 
 private:
-    QMap<QString, QMovie*>      _mapMovie;
-    QMap<QMovie*, int>          _movieCount;
+//    QMap<QString, QMovie*>      _mapMovie;
+//    QMap<QMovie*, int>          _movieCount;
     QTalk::util::spin_mutex     sm;
 };
 

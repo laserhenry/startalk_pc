@@ -23,7 +23,7 @@ NetImageLabel::NetImageLabel(QString link, QWidget* parent)
     QFileInfo info(QString::fromStdString(imgPath));
     if(!_image_link.isEmpty() && (!info.exists() || info.isDir()))
     {
-        g_pMainPanel->pool().enqueue([this](){
+        QT_CONCURRENT_FUNC([this](){
             std::string downloadFile = ChatMsgManager::getLocalFilePath(_image_link.toStdString());
             if(!downloadFile.empty())
                 emit sgDownloadSuccess();
@@ -37,7 +37,7 @@ void NetImageLabel::paintEvent(QPaintEvent *event) {
     QRect rect = this->contentsRect();
 
     auto load_default_image = [rect, &painter](){
-        auto image = QTalk::qimage::instance().loadImage(":/chatview/image1/default.png", true);
+        auto image = QTalk::qimage::loadImage(":/chatview/image1/default.png", true);
         painter.drawPixmap(rect, image);
     };
 
@@ -47,8 +47,8 @@ void NetImageLabel::paintEvent(QPaintEvent *event) {
 
     if(!imgPath.isEmpty())
     {
-        qreal dpi = QTalk::qimage::instance().dpi();
-        QPixmap image = QTalk::qimage::instance().loadImage(imgPath,
+        qreal dpi = QTalk::qimage::dpi();
+        QPixmap image = QTalk::qimage::loadImage(imgPath,
                                                             false, true, rect.width() * dpi, rect.height() * dpi);
         if(image.isNull())
             load_default_image();

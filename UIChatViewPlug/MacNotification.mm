@@ -78,7 +78,7 @@ void sendTextMessage(const std::string &text,
     // image
     NSImage *headerImage = [self getImage:image];
     [notification setContentImage:headerImage];   //用户头像
-
+    [headerImage release];
     // sound
 //    if(param->playSound)
 //        [notification setSoundName:@"sound/msg.wav"];
@@ -101,6 +101,7 @@ void sendTextMessage(const std::string &text,
     NSUserNotificationCenter *userNotificationCenter = [NSUserNotificationCenter defaultUserNotificationCenter];
     [userNotificationCenter scheduleNotification:notification];
     [userNotificationCenter setDelegate:self];
+    [notification release];
 }
 
 - (NSImage *)getImage:(NSString *)path {

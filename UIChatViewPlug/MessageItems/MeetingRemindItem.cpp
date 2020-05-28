@@ -127,12 +127,6 @@ void MeetingRemindItem::initReceiveLayout() {
     leftLay->setContentsMargins(_leftMargin);
     leftLay->setSpacing(_leftSpacing);
     mainLay->addLayout(leftLay);
-    if (!_headLab) {
-        _headLab = new HeadPhotoLab;
-    }
-    _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
-    _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     leftLay->addItem(vSpacer);

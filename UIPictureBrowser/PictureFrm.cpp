@@ -58,7 +58,7 @@ bool PictureFrm::loadNewPicture(const QString &picTure, bool isFirst) {
     _pGraphicsScene->addItem(_pPicItem);
 
     _strPicPath = picTure;
-    _pixmap = QTalk::qimage::instance().loadImage(picTure, false);
+    _pixmap = QTalk::qimage::loadImage(picTure, false);
     if(_pixmap.isNull())
     {
         QtMessageBox::information(nullptr, tr("提示"), tr("加载图片失败"));
@@ -117,27 +117,30 @@ bool PictureFrm::loadNewPicture(const QString &picTure, bool isFirst) {
 void PictureFrm::connects() {
     connect(_pPicBrowser, &PictureBrowser::enlargeSignal, [this]() {
         _scaleVal++;
-
-        _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
+        if(_pPicItem)
+            _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
     });
     connect(_pPicBrowser, &PictureBrowser::narrowSignal, [this]() {
         _scaleVal--;
-        _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
+        if(_pPicItem)
+            _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
     });
     connect(_pPicBrowser, &PictureBrowser::one2oneSiganl, [this]() {
         _scaleVal = 0;
         _pPicItem->setPos(0, 0);
-        _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
+        if(_pPicItem)
+            _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
     });
     connect(_pPicBrowser, &PictureBrowser::rotateSiganl, [this]() {
         _angle++;
-        _pPicItem->setRotation(_angle * -90);
+        if(_pPicItem)
+            _pPicItem->setRotation(_angle * -90);
     });
 
     connect(_pPicBrowser, &PictureBrowser::saveAsSignal, [this]() {
         QString strHistoryFileDir = QString::fromStdString(Platform::instance().getHistoryDir());
         QFileInfo oldFileInfo(_strPicPath);
-        QString suffix = QTalk::qimage::instance().getRealImageSuffix(_strPicPath).toLower();
+        QString suffix = QTalk::qimage::getRealImageSuffix(_strPicPath).toLower();
 
         if(suffix.toLower() == "webp")
         {
@@ -148,7 +151,7 @@ void PictureFrm::connects() {
                 Platform::instance().setHistoryDir(QFileInfo(newPath).absoluteDir().absolutePath().toStdString());
                 QString newSuffix = QFileInfo(newPath).suffix().toUpper();
                 //
-                auto tmpPix = QTalk::qimage::instance().loadImage(_strPicPath, false);
+                auto tmpPix = QTalk::qimage::loadImage(_strPicPath, false);
                 if(!tmpPix.isNull())
                 {
                     auto format = newSuffix.toUtf8().data();
@@ -204,7 +207,8 @@ bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
                         qreal currentScaleFactor =
                                 QLineF(pos0.pos(), pos1.pos()).length()
                                 / QLineF(pos0.startPos(), pos1.startPos()).length();
-                        _pPicItem->onScaleChange(currentScaleFactor > 1 ? ++_scaleVal : --_scaleVal,
+                        if(_pPicItem)
+                            _pPicItem->onScaleChange(currentScaleFactor > 1 ? ++_scaleVal : --_scaleVal,
                                 {0, 0});
                         break;
                     }
@@ -236,8 +240,8 @@ bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
         {
             if (_pressed) {
                 QPoint p = QCursor::pos();
-
-                _pPicItem->moveBy((p.x() - _startPos.x()), (p.y() - _startPos.y()));
+                if(_pPicItem)
+                    _pPicItem->moveBy((p.x() - _startPos.x()), (p.y() - _startPos.y()));
                 _startPos = p;
                 e->accept();
             }
@@ -257,7 +261,8 @@ bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
                 else
                     _scaleVal--;
                 //
-                _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
+                if(_pPicItem)
+                    _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
                 e->accept();
             }
             break;
@@ -281,4 +286,12 @@ bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
             break;
     }
     return QObject::eventFilter(o, e);
+}
+
+void PictureFrm::onCloseWnd() {
+    if (nullptr != _pPicItem) {
+        _pGraphicsScene->removeItem(_pPicItem);
+        delete _pPicItem;
+        _pPicItem = nullptr;
+    }
 }

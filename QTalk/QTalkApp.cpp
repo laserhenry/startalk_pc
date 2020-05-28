@@ -69,7 +69,7 @@ QTalkApp::QTalkApp(int argc, char *argv[])
     Platform::instance().setOSVersion(productVersion.toStdString());
 
     // Ui管理单例
-    _pUiManager = UIGolbalManager::GetUIGolbalManager();
+    _pUiManager = UIGolbalManager::getUIGolbalManager();
     int language = AppSetting::instance().getLanguage();
     if(QLocale::AnyLanguage == language)
     {

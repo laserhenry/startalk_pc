@@ -183,12 +183,6 @@ void ImageMessItem::initReceiveLayout() {
     leftLay->setContentsMargins(_leftMargin);
     leftLay->setSpacing(_leftSpacing);
     mainLay->addLayout(leftLay);
-    if (nullptr == _headLab) {
-        _headLab = new HeadPhotoLab;
-    }
-    _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
-    _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     leftLay->addItem(vSpacer);
@@ -250,13 +244,13 @@ void ImageMessItem::setImage() {
           //       _msgInfo.body);
 
         _imagePath = ":/chatview/image1/defaultImage.png";
-        QPixmap image = QTalk::qimage::instance().loadImage(_imagePath, true, true, 80, 80);
+        QPixmap image = QTalk::qimage::loadImage(_imagePath, true, true, 80, 80);
         _imageLab->setPixmap(image);
         _imageLab->setFixedSize(image.size());
     } else {
-        QString suffix = QTalk::qimage::instance().getRealImageSuffix(_imagePath);
+        QString suffix = QTalk::qimage::getRealImageSuffix(_imagePath);
         if ("GIF" == suffix) {
-            QPixmap image = QTalk::qimage::instance().loadImage(_imagePath, false);
+            QPixmap image = QTalk::qimage::loadImage(_imagePath, false);
             if (image.isNull()) {
                 _imagePath = "";
                 setImage();
@@ -265,7 +259,7 @@ void ImageMessItem::setImage() {
             _isGIF = true;
             _imageLab->setFixedSize(_size);
         } else {
-            QPixmap pixmap = QTalk::qimage::instance().loadImage(_imagePath, false);
+            QPixmap pixmap = QTalk::qimage::loadImage(_imagePath, false);
             if (pixmap.isNull()) {
                 _imagePath = "";
                 setImage();
@@ -306,25 +300,42 @@ void ImageMessItem::mousePressEvent(QMouseEvent *e) {
 
 bool ImageMessItem::event(QEvent* e)
 {
-    if(e->type() == QEvent::Show && nullptr == _movie)
+    switch (e->type())
     {
-        if(_isGIF)
+        case QEvent::Show:
         {
-            _movie = g_pMainPanel->gifManager->getMovie(_imagePath);
-            _movie->setSpeed(80);
-            _movie->setScaledSize(_size);
-            _movie->start();
-            _imageLab->setMovie(_movie);
+            if(_isGIF)
+            {
+                _movie = g_pMainPanel->gifManager->getMovie(_imagePath);
+                QObject::connect(_movie, SIGNAL(frameChanged(int)), this, SLOT(onMovieChanged(int)));
+                _movie->setSpeed(80);
+                _movie->setScaledSize(_size);
+                _movie->start();
+                _imageLab->setMovie(_movie);
+            }
+            break;
         }
-
-    }
-    else if(e->type() == QEvent::Hide && _movie)
-    {
-        if(_isGIF)
+        case QEvent::Hide:
         {
-            g_pMainPanel->gifManager->removeMovie(_movie);
-            _movie = nullptr;
+            if(_isGIF && _movie)
+            {
+                g_pMainPanel->gifManager->removeMovie(_movie);
+                _movie = nullptr;
+            }
+            break;
         }
+        case QEvent::Paint:
+        {
+            _paintTime = QDateTime::currentMSecsSinceEpoch();
+            if(_isGIF && _movie)
+            {
+                if(_movie->state() == QMovie::NotRunning || _movie->state() == QMovie::Paused)
+                    _movie->start();
+            }
+            break;
+        }
+        default:
+            break;
     }
     return QFrame::event(e);
 }
@@ -344,4 +355,11 @@ void ImageMessItem::onImageDownloaded()
         setVisible(true);
     }
     emit sgItemChanged();
+}
+
+void ImageMessItem::onMovieChanged(int cur) {
+    if(_movie && QDateTime::currentMSecsSinceEpoch() - _paintTime > 3000)
+    {
+        _movie->stop();
+    }
 }

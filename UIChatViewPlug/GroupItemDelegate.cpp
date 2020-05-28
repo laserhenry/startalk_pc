@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QPainter>
 #include <QFile>
+#include <QFileInfo>
 #include "../CustomUi/HeadPhotoLab.h"
 #include "../UICom/qimage/qimage.h"
 #include "../UICom/StyleDefine.h"
@@ -44,14 +45,23 @@ void GroupItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opt
     QString headPath = index.data(EM_ITEMDATA_TYPE_HEADPATH).toString();
     bool isOnline = index.data(EM_ITEMDATA_TYPE_ISONLINE).toBool();
     painter->setRenderHints(QPainter::Antialiasing,true);
-    if(!QFile(headPath).isOpen())
+
+    QFileInfo headFileInfo(headPath);
+    if(headFileInfo.exists())
     {
-        int dpi = QTalk::qimage::instance().dpi();
-        QPixmap pixmap = QTalk::qimage::instance().loadImage(headPath, true, true, HEAD_WIDTH * dpi);
-        if(!isOnline)
+        int dpi = QTalk::qimage::dpi();
+        QPixmap pixmap;
+        if(headFileInfo.suffix().toLower() == "gif")
         {
-            pixmap = QTalk::qimage::instance().generateGreyPixmap(pixmap);
+            headPath = QTalk::qimage::getGifImagePathNoMark(headPath);
+            pixmap = QTalk::qimage::loadImage(headPath, true, true, HEAD_WIDTH * dpi);
         }
+        else
+            pixmap = QTalk::qimage::loadImage(headPath, true, true, HEAD_WIDTH * dpi);
+
+        if(!isOnline)
+            pixmap = QTalk::qimage::generateGreyPixmap(pixmap);
+
         QPainterPath path;
         QRect headRect(rect.x() + 1, rect.y() + 8, HEAD_WIDTH, HEAD_WIDTH);
         painter->setPen(Qt::NoPen);

@@ -33,8 +33,8 @@ void ImageTextLabel::paintEvent(QPaintEvent *e) {
     auto contentWidth = textWidth + imageSize + 5;
     auto x = (int)(rect.width() - contentWidth) / 2;
     {
-        auto dpi = QTalk::qimage::instance().dpi();
-        auto pixmap = QTalk::qimage::instance().loadImage(_path, false, true, imageSize * dpi);
+        auto dpi = QTalk::qimage::dpi();
+        auto pixmap = QTalk::qimage::loadImage(_path, false, true, imageSize * dpi);
         painter.drawPixmap({x, rect.y() + (rect.height() - imageSize) / 2, imageSize, imageSize}, pixmap);
     }
 
@@ -71,8 +71,8 @@ void SystemTrayDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 
     // icon
     {
-        auto dpi = QTalk::qimage::instance().dpi();
-        auto pixmap = QTalk::qimage::instance().loadImage(":/QTalk/image1/newMessage.png", true, true, 24 * dpi);
+        auto dpi = QTalk::qimage::dpi();
+        auto pixmap = QTalk::qimage::loadImage(":/QTalk/image1/newMessage.png", true, true, 24 * dpi);
         QRect imageRect(12 + rect.x(), (rect.height() - 24) / 2 + rect.y(), 24, 24);
         painter->drawPixmap(imageRect, pixmap);
     }

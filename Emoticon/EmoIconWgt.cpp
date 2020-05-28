@@ -65,7 +65,7 @@ EmoIconRow::EmoIconRow(QWidget* parent)
 	_pLayout->setMargin(0);
 	_pLayout->setSpacing(15);
 	_pLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
-	setLayout(_pLayout);
+//	setLayout(_pLayout);
 }
 
 

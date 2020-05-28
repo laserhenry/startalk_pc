@@ -313,7 +313,7 @@ namespace QTalk {
     void analysisAtMessage(const QString& content, std::vector<StTextMessage>& messages, const std::map<QString, QString>& atUsers)
     {
         auto tmpStr = QString("@%1 ").arg(Platform::instance().getSelfName().data());
-        static QString allStr = "@all ";
+        static QString allStr = "@all";
         // type groupAt
         if((!atUsers.empty() &&
            atUsers.find(Platform::instance().getSelfXmppId().data()) != atUsers.end()) || content.contains(tmpStr))

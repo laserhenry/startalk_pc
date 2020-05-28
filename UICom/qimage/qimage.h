@@ -15,28 +15,18 @@ namespace QTalk {
 
     class UICOMSHARED_EXPORT qimage {
 
-	private:
-		static qimage* _qimage;
-
-	public:
-		static qimage& instance();
     public:
-        QPixmap loadImage(const QString& srcPath, bool save, bool scaled = false, int width = 0, int height = 0);
-        QPixmap loadCirclePixmap(const QString &srcPath, const int& radius, bool isGrey = false);
-        QPixmap generateGreyPixmap(const QPixmap &src);
-        QString  getRealImageSuffix(const QString &filePath);
-        QString getRealImagePath(const QString& filePath);
-        QPixmap scaledPixmap(const QPixmap& src, int width, int height = 0, bool model = false);
-        QPixmap generatePixmap(const QPixmap &src, const int &radius);
-        int dpi();
+        static QPixmap loadImage(const QString& srcPath, bool save, bool scaled = false, int width = 0, int height = 0);
+        static QPixmap loadCirclePixmap(const QString &srcPath, const int& radius, bool isGrey = false);
+        static QPixmap generateGreyPixmap(const QPixmap &src);
+        static QString getRealImageSuffix(const QString &filePath);
+        static QString getRealImagePath(const QString& filePath);
+        static QPixmap scaledPixmap(const QPixmap& src, int width, int height = 0, bool model = false);
+        static QPixmap generatePixmap(const QPixmap &src, const int &radius);
+        static int dpi();
 
-    private:
-        QMap<QString, QPixmap> _allPixmap;
-        QMap<QString, QMap<QString, QPixmap>> _scanPixmap; // <path, <size, pixmap>>
-
-    private:
-        QMutex _mutex;
-        int    _dpi;
+        static QString getGifImagePath(const QString& srcPath, qreal &width, qreal &height);
+        static QString getGifImagePathNoMark(const QString& srcPath);
     };
 }
 

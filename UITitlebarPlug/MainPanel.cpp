@@ -211,11 +211,11 @@ void MainPanel::init() {
     _hbox->addWidget(_searchFrm);
     _hbox->addItem(new QSpacerItem(10, 1, QSizePolicy::Fixed, QSizePolicy::Fixed));
 
-    _creatGroupBtn = new QToolButton(this);
-    _creatGroupBtn->setObjectName(QStringLiteral("creatGroupBtn"));
-    _creatGroupBtn->setFixedSize(_property._qrCodeBtnSize);
-    _creatGroupBtn->setToolTip(tr("快速建群"));
-    _hbox->addWidget(_creatGroupBtn);
+    _pQuickBtn = new QToolButton(this);
+    _pQuickBtn->setObjectName(QStringLiteral("creatGroupBtn"));
+    _pQuickBtn->setFixedSize(_property._qrCodeBtnSize);
+//    _creatGroupBtn->setToolTip(tr("快速建群"));
+    _hbox->addWidget(_pQuickBtn);
     _hbox->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding));
 
     auto *midLay = new QHBoxLayout;
@@ -279,7 +279,12 @@ void MainPanel::init() {
     _dropMenu = new DropMenu(this);
     _pAboutWnd = new AboutWnd(this);
     _pSystemSettingWnd = new SystemSettingWnd(_pMessageManager,this);
-    this->setFocusProxy(this);
+
+    _pQuickMenu = new QMenu(this);
+    _pQuickMenu->setAttribute(Qt::WA_TranslucentBackground, true);
+    auto* creatGroupAct = new QAction(tr("创建群聊"), this);
+    _pQuickMenu->addAction(creatGroupAct);
+//    this->setFocusProxy(this);
     //
     connect(_closeBtn, SIGNAL(clicked()), this, SLOT(onCtrlWdtClose()));
     connect(_minimizeBtn, SIGNAL(clicked()), this, SLOT(showSmall()));
@@ -358,7 +363,15 @@ void MainPanel::init() {
         emit sgOperator(tr("搜索"));
     });
 
-    connect(_creatGroupBtn, &QToolButton::clicked, [this](){
+    connect(_pQuickBtn, &QToolButton::clicked, [this](){
+        QPoint pos;
+        auto geo = this->geometry();
+        pos.setY(mapToGlobal(geo.bottomLeft()).y() - 5);
+        pos.setX(mapToGlobal(_pQuickBtn->geometry().topLeft()).x());
+        _pQuickMenu->exec(pos);
+    });
+
+    connect(creatGroupAct, &QAction::triggered, [this](){
         QString userCard = QString::fromStdString(Platform::instance().getSelfXmppId());
         emit creatGroup(userCard);
     });

@@ -1,4 +1,4 @@
-project(UICom)
+project(SUICom)
 
 ## 打开Qt的Moc功能和ui文件QRC文件处理功能
 set(CMAKE_AUTOMOC ON)
@@ -34,7 +34,7 @@ endif ()
 set(LIBRARY_OUTPUT_PATH ../bin)
 set(CMAKE_DEBUG_POSTFIX "d")
 
-ADD_LIBRARY(UICom SHARED ${SOURCE_FILES})
+ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
 #添加链接库
 target_link_libraries(${PROJECT_NAME}

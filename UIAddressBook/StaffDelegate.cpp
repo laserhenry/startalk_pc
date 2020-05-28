@@ -44,7 +44,7 @@ void StaffDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
     QString strText = index.data(EM_STAFF_DATATYPE_TEXT).toString();
     QString iconPath = index.data(EM_STAFF_DATATYPE_ICONPATH).toString();
     bool hasChild = index.data(EM_STAFF_DATATYPE_HASCHILD).toBool();
-    QPixmap icon = QTalk::qimage::instance().loadCirclePixmap(iconPath, 12);
+    QPixmap icon = QTalk::qimage::loadCirclePixmap(iconPath, 12);
 
     painter->drawPixmap(QRect(rect.x(), rect.y() + 8, 24, 24), icon);
     painter->setPen(QPen(StyleDefine::instance().getAdrNameFontColor()));

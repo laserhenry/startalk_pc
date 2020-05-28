@@ -113,7 +113,7 @@ SearchTextItem::SearchTextItem(const StNetMessageResult& info, QWidget *parent)
                     }
 
                     if (QPixmap(imagePath).isNull()) {
-                        QString realPath = QTalk::qimage::instance().getRealImagePath(imagePath);
+                        QString realPath = QTalk::qimage::getRealImagePath(imagePath);
                         if (QPixmap(realPath).isNull()) {
                             imagePath = ":/chatview/image1/default.png";
                         } else {
@@ -190,13 +190,8 @@ SearchTextItem::SearchTextItem(const StNetMessageResult& info, QWidget *parent)
 
 QSize SearchTextItem::getContentSize(qreal width) {
     width -= 32;
-//    this->setFixedWidth(width);
-    _pBrowser->setFixedWidth(width);
-    _pBrowser->document()->setTextWidth(width);
-    title->adjustSize();
     auto docSize = _pBrowser->document()->size();
     int h = title->height() + docSize.height();
-    _pBrowser->setFixedHeight(docSize.height());
     return {(int)width, h + 16};
 }
 
@@ -211,7 +206,7 @@ void SearchTextItem::downloadImage(const QString &imageLink) {
         auto imagePath = ChatMsgManager::getLocalFilePath(imageLink.toStdString());
         if(pThis)
         {
-            auto image = QTalk::qimage::instance().loadImage(imagePath.data(), false);
+            auto image = QTalk::qimage::loadImage(imagePath.data(), false);
             pThis->_pBrowser->document()->addResource(QTextDocument::ImageResource,
                                                imageLink, image);
         }
@@ -221,11 +216,11 @@ void SearchTextItem::downloadImage(const QString &imageLink) {
 void SearchTextItem::downloadEmoticon(const QString& pkgid, const QString& shortCut)
 {
     QPointer<SearchTextItem> pThis(this);
-    g_pMainPanel->pool().enqueue([pThis, pkgid, shortCut](){
+    QT_CONCURRENT_FUNC([pThis, pkgid, shortCut](){
         QString localPath = EmoticonMainWgt::getInstance()->downloadEmoticon(pkgid, shortCut);
         if(pThis)
         {
-            auto image = QTalk::qimage::instance().loadImage(localPath, false);
+            auto image = QTalk::qimage::loadImage(localPath, false);
             pThis->_pBrowser->document()->addResource(QTextDocument::ImageResource,
                                                       pkgid+shortCut, image);
         }
@@ -254,7 +249,7 @@ SearchFileITem::SearchFileITem(const StNetMessageResult &info, QWidget *parent)
 
     auto* iconLabel = new QLabel(this);
     iconLabel->setFixedSize(36, 36);
-    QPixmap pixmap = QTalk::qimage::instance().loadImage(info.file_info.fileIcon, true, true, 36);
+    QPixmap pixmap = QTalk::qimage::loadImage(info.file_info.fileIcon, true, true, 36);
     iconLabel->setPixmap(pixmap);
 
     auto* fileNameLabel = new QLabel(info.file_info.fileName, this);
@@ -475,7 +470,7 @@ SearchAudioVideoItem::SearchAudioVideoItem(const StNetMessageResult& info, QWidg
     contentLay->addWidget(pIconLabel, 0);
     contentLay->addWidget(contentLab, 1);
 
-    QPixmap icon = QTalk::qimage::instance().loadImage(":/chatview/image1/messageItem/AudioVideo.png", true);
+    QPixmap icon = QTalk::qimage::loadImage(":/chatview/image1/messageItem/AudioVideo.png", true);
     icon = icon.scaled(25, 25, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     pIconLabel->setPixmap(icon);
     contentLab->adjustSize();

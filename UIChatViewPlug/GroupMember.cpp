@@ -43,8 +43,12 @@ GroupMember::~GroupMember() = default;
   * @date     2018/10/09
   */
 void
-GroupMember::addMember(const std::string &xmppid, const std::string &userName, const QString &headSrc, QInt8 userType,
-                       bool isOnline, const QString& searchKey) {
+GroupMember::addMember(const std::string &xmppid,
+        const std::string &userName,
+        const QString &headSrc,
+        QInt8 userType,
+        bool isOnline,
+        const QString& searchKey) {
 //    static int index = 0;
 //    if(++index == 5)
 //    {
@@ -60,7 +64,9 @@ GroupMember::addMember(const std::string &xmppid, const std::string &userName, c
         item->setData(QString::fromStdString(userName), EM_ITEMDATA_TYPE_USERNAME);
         item->setData(searchKey, EM_ITEMDATA_TYPE_SEARCHKEY);
         item->setData(isOnline, EM_ITEMDATA_TYPE_ISONLINE);
-
+        item->setData(
+                QString::fromStdString(dbPlatForm::instance().getMaskName(xmppid)),
+                EM_ITEMDATA_TYPE_MASKNAME);
         item->setData(userType, EM_ITEMDATA_TYPE_USERTYPE);
         if (strId.toStdString() == Platform::instance().getSelfXmppId()) {
             if (userType == 1) {
@@ -307,6 +313,7 @@ void GroupMember::initUi() {
     //
     connect(this, &GroupMember::addMemberSignal, this, &GroupMember::addMember);
     connect(this, &GroupMember::sgUpdateMemberCount, this, &GroupMember::setMemberCount, Qt::QueuedConnection);
+    connect(this, &GroupMember::sgUpdateUserRole, this, &GroupMember::updateUserRole, Qt::QueuedConnection);
 }
 
 void GroupMember::setAdminByJid(const std::string& nick,const std::string& xmppId) {
@@ -481,4 +488,14 @@ void GroupMember::clearData() {
 //    groupMemberCount = groupMemberOnlineCount = 0;
 //    _mapMemberItem.clear();
 //    _srcModel->clear();
+}
+
+//
+void GroupMember::updateUserRole(const QString& xmppId, int role) {
+    auto id = xmppId.toStdString();
+    if(_mapMemberItem.contains(id) && _mapMemberItem[id])
+    {
+        _mapMemberItem[id]->setData(role, EM_ITEMDATA_TYPE_USERTYPE);
+    }
+    _pModel->sort(0);
 }

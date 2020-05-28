@@ -130,12 +130,6 @@ void CodeItem::initReceiveLayout() {
     leftLay->setContentsMargins(_leftMargin);
     leftLay->setSpacing(_leftSpacing);
     mainLay->addLayout(leftLay);
-    if (!_headLab) {
-        _headLab = new HeadPhotoLab;
-    }
-    _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
-    _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     leftLay->addItem(vSpacer);
@@ -211,7 +205,7 @@ void CodeItem::initContentLayout() {
 
     _iconLab = new QLabel(this);
     _iconLab->setFixedSize(40, 40);
-    auto pix = QTalk::qimage::instance().loadImage(":/chatview/image1/messageItem/code.png", true, true, 40, 40);
+    auto pix = QTalk::qimage::loadImage(":/chatview/image1/messageItem/code.png", true, true, 40, 40);
     _iconLab->setPixmap(pix);
     leftLay->addWidget(_iconLab);
     leftLay->addItem(new QSpacerItem(10, 10, QSizePolicy::Fixed, QSizePolicy::Expanding));

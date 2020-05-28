@@ -28,8 +28,8 @@ void ImageLabel::paintEvent(QPaintEvent *e) {
     width = factor * width;
     height = factor * height;
 
-    auto dpi = QTalk::qimage::instance().dpi();
-    pixmap = QTalk::qimage::instance().loadImage(_path, false, true, width * dpi, height * dpi);
+    auto dpi = QTalk::qimage::dpi();
+    pixmap = QTalk::qimage::loadImage(_path, false, true, width * dpi, height * dpi);
     painter.drawPixmap({rect.x(), rect.y(), (int)width, (int)height}, pixmap);
     QFrame::paintEvent(e);
 }

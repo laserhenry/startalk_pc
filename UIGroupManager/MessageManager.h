@@ -29,7 +29,7 @@ public:
     void addGroupMember(const std::vector<std::string>& members, const std::string& groupId);
     void creatGroup(const std::string& groupId, const std::string& groupName);
     void getUserInfo(std::shared_ptr<QTalk::Entity::ImUserInfo>& info);
-    void getRecentSession(std::vector<QTalk::StShareSession> &ss);
+    static void getRecentSession(std::vector<QTalk::StShareSession> &ss);
 
 };
 

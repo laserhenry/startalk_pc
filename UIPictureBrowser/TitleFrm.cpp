@@ -116,6 +116,7 @@ void TitleFrm::initUi()
 
     connect(_pCloseBtn, &QToolButton::clicked, _pPicBrowser, [this](){
         _pPicBrowser->setVisible(false);
+        _pPicBrowser->onCloseWnd();
     });
     connect(_pMinBtn, &QToolButton::clicked, [this]()
     {

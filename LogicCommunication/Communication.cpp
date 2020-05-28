@@ -137,6 +137,14 @@ Communication::~Communication() {
  */
 bool Communication::OnLogin(const std::string& userName, const std::string& password)
 {
+    if(Platform::instance().isMainThread())
+    {
+        std::thread([this, userName, password](){
+            OnLogin(userName, password);
+        }).detach();
+        return true;
+    }
+
     // 设置当前登录的userid
     Platform::instance().setSelfUserId(userName);
     // 下载公钥
@@ -1501,7 +1509,7 @@ void Communication::reportDump(const std::string&ip, const std::string& id, cons
                         tos, strSub, strBody.str(), true, error);
             }
             // report
-#if not defined (_STARTALK) and not defined (_QCHAT)
+#if !defined (_STARTALK) and !defined (_QCHAT)
             {
                 cJSON *obj = cJSON_CreateObject();
                 cJSON_AddStringToObject(obj, "symbolFileId", id.data());
@@ -1934,9 +1942,9 @@ void Communication::getSeatList(const QTalk::Entity::UID& uid) {
 
 void Communication::sendProduct(const std::string& username, const std::string &virtualname,
         const std::string &product, const std::string &type) {
-    if(_pHotLinesConfig){
+    /*if(_pHotLinesConfig){
         _pHotLinesConfig->sendProduct(username,virtualname,product,type);
-    }
+    }*/
 }
 
 void Communication::sessionTransfer(const QTalk::Entity::UID& uid, const std::string &newCser,

@@ -114,7 +114,7 @@ void StatusWgt::switchUser(QUInt8 t, const QTalk::Entity::UID &uid, const QStrin
     _isConsultServer = (t == QTalk::Enum::ChatType::ConsultServer);
     _uid = uid;
 
-    _pEdit->setVisible(_isGroupChat);
+//    _pEdit->setVisible(_isGroupChat);
     _pLabelPlat->setVisible(false);
     _pStsLabel->setVisible(!_isGroupChat);
     _pmood->setVisible(!_isGroupChat);
@@ -233,7 +233,7 @@ void StatusWgt::initUi() {
     _pBtnStructure = new QPushButton(this);
     _pBtnAddGroup = new QPushButton(this);
     _pBtnLock = new QPushButton(this);
-    _pEdit = new QPushButton(this);
+//    _pEdit = new QPushButton(this);
 
     _pLabelChatUser->setObjectName("ChatUser");
     _pLabelPlat->setObjectName("UserDept");
@@ -241,7 +241,7 @@ void StatusWgt::initUi() {
     _pBtnStructure->setObjectName("Structure");
     _pBtnAddGroup->setObjectName("AddGroup");
     _pBtnLock->setObjectName("Lock");
-    _pEdit->setObjectName("CO_Edit");
+//    _pEdit->setObjectName("CO_Edit");
     _pLabelChatUser->installEventFilter(this);
 	_pStsLabel->setFixedWidth(12);
     _pLabelPlat->setFixedSize(20, 20);
@@ -252,7 +252,7 @@ void StatusWgt::initUi() {
 
     //
     _pBtnStructure->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
-    _pEdit->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
+//    _pEdit->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
     _pBtnAddGroup->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
     _pBtnLock->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
 
@@ -281,7 +281,7 @@ void StatusWgt::initUi() {
     layout->addLayout(vlayout);
     layout->addItem(new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Fixed));
     layout->addWidget(_pBtnStructure);
-    layout->addWidget(_pEdit);
+//    layout->addWidget(_pEdit);
     layout->addWidget(_pBtnAddGroup);
     layout->addWidget(_pBtnLock);
     layout->setAlignment(vlayout, Qt::AlignVCenter);
@@ -311,19 +311,19 @@ void StatusWgt::initUi() {
         }
     });
 
-    connect(_pEdit, &QPushButton::clicked, [this, coEdit]() {
-
-        const std::string groupId = _uid.usrId();
-        QString tmpUrl = coEdit.data();
-        QString url = coEdit.data();;
-
-        if(coEdit.empty())
-        {
-            url = QString("%1/qtalkpad/docs/").arg(NavigationManager::instance().getHttpHost().data());
-        }
-        url.append(tmpUrl.contains("?") ? "&" : "?").append("to=").append(groupId.data());
-        WebService::loadCoEdit(QUrl(url));
-    });
+//    connect(_pEdit, &QPushButton::clicked, [this, coEdit]() {
+//
+//        const std::string groupId = _uid.usrId();
+//        QString tmpUrl = coEdit.data();
+//        QString url = coEdit.data();;
+//
+//        if(coEdit.empty())
+//        {
+//            url = QString("%1/qtalkpad/docs/").arg(NavigationManager::instance().getHttpHost().data());
+//        }
+//        url.append(tmpUrl.contains("?") ? "&" : "?").append("to=").append(groupId.data());
+//        WebService::loadCoEdit(QUrl(url));
+//    });
 }
 
 void StatusWgt::setName(const QString &name) {

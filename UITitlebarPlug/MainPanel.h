@@ -129,7 +129,7 @@ Q_SIGNALS:
 private:
     QFrame * _leftCorFrm;
     SeachEditPanel * _searchFrm;
-    QToolButton * _creatGroupBtn; // 二维码
+    QToolButton * _pQuickBtn; // 二维码
     SessionBtn * _sessionBtn; // 会话
     QToolButton * _contactBtn; // 联系人
     QToolButton * _multifunctionBtn; // 多功能
@@ -147,6 +147,8 @@ private:
     //
 private:
     DropMenu*    _dropMenu;
+    QMenu*      _pQuickMenu;
+
 
 private:
     AboutWnd* _pAboutWnd;

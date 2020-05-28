@@ -34,7 +34,11 @@ dbPlatForm& dbPlatForm::instance() {
 
 
 std::shared_ptr<QTalk::Entity::ImUserInfo> dbPlatForm::getUserInfo(const std::string &xmppId, const bool &readDb) {
-//    LogicManager::
+    std::string userId = xmppId;
+    auto indx = xmppId.find('/');
+    if(indx != std::string::npos)
+        userId = userId.substr(0, indx);
+
     std::shared_ptr<QTalk::Entity::ImUserInfo> info = _userInfoMap[xmppId];
     if (info && !readDb) {
         return info;

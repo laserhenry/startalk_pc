@@ -22,7 +22,7 @@ public slots:
     void setProcess(double speed, double dtotal, double dnow, double utotal, double unow);
     void onSaveAsAct();
     void onUploadFailed();
-    void downloadSuccess();
+    void downloadOrUploadSuccess();
 
 Q_SIGNALS:
     void sgOpenDir();

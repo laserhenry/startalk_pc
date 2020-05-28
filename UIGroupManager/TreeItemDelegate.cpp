@@ -42,7 +42,7 @@ void TreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     QString strText = index.data(EM_STAFF_DATATYPE_TEXT).toString();
     QString iconPath = index.data(EM_STAFF_DATATYPE_ICONPATH).toString();
 
-    QPixmap icon = QTalk::qimage::instance().loadCirclePixmap(iconPath, radius * QTalk::qimage::instance().dpi());
+    QPixmap icon = QTalk::qimage::loadCirclePixmap(iconPath, radius * QTalk::qimage::dpi());
     painter->setRenderHints(QPainter::Antialiasing, true);
     painter->setRenderHints(QPainter::SmoothPixmapTransform, true);
     painter->drawPixmap(QRect(rect.x(), rect.y() + (rect.height() - radius * 2) / 2, radius * 2, radius * 2), icon);
@@ -66,8 +66,8 @@ void TreeItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         picPath = isChecked ? ":/GroupManager/image1/collapse.png"
                             : ":/GroupManager/image1/extend.png";
     }
-    QPixmap checkIcon = QTalk::qimage::instance().loadCirclePixmap(picPath,
-            20 * QTalk::qimage::instance().dpi());
+    QPixmap checkIcon = QTalk::qimage::loadCirclePixmap(picPath,
+            20 * QTalk::qimage::dpi());
     painter->drawPixmap(pixRect, checkIcon);
 
     painter->restore();

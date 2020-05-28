@@ -6,24 +6,7 @@
 #include <iostream>
 #include "../QtUtil/Utils/Log.h"
 
-PluginManager::PluginManager(QObject *parent) :
-        ConfigObject(parent),
-        _pluginPath("") {
-    Init();
-}
-
-PluginManager::~PluginManager() {
-
-}
-
-
-/**
-  * @函数名
-  * @功能描述
-  * @参数
-  * @date 2018.9.11
-  */
-void PluginManager::Init() {
+PluginManager::PluginManager(QObject *parent) {
 
 }
 
@@ -35,76 +18,38 @@ void PluginManager::Init() {
   */
 void PluginManager::LoadPluginAllQt() {
     //
-    QJsonObject obj = Get("PluginsQt").toObject();
-        for (const QString& plugkey : obj.keys()) {
+    for (const QString& plug : _plugs) {
 #ifdef _MACOS
 #ifdef QT_NO_DEBUG
-            QString plugin = _pluginPath + "lib" + obj.value(plugkey).toString() + ".dylib";
+        QString plugin = _pluginPath + "lib" + plug + ".dylib";
 #else
-            QString plugin = _pluginPath + "lib" + obj.value(plugkey).toString() + "d.dylib";
+        QString plugin = _pluginPath + "lib" + plug + "d.dylib";
 #endif
 #else
 #ifdef _WINDOWS
 #ifdef QT_NO_DEBUG
-            QString plugin = _pluginPath + obj.value(plugkey).toString() + ".dll";
+        QString plugin = _pluginPath + plug + ".dll";
 #else
-            QString plugin = _pluginPath + obj.value(plugkey).toString() + "d.dll";
+        QString plugin = _pluginPath + plug + "d.dll";
 #endif
 #else
 #ifdef QT_NO_DEBUG
-            QString plugin = _pluginPath + "lib" + obj.value(plugkey).toString() + ".so";
+        QString plugin = _pluginPath + "lib" + plug + ".so";
 #else
-            QString plugin = _pluginPath + "lib" + obj.value(plugkey).toString() + "d.so";
+        QString plugin = _pluginPath + "lib" + plug + "d.so";
 #endif
 #endif
 #endif
 
-            QFileInfo file(plugin);
-            QString filepath = file.absoluteFilePath();
-            if (file.exists()) {
-                qInfo() << "plugin has been found:  " << filepath;
-                auto *loader = new QPluginLoader(plugin);
-                _pluginRegisterQt.insert(plugkey, loader);
+        if (QFile::exists(plugin)) {
+            qInfo() << "plugin has been found:  " << plugin;
+            auto *loader = new QPluginLoader(plugin);
+            _pluginRegisterQt.insert(plug, loader);
 
-            } else {
-                qInfo() << "plugin file is not exists... path: " << filepath;
-            }
-        }
-}
-
-/**
-  * @函数名
-  * @功能描述 加载qt插件
-  * @参数
-  * @date 2018.9.11
-  */
-bool PluginManager::LoadPluginQt(const QString &key, const QString &PluginAllPath) {
-    QFileInfo file(PluginAllPath);
-    if (file.exists()) {
-        QPluginLoader *loader = new QPluginLoader(PluginAllPath);
-        if (loader->instance()) {
-            _pluginRegisterQt.insert(key, loader);
-            return true;
         } else {
-            return false;
+            qWarning() << "plugin file is not exists... path: " << plugin;
         }
-    } else {
-        return false;
     }
-}
-
-/**
-  * @函数名
-  * @功能描述 卸载说有插件
-  * @参数
-  * @date 2018.9.11
-  */
-void PluginManager::UnloadPluginAllQt() {
-        for (QPluginLoader *loader: _pluginRegisterQt.values()) {
-            loader->unload();
-            delete loader;
-        }
-    _pluginRegisterQt.clear();
 }
 
 /**
@@ -131,46 +76,18 @@ bool PluginManager::UnloadPluginQt(const QString &key) {
   * @date 2018.9.11
   */
 QObject *PluginManager::GetPluginInstanceQt(const QString &key) {
-    // 如果插件没有加载，则加载插件
-    if (_pluginRegisterQt.find(key) == _pluginRegisterQt.end()) {
-        QJsonObject obj = Get("PluginsQt").toObject();
-#ifdef _MACOS
-#ifdef QT_NO_DEBUG
-        QString plugin = _pluginPath + "lib" + obj.value(key).toString() + ".dylib";
-#else
-        QString plugin = _pluginPath + "lib" + obj.value(key).toString() + "d.dylib";
-#endif
-#else
-#ifdef _WINDOWS
-#ifdef QT_NO_DEBUG
-        QString plugin = _pluginPath + obj.value(key).toString() + ".dll";
-#else
-        QString plugin = _pluginPath + obj.value(key).toString() + "d.dll";
-#endif
-#else
-#ifdef QT_NO_DEBUG
-        QString plugin = _pluginPath + "lib" + obj.value(key).toString() + ".so";
-#else
-        QString plugin = _pluginPath + "lib" + obj.value(key).toString() + "d.so";
-#endif
-#endif
-#endif
-        if (!LoadPluginQt(key, plugin)) {
-            return nullptr;
-        }
-    }
 
     if (_pluginRegisterQt.value(key)) {
         QObject *plugin = _pluginRegisterQt.value(key)->instance();
         if (plugin) {
             return plugin;
         } else {
-            std::string strErr = _pluginRegisterQt.value(key)->errorString().toStdString();
-            std::cout << "error load:  " << strErr << std::endl;
-            return NULL;
+            auto strErr = _pluginRegisterQt.value(key)->errorString();
+            qWarning() << "error load:  " << strErr;
+            return nullptr;
         }
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -182,7 +99,7 @@ QObject *PluginManager::GetPluginInstanceQt(const QString &key) {
   */
 std::shared_ptr<QMap<QString, QObject *> > PluginManager::GetAllPluginInstanceQt() const {
     std::shared_ptr<QMap<QString, QObject *> > plugins(new QMap<QString, QObject *>);
-        for (QString pluginName : _pluginRegisterQt.keys()) {
+        for (const QString& pluginName : _pluginRegisterQt.keys()) {
             QPluginLoader *pluginloader = _pluginRegisterQt.value(pluginName);
             if (pluginloader->instance()) {
                 plugins->insert(pluginName, pluginloader->instance());
@@ -199,4 +116,9 @@ std::shared_ptr<QMap<QString, QObject *> > PluginManager::GetAllPluginInstanceQt
   */
 void PluginManager::setPluginPath(const QString &path) {
     _pluginPath = path;
+}
+
+//
+void PluginManager::setPlugNames(const QVector<QString> &plugs) {
+    _plugs = plugs;
 }

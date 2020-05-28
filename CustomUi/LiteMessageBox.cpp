@@ -29,11 +29,11 @@ LiteMessageBox::LiteMessageBox(int type, const QString& message, QWidget* base)
         case EM_TYPE_SUCCESS:
 
             setObjectName("LiteMessageBoxSuccess");
-            iconLab->setPixmap(QTalk::qimage::instance().loadImage(":/success", true, true, 15, 15));
+            iconLab->setPixmap(QTalk::qimage::loadImage(":/success", true, true, 15, 15));
             break;
         case EM_TYPE_FAILED:
             setObjectName("LiteMessageBoxFailed");
-            iconLab->setPixmap(QTalk::qimage::instance().loadImage(":/error", true, true, 15, 15));
+            iconLab->setPixmap(QTalk::qimage::loadImage(":/error", true, true, 15, 15));
             break;
         case EM_TYPE_INVALID:
         default:

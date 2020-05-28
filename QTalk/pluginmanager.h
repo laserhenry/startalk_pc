@@ -4,29 +4,30 @@
 #include <QMap>
 #include <QPluginLoader>
 #include <QLibrary>
+#include <QVector>
 #include <memory>
 #include "../UICom/Config/configobject.h"
 
-class PluginManager : public ConfigObject
+class PluginManager
 {
-    Q_OBJECT
 public:
     explicit PluginManager(QObject *parent = nullptr);
-    ~PluginManager() override;
 
 public:
-    void Init();
     void LoadPluginAllQt();
-    bool LoadPluginQt(const QString &key, const QString &PluginAllPath);
-    void UnloadPluginAllQt();
     bool UnloadPluginQt(const QString &key);
     QObject *GetPluginInstanceQt(const QString &key);
     std::shared_ptr<QMap<QString, QObject *>> GetAllPluginInstanceQt() const;
     void setPluginPath(const QString &path);
 
+public:
+    void setPlugNames(const QVector<QString>& plugs);
+
 private:
     QMap<QString, QPluginLoader*> _pluginRegisterQt;
     QString _pluginPath;
+
+    QVector<QString> _plugs;
 };
 
 #endif // PLUGINMANAGER_H

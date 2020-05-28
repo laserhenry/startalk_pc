@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by cc on 2019/12/25.
 //
 
@@ -68,6 +68,10 @@ public:
 public:
     void setShareMessageState(bool flag);
 
+
+public:
+    void freeView();
+
 private:
     void keyPressEvent(QKeyEvent* e) override;
     void onShowLoading(bool show);
@@ -92,6 +96,7 @@ public:
 
 private:
     QString            _strConversionId;
+    QString            _name;
     QVBoxLayout*       _leftLay  = nullptr;
     QHBoxLayout*       _sendBtnLay = nullptr;
     QPushButton*       _sendBtn = nullptr;

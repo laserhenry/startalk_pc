@@ -132,7 +132,7 @@ if (APPLE)
     #            COMPILE_FLAGS "-fobjc-arc"
     #            )
 
-    set_property(SOURCE ASIDataCompressor.m APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-objc-arc")
+#    set_property(SOURCE ASIDataCompressor.m APPEND_STRING PROPERTY COMPILE_FLAGS "-fno-objc-arc")
 
     FIND_LIBRARY(CoreFoundation_Library CoreFoundation)
     if (NOT CoreFoundation_Library)

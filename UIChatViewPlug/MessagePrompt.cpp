@@ -111,7 +111,6 @@ void MessagePrompt::initUi()
         }
         if(headPath.isEmpty() || !QFile::exists(headPath))
         {
-            headPath = ":/chatview/image1/defaultGroupHead.png";
 #ifdef _STARTALK
             headPath = ":/QTalk/image1/StarTalk_defaultGroup.png";
 #else

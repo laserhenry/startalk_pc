@@ -14,16 +14,12 @@ elseif (UNIX)
 else ()
     ADD_DEFINITIONS(-D_WINDOWS)
     ADD_DEFINITIONS(-DUILOGINPLUG_LIBRARY)
-    #    set(QT_HOME C:\\Qt\\5.12.3\\msvc2017_64)
-    #    set(CMAKE_PREFIX_PATH ${QT_HOME})
-    #    link_directories(../Depends/curl/lib/windows/x64)
-    #    link_directories(../Depends/zlib/lib/windows/x64)
-    #    link_directories(../Depends/openssl/lib/windows/x64)
 endif ()
 
 find_package(Qt5Core)
 find_package(Qt5Widgets)
 find_package(Qt5Concurrent)
+find_package(Qt5Network)
 #
 set(SOURCE_FILES
         image1.qrc
@@ -56,9 +52,10 @@ target_link_libraries(${PROJECT_NAME}
         Qt5::Core
         Qt5::Widgets
         Qt5::Concurrent
+        Qt5::Network
         EventBus
         CustomUi
-        UICom
+        SUICom
         QtUtil
         Platform
         qzxing)

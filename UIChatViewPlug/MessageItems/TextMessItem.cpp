@@ -22,6 +22,7 @@
 #include "../../Platform/Platform.h"
 #include "../ChatUtil.h"
 #include "../../UICom/StyleDefine.h"
+#include "../../UICom/uicom.h"
 
 #define DEM_LINK_HTML "<a href=\"%1\" style=\"text-decoration:none; color:rgba(%2);\">%3</a>"
 
@@ -217,12 +218,19 @@ void TextMessItem::setMessageContent(bool delMov) {
                     }
 
                     if (QPixmap(imagePath).isNull()) {
-                        QString realPath = QTalk::qimage::instance().getRealImagePath(imagePath);
+                        QString realPath = QTalk::qimage::getRealImagePath(imagePath);
                         if (QPixmap(realPath).isNull()) {
                             imagePath = ":/chatview/image1/defaultImage.png";
                         } else {
                             imagePath = realPath;
                         }
+                    }
+
+                    QFileInfo imageInfo(imagePath);
+                    if(imageInfo.suffix().toUpper() == "GIF" && _mapMovies.find(msg.content) == _mapMovies.end())
+                    {
+                        _mapMovies[msg.content] = nullptr;
+//                        imagePath = QTalk::qimage::getGifImagePath(imagePath, imageWidth, imageHeight);
                     }
 
                     QTextImageFormat imageFormat;
@@ -236,11 +244,7 @@ void TextMessItem::setMessageContent(bool delMov) {
                     _textBrowser->textCursor().insertImage(imageFormat);
                     _textBrowser->setCurrentCharFormat(f);
                     //
-                    QFileInfo imageInfo(imagePath);
-                    if(imageInfo.suffix().toUpper() == "GIF" && _mapMovies.find(msg.content) == _mapMovies.end())
-                    {
-                        _mapMovies[msg.content] = nullptr;
-                    }
+
                     //
                     break;
                 }
@@ -392,12 +396,6 @@ void TextMessItem::initReceiveLayout() {
     leftLay->setContentsMargins(_leftMargin);
     leftLay->setSpacing(_leftSpacing);
     mainLay->addLayout(leftLay);
-    if (!_headLab) {
-        _headLab = new HeadPhotoLab;
-    }
-    _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
-    _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     leftLay->addItem(vSpacer);
@@ -547,7 +545,7 @@ void TextMessItem::copyText() {
                 else
                     imagePath = tmpImgPath.data();
 
-                QPixmap pixmap = QTalk::qimage::instance().loadImage(imagePath, false);
+                QPixmap pixmap = QTalk::qimage::loadImage(imagePath, false);
                 if(!pixmap.isNull())
                 {
                     mimeData->setImageData(pixmap.toImage());
@@ -604,7 +602,7 @@ void TextMessItem::copyText() {
             else
                 imagePath = _msgs[0].content;
 
-            QPixmap pixmap = QTalk::qimage::instance().loadImage(imagePath, false);
+            QPixmap pixmap = QTalk::qimage::loadImage(imagePath, false);
             mimeData->setImageData(pixmap.toImage());
         }
         else
@@ -629,14 +627,32 @@ void TextMessItem::onImageClicked(int index) {
 
 bool TextMessItem::event(QEvent* e)
 {
-    if(e->type() == QEvent::Show)
+    switch (e->type())
     {
-        startMovies(_mapMovies, this);
+        case QEvent::Show:
+            startMovies(_mapMovies, this);
+            break;
+        case QEvent::Hide:
+            deleteMovies(_mapMovies);
+            break;
+        case QEvent::Paint:
+        {
+            _paintTime = QDateTime::currentMSecsSinceEpoch();
+            for(auto & item : _mapMovies)
+            {
+                if(nullptr != item.second)
+                {
+                    auto* mov = item.second;
+                    if(mov->state() == QMovie::NotRunning || mov->state() == QMovie::Paused)
+                        mov->start();
+                }
+            }
+            break;
+        }
+        default:
+            break;
     }
-    else if(e->type() == QEvent::Hide)
-    {
-        deleteMovies(_mapMovies);
-    }
+
     return MessageItemBase::event(e);
 }
 
@@ -702,7 +718,7 @@ void TextMessItem::onImageDownloaded(const QString& link)
     setMessageContent();
 }
 
-void TextMessItem::onMovieChanged(int )
+void TextMessItem::onMovieChanged(int cur)
 {
     auto *mov = qobject_cast<QMovie*>(sender());
     if(mov)
@@ -716,5 +732,9 @@ void TextMessItem::onMovieChanged(int )
                                                   itFind->first, mov->currentImage());
             _textBrowser->setLineWrapColumnOrWidth(_textBrowser->lineWrapColumnOrWidth());
         }
+
+        //
+        if(QDateTime::currentMSecsSinceEpoch() - _paintTime > 3000)
+            mov->stop();
     }
 }

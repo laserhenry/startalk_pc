@@ -17,7 +17,7 @@ namespace QTalk {
 
         void JID::innerParseUser(const string &input, const std::string &clientVersion, const std::string &platformStr, int channel) {
 
-            std::string jid(input);
+            const std::string& jid(input);
 
             size_t pos = jid.find('@');
             if (pos > 0 && pos <= jid.size()) 
@@ -30,7 +30,6 @@ namespace QTalk {
                 std::string resource;
 
                 if (remain.empty()) {
-                    throw "jid's parameter is illegal";
                 } else {
                     if (pos > 0 && pos <= remain.size()) {
                         domain = remain.substr(0, pos);
@@ -50,7 +49,8 @@ namespace QTalk {
             }
         }
 
-        JID::JID(const std::string &jid, const string &clientVersion, const string &platformStr, int channel) {
+        JID::JID(const std::string &jid, const string &clientVersion, const string &platformStr, int channel)
+        {
             innerParseUser(jid, clientVersion, platformStr, channel);
         }
 
@@ -58,7 +58,7 @@ namespace QTalk {
         void JID::init(const std::string &node, const  std::string &domain,
                 const std::string &resource, int channel) {
             if (node.empty() || domain.empty()) {
-                throw "jid's parameter is illegal";
+                //throw "jid's parameter is illegal";
             }
 
             _domain = domain;

@@ -61,7 +61,7 @@ void OANavigationItem::paintEvent(QPaintEvent *e)
 	QPainter painter(this);
 
 	painter.fillRect(e->rect(), QBrush(_selected ? StyleDefine::instance().getAdrSelectColor() : StyleDefine::instance().getAdrNormalColor()));
-	QPixmap pixmap = QTalk::qimage::instance().loadCirclePixmap(_icon, 14 * qimage::instance().dpi());
+	QPixmap pixmap = qimage::loadCirclePixmap(_icon, 14 * qimage::dpi());
     painter.setRenderHints(QPainter::Antialiasing, true);
     painter.setRenderHints(QPainter::SmoothPixmapTransform, true);
     painter.drawPixmap( 20, 12, 24, 24, pixmap);

@@ -66,7 +66,7 @@ private:
 	QPushButton* _pBtnStructure{}; // 组织架构
 	QPushButton* _pBtnAddGroup{};  // 增加群聊/邀请加入群
 	QPushButton* _pBtnLock{};      //锁
-	QPushButton* _pEdit{};      //锁
+//	QPushButton* _pEdit{};      //锁
 
 
 private:

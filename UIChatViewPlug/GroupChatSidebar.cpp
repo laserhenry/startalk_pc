@@ -61,13 +61,12 @@ void GroupChatSidebar::updateGroupMember(const GroupMemberMessage& e)
 		//
 		bool isOnline = Platform::instance().isOnline(Entity::JID(it->first).basename());
 		if (isOnline)
-		{
 			onlineUserSize++;
-		}
 		auto itFind = std::find(deletedMembers.begin(), deletedMembers.end(), it->first);
 		if (itFind !=  deletedMembers.end())
 		{
 			deletedMembers.erase(itFind);
+			emit _pGroupMember->sgUpdateUserRole(it->first.data(), userRole[it->first]);
 		}
 		else if (_pGroupMember)
 		{
@@ -80,10 +79,11 @@ void GroupChatSidebar::updateGroupMember(const GroupMemberMessage& e)
                 if(name.empty())
                     name = QTalk::Entity::JID(it->first).username();
 
-                emit _pGroupMember->addMemberSignal(it->first, name, QString(headSrc.c_str()), userRole[it->first],
-                                                    isOnline, QString::fromStdString(it->second.searchKey));
-				_arMembers.push_back(it->first);
+                emit _pGroupMember->addMemberSignal(it->first,
+                        name, QString(headSrc.c_str()), userRole[it->first],
+                        isOnline, QString::fromStdString(it->second.searchKey));
 			}
+            _arMembers.push_back(it->first);
 		}
 	}
 
@@ -91,9 +91,7 @@ void GroupChatSidebar::updateGroupMember(const GroupMemberMessage& e)
 	for (const std::string& id : deletedMembers)
 	{
 		if (_pGroupMember)
-		{
 			emit deleteMember(id);
-		}
 	}
     if(_pGroupMember)
         emit _pGroupMember->sgUpdateMemberCount(members.size(), onlineUserSize);

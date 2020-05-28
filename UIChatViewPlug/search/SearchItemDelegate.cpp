@@ -87,8 +87,8 @@ void MessageALlDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
                 painter->setPen(QColor(237,238,237));
                 painter->drawRoundedRect(fileContentRect, 2, 2);
                 //
-                int dpi = QTalk::qimage::instance().dpi();
-                QPixmap pixmap = QTalk::qimage::instance().loadImage(fileIcon, true, true, 40 * dpi);
+                int dpi = QTalk::qimage::dpi();
+                QPixmap pixmap = QTalk::qimage::loadImage(fileIcon, true, true, 40 * dpi);
                 int w = pixmap.width() / dpi;
                 int h = pixmap.height() / dpi;
                 painter->drawPixmap((40 - w) / 2 + conRect.x() + 10,
@@ -168,8 +168,8 @@ void FileMessageDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
                 if(isHover)
                     painter->fillRect(conRect, QColor(242,242,242));
                 //
-                int dpi = QTalk::qimage::instance().dpi();
-                QPixmap pixmap = QTalk::qimage::instance().loadImage(fileIcon, true, true, 40 * dpi);
+                int dpi = QTalk::qimage::dpi();
+                QPixmap pixmap = QTalk::qimage::loadImage(fileIcon, true, true, 40 * dpi);
                 int w = pixmap.width() / dpi;
                 int h = pixmap.height() / dpi;
                 painter->drawPixmap((40 - w) / 2 + conRect.x() + 10,

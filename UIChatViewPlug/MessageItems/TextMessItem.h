@@ -72,7 +72,7 @@ private:
 // gif
 private:
     std::map<QString, QMovie*> _mapMovies;
-
+    qint64 _paintTime = 0;
 };
 
 #endif // RICHTEXTMESSITEM_H

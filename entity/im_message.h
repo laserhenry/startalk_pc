@@ -86,6 +86,14 @@ namespace QTalk {
             MediaTypeSystemLY               =268435457,
 		};
 
+		typedef union {
+		    struct {
+		        char unread;
+		        char read;
+		    };
+		    int value;
+		} UReadTag;
+
 		struct ImMessageInfo
 		{
 			ImMessageInfo()
@@ -129,6 +137,7 @@ namespace QTalk {
 			std::string Content;
 			int         Type;
 			int         ReadedTag{};
+//            UReadTag    ReadedTag{};
 			int         State;
 			int         Direction;
 			QInt64      LastUpdateTime;

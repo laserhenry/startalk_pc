@@ -296,7 +296,7 @@ bool MessageDao::bulkInsertMessageInfo(const std::vector<QTalk::Entity::ImMessag
         _pSqlDb->exec("commit transaction;");
         return true;
     } catch (std::exception &e) {
-        warn_log("exception : {0}", e.what());
+        error_log("exception : {0}", e.what());
         query.clearBindings();
         _pSqlDb->exec("rollback transaction;");
         return false;
@@ -393,6 +393,9 @@ long long MessageDao::getMaxTimeStampByChatType(QTalk::Enum::ChatType chatType) 
             timeStamp = query.getColumn(0).getInt64();
         }
         return timeStamp;
+    }
+    catch (qtalk::sqlite::exception& e) {
+        warn_log("MessageDao getMaxTimeStampByChatType exception : {0}", e.what());
     }
     catch (std::exception &e) {
         warn_log("MessageDao getMaxTimeStampByChatType exception : {0}", e.what());

@@ -9,7 +9,7 @@
         <file>image1/StarTalk_50.png</file>
         <file>image1/starTalkTip.png</file>
         <file>image1/redPoint.png</file>
-        <file>config/PluginManager.json</file>
+        <file>config/pluginManager.json</file>
         <file>image1/edit_hover.png</file>
         <file>image1/edit_normal.png</file>
         <file>image1/search_hover.png</file>

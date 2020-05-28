@@ -40,10 +40,13 @@ int main(int argc, char *argv[]) {
         std::cout << id.toStdString() << std::endl;
         exit(0);
     }
-
     unsigned short pid = QCoreApplication::applicationPid();
     qputenv("QTWEBENGINE_REMOTE_DEBUGGING", std::to_string(pid).data());
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+    // high dpi
+    QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+#endif
     // 缩放因子
     QSettings settings(QSettings::NativeFormat, QSettings::UserScope,
 #ifdef _STARTALK
@@ -51,7 +54,14 @@ int main(int argc, char *argv[]) {
 #else
                        "qunar.com", "qtalk");
 #endif
-    bool scale_enable = settings.value("QT_SCALE_ENABLE").toBool();
+    if(settings.contains("QT_SCALE_ENABLE_V2"))
+        settings.remove("QT_SCALE_ENABLE_V2");
+
+    bool scale_enable = true;
+    if(settings.contains("QT_SCALE_ENABLE"))
+        scale_enable = settings.value("QT_SCALE_ENABLE").toBool();
+    else
+        settings.setValue("QT_SCALE_ENABLE", scale_enable);
     if (scale_enable) {
         QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 		QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);

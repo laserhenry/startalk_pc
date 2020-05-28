@@ -52,6 +52,17 @@
 #include "../Screenshot/SnipScreenTool.h"
 #endif
 
+#ifdef _WINDOWS
+#include <wrapper.h>
+#include <QAudioOutput>
+#include <QSharedPointer>
+#include <QMediaPlayer>
+#include <sound/amr/VoiceHelper.h>
+
+QSharedPointer<WavOutput> spOutputDevice;
+QSharedPointer<QAudioOutput> spAudioOutput;
+#endif // _WINDOWS
+
 //
 using namespace QTalk;
 using namespace QTalk::Entity;
@@ -65,9 +76,8 @@ void deleteViewItem(const QTalk::Entity::UID& uid, ChatViewItem* viewItem) {
 ChatViewMainPanel::ChatViewMainPanel(QWidget *parent) :
         QFrame(parent),
         _strSelfId(""),
-        _pool("ChatViewMainPanel pool"),
         _pEmptyLabel(nullptr),
-        _mapItems(10, deleteViewItem) {
+        _mapItems(50, deleteViewItem) {
 
     _netManager = new QNetworkAccessManager(this);
 
@@ -96,9 +106,9 @@ ChatViewMainPanel::ChatViewMainPanel(QWidget *parent) :
     EmoticonMainWgt::getInstance();
     initPlug();
     //
-    _pLoadingLabel = makeLoadingLabel();
-    _pLoadingLabel->movie()->start();
-    _pStackedLayout->addWidget(_pLoadingLabel);
+//    _pLoadingLabel = makeLoadingLabel();
+//    _pLoadingLabel->movie()->start();
+//    _pStackedLayout->addWidget(_pLoadingLabel);
     //
     _pAudioVideoManager = new AudioVideoManager;
     connect(_pAudioVideoManager, &AudioVideoManager::sgSendSignal, this, &ChatViewMainPanel::onSendSignal);
@@ -142,7 +152,7 @@ ChatViewMainPanel::ChatViewMainPanel(QWidget *parent) :
             &ChatViewMainPanel::sendCollectionMessage);
     //
     QPointer<ChatViewMainPanel> pThis(this);
-    QtConcurrent::run([pThis](){
+    QT_CONCURRENT_FUNC([pThis](){
         if(pThis)
         {
             std::vector<QTalk::StShareSession> ss;
@@ -181,7 +191,7 @@ void ChatViewMainPanel::onChatUserChanged(const StSessionInfo &info) {
             return;
         }
         //
-        if(_pViewItem)
+        if(_pViewItem && _pViewItem->_uid.qUsrId().section("@", 0, 0) != SYSTEM_XMPPID)
         {
             QString content = _pViewItem->_pInputWgt->translateText();
             if(!content.isEmpty())
@@ -189,6 +199,8 @@ void ChatViewMainPanel::onChatUserChanged(const StSessionInfo &info) {
                 emit sgShowDraft(_pViewItem->_uid, content);
                 _his_input_data[_pViewItem->_uid] = content;
             }
+
+            _pViewItem->freeView();
         }
 
         // 先进入聊天窗口再拉历史消息
@@ -219,7 +231,7 @@ void ChatViewMainPanel::onChatUserChanged(const StSessionInfo &info) {
         {
             if(uid.usrId() == uid.realId()){
                 chatType = QTalk::Enum::Consult;
-                QtConcurrent::run([ uid]() {
+                QT_CONCURRENT_FUNC([ uid]() {
                     ChatMsgManager::hotLineMessageList(uid.usrId());
                 });
             } else {
@@ -253,10 +265,7 @@ void ChatViewMainPanel::onChatUserChanged(const StSessionInfo &info) {
             _pStackedLayout->setCurrentWidget(_pViewItem);
             func();
 
-            auto functor = QtConcurrent::run([this, info, uid, chatType]() {
-#ifdef _MACOS
-                pthread_setname_np("ChatViewMainPanel::onChatUserChanged");
-#endif
+            auto functor = QT_CONCURRENT_FUNC([this, info, uid, chatType]() {
                 // 获取历史消息
                 QInt64 t = 0;
                 debug_log("onChatUserChanged time:{0}", t);
@@ -318,7 +327,8 @@ void ChatViewMainPanel::onChatUserChanged(const StSessionInfo &info) {
                 if (chatType == Enum::GroupChat) {
                     ChatMsgManager::getGroupInfo(info.userId.toStdString());
                 }
-
+                if(_pViewItem && _pViewItem->_pChatMainWgt)
+                    emit _pViewItem->_pChatMainWgt->sgEnableScroll();
             });
         }
 
@@ -439,7 +449,7 @@ void ChatViewMainPanel::onRecvMessage(R_Message &e, bool isCarbon) {
   */
 void ChatViewMainPanel::onRecvFileProcessMessage(const FileProcessMessage &e) {
     // 只刷新当前会话
-    if (_pViewItem && _pViewItem->_pChatMainWgt && _pViewItem->_pSearchMainWgt) {
+    if (_pViewItem && _pViewItem->_pChatMainWgt) {
         _pViewItem->_pChatMainWgt->recvFileProcess(e.speed, e.downloadTotal, e.downloadNow, e.uploadTotal,
                                              e.uploadNow, e.key);
     }
@@ -491,6 +501,7 @@ void ChatViewMainPanel::updateGroupMember(const GroupMemberMessage &e) {
   */
 void ChatViewMainPanel::updateHead() {
 
+    // has c crash todo
     auto func = [this](){
         for(const auto& it : _mapItems)
         {
@@ -502,7 +513,7 @@ void ChatViewMainPanel::updateHead() {
         }
     };
 
-    QtConcurrent::run(func);
+    QT_CONCURRENT_FUNC(func);
 }
 
 /**
@@ -624,15 +635,17 @@ void ChatViewMainPanel::showUserCard(const QString &userId) {
  * 
  */
 void ChatViewMainPanel::getHistoryMsg(const QInt64 &t, const QUInt8 &chatType, const QTalk::Entity::UID &uid) {
-    //
-    static qint64 req_time = 0;
-    qint64 cur_time = QDateTime::currentMSecsSinceEpoch();
-    if(cur_time - req_time < 500)
-        return;
 
     //
     if(Platform::instance().isMainThread()) {
-        _pool.enqueue(std::bind(&ChatViewMainPanel::getHistoryMsg, this, t, chatType, uid));
+        //
+        static qint64 req_time = 0;
+        qint64 cur_time = QDateTime::currentMSecsSinceEpoch();
+        if(cur_time - req_time < 500)
+            return;
+        req_time = cur_time;
+
+        QT_CONCURRENT_FUNC(std::bind(&ChatViewMainPanel::getHistoryMsg, this, t, chatType, uid));
         return;
     }
 
@@ -734,8 +747,6 @@ void ChatViewMainPanel::gotReadState(const UID &uid, const map<string, QInt32> &
 //
 void ChatViewMainPanel::gotMState(const QTalk::Entity::UID &uid, const std::string &messageId, const QInt64 &time) {
     //
-    eraseSending(messageId);
-
     if(!_mapItems.contains(uid))
         return;
     auto* pViewItem = _mapItems.get(uid);
@@ -1010,7 +1021,8 @@ void ChatViewMainPanel::updateUserConfig(const std::map<std::string, std::string
                 auto info = dbPlatForm::instance().getUserInfo(uid.usrId(), true);
                 std::string userName = QTalk::getUserName(info);
                 emit pViewItem->_pStatusWgt->updateName(userName.data());
-                emit pViewItem->_pSearchMainWgt->sgUpdateName(userName.data());
+                if(pViewItem->_pSearchMainWgt)
+                    emit pViewItem->_pSearchMainWgt->sgUpdateName(userName.data());
             }
         }
         else if(it.second == "kNoticeStickJidDic")
@@ -1033,7 +1045,8 @@ void ChatViewMainPanel::updateUserConfig(const std::map<std::string, std::string
                 auto info = dbPlatForm::instance().getUserInfo(uid.usrId(), true);
                 std::string userName = QTalk::getUserName(info);
                 emit pViewItem->_pStatusWgt->updateName(userName.data());
-                emit pViewItem->_pSearchMainWgt->sgUpdateName(userName.data());
+                if(pViewItem->_pSearchMainWgt)
+                    emit pViewItem->_pSearchMainWgt->sgUpdateName(userName.data());
             }
         }
         else if(conf.ConfigKey == "kNoticeStickJidDic")
@@ -1132,13 +1145,13 @@ void ChatViewMainPanel::showEmptyLabel() {
     int hour = curTime.hour();
     QPixmap emptyPixmap;
     if (hour < 12)
-        emptyPixmap = QTalk::qimage::instance().loadImage(
+        emptyPixmap = QTalk::qimage::loadImage(
                 QString(":/chatview/image1/morning_%1.png").arg(AppSetting::instance().getThemeMode()), false);
     else if (hour < 19)
-        emptyPixmap = QTalk::qimage::instance().loadImage(
+        emptyPixmap = QTalk::qimage::loadImage(
                 QString(":/chatview/image1/afternoon_%1.png").arg(AppSetting::instance().getThemeMode()), false);
     else
-        emptyPixmap = QTalk::qimage::instance().loadImage(
+        emptyPixmap = QTalk::qimage::loadImage(
                 QString(":/chatview/image1/night_%1.png").arg(AppSetting::instance().getThemeMode()), false);
 
     _pEmptyLabel->setPixmap(emptyPixmap);
@@ -1159,7 +1172,8 @@ void ChatViewMainPanel::updateGroupInfo(const std::shared_ptr<QTalk::StGroupInfo
     if(pViewItem) {
         emit pViewItem->_pGroupSidebar->updateGroupTopic(QString::fromStdString(groupinfo->title));
         emit pViewItem->_pStatusWgt->updateName(QString::fromStdString(groupinfo->name));
-        emit pViewItem->_pSearchMainWgt->sgUpdateName(QString::fromStdString(groupinfo->name));
+        if(pViewItem->_pSearchMainWgt)
+            emit pViewItem->_pSearchMainWgt->sgUpdateName(QString::fromStdString(groupinfo->name));
     }
 }
 
@@ -1242,7 +1256,7 @@ void deleteDumps()
  */
 void ChatViewMainPanel::packAndSendLog(const QString &describe) {
 
-    QtConcurrent::run([this, describe]() {
+    QT_CONCURRENT_FUNC([this, describe]() {
 #ifdef _MACOS
         pthread_setname_np("ChatViewMainPanel::packAndSendLog");
 #endif
@@ -1500,26 +1514,74 @@ void ChatViewMainPanel::initSound() {
     }
 #endif
 
+#ifndef _WINDOWS
     _pVoicePlayer = new QMediaPlayer;
+#endif // !_WINDOWS
+    
 }
+
+
+#ifdef _WINDOWS
+void play(const QString& filePath, VoiceMessageItem *msgItem)
+{
+    QFile amrfile(filePath);
+    if (!amrfile.open(QIODevice::ReadOnly))
+        return;
+    QByteArray m_buffer = amrfile.readAll();
+    QByteArray* spArrData = new QByteArray;
+
+    if (VoiceHelper::amrBufferToWavBuffer((unsigned char*)m_buffer.data(), m_buffer.size(), spArrData))
+    {
+        if (spArrData->size() == 0)
+            return;
+        QAudioFormat format;
+        format.setSampleRate(8000);
+        format.setChannelCount(1);
+        format.setSampleSize(16);
+        format.setCodec("audio/pcm");
+        format.setByteOrder(QAudioFormat::LittleEndian);
+        format.setSampleType(QAudioFormat::UnSignedInt);
+        if (!spOutputDevice.isNull())
+        {
+            spOutputDevice->disconnect();
+        }
+
+        spAudioOutput.reset(new QAudioOutput(format));
+        spOutputDevice.reset(new WavOutput(spArrData));
+
+        WavOutput* od = spOutputDevice.data();
+        QObject::connect(od, &WavOutput::sgFinish, [msgItem, spArrData](){
+            spAudioOutput->stop();
+            delete spArrData;
+            msgItem->stopVoice();
+        });
+        spAudioOutput->start(spOutputDevice.data());
+    }
+}
+#endif
 
 void ChatViewMainPanel::playVoice(const std::string &localFile, VoiceMessageItem *msgItem)
 {
-    if(_pVoicePlayer)
+#ifndef _WINDOWS
+    if (_pVoicePlayer)
     {
-        if(_pVoicePlayer->state() != QMediaPlayer::PlayingState)
+        if (_pVoicePlayer->state() != QMediaPlayer::PlayingState)
             _pVoicePlayer->stop();
 
         _pVoicePlayer->setMedia(QUrl::fromLocalFile(localFile.data()));
         _pVoicePlayer->play();
 
-        connect(_pVoicePlayer, &QMediaPlayer::stateChanged, [msgItem](QMediaPlayer::State newState){
-            if(newState == QMediaPlayer::StoppedState)
+        connect(_pVoicePlayer, &QMediaPlayer::stateChanged, [msgItem](QMediaPlayer::State newState) {
+            if (newState == QMediaPlayer::StoppedState)
             {
                 msgItem->stopVoice();
             }
-        });
+            });
     }
+#else
+    play(localFile.data(), msgItem);
+#endif // !_WINDOWS
+
 }
 
 ///**
@@ -2071,7 +2133,7 @@ void dealImage(QString& strRet, QString imagePath, const QString& imageLink)
         imagePath = srcImgPath;
 
     // load image
-    std::string realSuffix = QTalk::qimage::instance().getRealImageSuffix(imagePath).toStdString();
+    std::string realSuffix = QTalk::qimage::getRealImageSuffix(imagePath).toStdString();
     QImage image;
     image.load(imagePath, realSuffix.data());
     int w = image.width();
@@ -2196,7 +2258,7 @@ void ChatViewMainPanel::scanQRcCodeImage(const QString &imgPath) {
 
     if(_pQRcode && _pQRcode->_pScanQRcode)
     {
-        QPixmap pix = QTalk::qimage::instance().loadImage(imgPath, false);
+        QPixmap pix = QTalk::qimage::loadImage(imgPath, false);
         _pQRcode->_pScanQRcode->scanPixmap(pix, true);
     }
 }
@@ -2230,6 +2292,9 @@ void ChatViewMainPanel::preSendMessage(const QTalk::Entity::UID& uid,
         emit g_pMainPanel->sgUserSendMessage();
         // 消息处理
         ChatMsgManager::preSendMessage(message);
+        //
+        if(_his_input_data.contains(uid))
+            _his_input_data.remove(uid);
     }
 }
 
@@ -2400,7 +2465,7 @@ void ChatViewMainPanel::sendFileMessage(const QTalk::Entity::UID& uid,
         message.UserName = Platform::instance().getSelfName();
         message.FileName = fileName.toStdString();
         message.FileSize = fileSize.toStdString();
-        QFuture<void> future = QtConcurrent::run([tmp_file_path, &message](){
+        QFuture<void> future = QT_CONCURRENT_FUNC([tmp_file_path, &message](){
             message.FileMd5 = QTalk::utils::getFileMd5(tmp_file_path.toLocal8Bit().data());
         });
 
@@ -2463,6 +2528,9 @@ void ChatViewMainPanel::sendFileMessage(const QTalk::Entity::UID& uid,
             }
 
             if (!url.empty()) {
+
+                if(_pViewItem && _pViewItem->_uid == uid && _pViewItem->_pChatMainWgt)
+                    emit _pViewItem->_pChatMainWgt->sgUploadFileSuccess(msgId.data(), url.data());
 
                 cJSON *content = cJSON_CreateObject();
                 cJSON_AddStringToObject(content, "FILEID", message.MsgId.c_str());
@@ -2583,15 +2651,15 @@ void ChatViewMainPanel::sendAudioVideoMessage(const QTalk::Entity::UID& uid,
 
 void ChatViewMainPanel::postInterface(const std::string &url, const std::string &params)
 {
-    QtConcurrent::run(&ChatMsgManager::postInterface, url, params);
+    QT_CONCURRENT_FUNC(&ChatMsgManager::postInterface, url, params);
 }
 
 void ChatViewMainPanel::sendGetRequest(const std::string &url) {
-    QtConcurrent::run(&ChatMsgManager::sendGetRequest, url);
+    QT_CONCURRENT_FUNC(&ChatMsgManager::sendGetRequest, url);
 }
 
 void ChatViewMainPanel::updateMessageExtendInfo(const std::string &msgId, const string &info) {
-    QtConcurrent::run(&ChatMsgManager::updateMessageExtendInfo, msgId, info);
+    QT_CONCURRENT_FUNC(&ChatMsgManager::updateMessageExtendInfo, msgId, info);
 }
 
 //
@@ -2654,7 +2722,7 @@ void ChatViewMainPanel::start2Talk_old(const std::string &peerId, bool isVideo, 
 
     if(_pAudioVideoManager)
     {
-        QFuture<std::string> future = QtConcurrent::run([]() -> std::string{
+        QFuture<std::string> future = QT_CONCURRENT_FUNC([]() -> std::string{
             QString url = QString("%1/rtc?username=%2")
                     .arg(NavigationManager::instance().getVideoUrl().data())
                     .arg(Platform::instance().getClientAuthKey().data());
@@ -2671,7 +2739,7 @@ void ChatViewMainPanel::start2Talk_old(const std::string &peerId, bool isVideo, 
 
 //
 void ChatViewMainPanel::onSendSignal(const QString &json, const QString& id) {
-    QtConcurrent::run([this, json, id](){
+    QT_CONCURRENT_FUNC([this, json, id](){
 
         if(_pAudioVideoManager)
         {
@@ -2850,8 +2918,14 @@ void ChatViewMainPanel::eraseSending(const std::string &msgId) {
 }
 
 bool ChatViewMainPanel::isSending(const std::string &msgId) {
-    QMutexLocker locker(&_sendingMutex);
-    return _sending.find(msgId) != _sending.end();
+    bool isSending = false;
+    {
+        QMutexLocker locker(&_sendingMutex);
+        isSending = _sending.find(msgId) != _sending.end();
+    }
+    if(isSending)
+        eraseSending(msgId);
+    return isSending;
 }
 
 
@@ -2900,7 +2974,7 @@ void ChatViewMainPanel::downloadFileWithProcess(const QString &url, const QStrin
         delete t;
         delete last;
 
-        if (_pViewItem && _pViewItem->_pChatMainWgt && _pViewItem->_pSearchMainWgt) {
+        if (_pViewItem && _pViewItem->_pChatMainWgt) {
             emit _pViewItem->_pChatMainWgt->sgDownloadFileSuccess(key);
         }
     });

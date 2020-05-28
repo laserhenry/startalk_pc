@@ -54,7 +54,7 @@ void UserMedalItem::setUserMedal(const QTalk::Entity::ImMedalList &medalInfo, in
 
 void UserMedalItem::paintEvent(QPaintEvent * e)
 {
-    QPixmap pixmap = QTalk::qimage::instance().loadImage(_imagePath, false);
+    QPixmap pixmap = QTalk::qimage::loadImage(_imagePath, false);
     QPainter painter(this);
     painter.setRenderHints(QPainter::Antialiasing, true);
     painter.setRenderHints(QPainter::SmoothPixmapTransform, true);

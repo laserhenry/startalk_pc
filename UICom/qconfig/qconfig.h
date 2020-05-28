@@ -28,6 +28,12 @@ namespace QTalk
         QList<QPair<QString, QString>> attributes;  // 所有属性
 
         StConfig()= default;
+
+        ~StConfig() {
+            for(const auto* c : children)
+                delete c;
+        }
+
         explicit StConfig(QString name) : tagName(std::move(name)){}
         //
         bool hasChild(const QString& childTagName)

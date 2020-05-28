@@ -30,7 +30,7 @@ set(SOURCE_FILES
         LiteMessageBox.cpp
         LiteMessageBox.h
         NavigationItem.cpp
-        NavigationItem.h MedalWgt.cpp MedalWgt.h TitleBar.cpp TitleBar.h ImageLabel.cpp ImageLabel.h)
+        NavigationItem.h MedalWgt.cpp MedalWgt.h TitleBar.cpp TitleBar.h ImageLabel.cpp ImageLabel.h NTMessageBox.cpp NTMessageBox.h)
 
 if (APPLE)
     ADD_DEFINITIONS(-D_MACOS)
@@ -51,4 +51,4 @@ set(CMAKE_DEBUG_POSTFIX "d")
 ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
 #添加链接库
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets UICom QtUtil Platform EventBus)
+target_link_libraries(${PROJECT_NAME} Qt5::Widgets SUICom QtUtil Platform EventBus)

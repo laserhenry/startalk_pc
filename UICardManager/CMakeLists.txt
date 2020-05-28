@@ -60,4 +60,4 @@ target_link_libraries(${PROJECT_NAME}
         EventBus
         Platform
         QtUtil
-        UICom)
+        SUICom)

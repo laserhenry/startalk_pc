@@ -176,12 +176,6 @@ void CommonTrdInfoItem::initReceiveLayout() {
     leftLay->setContentsMargins(_leftMargin);
     leftLay->setSpacing(_leftSpacing);
     mainLay->addLayout(leftLay);
-    if (!_headLab) {
-        _headLab = new HeadPhotoLab;
-    }
-    _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
-    _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     leftLay->addItem(vSpacer);
@@ -328,20 +322,20 @@ void CommonTrdInfoItem::initContentLayout() {
         connect(this, &CommonTrdInfoItem::sgDownloadedIcon, this, &CommonTrdInfoItem::setIcon, Qt::QueuedConnection);
         QString imgUrl = jsonObject.value("img").toString();
         QString placeHolder = ":/chatview/image1/defaultShareIcon.png";
-        QPixmap defaultPix = QTalk::qimage::instance().loadImage(placeHolder, true, true, 40, 40);
+        QPixmap defaultPix = QTalk::qimage::loadImage(placeHolder, true, true, 40, 40);
         if (imgUrl.isEmpty()) {
             _iconLab->setPixmap(defaultPix);
         } else {
             std::string imgPath = QTalk::GetImagePathByUrl(imgUrl.toStdString());
             if(QFile::exists(imgPath.data()))
             {
-                _iconLab->setPixmap(QTalk::qimage::instance().loadImage(imgPath.data(), false, true, 40, 40));
+                _iconLab->setPixmap(QTalk::qimage::loadImage(imgPath.data(), false, true, 40, 40));
             }
             else
             {
                 _iconLab->setPixmap(defaultPix);
                 QPointer<CommonTrdInfoItem> pThis(this);
-                g_pMainPanel->pool().enqueue([pThis, imgUrl](){
+                QT_CONCURRENT_FUNC([pThis, imgUrl](){
                     std::string downloadFile = ChatMsgManager::getLocalFilePath(imgUrl.toStdString());
                     if(pThis && !downloadFile.empty())
                         emit pThis->sgDownloadedIcon(QString::fromStdString(downloadFile));
@@ -358,7 +352,7 @@ void CommonTrdInfoItem::initContentLayout() {
 }
 
 void CommonTrdInfoItem::setIcon(const QString &iconPath) {
-    QPixmap pixmap = QTalk::qimage::instance().loadImage(iconPath, false, true, 40, 40);
+    QPixmap pixmap = QTalk::qimage::loadImage(iconPath, false, true, 40, 40);
     _iconLab->setPixmap(pixmap);
 }
 

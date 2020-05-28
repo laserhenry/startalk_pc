@@ -20,5 +20,5 @@ bool MessageSortModel::lessThan(const QModelIndex &source_left, const QModelInde
     qint64 leftTime = source_left.data(SEARCH_USER_MSG_TIME).toLongLong();
     qint64 rightTime = source_right.data(SEARCH_USER_MSG_TIME).toLongLong();
 
-    return leftTime < rightTime;
+    return leftTime <= rightTime;
 }

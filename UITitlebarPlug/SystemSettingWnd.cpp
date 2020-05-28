@@ -39,8 +39,8 @@
 #include <QSettings>
 
 SystemSettingWnd::SystemSettingWnd(TitlebarMsgManager *messageManager,QWidget *parent)
-        :_pMessageManager(messageManager),
-        UShadowDialog(parent, true) {
+        : UShadowDialog(parent, true),
+        _pMessageManager(messageManager){
 
     initUi();
 }
@@ -279,7 +279,7 @@ void SystemSettingWnd::initMsgNotify(QVBoxLayout* vlayout) {
     nativeNotify->setVisible(false);
 #endif
 
-	auto* msgAudioLay = new QHBoxLayout(this);
+	auto* msgAudioLay = new QHBoxLayout;
 	auto* changeSoundBtn = new QPushButton(tr("更换提示音"));
 	changeSoundBtn->setObjectName("SettingBtn");
     msgAudioLay->addWidget(msgAudioCK);

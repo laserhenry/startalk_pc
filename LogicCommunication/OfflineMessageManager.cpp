@@ -334,7 +334,6 @@ void OfflineMessageManager::updateGroupMasks() {
     }
     catch (std::exception &e) {
         error_log("updateGroupMasks exception {0}", e.what());
-        throw e.what();
     }
 }
 
@@ -395,7 +394,7 @@ void OfflineMessageManager::getOfflineChatMessageJson(long long chatTimestamp, i
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
     cJSON_Delete(jsonObject);
     //
-    auto callback = [this, chatTimestamp, count, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
+    auto callback = [this, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
             (int code, std::string responeseData) {
         info_log("{0}  {1}", code, responeseData);
         std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;

@@ -114,8 +114,8 @@ protected:
             }
 
             if (!QFile(headPath).isOpen()) {
-                int dpi = QTalk::qimage::instance().dpi();
-                QPixmap pixmap = QTalk::qimage::instance().loadImage(headPath, true, true, 22 * dpi);
+                int dpi = QTalk::qimage::dpi();
+                QPixmap pixmap = QTalk::qimage::loadImage(headPath, true, true, 22 * dpi);
                 QPainterPath path;
                 QRect headRect(rect.x(), rect.y() + 8, 22, 22);
                 path.addEllipse(headRect);
@@ -199,9 +199,9 @@ public:
         _pMemberView->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
         _pMemberView->horizontalHeader()->setSelectionMode(QHeaderView::NoSelection);
         _pMemberView->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
-        _pSrcModel = new QStandardItemModel;
-        _pModel = new GroupItemPopSortModel;
-        _pItemDelegate = new GroupItemPopDelegate;
+        _pSrcModel = new QStandardItemModel(this);
+        _pModel = new GroupItemPopSortModel(this);
+        _pItemDelegate = new GroupItemPopDelegate(this);
         _pModel->setSourceModel(_pSrcModel);
         _pMemberView->setModel(_pModel);
         _pMemberView->setItemDelegate(_pItemDelegate);

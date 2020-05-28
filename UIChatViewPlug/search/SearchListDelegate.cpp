@@ -50,7 +50,7 @@ void SearchListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
             painter->setPen(Qt::NoPen);
             QRect headRect(rect.x() + 16, (rect.height() - HEAD_WIDTH) / 2 + rect.y(),
                            HEAD_WIDTH, HEAD_WIDTH);
-            int dpi = QTalk::qimage::instance().dpi();
+            int dpi = QTalk::qimage::dpi();
 
             QString icon = index.data(EM_SEARCH_LIST_DATA_HEAD).toString();
             QFileInfo iconInfo(icon);
@@ -62,7 +62,7 @@ void SearchListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
                 icon = ":/QTalk/image1/headPortrait.png";
 #endif
             }
-            QPixmap pixmap = QTalk::qimage::instance().loadImage(icon, true, true, HEAD_WIDTH * dpi);
+            QPixmap pixmap = QTalk::qimage::loadImage(icon, true, true, HEAD_WIDTH * dpi);
             QPainterPath path;
             painter->setBrush(QColor(240, 240, 240, 200));
             painter->drawEllipse(headRect);

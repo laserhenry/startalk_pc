@@ -67,7 +67,7 @@ void LocalEmoticon::initUi()
 	layout->addWidget(_pLocalEmoLst);
 	layout->addWidget(_pStackEmoView);
 	_pLocalEmoLst->setFixedWidth(180);
-	setLayout(layout);
+//	setLayout(layout);
 	//
 	_pLocalEmoLst->setFrameShape(QFrame::NoFrame);
 	_pLocalEmoLst->setFocusPolicy(Qt::NoFocus);

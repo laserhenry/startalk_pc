@@ -63,7 +63,7 @@ SystemTray::SystemTray(MainWindow* mainWnd)
 
     //
     connect(_pSysTrayIcon, &QSystemTrayIcon::activated, this, &SystemTray::activeTray);
-    connect(_popWnd, &SystemTrayPopWnd::sgQuit, _pMainWindow, &MainWindow::systemQuit);
+    connect(_popWnd, &SystemTrayPopWnd::sgQuit, _pMainWindow, &MainWindow::systemQuit, Qt::QueuedConnection);
     connect(_popWnd, &SystemTrayPopWnd::sgJumtoSession, _pMainWindow, &MainWindow::sgJumtoSession);
     connect(_popWnd, &SystemTrayPopWnd::sgJumtoSession, [this](const StSessionInfo&){_pMainWindow->wakeUpWindow();});
     connect(_popWnd, &SystemTrayPopWnd::sgFeedback, this, &SystemTray::onSendLog);
@@ -81,7 +81,7 @@ SystemTray::SystemTray(MainWindow* mainWnd)
 
     connect(_timer, &QTimer::timeout, this, &SystemTray::onTimer);
 
-	connect(sysQuitAct, &QAction::triggered, _pMainWindow, &MainWindow::systemQuit);
+	connect(sysQuitAct, &QAction::triggered, _pMainWindow, &MainWindow::systemQuit, Qt::QueuedConnection);
 	connect(sendLog, &QAction::triggered, this, &SystemTray::onSendLog);
 	connect(showWmdAct, &QAction::triggered, [this]()
 		{
@@ -286,9 +286,7 @@ void SystemTray::onSendLog()
         //
         bool ret = JlCompress::compressDir(logZip, logBasePath);
         if (ret) {
-            if (_pMainWindow && _pMainWindow->_pMessageManager) {
-                _pMainWindow->_pMessageManager->sendLogReport("quick report", logZip.toStdString());
-            }
+            QTalkMsgManager::sendLogReport("quick report", logZip.toStdString());
         }
     });
 }

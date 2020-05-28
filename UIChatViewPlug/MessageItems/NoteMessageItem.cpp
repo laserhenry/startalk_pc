@@ -126,14 +126,14 @@ void NoteMessageItem::initContentLayout() {
 
         connect(this, &NoteMessageItem::sgDownloadedIcon, this, &NoteMessageItem::setIcon, Qt::QueuedConnection);
         QString placeHolder = ":/chatview/image1/defaultShareIcon.png";
-        QPixmap defaultPix = QTalk::qimage::instance().loadImage(placeHolder, true, true, 80, 40);
+        QPixmap defaultPix = QTalk::qimage::loadImage(placeHolder, true, true, 80, 40);
         if (imgUrl.isEmpty()) {
             iconLabel->setPixmap(defaultPix);
         } else {
             std::string imgPath = QTalk::GetImagePathByUrl(imgUrl.toStdString());
             if(QFile::exists(imgPath.data()))
             {
-                iconLabel->setPixmap(QTalk::qimage::instance().loadImage(imgPath.data(), false, true, 80, 40));
+                iconLabel->setPixmap(QTalk::qimage::loadImage(imgPath.data(), false, true, 80, 40));
             }
             else
             {
@@ -209,12 +209,6 @@ void NoteMessageItem::initReceiveLayout() {
     leftLay->setContentsMargins(_leftMargin);
     leftLay->setSpacing(_leftSpacing);
     mainLay->addLayout(leftLay);
-    if (!_headLab) {
-        _headLab = new HeadPhotoLab;
-    }
-    _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
-    _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     leftLay->addItem(vSpacer);
@@ -281,6 +275,6 @@ void NoteMessageItem::mousePressEvent(QMouseEvent *event) {
 }
 
 void NoteMessageItem::setIcon(const QString &iconPath) {
-    QPixmap pixmap = QTalk::qimage::instance().loadImage(iconPath, false, true, 80, 40);
+    QPixmap pixmap = QTalk::qimage::loadImage(iconPath, false, true, 80, 40);
     iconLabel->setPixmap(pixmap);
 }

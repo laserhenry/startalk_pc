@@ -31,11 +31,14 @@ void HotLinesConfig::getVirtualUserRole(){
     cJSON_Delete(obj);
     //
     std::set<std::string> hotlines;
-    auto callback = [this, &hotlines](int code, const std::string &responseData) {
+    auto callback = [ &hotlines](int code, const std::string &responseData) {
         if (code == 200) {
             cJSON* json = cJSON_Parse(responseData.c_str());
             if(nullptr == json)
+            {
                 error_log("error json {0}", responseData);
+                return;
+            }
 
             cJSON_bool ret = QTalk::JSON::cJSON_SafeGetBoolValue(json, "ret");
             if(ret)
@@ -43,13 +46,13 @@ void HotLinesConfig::getVirtualUserRole(){
                 cJSON* data = cJSON_GetObjectItem(json, "data");
                 cJSON* allhotlines = cJSON_GetObjectItem(data, "allhotlines");
 
-
                 cJSON* item = nullptr;
                 cJSON_ArrayForEach(item, allhotlines) {
                     if(item && cJSON_IsString(item))
                         hotlines.insert(item->valuestring);
                 }
             }
+            cJSON_Delete(json);
         }
     };
     if (_pComm) {
@@ -71,10 +74,10 @@ void HotLinesConfig::getServiceSeat() {
     std::string strUrl = url.str();
 
     //
-    auto callback = [this](int code, const std::string &responseData) {
+    auto callback = [](int code, const std::string &responseData) {
 
         if (code == 200) {
-            Platform::instance().setSeats(responseData.c_str());
+            Platform::instance().setSeats(responseData);
         }
     };
     std::string qvt = Platform::instance().getQvt();
@@ -107,7 +110,7 @@ void HotLinesConfig::setServiceSeat(int sid, int state) {
     std::string strUrl = url.str();
 
     //
-    auto callback = [this](int code, const std::string &responseData) {
+    auto callback = [](int code, const std::string &responseData) {
 
         if (code == 200) {
 
@@ -264,7 +267,7 @@ void HotLinesConfig::updateQuickReply() {
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
     cJSON_Delete(jsonObject);
     //
-    auto callback = [this](int code, const std::string &responseData) {
+    auto callback = [](int code, const std::string &responseData) {
         if (code == 200) {
             LogicManager::instance()->getDatabase()->batchInsertQuickReply(responseData);
         }
@@ -315,7 +318,7 @@ void HotLinesConfig::sendProduct(const std::string& username, const std::string&
 
     debug_log("sendProduct:" + postData);
 
-    auto callback = [this](int code, const std::string &responseData) {
+    auto callback = [](int code, const std::string &responseData) {
         if (code == 200) {
 
         }
@@ -348,7 +351,7 @@ void HotLinesConfig::sendWechat(const QTalk::Entity::UID &uid) {
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
     cJSON_Delete(jsonObject);
 
-    auto callback = [this](int code, const std::string &responseData) {
+    auto callback = [](int code, const std::string &responseData) {
         if (code == 200) {
 
         }
@@ -364,7 +367,7 @@ void HotLinesConfig::sendWechat(const QTalk::Entity::UID &uid) {
 
 void HotLinesConfig::getHotLineMessageList(const std::string &xmppId) {
 
-    QTalk::Entity::JID jid(xmppId.data());
+    QTalk::Entity::JID jid(xmppId);
 
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
@@ -373,7 +376,7 @@ void HotLinesConfig::getHotLineMessageList(const std::string &xmppId) {
         << "&m_from=" << jid.basename()
         << "&m_to=" << Platform::instance().getSelfXmppId();
 
-    auto callback = [this](int code, const std::string &responseData) {
+    auto callback = [](int code, const std::string &responseData) {
         if (code == 200) {
 
         }

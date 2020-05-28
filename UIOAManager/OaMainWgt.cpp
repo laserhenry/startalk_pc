@@ -21,17 +21,14 @@
 #include "../UICom/StyleDefine.h"
 
 using namespace QTalk;
-CellWgtItem::CellWgtItem(QString name, QString icon, QString  url, QWidget *parent)
-    :QFrame(parent), _name(std::move(name)), _icon(std::move(icon)), _url(std::move(url))
+CellWgtItem::CellWgtItem(QString name, QString icon, QWidget *parent)
+    :QFrame(parent), _name(std::move(name)), _icon(std::move(icon))
 {
     setMinimumSize(100, 100);
     setFrameShape(QFrame::NoFrame);
 }
 
-CellWgtItem::~CellWgtItem()
-{
-
-}
+CellWgtItem::~CellWgtItem() = default;
 
 /**
  *
@@ -39,17 +36,7 @@ CellWgtItem::~CellWgtItem()
  */
 void CellWgtItem::mousePressEvent(QMouseEvent* e)
 {
-    QUrl url(_url);
-    if(AppSetting::instance().getOpenOaLinkWithAppBrowser())
-    {
-        MapCookie cookie;
-        cookie["q_u"] = Platform::instance().getSelfUserId().data();
-        WebService::loadUrl(url, true, cookie);
-    }
-    else
-    {
-        QDesktopServices::openUrl(url);
-    }
+    emit itemClicked();
     QFrame::mousePressEvent(e);
 }
 
@@ -61,7 +48,7 @@ void CellWgtItem::paintEvent(QPaintEvent* e)
 {
     QPainter painter(this);
     std::string localPath = QTalk::getOAIconPath(_icon.toStdString());
-    QPixmap pixmap = QTalk::qimage::instance().loadImage(QString::fromLocal8Bit(localPath.data()), false, true, 40, 40);
+    QPixmap pixmap = QTalk::qimage::loadImage(QString::fromLocal8Bit(localPath.data()), false, true, 40, 40);
 
     painter.setRenderHints(QPainter::Antialiasing, true);
     painter.setRenderHints(QPainter::SmoothPixmapTransform, true);
@@ -81,10 +68,7 @@ OaMainWgt::OaMainWgt(const int& id, QString name, const std::vector<StMember>& m
     initUi();
 }
 
-OaMainWgt::~OaMainWgt()
-{
-
-}
+OaMainWgt::~OaMainWgt() = default;
 
 /**
  *
@@ -93,19 +77,19 @@ void OaMainWgt::initUi()
 {
     setObjectName("OaMainWgt");
     //
-    QFrame* topFrm = new QFrame(this);
+    auto* topFrm = new QFrame(this);
     topFrm->setObjectName("OaMainWgt_topFrm");
     auto* topLay = new QHBoxLayout(topFrm);
     topLay->setMargin(0);
     topLay->setSpacing(0);
-    QLabel* titleLabel = new QLabel(_name, this);
+    auto* titleLabel = new QLabel(_name, this);
     titleLabel->setContentsMargins(10, 0, 0, 0);
     titleLabel->setObjectName("OaMainWgt_titleLab");
     titleLabel->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
     topLay->addWidget(titleLabel);
     titleLabel->setFixedHeight(50);
     //
-    QFrame* mainFrm = new QFrame(this);
+    auto* mainFrm = new QFrame(this);
     _pTabWgt = new QTableWidget();
     _pTabWgt->setFrameShape(QFrame::NoFrame);
     _pTabWgt->horizontalHeader()->setVisible(false);
@@ -137,10 +121,29 @@ void OaMainWgt::initUi()
             _pTabWgt->insertRow(tmpRow);
             _pTabWgt->setRowHeight(tmpRow, 100);
         }
-        CellWgtItem* wgt = new CellWgtItem(QString::fromStdString(it->memberName),
-                QString::fromStdString(it->memberIcon), QString::fromStdString(it->memberAction), this);
-        _pTabWgt->setCellWidget(tmpRow, tmpColumn, wgt);
+        auto* wgt = new CellWgtItem(QString::fromStdString(it->memberName), QString::fromStdString(it->memberIcon), this);
 
+        connect(wgt, &CellWgtItem::itemClicked, [this, it](){
+
+            if( StOAUIData::StMember::ACTION_TYPE_H5 == it->action_type)
+            {
+                QUrl url(it->memberAction.data());
+                if(AppSetting::instance().getOpenOaLinkWithAppBrowser())
+                {
+                    MapCookie cookie;
+                    cookie["q_u"] = Platform::instance().getSelfUserId().data();
+                    WebService::loadUrl(url, true, cookie);
+                }
+                else
+                    QDesktopServices::openUrl(url);
+            }
+            else if (StOAUIData::StMember::ACTION_TYPE_NATIVE == it->action_type)
+            {
+
+            }
+        });
+
+        _pTabWgt->setCellWidget(tmpRow, tmpColumn, wgt);
         if (++tmpColumn == 6)
         {
             tmpColumn = 0;

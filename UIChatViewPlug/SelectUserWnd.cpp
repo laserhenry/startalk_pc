@@ -111,8 +111,8 @@ SelectUserWndDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
 
     if(!QFile(headPath).isOpen())
     {
-        int dpi = QTalk::qimage::instance().dpi();
-        QPixmap pixmap = QTalk::qimage::instance().loadImage(headPath, true, true, HEAD_WIDTH * dpi);
+        int dpi = QTalk::qimage::dpi();
+        QPixmap pixmap = QTalk::qimage::loadImage(headPath, true, true, HEAD_WIDTH * dpi);
         QPainterPath path;
         QRect headRect(rect.x() + 13, rect.y() + 8, HEAD_WIDTH, HEAD_WIDTH);
         path.addEllipse(headRect);
@@ -171,7 +171,11 @@ SelectUserWnd::SelectUserWnd(QWidget* parent)
     _loop = new QEventLoop(this);
 }
 
-SelectUserWnd::~SelectUserWnd() = default;
+SelectUserWnd::~SelectUserWnd()
+{
+    if(_loop->isRunning())
+        _loop->quit();
+}
 
 void SelectUserWnd::initUi()
 {

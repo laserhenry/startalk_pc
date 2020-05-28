@@ -47,7 +47,7 @@ void StyleSheetManager::setStyleSheets(int theme, const std::string& font)
     // 设置app qss
     setStylesForApp(theme, font);
     //
-    std::shared_ptr<QMap<QString, QObject *> > plugins = UIGolbalManager::GetUIGolbalManager()->GetAllPluginInstanceQt();
+    std::shared_ptr<QMap<QString, QObject *> > plugins = UIGolbalManager::getUIGolbalManager()->getAllPluginInstanceQt();
     for (const QString& pluginName : plugins->keys()) {
         QObject * plugin = plugins->value(pluginName);
         if (plugin)
@@ -128,7 +128,7 @@ void StyleSheetManager::setStyleSheetForPlugin(const QString& plgName, int theme
     if (QFile::exists(styleSheetPath))
     {
         QFile file(styleSheetPath);
-        QObject* plugin = UIGolbalManager::GetUIGolbalManager()->GetPluginInstanceQt(plgName);
+        QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt(plgName);
         if (plugin)
         {
             auto *plug = dynamic_cast<UIPluginInterface *>(plugin);

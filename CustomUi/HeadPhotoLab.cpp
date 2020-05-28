@@ -56,7 +56,7 @@ void HeadPhotoLab::setHead(const QString& headPath, int radius, bool isGrey, boo
 void HeadPhotoLab::paintEvent(QPaintEvent *e)
 {
     //
-    int dpi = QTalk::qimage::instance().dpi();
+    int dpi = QTalk::qimage::dpi();
     QPixmap pixmap;
     if(_mov)
     {
@@ -66,7 +66,7 @@ void HeadPhotoLab::paintEvent(QPaintEvent *e)
             if(index >= _pixmap.size())
             {
                 pixmap = _mov->currentPixmap();
-                pixmap = QTalk::qimage::instance().scaledPixmap(pixmap, _radius * dpi * 2);
+                pixmap = QTalk::qimage::scaledPixmap(pixmap, _radius * dpi * 2);
                 _pixmap.push_back(pixmap);
             }
             else
@@ -78,7 +78,7 @@ void HeadPhotoLab::paintEvent(QPaintEvent *e)
     {
         if(_pixmap.empty())
         {
-            pixmap = QTalk::qimage::instance().loadImage(_imagePath, true, true, _radius * 2 * dpi);
+            pixmap = QTalk::qimage::loadImage(_imagePath, true, true, _radius * 2 * dpi);
             _pixmap.push_back(pixmap);
         }
         else
@@ -125,7 +125,7 @@ void HeadPhotoLab::initMovie() {
     }
     if(_startMovie && !_imagePath.isEmpty())
     {
-        QString suff = QTalk::qimage::instance().getRealImageSuffix(_imagePath);
+        QString suff = QTalk::qimage::getRealImageSuffix(_imagePath);
         if(suff == "GIF")
         {
             _mov = new QMovie(_imagePath);
@@ -157,4 +157,10 @@ void HeadPhotoLab::startMovie() {
 void HeadPhotoLab::stopMovie() {
     _startMovie = false;
     initMovie();
+    if(_mov)
+    {
+        _mov->stop();
+        delete _mov;
+        _mov = nullptr;
+    }
 }

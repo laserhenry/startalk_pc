@@ -33,7 +33,7 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
     QString iconPath = index.data(EM_SEARCH_DATATYPE_ICONPATH).toString();
     QString staff = index.data(EM_SEARCH_DATATYPE_STAFF).toString();
 
-    QPixmap icon = QTalk::qimage::instance().loadCirclePixmap(iconPath, radius * QTalk::qimage::instance().dpi());
+    QPixmap icon = QTalk::qimage::loadCirclePixmap(iconPath, radius * QTalk::qimage::dpi());
     painter->setRenderHints(QPainter::Antialiasing, true);
     painter->setRenderHints(QPainter::SmoothPixmapTransform, true);
     painter->drawPixmap(QRect(rect.x(), rect.y() + (rect.height() - radius * 2) / 2, radius * 2, radius * 2), icon);
@@ -50,8 +50,8 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
     QString picPath = isChecked ? ":/GroupManager/image1/checkbox_checked.png"
                             : ":/GroupManager/image1/checkbox_unchecked.png";
 
-    QPixmap checkIcon = QTalk::qimage::instance().loadCirclePixmap(picPath,
-                                                                   10 * QTalk::qimage::instance().dpi());
+    QPixmap checkIcon = QTalk::qimage::loadCirclePixmap(picPath,
+                                                                   10 * QTalk::qimage::dpi());
     painter->drawPixmap(pixRect, checkIcon);
 
     painter->restore();

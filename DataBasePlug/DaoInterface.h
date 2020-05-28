@@ -17,7 +17,7 @@ public:
     virtual bool clearData() = 0;
 
 protected:
-    qtalk::sqlite::database *_pSqlDb;
+    qtalk::sqlite::database *_pSqlDb {};
 };
 
 #endif //QTALK_V2_DAOINTERFACE_H

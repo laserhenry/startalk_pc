@@ -1,12 +1,4 @@
-if (ATALK STREQUAL "ON")
-    project(ATalk)
-elseif (STARTALK STREQUAL "ON")
-    project(StarTalk)
-elseif (QCHAT STREQUAL "ON")
-    project(QChat)
-else ()
-    project(QTalk)
-endif ()
+project(StarTalk)
 
 include_directories(.)
 # 打开Qt的Moc功能和ui文件QRC文件处理功能
@@ -43,15 +35,8 @@ else ()
     set(PLATFORM_SOURCE
             HotKey/qhotkey_win.cpp)
 
-    if (ATALK STREQUAL "ON")
-        file(GLOB SourceFiles *.cpp icon/QTalk.rc)
-    elseif (STARTALK STREQUAL "ON")
-        file(GLOB SourceFiles *.cpp icon/Startalk.rc)
-    elseif (QCHAT STREQUAL "ON")
-        file(GLOB SourceFiles *.cpp icon/QChat.rc)
-    else ()
-        file(GLOB SourceFiles *.cpp icon/QTalk.rc)
-    endif ()
+    file(GLOB SourceFiles *.cpp icon/Startalk.rc)
+
 endif ()
 
 
@@ -111,7 +96,7 @@ if (WIN32)
             libcurl
             Platform
             LogicManager
-            UICom
+            SUICom
             quazip
             breakpad
             )
@@ -126,7 +111,7 @@ else ()
             EventBus
             Platform
             LogicManager
-            UICom
+            SUICom
             pthread
             quazip
             breakpad)
@@ -139,16 +124,7 @@ if (APPLE)
                 MACOSX_BUNDLE TRUE
                 )
         set_property(TARGET ${PROJECT_NAME} PROPERTY MACOSX_BUNDLE_ICON_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.icos)
-        if (STARTALK STREQUAL "ON")
-            message("startalk")
-            set_property(TARGET ${PROJECT_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/startalk.info.plist)
-        elseif(QCHAT STREQUAL "ON")
-            message("qchat")
-            set_property(TARGET ${PROJECT_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/qchat.info.plist)
-        else()
-            message("qtalk")
-            set_property(TARGET ${PROJECT_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in)
-        endif ()
+        set_property(TARGET ${PROJECT_NAME} PROPERTY MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/startalk.info.plist)
         install(TARGETS ${PROJECT_NAME} DESTINATION ${PROJECT_NAME}.app)
     endif ()
 endif ()

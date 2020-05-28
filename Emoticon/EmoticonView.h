@@ -20,6 +20,7 @@ public:
 
 public:
     void setImagePath(const QString& imgPath);
+    void releaseView();
 
 protected:
     void paintEvent(QPaintEvent* e) override;

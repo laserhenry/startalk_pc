@@ -21,6 +21,8 @@ endif ()
 find_package(Qt5Widgets)
 find_package(Qt5WebEngineWidgets)
 find_package(Qt5MultimediaWidgets)
+
+find_package(Qt5Multimedia)
 find_package(Qt5Network)
 find_package(Qt5Concurrent)
 #
@@ -117,8 +119,6 @@ set(SOURCE_FILES
         QRcode/ScanMainFrm.h
         QRcode/TipButton.cpp
         QRcode/TipButton.h
-        VoiceHelper.cpp
-        VoiceHelper.h
         MessageItems/VoiceMessageItem.cpp MessageItems/VoiceMessageItem.h
         MessageItems/NoteMessageItem.h MessageItems/NoteMessageItem.cpp
         MessageItems/NoticeMessageItem.h MessageItems/NoticeMessageItem.cpp
@@ -205,7 +205,7 @@ if (APPLE)
             EventBus
             CustomUi
             Screenshot
-            UICom
+            SUICom
             Emoticon
             quazip
             WebService
@@ -214,7 +214,22 @@ if (APPLE)
             )
 
 elseif (WIN32)
-    ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+    include_directories(${PROJECT_SOURCE_DIR}/../Depends/amr/include/)
+    set(WIN_SOURCE_FILE
+            sound/amr/VoiceHelper.cpp
+            sound/amr/VoiceHelper.h
+            sound/amr/WavOutput.cpp
+            sound/amr/WavOutput.h
+            sound/amr/wavreader.c
+            sound/amr/wavreader.h)
+
+    if (PLATFORM_32BIT STREQUAL "ON")
+        link_directories(Depends/amr/lib/x86)
+    else()
+        link_directories(Depends/amr/lib/x64)
+    endif()
+
+    ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${WIN_SOURCE_FILE})
 
     target_link_libraries(${PROJECT_NAME}
             Qt5::Widgets
@@ -222,6 +237,7 @@ elseif (WIN32)
             Qt5::MultimediaWidgets
             Qt5::Network
             Qt5::Concurrent
+            Qt5::Multimedia
             libssl
             libcrypto
             Platform
@@ -229,7 +245,7 @@ elseif (WIN32)
             EventBus
             CustomUi
             Screenshot
-            UICom
+            SUICom
             Emoticon
             quazip
             WebService
@@ -249,7 +265,7 @@ else ()
             EventBus
             CustomUi
             Screenshot
-            UICom
+            SUICom
             Emoticon
             quazip
             WebService

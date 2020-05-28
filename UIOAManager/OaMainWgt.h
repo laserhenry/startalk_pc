@@ -20,25 +20,29 @@ typedef QTalk::StOAUIData::StMember StMember;
  */
 class CellWgtItem : public QFrame
 {
+	Q_OBJECT
 public:
-    CellWgtItem(QString name, QString icon, QString  url, QWidget *parent = nullptr);
+    CellWgtItem(QString name, QString icon, QWidget *parent = nullptr);
     ~CellWgtItem() override;
 
 public:
     void mousePressEvent(QMouseEvent* e) override;
     void paintEvent(QPaintEvent* e) override ;
 
+Q_SIGNALS:
+    void itemClicked();
+
 private:
     QString _name;
     QString _icon;
-    QString _url;
 };
 
 class OAManagerPanel;
 class OaMainWgt : public QFrame
 {
+	Q_OBJECT
 public:
-    OaMainWgt(const int& id, QString  name, const std::vector<StMember>& member, QWidget* parent = nullptr);
+    OaMainWgt(const int& id, QString name, const std::vector<StMember>& member, QWidget* parent = nullptr);
     ~OaMainWgt() override;
 
 private:

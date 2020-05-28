@@ -26,6 +26,8 @@ enum {
     ITEM_DATA_SEARCHINDEX
 };
 
+#define DEM_ALL_STR "all"
+
 //
 int AtSortModel::filterCount = 0;
 AtSortModel::AtSortModel(QObject *parent)
@@ -80,8 +82,9 @@ void AtItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option
 	QString headPath = index.data(ITEM_DATA_ICON).toString();
 	painter->setPen(QTalk::StyleDefine::instance().getNavNameFontColor());
 	QTalk::setPainterFont(painter, AppSetting::instance().getFontLevel());
+	auto name = index.data(ITEM_DATE_NAME).toString();
     painter->drawText(QRect(rect.x() + 35, rect.y(), rect.width() - 35, rect.height()), Qt::AlignLeft | Qt::AlignVCenter,
-            index.data(ITEM_DATE_NAME).toString());
+                      DEM_ALL_STR == name ? tr("全体成员") : name);
 
     QFileInfo headInfo(headPath);
     if(!headInfo.exists() || headInfo.isDir())
@@ -94,8 +97,8 @@ void AtItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option
     }
 	if (!QFile(headPath).isOpen())
 	{
-        int dpi = QTalk::qimage::instance().dpi();
-		QPixmap pixmap = QTalk::qimage::instance().loadImage(headPath, true, true, 24 * dpi);
+        int dpi = QTalk::qimage::dpi();
+		QPixmap pixmap = QTalk::qimage::loadImage(headPath, true, true, 24 * dpi);
 		QPainterPath path;
 		QRect headRect(rect.x() + 5, rect.y() + 3, 24, 24);
 		path.addEllipse(headRect);
@@ -145,9 +148,9 @@ AtMessageView::AtMessageView(InputWgt *inputWgt)
 	_atView->installEventFilter(this);
     _atView->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    _atSrcModel = new QStandardItemModel;
-    _atModel = new AtSortModel();
-    _atItemDelegate = new AtItemDelegate;
+    _atSrcModel = new QStandardItemModel(this);
+    _atModel = new AtSortModel(this);
+    _atItemDelegate = new AtItemDelegate(this);
     _atModel->setSourceModel(_atSrcModel);
     _atModel->setFilterRole(ITEM_DATE_NAME);
     _atView->setModel(_atModel);
@@ -165,6 +168,8 @@ AtMessageView::AtMessageView(InputWgt *inputWgt)
     layout->addWidget(_atView);
 
 	connect(_atItemDelegate, &AtItemDelegate::itemClicked, this, &AtMessageView::confirmAtUser);
+
+    addItem(":/QTalk/image1/defaultGroupHead.png", DEM_ALL_STR, DEM_ALL_STR, DEM_ALL_STR);
 }
 
 AtMessageView::~AtMessageView()
@@ -189,13 +194,17 @@ void AtMessageView::addItem(const QString &icon, const QString& xmppId, const QS
     {
         auto * item = new QStandardItem;
         item->setData(name, ITEM_DATE_NAME);
-        item->setData(QString::fromStdString(QTalk::Entity::JID(xmppId.toStdString()).username()), ITEM_DATA_USERID);
+        item->setData(xmppId.section("@", 0, 0), ITEM_DATA_USERID);
         item->setData(xmppId, ITEM_DATA_XMPPID);
         item->setData(searchIndex, ITEM_DATA_SEARCHINDEX);
 
-        QString headSrc = QString::fromStdString(QTalk::GetHeadPathByUrl(icon.toStdString()));
-
-        item->setData(headSrc, ITEM_DATA_ICON);
+        if(name == DEM_ALL_STR)
+            item->setData(icon, ITEM_DATA_ICON);
+        else
+        {
+            QString headSrc = QString::fromStdString(QTalk::GetHeadPathByUrl(icon.toStdString()));
+            item->setData(headSrc, ITEM_DATA_ICON);
+        }
         _items[xmppId] = item;
         _atSrcModel->appendRow(item);
     }

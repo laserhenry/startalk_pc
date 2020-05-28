@@ -40,6 +40,7 @@ private:
 Q_SIGNALS:
     void setTreeDataFinish();
     void initDataFinish();
+    void sgUpdateSession(const std::vector<QTalk::StShareSession>&);
 
 public slots:
     // 建群
@@ -74,6 +75,7 @@ protected:
     void initStructure();
     void initData();
     void updateUi();
+    void onUpdateSession(const std::vector<QTalk::StShareSession>&);
 
 protected:
     void sendAddGroupMemberMessage(const QString &groupId, const QList<QString> &members, bool = true);
@@ -140,6 +142,8 @@ private:
     QStandardItemModel* _pSearchSrcModel;
     SearchItemSortModel* _pSearchModel;
     SearchItemDelegate* _pSearchItemDelegate;
+
+    std::vector<QStandardItem*> recentItems;
 };
 
 #endif//_UIGROUPMANAGER_H_

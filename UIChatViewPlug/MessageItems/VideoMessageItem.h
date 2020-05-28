@@ -45,7 +45,7 @@ private:
     QLabel *_playBtnLab;
     QLabel *_contentLab;
     VideoMaskFrame *maskFrame;
-    QLabel *btnLable;
+//    QLabel *btnLable;
 
     QSize _headPixSize;
     QMargins _mainMargin;

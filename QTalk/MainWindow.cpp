@@ -14,12 +14,14 @@
 #include <QPropertyAnimation>
 #include <QMenuBar>
 #include <QtConcurrent>
+#include <QScreen>
 #include "../UICom/uicom.h"
 #include "../interface/view/IUITitleBarPlug.h"
 #include "../interface/view/IUINavigationPlug.h"
 #include "../interface/view/IUIChatViewPlug.h"
 #include "../interface/view/IUIGroupManagerPlug.h"
 #include "../interface/view/IUIPictureBroswerPlug.h"
+#include "../interface/view/IUIAddressBookPlug.h"
 #include "../UICom/UIEntity.h"
 #include "../CustomUi/UShadowEffect.h"
 #include "../interface/view/IUICardManagerPlug.h"
@@ -29,16 +31,20 @@
 #include "../UICom/uicom.h"
 #include "MessageManager.h"
 #include "SystemTray.h"
-#include "../interface/view/IUIAddressBookPlug.h"
 #include "../interface/view/IUIOAManagerPlug.h"
 #include "../QtUtil/Utils/Log.h"
 #include "../Platform/AppSetting.h"
 #include "../entity/UID.h"
 #include "../CustomUi/QtMessageBox.h"
 #include "MacApp.h"
+
 #ifdef _WINDOWS
 #include <windows.h>
 #include <windowsx.h>
+#endif
+
+#ifdef _MACOS
+#include <sys/stat.h>
 #endif
 
 #define WIN_STATE "WIN_STATE"
@@ -83,7 +89,6 @@ MainWindow::MainWindow(QWidget *parent) :
     _noOperatorThread(nullptr)
 {
     _pListener = new QTalkMsgListener(this);
-    _pMessageManager = new QTalkMsgManager;
     // 系统设置
     AppSetting::instance();
     //
@@ -123,6 +128,12 @@ MainWindow::MainWindow(QWidget *parent) :
     //
     connect(addNew, &QAction::triggered, this, &MainWindow::sgRunNewInstance);
 #endif
+//    auto screens = qApp->screens();
+//
+//    for(auto* sc : screens)
+//    {
+//        qInfo() << sc->name();
+//    }
 }
 
 
@@ -145,8 +156,8 @@ bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *r
 {
 #ifdef _WINDOWS
 	MSG* msg = (MSG*)message;
-	int pixelRatio = this->devicePixelRatio();
-	pixelRatio = qMax(pixelRatio, 1);
+	double pixelRatio = this->devicePixelRatioF();
+	pixelRatio = qMax(pixelRatio, 1.0);
 	int tempBorderWidth = boundaryWidth;
 	switch (msg->message)
 	{
@@ -202,7 +213,7 @@ void MainWindow::init()
 {
     initPanels();
     //
-    UIGolbalManager::GetUIGolbalManager()->setStyleSheetAll();
+    UIGolbalManager::getUIGolbalManager()->setStyleSheetAll();
 }
 
 /**
@@ -221,6 +232,7 @@ void MainWindow::initPanels()
     initPictureBrowser();
     initOAManager();
     initNavigation();
+//    initTScreen();
 }
 
 void MainWindow::initLayouts()
@@ -296,7 +308,7 @@ void MainWindow::initLayouts()
   */
 void MainWindow::initTitleBar()
 {
-    QObject* plugin = UIGolbalManager::GetUIGolbalManager()->GetPluginInstanceQt("UITitlebarPlug");
+    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UITitlebarPlug");
     if (plugin)
     {
         _titleBarPlugin = qobject_cast<IUITitlebarPlug *>(plugin);
@@ -315,7 +327,7 @@ void MainWindow::initTitleBar()
 
 void MainWindow::initCardManager()
 {
-    QObject* plugin = UIGolbalManager::GetUIGolbalManager()->GetPluginInstanceQt("UICardManager");
+    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UICardManager");
     if (plugin)
     {
         _pCardManagerPlug = qobject_cast<IUICardManagerPlug *>(plugin);
@@ -338,7 +350,7 @@ void MainWindow::initCardManager()
   */
 void MainWindow::initNavigation()
 {
-    QObject* plugin = UIGolbalManager::GetUIGolbalManager()->GetPluginInstanceQt("UINavigationPlug");
+    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UINavigationPlug");
     if (plugin)
     {
         _navigationPlugin = qobject_cast<IUINavigationPlug *>(plugin);
@@ -360,7 +372,7 @@ void MainWindow::initNavigation()
   */
 void MainWindow::initChatView()
 {
-    QObject* plugin = UIGolbalManager::GetUIGolbalManager()->GetPluginInstanceQt("UIChatViewPlug");
+    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UIChatViewPlug");
     if (plugin)
     {
         _chatViewPlugin = qobject_cast<IUIChatViewPlug *>(plugin);
@@ -449,7 +461,7 @@ void MainWindow::connectPlugs()
     connect(_navigationPanel, SIGNAL(updateTotalUnreadCount(int)), _titleBar, SLOT(updateUnreadCount(int)));
 	connect(_titleBar, SIGNAL(feedbackLog(const QString&)), _chatViewPanel, SLOT(packAndSendLog(const QString&)));
 	connect(this, SIGNAL(systemShortCut()), _chatViewPanel, SLOT(systemShortCut()));
-	connect(_titleBar, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()));
+	connect(_titleBar, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()), Qt::QueuedConnection);
 
 	connect(_chatViewPanel, SIGNAL(sgShortCutSwitchSession(int)),
 	        _navigationPanel, SLOT(onShortCutSwitchSession(int)));
@@ -464,7 +476,7 @@ void MainWindow::connectPlugs()
 	connect(_titleBar, SIGNAL(sgSetAutoLogin(bool)), this, SLOT(setAutoLogin(bool)));
 	connect(_titleBar, SIGNAL(sgUpdateHotKey()), this, SLOT(onUpdateHotKey()));
 
-	connect(_titleBar, SIGNAL(sgSaveSysConfig()), UIGolbalManager::GetUIGolbalManager(), SLOT(saveSysConfig()));
+	connect(_titleBar, SIGNAL(sgSaveSysConfig()), UIGolbalManager::getUIGolbalManager(), SLOT(saveSysConfig()));
 	connect(_titleBar, SIGNAL(sgSaveSysConfig()), this, SLOT(onSaveSysConfig()));
 	connect(_titleBar, SIGNAL(msgSoundChanged()), _chatViewPanel, SLOT(onMsgSoundChanged()));
 
@@ -482,7 +494,7 @@ void MainWindow::connectPlugs()
     connect(_chatViewPanel, SIGNAL(sgShockWnd()), this, SLOT(onShockWnd()));
     connect(_chatViewPanel, SIGNAL(sgUserSendMessage()),
             this, SLOT(onUserSendMessage()));
-    connect(UIGolbalManager::GetUIGolbalManager(), SIGNAL(sgMousePressGlobalPos(QPoint)), _titleBar,
+    connect(UIGolbalManager::getUIGolbalManager(), SIGNAL(sgMousePressGlobalPos(QPoint)), _titleBar,
             SLOT(onMousePressGolbalPos(QPoint)));
     // show draft
     connect(_chatViewPanel, SIGNAL(sgShowDraft(const QTalk::Entity::UID&, const QString&)),
@@ -501,26 +513,36 @@ void MainWindow::connectPlugs()
     connect(_pCardManager, SIGNAL(sgOperator(const QString&)), this, SLOT(addOperatorLog(const QString&)));
     connect(_pAddressBook, SIGNAL(sgOpeartor(const QString&)), this, SLOT(addOperatorLog(const QString&)));
     connect(_pOfflineTimer, &QTimer::timeout, [this](){
-        if(_pMessageManager)
+//        if(_pMessageManager)
         {
             _isOffline = true;
             _pOfflineTimer->stop();
             _logout_t = QDateTime::currentMSecsSinceEpoch();
-            _pMessageManager->sendOnlineState(_login_t, _logout_t, _ipv4Address.toStdString());
+            QTalkMsgManager::sendOnlineState(_login_t, _logout_t, _ipv4Address.toStdString());
         }
     });
     connect(_pLogTimer, &QTimer::timeout, [this](){
-        if(_pMessageManager)
+//        if(_pMessageManager)
         {
+#if !defined(_STARTALK) and !defined(_QCHAT)
+            if(_loginDate != QDate::currentDate())
+            {
+                //
+                _loginDate = QDate::currentDate();
+                QtConcurrent::run(&QTalkMsgManager::reportLogin);
+            }
+#endif
+
             if(_operators.empty())
                 return;
 
             std::vector<QTalk::StActLog> operators(_operators);
-            _pMessageManager->sendOperatorStatistics(_ipv4Address.toStdString(), operators);
+            QTalkMsgManager::sendOperatorStatistics(_ipv4Address.toStdString(), operators);
             QMutexLocker locker(&_logMutex);
             _operators.clear();
         }
     });
+    //
 }
 
 /**
@@ -556,7 +578,7 @@ void MainWindow::initSystemTray()
   */
 void MainWindow::initGroupManager()
 {
-	QObject* plugin = UIGolbalManager::GetUIGolbalManager()->GetPluginInstanceQt("UIGroupManager");
+	QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UIGroupManager");
 	if (plugin)
 	{
         _pGroupManagerPlug = qobject_cast<IUIGroupManagerPlug *>(plugin);
@@ -573,7 +595,7 @@ void MainWindow::initGroupManager()
 
 void MainWindow::InitLogin(bool _enable, const QString& loginMsg)
 {
-    QObject* plugin = UIGolbalManager::GetUIGolbalManager()->GetPluginInstanceQt("UILoginPlug");
+    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UILoginPlug");
     if (plugin)
     {
         _pLoginPlug = qobject_cast<IUILoginPlug *>(plugin);
@@ -588,9 +610,9 @@ void MainWindow::InitLogin(bool _enable, const QString& loginMsg)
         }
         if (_logindlg)
         {
-            UIGolbalManager::GetUIGolbalManager()->setStyleSheetForPlugin("UILoginPlug");
+            UIGolbalManager::getUIGolbalManager()->setStyleSheetForPlugin("UILoginPlug");
             connect(_logindlg, SIGNAL(sgSynDataSuccess()), this, SLOT(openMainWindow()));
-            connect(_logindlg, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()));
+            connect(_logindlg, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()), Qt::QueuedConnection);
             _logindlg->show();
         }
     }
@@ -746,6 +768,11 @@ void MainWindow::openMainWindow()
         connect(about, SIGNAL(triggered()), _titleBar, SLOT(onShowAboutWnd()));
 #endif
         //
+#if !defined(_STARTALK) and !defined(_QCHAT)
+        _loginDate = QDate::currentDate();
+        QtConcurrent::run(&QTalkMsgManager::reportLogin);
+#endif
+        //
         dealDumpFile();
         checkUpdater();
 	}
@@ -813,7 +840,7 @@ void MainWindow::onAppActive()
 
 void MainWindow::initPictureBrowser()
 {
-    QObject* plugin = UIGolbalManager::GetUIGolbalManager()->GetPluginInstanceQt("UIPictureBrowser");
+    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UIPictureBrowser");
     if (plugin)
     {
         _pPictureBrowserPlug = qobject_cast<IUIPictureBroswerPlug *>(plugin);
@@ -837,7 +864,7 @@ void MainWindow::initPictureBrowser()
   */
 void MainWindow::initAddressBook()
 {
-	QObject* plugin = UIGolbalManager::GetUIGolbalManager()->GetPluginInstanceQt("UIAddressBook");
+	QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UIAddressBook");
 	if (plugin)
 	{
 		_pAddressBookPlug = qobject_cast<IUIAddressBookPlug*>(plugin);
@@ -845,7 +872,6 @@ void MainWindow::initAddressBook()
 		{
 			_pAddressBookPlug->init();
 			_pAddressBook = _pAddressBookPlug->widget();
-//			UIGolbalManager::GetUIGolbalManager()->setStyleSheetForPlugin("UIAddressBook");
 		}
 	}
 	assert(_pAddressBookPlug);
@@ -861,7 +887,7 @@ void MainWindow::initAddressBook()
   */
 void MainWindow::initOAManager()
 {
-	QObject* plugin = UIGolbalManager::GetUIGolbalManager()->GetPluginInstanceQt("UIOAManager");
+	QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UIOAManager");
 	if (plugin)
 	{
 		_pOAManagerPlug = qobject_cast<IUIOAManagerPlug*>(plugin);
@@ -940,10 +966,7 @@ void MainWindow::systemQuit()
  */
 void MainWindow::sendHeartBeat()
 {
-    if(_pMessageManager)
-    {
-        _pMessageManager->sendHearBeat();
-    }
+    QTalkMsgManager::sendHearBeat();
 }
 
 // 多屏处理
@@ -1030,9 +1053,13 @@ QWidget * MainWindow::getActiveWnd() {
     return wakeUpWgt;
 }
 
+#include <QPointer>
 void MainWindow::wakeUpWindow()
 {
     QWidget* wakeUpWgt = getActiveWnd();
+
+    if(!QPointer<QWidget>(wakeUpWgt))
+        return;
 
 #ifdef _WINDOWS
     if (wakeUpWgt->isActiveWindow())
@@ -1097,26 +1124,24 @@ void MainWindow::onSaveSysConfig()
         _noOperatorThread->setLeaveMinute();
 
     //
-    UIGolbalManager::GetUIGolbalManager()->saveSysConfig();
+    UIGolbalManager::getUIGolbalManager()->saveSysConfig();
 }
 
 void MainWindow::setUserStatus(bool isAway)
 {
-    if(_pMessageManager)
-        _pMessageManager->chanegUserStatus(isAway ? "away" : "online");
+    QTalkMsgManager::chanegUserStatus(isAway ? "away" : "online");
 }
 
 void MainWindow::onUserSendMessage()
 {
     _noOperatorThread->resetUnOperatorTime();
-    if(_pMessageManager)
-        _pMessageManager->chanegUserStatus("online");
+    QTalkMsgManager::chanegUserStatus("online");
 }
 
 void MainWindow::checkUpdater() {
 
-    auto version = UIGolbalManager::GetUIGolbalManager()->_updater_version;
-    QFuture<std::string> future = QtConcurrent::run(_pMessageManager, &QTalkMsgManager::checkUpdater, version);
+    auto version = UIGolbalManager::getUIGolbalManager()->_updater_version;
+    QFuture<std::string> future = QtConcurrent::run(&QTalkMsgManager::checkUpdater, version);
 //    future.waitForFinished();
     while(!future.isFinished())
         QApplication::processEvents(QEventLoop::AllEvents, 100);
@@ -1244,7 +1269,7 @@ void delDmpFun(const QString& path, const std::string& ip)
 //
 void MainWindow::dealDumpFile()
 {
-    QTimer::singleShot(60 * 1000, [this](){
+    QTimer::singleShot(30 * 1000, [this](){
         // deal dump
         QDateTime curDateTime = QDateTime::currentDateTime();
         auto appdata = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation).toLocal8Bit();

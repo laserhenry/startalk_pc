@@ -55,6 +55,7 @@ Q_SIGNALS:
 	void sgImageDownloaded(const QString&, const QString&);
 	void sgJumTo();
 	void sgDownloadFileSuccess(const QString&);
+	void sgUploadFileSuccess(const QString&, const QString&);
 
 public:
     void setShareMessageState(bool flag);
@@ -66,6 +67,7 @@ protected:
 	void resizeEvent(QResizeEvent *e) override;
 	void wheelEvent(QWheelEvent *e) override;
 	bool event(QEvent* e) override ;
+	bool eventFilter(QObject* o, QEvent* e) override ;
     void showEvent(QShowEvent* e) override;
 
 private slots:
@@ -78,6 +80,7 @@ private slots:
 	void onImageDownloaded(const QString& msgId, const QString& path);
 	void onCustomContextMenuRequested(const QPoint &pos);
 	void onDownloadFile(const QString&);
+	void onUploadFileSuccess(const QString&, const QString&);
 
 private:
     void showTipMessage(const QString& messageId, int type, const QString& content, QInt64 t);
@@ -96,6 +99,9 @@ private:
     void onDisconnected();
     void onSendMessageFailed(const QString& msgId);
 
+public:
+    void freeView();
+
 public slots:
     void onItemCheckChanged(bool);
 
@@ -106,6 +112,7 @@ Q_SIGNALS:
     void updateRevokeSignal(const QString& fromId, const QString& messageId, const long long&);
     void sgSendFailed(const QString& msgId);
     void sgGotMState(const QString& msgId, const long long& time);
+    void sgEnableScroll();
 
 private:
     void downloadImage(const QString& msgId, const QString& link, int width, int height);
@@ -132,7 +139,7 @@ private:
 	AtMessageTip*   _pAtMessageTipItem;
 
 private:
-	int _oldScrollBarVal;
+	int _oldScrollBarVal = 0;
     long long downloadProcess = 0;
     STLazyQueue<bool> *_resizeQueue{};
     STLazyQueue<bool> *_selectItemQueue{};
@@ -141,14 +148,14 @@ private:
     bool _selectEnable{};
 
 private:
-    QAction* saveAsAct;
-    QAction* copyAct;
-    QAction* quoteAct;
-    QAction* forwardAct;
-    QAction* revokeAct;
-    QAction* collectionAct;
-    QAction* shareMessageAct;
-    QAction* qrcodeAct;
+    QAction* saveAsAct{};
+    QAction* copyAct{};
+    QAction* quoteAct{};
+    QAction* forwardAct{};
+    QAction* revokeAct{};
+    QAction* collectionAct{};
+    QAction* shareMessageAct{};
+    QAction* qrcodeAct{};
 
 private:
 	QMap<QString, MessageItemBase*> _mapItemWgt;
@@ -159,14 +166,19 @@ private:
     ChatMainDelegate*               _pDelegate{};
 
 public:
-	enum {EM_JUM_INVALID, EM_JUM_BOTTOM, EM_JUM_ITEM, EM_JUM_TOP};
+	enum JumType {EM_JUM_INVALID, EM_JUM_BOTTOM, EM_JUM_ITEM, EM_JUM_TOP, EM_JUM_ITEM_BOTTOM};
 
 private:
     int _jumType = EM_JUM_INVALID;
 	QModelIndex _jumIndex;
+	QModelIndex _reset_jumIndex;
 
 public:
 	void jumTo();
+
+private:
+    bool _isLeave {};
+    bool _wheelFlag = false;
 };
 
 #endif//_CHATMAINWGT_H_

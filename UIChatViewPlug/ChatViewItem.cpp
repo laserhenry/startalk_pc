@@ -116,7 +116,7 @@ void ChatViewItem::setShareMessageState(bool flag)
 void ChatViewItem::initUi() {
     setObjectName("ChatViewItem");
     _pLoading = makeLoadingLabel(true, {40, 40}, this);
-    _pLoading->movie()->start();
+    _pLoading->movie()->stop();
     // first
     _pShareMessageFrm = new ShareMessageFrm(this);
     // top status widget
@@ -159,7 +159,7 @@ void ChatViewItem::initUi() {
     //
     _pShareMessageFrm->setVisible(false);
     //
-    _pSearchMainWgt = new LocalSearchMainWgt();
+//    _pSearchMainWgt = new LocalSearchMainWgt();
     // 布局
     pMidLayout = new QHBoxLayout;
     pMidLayout->setMargin(0);
@@ -279,7 +279,11 @@ void ChatViewItem::keyPressEvent(QKeyEvent *e)
 void ChatViewItem::onShowSearchWnd()
 {
     if(nullptr == _pSearchMainWgt)
-        return;
+    {
+        _pSearchMainWgt = new LocalSearchMainWgt;
+        _pSearchMainWgt->setStyleSheet(g_pMainPanel->_qss);
+        _pSearchMainWgt->sgUpdateName(_name);
+    }
 
     QPoint pos = this->geometry().topRight();
     pos = mapToGlobal(pos);
@@ -292,8 +296,9 @@ void ChatViewItem::onShowSearchWnd()
 }
 
 //
-void ChatViewItem::switchSession(const QUInt8 & chatType, const class QString & userName, const QTalk::Entity::UID & uid) {
+void ChatViewItem::switchSession(const QUInt8 & chatType, const QString & userName, const QTalk::Entity::UID & uid) {
     _uid = uid;
+    _name = userName;
     _chatType = (Enum::ChatType) chatType;
     //
     if(_pSearchMainWgt)
@@ -339,7 +344,11 @@ void ChatViewItem::onShowLoading(bool show)
 {
     _pLoading->setVisible(show);
     if(show)
-        _pLoading->movie()->started();
+        _pLoading->movie()->start();
     else
         _pLoading->movie()->stop();
+}
+
+void ChatViewItem::freeView() {
+    _pChatMainWgt->freeView();
 }

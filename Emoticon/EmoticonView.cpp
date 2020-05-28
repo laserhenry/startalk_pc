@@ -33,17 +33,17 @@ EmoticonView::~EmoticonView() = default;
 
 void EmoticonView::paintEvent(QPaintEvent *e)
 {
-    const int dpi = QTalk::qimage::instance().dpi();
+    const int dpi = QTalk::qimage::dpi();
 
     QPixmap pix;
     if(nullptr != _mov)
     {
         pix = _mov->currentPixmap();
         if(!pix.isNull())
-            pix = QTalk::qimage::instance().scaledPixmap(pix, _width * dpi, _width * dpi);
+            pix = QTalk::qimage::scaledPixmap(pix, _width * dpi, _width * dpi);
     }
     if(pix.isNull())
-        pix = QTalk::qimage::instance().loadImage(_imagePath, false, true, _width * dpi, _width * dpi);
+        pix = QTalk::qimage::loadImage(_imagePath, false, true, _width * dpi, _width * dpi);
 
     int w = pix.width() / dpi;
     int h = pix.height() / dpi;
@@ -68,7 +68,7 @@ void EmoticonView::paintEvent(QPaintEvent *e)
 void EmoticonView::setImagePath(const QString &imgPath)
 {
     _imagePath = imgPath;
-    QString suffix = QTalk::qimage::instance().getRealImageSuffix(_imagePath);
+    QString suffix = QTalk::qimage::getRealImageSuffix(_imagePath);
     if(suffix.toUpper() == "GIF")
     {
         if(nullptr == _mov)
@@ -94,9 +94,19 @@ void EmoticonView::setImagePath(const QString &imgPath)
         }
     }
 
-    QPixmap img = QTalk::qimage::instance().loadImage(_imagePath, true);
+    QPixmap img = QTalk::qimage::loadImage(_imagePath, true);
     _width = qMin((int)img.height(), (int)img.width());
     _width = qMin(100, _width);
 
     update();
+}
+
+
+void EmoticonView::releaseView() {
+    if(nullptr != _mov)
+    {
+        _mov->stop();
+        delete _mov;
+        _mov = nullptr;
+    }
 }

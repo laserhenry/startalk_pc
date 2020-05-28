@@ -53,6 +53,9 @@ void MacApp::checkValidToVisitMicroPhone() {
 
         AVAuthorizationStatus audioStatus = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeAudio];
         AVAuthorizationStatus videoStatus = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
+
+        [audioDevices release];
+        [videoDevices release];
     }
 #endif
 

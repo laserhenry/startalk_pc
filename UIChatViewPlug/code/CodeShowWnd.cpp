@@ -121,6 +121,7 @@ void CodeShowWnd::loadCodeFile(const QString &type, const QString &language)
                            "<link rel=\"stylesheet\" href=\"styles/%1.css\">  "
                            "<script src=\"highlight.pack.js\"></script>  "
                            "<script>hljs.initHighlightingOnLoad();</script>  "
+                           "<style type=\"text/css\">pre{white-space: pre-wrap;word-wrap: break-word;}</style>"
                            "</head>"
                            "<body>"
                            "<pre>"

@@ -40,7 +40,6 @@
 #include "ShareMessageFrm.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
-
 ChatMainWgt::ChatMainWgt(ChatViewItem *pViewItem)
         : QListView(pViewItem),
         _pViewItem(pViewItem),
@@ -134,7 +133,13 @@ ChatMainWgt::ChatMainWgt(ChatViewItem *pViewItem)
     _selectItemQueue = new STLazyQueue<bool>(50, selectItemFun);
 }
 
-ChatMainWgt::~ChatMainWgt() = default;
+ChatMainWgt::~ChatMainWgt()
+{
+    if(_resizeQueue)
+        delete _resizeQueue;
+    if(_selectItemQueue)
+        delete _selectItemQueue;
+};
 
 void ChatMainWgt::connects() {
     //
@@ -150,6 +155,7 @@ void ChatMainWgt::connects() {
     connect(this, &ChatMainWgt::sgGotMState, this, &ChatMainWgt::onMState);
     connect(this, &ChatMainWgt::sgDisConnected, this, &ChatMainWgt::onDisconnected);
     connect(this, &ChatMainWgt::sgSendFailed, this, &ChatMainWgt::onSendMessageFailed);
+    connect(this, &ChatMainWgt::sgUploadFileSuccess, this, &ChatMainWgt::onUploadFileSuccess);
     connect(this, &ChatMainWgt::updateRevokeSignal, this, &ChatMainWgt::updateRevokeMessage);
     connect(this, &ChatMainWgt::sgImageDownloaded, this, &ChatMainWgt::onImageDownloaded, Qt::QueuedConnection);
     connect(this, &ChatMainWgt::customContextMenuRequested, this, &ChatMainWgt::onCustomContextMenuRequested);
@@ -169,11 +175,12 @@ void ChatMainWgt::connects() {
     connect(this, &ChatMainWgt::showTipMessageSignal,
             this, &ChatMainWgt::showTipMessage);
     connect(this, &ChatMainWgt::sgJumTo,
-            this, &ChatMainWgt::jumTo, Qt::QueuedConnection);
+            this, &ChatMainWgt::jumTo);
     connect(forwardAct, &QAction::triggered, this, &ChatMainWgt::onForwardAct);
     QScrollBar *scrolbar = this->verticalScrollBar();
+    scrolbar->installEventFilter(this);
     connect(scrolbar, &QScrollBar::valueChanged, this, &ChatMainWgt::onScrollBarChanged);
-    connect(scrolbar, &QScrollBar::rangeChanged, [this](int, int){
+    connect(scrolbar, &QScrollBar::rangeChanged, [this](int min, int max){
         emit this->sgJumTo();
     });
     connect(this, &ChatMainWgt::adjustItems, this, &ChatMainWgt::onAdjustItems, Qt::QueuedConnection);
@@ -443,56 +450,48 @@ void ChatMainWgt::onShowMessage(StNetMessageResult info, int jumType) {
     //
     _pModel->sort(0);
     //
-    auto index = _pModel->mapFromSource(item->index());
-    _pDelegate->dealWidget(index);
+    if(!_isLeave)
     {
-        // default size hint
-        auto *base = dynamic_cast<MessageItemBase*>(this->indexWidget(index));
-        if(base)
-            item->setSizeHint({this->width(), base->itemWdtSize().height()});
-        else
-            item->setSizeHint({this->width(), 40});
-    }
-
-    {
-        static unsigned char flag = 0;
-        if(++flag % 2)
-            this->resize(this->width() + 1, this->height());
-        else
-            this->resize(this->width() - 1, this->height());
-    }
-
-    //
-    _jumType = jumType;
-    if(_jumType == EM_JUM_INVALID)
-    {
-        static int oldMax = 0;
-        int scrollBarVal = this->verticalScrollBar()->value();
-        int maximum = this->verticalScrollBar()->maximum();
-
-        if(maximum != 0)
+        auto index = _pModel->mapFromSource(item->index());
+        _pDelegate->dealWidget(index);
         {
-            if(scrollBarVal > oldMax)
-            {
-                if(maximum - scrollBarVal > 220)
-                    _pNewMessageTipItem->onNewMessage();
-            }
+            // default size hint
+            auto *base = dynamic_cast<MessageItemBase*>(this->indexWidget(index));
+            if(base)
+                item->setSizeHint({this->width(), base->itemWdtSize().height()});
             else
-            {
-                if(oldMax - scrollBarVal > 220)
-                    _pNewMessageTipItem->onNewMessage();
-            }
-            oldMax = maximum;
+                item->setSizeHint({this->width(), 40});
         }
-    }
-    this->repaint();
-    this->setRowHidden(index.row(), false);
 
-    //
-//    {
-//        QApplication::processEvents(QEventLoop::AllEvents, 50);
-        jumTo();
-//    }
+        {
+            static unsigned char flag = 0;
+            if(++flag % 2)
+                this->resize(this->width() + 1, this->height());
+            else
+                this->resize(this->width() - 1, this->height());
+        }
+
+        if(info.direction == QTalk::Entity::MessageDirectionReceive && jumType == EM_JUM_INVALID)
+        {
+            int scrollBarVal = this->verticalScrollBar()->value();
+            int maximum = this->verticalScrollBar()->maximum();
+            int itemSize = item->sizeHint().height();
+            if(_mapTimeItem.contains(info.msg_id))
+                itemSize += 40;
+            if(maximum != 0 && (maximum - scrollBarVal - itemSize) > 200)
+                _pNewMessageTipItem->onNewMessage();
+            else
+                this->scrollToBottom();
+        }
+        else
+        {
+            _jumType = jumType;
+            jumTo();
+        }
+
+        this->repaint();
+        this->setRowHidden(index.row(), false);
+    }
 }
 
 /**
@@ -510,6 +509,9 @@ void ChatMainWgt::recvFileProcess(const double &speed, const double &dtotal, con
 //
 void ChatMainWgt::wheelEvent(QWheelEvent *e) {
 
+    if(!_wheelFlag)
+        _wheelFlag = true;
+
     int scrollBarVal = this->verticalScrollBar()->value();
     int maximum = this->verticalScrollBar()->maximum();
 
@@ -523,8 +525,8 @@ void ChatMainWgt::wheelEvent(QWheelEvent *e) {
     if((maximum == 0 || scrollBarVal == 0) && direct > 0)
     {
         qint64 time = 0;
+        int i = 0;
         if (_pModel->rowCount() > 0) {
-            int i = 0;
             while (true) {
                 time = _pModel->index(i, 0).data(EM_USER_MSG_TIME).toLongLong();
                 if (time != 0) {
@@ -537,7 +539,6 @@ void ChatMainWgt::wheelEvent(QWheelEvent *e) {
                 i++;
             }
         }
-
         if(_hasnotHistoryMsg)
             g_pMainPanel->getHistoryMsg(time, _pViewItem->_chatType, _pViewItem->getPeerId());
     }
@@ -592,6 +593,11 @@ void ChatMainWgt::updateRevokeMessage(const QString &fromId, const QString &mess
         _pSrcModel->removeRow(item->index().row());
         _mapItem.remove(messageId);
         _mapItemWgt.remove(messageId);
+        if(_mapTimeItem.contains(messageId) && _mapTimeItem[messageId])
+        {
+            _pSrcModel->removeRow(_mapTimeItem[messageId]->index().row());
+            _mapTimeItem.remove(messageId);
+        }
 
         QString content = tr("%1撤回了一条消息").arg(fromId == Platform::instance().getSelfXmppId().data() ?
                 tr("你") : info.user_name);
@@ -632,7 +638,7 @@ void ChatMainWgt::saveAsImage(const QString &imageLink) {
     QString oldFilePath = QString::fromStdString(imageLocalFile);
     QFileInfo oldFileInfo(oldFilePath);
     if (!oldFilePath.isEmpty() && oldFileInfo.exists()) {
-        QString suffix = QTalk::qimage::instance().getRealImageSuffix(oldFilePath).toLower();
+        QString suffix = QTalk::qimage::getRealImageSuffix(oldFilePath).toLower();
         QString hisDir = QString::fromStdString(Platform::instance().getHistoryDir());
 
         if(suffix.toLower() == "webp")
@@ -644,7 +650,7 @@ void ChatMainWgt::saveAsImage(const QString &imageLink) {
                 Platform::instance().setHistoryDir(QFileInfo(newPath).absoluteDir().absolutePath().toStdString());
                 QString newSuffix = QFileInfo(newPath).suffix().toUpper();
                 //
-                auto tmpPix = QTalk::qimage::instance().loadImage(oldFilePath, false);
+                auto tmpPix = QTalk::qimage::loadImage(oldFilePath, false);
                 if(!tmpPix.isNull())
                 {
                     auto format = newSuffix.toUtf8().data();
@@ -685,7 +691,7 @@ void copyImage(const QString& imageLink, const QString& imagePath)
 //        urls << QUrl::fromLocalFile(imagePath);
 
 //    mimeData->setUrls(urls);
-    QPixmap pixmap = QTalk::qimage::instance().loadImage(srcImgPath.data(), false);
+    QPixmap pixmap = QTalk::qimage::loadImage(srcImgPath.data(), false);
     mimeData->setImageData(pixmap.toImage());
     QApplication::clipboard()->setMimeData(mimeData);
 }
@@ -893,6 +899,12 @@ void ChatMainWgt::onForwardAct(bool) {
  */
 void ChatMainWgt::onScrollBarChanged(int val) {
 
+    {
+        // 防止刷新ui时触发
+        if(!_wheelFlag)
+            return;
+    }
+
     if (_oldScrollBarVal - val > 0) {
         if (val > 10)
         {
@@ -901,8 +913,8 @@ void ChatMainWgt::onScrollBarChanged(int val) {
         }
 
         QInt64 time = 0;
+        int i = 0;
         if (_pModel->rowCount() > 0) {
-            int i = 0;
 
             while (true) {
                 time = _pModel->index(i, 0).data(EM_USER_MSG_TIME).toLongLong();
@@ -940,11 +952,14 @@ void ChatMainWgt::onAdjustItems(bool isOk) {
                 QTalk::Entity::MessageTypeRobotAnswer == itemType) {
 
                 auto *chatItem = qobject_cast<TextMessItem *>( itemWgt);
-                chatItem->setMessageContent(false);
+                if(chatItem)
+                    chatItem->setMessageContent(false);
             }
         }
     }
 
+    _pAtMessageTipItem->showAtInfo();
+    _pNewMessageTipItem->onResize();
     this->repaint();
 }
 
@@ -1032,7 +1047,7 @@ void ChatMainWgt::onShareMessage()
     //
     auto id = _pViewItem->_uid.toQString();
     auto chatType = _pViewItem->_chatType;
-    g_pMainPanel->pool().enqueue([this, arMsgs, id, chatType]() {
+    QT_CONCURRENT_FUNC([this, arMsgs, id, chatType]() {
 #ifdef _MACOS
         pthread_setname_np("ChatMainWgt onShareMessage thread");
 #endif
@@ -1082,6 +1097,18 @@ bool ChatMainWgt::event(QEvent *e) {
 }
 
 //
+bool ChatMainWgt::eventFilter(QObject* o, QEvent *e) {
+
+    if(o == this->verticalScrollBar() && e->type() == QEvent::MouseButtonPress)
+    {
+        if(!_wheelFlag)
+            _wheelFlag = true;
+    }
+
+    return QListView::eventFilter(o, e);
+}
+
+//
 void ChatMainWgt::onUserMedalChanged(const std::set<std::string> &changedUser) {
     auto items = _mapItemWgt.values();
     for(auto* wgt : items)
@@ -1103,7 +1130,7 @@ void ChatMainWgt::onUserMedalChanged(const std::set<std::string> &changedUser) {
 void ChatMainWgt::downloadImage(const QString &msgid, const QString &link, int width, int height)
 {
     QPointer<ChatMainWgt> pThis(this);
-    g_pMainPanel->pool().enqueue([pThis, link, msgid](){
+    QT_CONCURRENT_FUNC([pThis, link, msgid](){
         ChatMsgManager::getLocalFilePath(link.toStdString());
         if(pThis)
             emit pThis->sgImageDownloaded(msgid, link);
@@ -1145,7 +1172,7 @@ void ChatMainWgt::onImageDownloaded(const QString &msgid, const QString &path)
             }
         }
 
-        _resizeQueue->push(true);
+//        _resizeQueue->push(true);
     }
 
     if(_mapItem.contains(msgid))
@@ -1182,7 +1209,7 @@ void ChatMainWgt::onImageDownloaded(const QString &msgid, const QString &path)
 void ChatMainWgt::downloadEmoticon(const QString& msgId, const QString& pkgid, const QString& shortCut)
 {
     QPointer<ChatMainWgt> pThis(this);
-    g_pMainPanel->pool().enqueue([pThis, msgId, pkgid, shortCut](){
+    QT_CONCURRENT_FUNC([pThis, msgId, pkgid, shortCut](){
         QString localPath = EmoticonMainWgt::getInstance()->downloadEmoticon(pkgid, shortCut);
         if(pThis)
             emit pThis->sgImageDownloaded(msgId, localPath);
@@ -1242,9 +1269,14 @@ void ChatMainWgt::onMState(const QString& msgId, const long long& time) {
 
     if(_mapItemWgt.contains(msgId))
         _mapItemWgt[msgId]->setReadState(1);
+    else
+        g_pMainPanel->eraseSending(msgId.toStdString());
 }
 
 void ChatMainWgt::jumTo() {
+
+    if(_isLeave)
+        return;
 
     switch (_jumType)
     {
@@ -1256,7 +1288,13 @@ void ChatMainWgt::jumTo() {
         case EM_JUM_ITEM:
         {
             if(_jumIndex.isValid())
-                this->scrollTo(_pModel->mapFromSource(_jumIndex), PositionAtCenter);
+                this->scrollTo(_pModel->mapFromSource(_jumIndex), PositionAtTop);
+            break;
+        }
+        case EM_JUM_ITEM_BOTTOM:
+        {
+            if(_reset_jumIndex.isValid())
+                this->scrollTo(_pModel->mapFromSource(_reset_jumIndex), PositionAtBottom);
             break;
         }
         case EM_JUM_TOP:
@@ -1267,21 +1305,10 @@ void ChatMainWgt::jumTo() {
         case EM_JUM_INVALID:
         default:
         {
-            static int oldMax = 0;
             int scrollBarVal = this->verticalScrollBar()->value();
             int maximum = this->verticalScrollBar()->maximum();
-            if(scrollBarVal > oldMax)
-            {
-                if(maximum - scrollBarVal < 220)
-                    this->scrollToBottom();
-            }
-            else
-            {
-                if(oldMax - scrollBarVal < 220)
-                    this->scrollToBottom();
-            }
-
-            oldMax = maximum;
+            if(maximum != 0 && maximum - scrollBarVal <= 220)
+                this->scrollToBottom();
             break;
         }
     }
@@ -1289,7 +1316,10 @@ void ChatMainWgt::jumTo() {
 }
 
 void ChatMainWgt::showEvent(QShowEvent *e) {
-    jumTo();
+//    _jumType = EM_JUM_BOTTOM;
+    _isLeave = false;
+//    this->setItemDelegate(_pDelegate);
+//    _oldScrollBarVal = 0;
     {
         static unsigned char flag = 0;
         if(++flag % 2)
@@ -1297,12 +1327,14 @@ void ChatMainWgt::showEvent(QShowEvent *e) {
         else
             this->resize(this->width() - 1, this->height());
     }
+    _pNewMessageTipItem->onResetWnd();
     QWidget::showEvent(e);
 }
 
 //
 void ChatMainWgt::scrollToItem(QStandardItem *pItem) {
-    this->scrollTo(_pModel->mapFromSource(pItem->index()), QAbstractItemView::PositionAtTop);
+    if(pItem && _mapItem.values().contains(pItem))
+        this->scrollTo(_pModel->mapFromSource(pItem->index()), QAbstractItemView::PositionAtTop);
 }
 
 //
@@ -1315,7 +1347,7 @@ void ChatMainWgt::onDownloadFile(const QString &key) {
         auto* pFileItem = qobject_cast<FileSendReceiveMessItem*>(item);
         if(pFileItem)
         {
-            pFileItem->downloadSuccess();
+            pFileItem->downloadOrUploadSuccess();
         }
     }
     //
@@ -1325,4 +1357,22 @@ void ChatMainWgt::onDownloadFile(const QString &key) {
             pVideoItem->downloadSuccess();
     }
 
+}
+
+//
+void ChatMainWgt::freeView() {
+//    this->setItemDelegate(nullptr);
+//    _reset_jumIndex = _pModel->mapToSource(_pModel->index(_pModel->rowCount() - 1, 0));
+    _isLeave = true;
+//    _wheelFlag = false;
+}
+
+//
+void ChatMainWgt::onUploadFileSuccess(const QString & key, const QString & url) {
+    auto* item = _mapItemWgt[key];
+    {
+        auto* pFileItem = qobject_cast<FileSendReceiveMessItem*>(item);
+        if(pFileItem)
+            pFileItem->downloadOrUploadSuccess();
+    }
 }

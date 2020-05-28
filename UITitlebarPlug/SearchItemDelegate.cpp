@@ -120,7 +120,7 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
             painter->setPen(Qt::NoPen);
             QRect headRect(rect.x() + 16, (rect.height() - HEAD_WIDTH) / 2 + rect.y(),
                            HEAD_WIDTH, HEAD_WIDTH);
-            int dpi = QTalk::qimage::instance().dpi();
+            int dpi = QTalk::qimage::dpi();
             if(QTalk::Search::EM_ACTION_HS_FILE == retType)
             {
                 QFileInfo iconInfo(name);
@@ -145,7 +145,7 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
                 else
                     iconPath = ":/QTalk/image1/file_type/unknown.png";
 
-                QPixmap pixmap = QTalk::qimage::instance().loadImage(iconPath, true, true, HEAD_WIDTH * dpi);
+                QPixmap pixmap = QTalk::qimage::loadImage(iconPath, true, true, HEAD_WIDTH * dpi);
                 int w = pixmap.width() / dpi;
                 int h = pixmap.height() / dpi;
                 painter->drawPixmap((HEAD_WIDTH - w) / 2 + headRect.x(),
@@ -163,7 +163,7 @@ void SearchItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
                     icon = ":/QTalk/image1/headPortrait.png";
 #endif
                 }
-                QPixmap pixmap = QTalk::qimage::instance().loadImage(icon, true, true, HEAD_WIDTH * dpi);
+                QPixmap pixmap = QTalk::qimage::loadImage(icon, true, true, HEAD_WIDTH * dpi);
                 QPainterPath path;
                 painter->setBrush(QColor(240, 240, 240, 200));
                 painter->drawEllipse(headRect);

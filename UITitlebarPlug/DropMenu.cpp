@@ -96,14 +96,7 @@ void DropMenu::initUi()
     connect(_pSysQuitLabel, &ActionLabel::clicked, this, &DropMenu::sysQuit);
     connect(_pAboutLabel, &ActionLabel::clicked, this, &DropMenu::sgShowAboutWnd);
     connect(_pSettingLabel, &ActionLabel::clicked, this, &DropMenu::sgShowSystemSetting);
-    connect(_pLogoutLabel, &ActionLabel::clicked, [](){
-        // 重启应用
-        QString program = QApplication::applicationFilePath();
-        QStringList arguments;
-        arguments << "AUTO_LOGIN=OFF";
-        QProcess::startDetached(program, arguments);
-        exit(0);
-    });
+    connect(_pLogoutLabel, &ActionLabel::clicked, this, &DropMenu::restartApp, Qt::QueuedConnection);
 
     connect(_pUserCardLabel, &ActionLabel::clicked, [this](){setVisible(false);});
     connect(_pSysQuitLabel, &ActionLabel::clicked, [this](){setVisible(false);});
@@ -122,6 +115,15 @@ void DropMenu::initUi()
     connect(actOnline, &QAction::triggered, this, &DropMenu::switchUserStatus);
     connect(actBusy, &QAction::triggered, this, &DropMenu::switchUserStatus);
     connect(actAway, &QAction::triggered, this, &DropMenu::switchUserStatus);
+}
+
+void DropMenu::restartApp() {
+    // 重启应用
+    QString program = QApplication::applicationFilePath();
+    QStringList arguments;
+    arguments << "AUTO_LOGIN=OFF";
+    QProcess::startDetached(program, arguments);
+    QApplication::exit(0);
 }
 
 void DropMenu::switchUserStatus()

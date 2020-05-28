@@ -3,9 +3,9 @@
 
 NavigationItem::NavigationItem(const QUInt8& itemType, QWidget *parent)
         : QFrame(parent)
+        , _itemWgt(nullptr)
         , _itemType(itemType)
         , _selected(false)
-        , _itemWgt(nullptr)
 {
     Q_INIT_RESOURCE(ushadowdialog);
 

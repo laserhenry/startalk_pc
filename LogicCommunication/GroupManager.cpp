@@ -345,7 +345,7 @@ bool GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupIn
             MapGroupCard params;
             for(const auto& it : groups)
             {
-                QTalk::Entity::JID jid(it.GroupId.data());
+                QTalk::Entity::JID jid(it.GroupId);
                 params[jid.domainname()].push_back(it);
             }
             getGroupCard(params);

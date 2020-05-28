@@ -106,7 +106,7 @@ bool UShadowBorder::event(QEvent *e) {
 }
 
 void UShadowBorder::mousePressEvent(QMouseEvent *e) {
-    QPoint pos = QCursor::pos();
+//    QPoint pos = QCursor::pos();
     _borderPressed = true;
     _pControlWgt->setResizing(true);
     _resizeStartPos = QCursor::pos();
@@ -173,7 +173,7 @@ void UShadowBorder::mouseMoveEvent(QMouseEvent *e) {
 void UShadowBorder::paintEvent(QPaintEvent *e) {
 
     QPainter painter(this);
-    QRect rect = contentsRect();
+//    QRect rect = contentsRect();
     painter.setPen(Qt::NoPen);
     // painter.fillRect(rect, QColor(255,255,255,1));
 

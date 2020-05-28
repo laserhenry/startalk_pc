@@ -161,6 +161,8 @@ bool EmoPreviewWgt::event(QEvent* e)
     {
         if(_pEmoView->isVisible())
             _pEmoView->setVisible(false);
+        if(_pEmoView)
+            _pEmoView->releaseView();
     }
 
     return QStackedWidget::event(e);

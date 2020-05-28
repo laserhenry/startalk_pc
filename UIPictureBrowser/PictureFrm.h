@@ -21,6 +21,7 @@ public:
 
 public:
     bool loadNewPicture(const QString &picTure, bool isFirst);
+    void onCloseWnd();
 
 protected:
     bool eventFilter(QObject *o, QEvent *e) override;

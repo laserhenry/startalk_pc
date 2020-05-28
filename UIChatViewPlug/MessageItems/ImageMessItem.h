@@ -38,6 +38,7 @@ private:
 
 private slots:
     void onMoveTimer();
+    void onMovieChanged(int);
 
 Q_SIGNALS:
     void sgItemChanged();
@@ -66,6 +67,7 @@ public:
     QString _imagePath;
     QString _imageLink;
     QSize   _size;
+    qint64   _paintTime = 0;
 };
 
 #endif // STATICIMAGEMESSITEM_H

@@ -218,6 +218,9 @@ std::string *QtHttpRequest::getResponseData() {
 }
 
 QtHttpRequest::~QtHttpRequest() {
+    if(nullptr != _processData)
+        delete _processData;
+
     CURL *curl = _httpCore;
     if (curl != nullptr) {
         curl_slist_free_all(_headers);
@@ -263,13 +266,13 @@ void QTalk::QtHttpRequest::setProcessCallback(const std::string& key,
         std::function<void(StProcessParam)> fun) {
 
     CURL *curl = _httpCore;
-    StProcessData *data = new StProcessData(curl, key);
+    _processData = new StProcessData(curl, key);
 
     if (curl != nullptr) {
         callfun = std::move(fun);
         curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
         curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, processCallback);
-        curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, data);
+        curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, _processData);
     }
 }
 

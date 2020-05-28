@@ -892,7 +892,7 @@ QLabel#CommonTrdInfoItemContentLabel {
 }
 
 QFrame#BtnBgFrame {
-    background:rgba(0,0,0,0.5);
+    /*background:rgba(0,0,0,0.5);*/
     border-radius:18px;
 }
 

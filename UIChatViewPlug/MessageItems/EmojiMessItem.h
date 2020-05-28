@@ -33,6 +33,7 @@ private:
 
 private slots:
     void onMoveTimer();
+    void onMovieChanged(int );
 
 Q_SIGNALS:
     void sgItemChanged();
@@ -60,6 +61,7 @@ private:
 public:
     QString _imagePath;
     QSizeF   _size;
+    qint64   _paintTime = 0;
 };
 
 #endif // EMOJIMESSITEM_H

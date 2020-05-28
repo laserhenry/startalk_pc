@@ -5,6 +5,7 @@
 #define MAINWINDOW_H
 
 #include <QFrame>
+#include <QDate>
 #include <QSplitter>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -127,9 +128,6 @@ private:
     //
     void dealDumpFile();
 
-public:
-    QTalkMsgManager   *_pMessageManager{};
-
 private:
     QTimer   *_timr{};
 
@@ -206,5 +204,7 @@ private:
 
 private:
     LocalServer* _pLocalServer{};
+
+    QDate        _loginDate{};
 };
 #endif // MAINWINDOW_H

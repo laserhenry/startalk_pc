@@ -511,7 +511,7 @@ void GroupCard::onSendMail() {
         auto selfDomain = Platform::instance().getSelfDomain();
         for(const auto& u : groupMembers)
         {
-            QTalk::Entity::JID jid(u.data());
+            QTalk::Entity::JID jid(u);
             if(selfDomain != jid.domainname())
                 continue;
 

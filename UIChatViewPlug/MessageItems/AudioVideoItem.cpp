@@ -133,12 +133,6 @@ void AudioVideoItem::initReceiveLayout() {
     leftLay->setContentsMargins(_leftMargin);
     leftLay->setSpacing(_leftSpacing);
     mainLay->addLayout(leftLay);
-    if (!_headLab) {
-        _headLab = new HeadPhotoLab;
-    }
-    _headLab->setFixedSize(_headPixSize);
-    _headLab->setHead(_msgInfo.user_head, HEAD_RADIUS);
-    _headLab->installEventFilter(this);
     leftLay->addWidget(_headLab);
     auto *vSpacer = new QSpacerItem(1, 1, QSizePolicy::Fixed, QSizePolicy::Expanding);
     leftLay->addItem(vSpacer);
@@ -227,7 +221,7 @@ void AudioVideoItem::initContentLayout() {
     lay->addWidget(_pIconLabel, 0);
     lay->addWidget(_contentLab, 1);
 
-    QPixmap icon = QTalk::qimage::instance().loadImage(":/chatview/image1/messageItem/AudioVideo.png", true);
+    QPixmap icon = QTalk::qimage::loadImage(":/chatview/image1/messageItem/AudioVideo.png", true);
     icon = icon.scaled(25, 25, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     _pIconLabel->setPixmap(icon);
     _contentLab->adjustSize();

@@ -88,7 +88,8 @@ void NavManager::initConfig()
         }
         else
         {
-            delete _pConfigloader;
+//            if(_pConfigloader)
+//                delete _pConfigloader;
         }
     }
 	//
@@ -147,6 +148,8 @@ void NavManager::initConfig()
         saveConfig();
 #endif
         }
+
+        delete navConfig;
     }
 
 }
@@ -247,6 +250,7 @@ void NavManager::saveConfig()
         //
         QTalk::qConfig::saveConfig(newConfig.data(), false, navConfig);
     }
+    delete navConfig;
 }
 
 /**

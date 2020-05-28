@@ -20,7 +20,7 @@
 #include "TriggerConfig.h"
 
 DataBasePlug::DataBasePlug() :
-        _dataBass(nullptr), _dbPool("db thread pool") {
+        _dbPool("db thread pool") {
 }
 
 DataBasePlug::~DataBasePlug()
@@ -51,7 +51,14 @@ bool DataBasePlug::OpenDB(const std::string &dbPath, std::string& errorMsg) {
             modifyDbByVersion();
 
             ret = true;
-        } catch (std::exception &exception) {
+        }
+        catch (qtalk::sqlite::exception& e)
+        {
+            ret = false;
+            errorMsg = e.what();
+            error_log("OpenDB failed! {0}", e.what());
+        }
+        catch (std::exception &exception) {
             ret = false;
             errorMsg = exception.what();
             error_log("OpenDB failed! {0}", exception.what());
@@ -258,11 +265,11 @@ bool DataBasePlug::bulkInsertMessageInfo(const std::vector<QTalk::Entity::ImMess
 
 long long DataBasePlug::getMaxTimeStampByChatType(QTalk::Enum::ChatType chatType) {
     long long ret = 0;
-    auto func = _dbPool.enqueue([this, &ret, chatType]() {
-        MessageDao dao(_dataBass);
-        ret = dao.getMaxTimeStampByChatType(chatType);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, chatType]() {
+    MessageDao dao(_dataBass);
+    ret = dao.getMaxTimeStampByChatType(chatType);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -281,13 +288,13 @@ long long DataBasePlug::getMaxTimeStamp()
   */
 bool DataBasePlug::getUserMessage(const long long &time, const std::string &userName,const std::string &realJid,
                                   std::vector<QTalk::Entity::ImMessageInfo> &msgList) {
-    bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, time, userName,realJid, &msgList]() {
-        MessageDao dao(_dataBass);
-        ret = dao.getUserMessage(time, userName,realJid, msgList);
-    });
-    func.get();
-    return ret;
+//    bool ret = false;
+//    auto func = _dbPool.enqueue([this, &ret, time, userName,realJid, &msgList]() {
+    MessageDao dao(_dataBass);
+    return dao.getUserMessage(time, userName,realJid, msgList);
+//    });
+//    func.get();
+//    return ret;
 }
 
 /**
@@ -297,13 +304,13 @@ bool DataBasePlug::getUserMessage(const long long &time, const std::string &user
   * @date     2018/09/29
   */
 bool DataBasePlug::getUserVersion(int &version) {
-    bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, &version]() {
-        UserDao dao(_dataBass);
-        ret = dao.getUserVersion(version);
-    });
-    func.get();
-    return ret;
+//    bool ret = false;
+//    auto func = _dbPool.enqueue([this, &ret, &version]() {
+    UserDao dao(_dataBass);
+    return dao.getUserVersion(version);
+//    });
+//    func.get();
+//    return ret;
 }
 
 /**
@@ -347,11 +354,11 @@ bool DataBasePlug::bulkInsertGroupInfo(const std::vector<QTalk::Entity::ImGroupI
   */
 bool DataBasePlug::getGroupMainVersion(long long &lastUpdateTime) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, &lastUpdateTime]() {
-        GroupDao dao(_dataBass);
-        ret = dao.getGroupLastUpdateTime(lastUpdateTime);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, &lastUpdateTime]() {
+    GroupDao dao(_dataBass);
+    ret = dao.getGroupLastUpdateTime(lastUpdateTime);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -390,11 +397,11 @@ bool DataBasePlug::updateGroupCard(const std::vector<QTalk::Entity::ImGroupInfo>
   */
 std::shared_ptr<QTalk::Entity::ImGroupInfo> DataBasePlug::getGroupInfoByXmppId(const std::string &xmppids) {
     std::shared_ptr<QTalk::Entity::ImGroupInfo> ret;
-    auto func = _dbPool.enqueue([this, &ret, xmppids]() {
-        GroupDao dao(_dataBass);
-        ret = dao.getGroupInfoByXmppId(xmppids);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, xmppids]() {
+    GroupDao dao(_dataBass);
+    ret = dao.getGroupInfoByXmppId(xmppids);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -409,9 +416,8 @@ bool DataBasePlug::getGroupMemberById(const std::string &groupId, std::map<std::
                                       std::map<std::string, QUInt8> &userRole) {
 //    bool ret = false;
 //    auto func = _dbPool.enqueue([this, &ret, groupId, &member, &userRole]() {
-        GroupMemberDao dao(_dataBass);
-//        ret =
-        dao.getGroupMemberById(groupId, member, userRole);
+    GroupMemberDao dao(_dataBass);
+    dao.getGroupMemberById(groupId, member, userRole);
 //    });
 //    func.get();
     return true;
@@ -427,11 +433,11 @@ bool DataBasePlug::getGroupMemberById(const std::string &groupId, std::map<std::
 bool
 DataBasePlug::getGroupMemberInfo(const std::vector<std::string> &members, std::vector<QTalk::StUserCard> &userInfos) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, members, &userInfos]() {
-        UserDao dao(_dataBass);
-        ret = dao.getUserCardInfos(members, userInfos);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, members, &userInfos]() {
+    UserDao dao(_dataBass);
+    ret = dao.getUserCardInfos(members, userInfos);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -439,11 +445,11 @@ DataBasePlug::getGroupMemberInfo(const std::vector<std::string> &members, std::v
 bool DataBasePlug::getGroupMemberInfo(std::map<std::string, QTalk::StUserCard> &userInfos)
 {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, &userInfos]() {
-        UserDao dao(_dataBass);
-        ret = dao.getUserCardInfos(userInfos);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, &userInfos]() {
+    UserDao dao(_dataBass);
+    ret = dao.getUserCardInfos(userInfos);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -474,11 +480,11 @@ bool DataBasePlug::bulkInsertGroupMember(const std::string &groupId, const std::
   */
 bool DataBasePlug::getGroupTopic(const std::string &groupId, std::string &groupTopic) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, groupId, &groupTopic]() {
-        GroupDao dao(_dataBass);
-        ret = dao.getGroupTopic(groupId, groupTopic);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, groupId, &groupTopic]() {
+    GroupDao dao(_dataBass);
+    ret = dao.getGroupTopic(groupId, groupTopic);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -588,11 +594,11 @@ bool DataBasePlug::bulkInsertUserInfo(const std::vector<QTalk::Entity::ImUserInf
 std::shared_ptr<QTalk::Entity::ImUserInfo> DataBasePlug::getUserInfoByXmppId(const std::string &xmppid) {
     //assert(xmppid.size() <= 45);
     std::shared_ptr<QTalk::Entity::ImUserInfo> ret = nullptr;
-    auto func = _dbPool.enqueue([this, &ret, xmppid]() {
-        UserDao dao(_dataBass);
-        ret = dao.getUserInfoByXmppId(xmppid);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, xmppid]() {
+    UserDao dao(_dataBass);
+    ret =dao.getUserInfoByXmppId(xmppid);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -771,21 +777,21 @@ bool DataBasePlug::insertConfig(const std::string &key, const std::string &subKe
 
 bool DataBasePlug::getConfig(const std::string &key, const std::string &subKey, std::string &val) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, key, subKey, &val]() {
-        ConfigDao confDao(_dataBass);
-        ret = confDao.getConfig(key, subKey, val);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, key, subKey, &val]() {
+    ConfigDao confDao(_dataBass);
+    ret = confDao.getConfig(key, subKey, val);
+//    });
+//    func.get();
     return ret;
 }
 
 bool DataBasePlug::getConfig(const std::string &key, std::map<std::string, std::string> &mapConf) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, key, &mapConf]() {
-        ConfigDao confDao(_dataBass);
-        ret = confDao.getConfig(key, mapConf);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, key, &mapConf]() {
+    ConfigDao confDao(_dataBass);
+    ret = confDao.getConfig(key, mapConf);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -821,53 +827,53 @@ bool DataBasePlug::insertOrUpdateUserSuppl(std::shared_ptr<QTalk::Entity::ImUser
 
 bool DataBasePlug::getStructure(std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>> &structure) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, &structure]() {
-        UserDao dao(_dataBass);
-        ret = dao.getStructure(structure);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, &structure]() {
+    UserDao dao(_dataBass);
+    ret = dao.getStructure(structure);
+//    });
+//    func.get();
     return ret;
 }
 
 bool DataBasePlug::getUnreadedMessages(const std::string &messageId, std::vector<std::string> &msgIds) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, messageId, &msgIds]() {
-        MessageDao dao(_dataBass);
-        ret = dao.getUnreadedMessages(messageId, msgIds);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, messageId, &msgIds]() {
+    MessageDao dao(_dataBass);
+    ret = dao.getUnreadedMessages(messageId, msgIds);
+//    });
+//    func.get();
     return ret;
 }
 
 bool DataBasePlug::getGroupMessageLastUpdateTime(const std::string &messageId, QInt64 &time) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, messageId, &time]() {
-        MessageDao dao(_dataBass);
-        ret = dao.getGroupMessageLastUpdateTime(messageId, time);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, messageId, &time]() {
+    MessageDao dao(_dataBass);
+    ret = dao.getGroupMessageLastUpdateTime(messageId, time);
+//    });
+//    func.get();
     return ret;
 }
 
 bool DataBasePlug::getGroupUnreadedCount(const std::map<std::string, QInt64> &readMasks,
                                          std::map<std::string, int> &unreadedCount) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, readMasks, &unreadedCount]() {
-        perf_counter("getGroupUnreadedCount");
-        MessageDao dao(_dataBass);
-        ret = dao.getGroupUnreadedCount(readMasks, unreadedCount);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, readMasks, &unreadedCount]() {
+//        perf_counter("getGroupUnreadedCount");
+    MessageDao dao(_dataBass);
+    ret = dao.getGroupUnreadedCount(readMasks, unreadedCount);
+//    });
+//    func.get();
     return ret;
 }
 
 bool DataBasePlug::getMessageByMessageId(const std::string &messageId, QTalk::Entity::ImMessageInfo &imMessageInfo) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, messageId, &imMessageInfo]() {
+//    auto func = _dbPool.enqueue([this, &ret, messageId, &imMessageInfo]() {
         MessageDao dao(_dataBass);
         ret = dao.getMessageByMessageId(messageId, imMessageInfo);
-    });
-    func.get();
+//    });
+//    func.get();
     return ret;
 }
 
@@ -883,11 +889,11 @@ bool DataBasePlug::updateRevokeMessage(const std::string &messageId) {
 
 bool DataBasePlug::getConfigVersion(int &version) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, & version]() {
-        ConfigDao dao(_dataBass);
-        ret = dao.getConfigVersion(version);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, & version]() {
+    ConfigDao dao(_dataBass);
+    ret = dao.getConfigVersion(version);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -913,11 +919,11 @@ bool DataBasePlug::bulkRemoveConfig(const std::map<std::string, std::string> &ma
 
 bool DataBasePlug::getAllConfig(std::vector<QTalk::Entity::ImConfig> &configs) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, &configs]() {
-        ConfigDao dao(_dataBass);
-        ret = dao.getAllConfig(configs);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, &configs]() {
+    ConfigDao dao(_dataBass);
+    ret = dao.getAllConfig(configs);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -1004,21 +1010,21 @@ bool DataBasePlug::deleteFriendByXmppId(const std::string &xmppId) {
 
 bool DataBasePlug::getAllFriends(std::vector<QTalk::Entity::IMFriendList> &friends) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, &friends]() {
-        FriendListDao dao(_dataBass);
-        ret = dao.getAllFriends(friends);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, &friends]() {
+    FriendListDao dao(_dataBass);
+    ret = dao.getAllFriends(friends);
+//    });
+//    func.get();
     return ret;
 }
 
 bool DataBasePlug::getAllGroup(std::vector<QTalk::Entity::ImGroupInfo> &groups) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, &groups]() {
-        GroupDao dao(_dataBass);
-        ret = dao.getAllGroup(groups);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, &groups]() {
+    GroupDao dao(_dataBass);
+    ret = dao.getAllGroup(groups);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -1044,22 +1050,22 @@ bool DataBasePlug::bulkDeleteUserInfo(const std::vector<std::string> &userIds) {
 
 bool DataBasePlug::getStructureCount(const std::string &strName, int &count) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, strName, &count]() {
-        UserDao dao(_dataBass);
-        ret = dao.getStructureCount(strName, count);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, strName, &count]() {
+    UserDao dao(_dataBass);
+    ret = dao.getStructureCount(strName, count);
+//    });
+//    func.get();
     return ret;
 }
 
 
 bool DataBasePlug::getStructureMember(const std::string &strName, std::vector<std::string> &arMember) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, strName, &arMember]() {
-        UserDao dao(_dataBass);
-        ret = dao.getStructureMember(strName, arMember);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, strName, &arMember]() {
+    UserDao dao(_dataBass);
+    ret = dao.getStructureMember(strName, arMember);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -1068,11 +1074,11 @@ bool DataBasePlug::getStructureMember(const std::string &strName, std::vector<st
  */
 bool DataBasePlug::getGroupCardById(std::shared_ptr<QTalk::Entity::ImGroupInfo> &group) {
     bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, &group]() {
-        GroupDao dao(_dataBass);
-        ret = dao.getGroupCardById(group);
-    });
-    func.get();
+//    auto func = _dbPool.enqueue([this, &ret, &group]() {
+    GroupDao dao(_dataBass);
+    ret = dao.getGroupCardById(group);
+//    });
+//    func.get();
     return ret;
 }
 
@@ -1100,20 +1106,20 @@ bool DataBasePlug::getGroupCardById(std::shared_ptr<QTalk::Entity::ImGroupInfo> 
 
 void DataBasePlug::getRecentSession(std::vector<QTalk::StShareSession> &sessions)
 {
-    auto func = _dbPool.enqueue([this, &sessions]() {
+//    auto func = _dbPool.enqueue([this, &sessions]() {
         SessionListDao dao(_dataBass);
         dao.getRecentSession(sessions);
-    });
-    func.get();
+//    });
+//    func.get();
 }
 
 void DataBasePlug::geContactsSession(std::vector<QTalk::StShareSession> &sessions)
 {
-    auto func = _dbPool.enqueue([this, &sessions]() {
+//    auto func = _dbPool.enqueue([this, &sessions]() {
         UserDao dao(_dataBass);
         dao.geContactsSession(sessions);
-    });
-    func.get();
+//    });
+//    func.get();
 }
 
 bool DataBasePlug::initConfigVersions() {
@@ -1149,11 +1155,11 @@ bool DataBasePlug::insertHotLine(std::string value) {
 }
 
 void DataBasePlug::getHotLines(std::string &hotLines) {
-    auto func = _dbPool.enqueue([this, &hotLines]() {
+//    auto func = _dbPool.enqueue([this, &hotLines]() {
         CacheDataDao cacheDataDao(_dataBass);
         cacheDataDao.getHotLines(hotLines);
-    });
-    func.get();
+//    });
+//    func.get();
 }
 
 bool DataBasePlug::isHotlineMerchant(const std::string xmppid) {
@@ -1168,11 +1174,11 @@ bool DataBasePlug::isHotlineMerchant(const std::string xmppid) {
 
 std::string DataBasePlug::getGroupReadMarkTime(){
     std::string ret = "0";
-    auto func = _dbPool.enqueue([this, &ret]() {
+//    auto func = _dbPool.enqueue([this, &ret]() {
         CacheDataDao cacheDataDao(_dataBass);
         ret = cacheDataDao.getGroupReadMarkTime();
-    });
-    func.get();
+//    });
+//    func.get();
     return ret;
 }
 bool DataBasePlug::updateGroupReadMarkTime(std::string time){
@@ -1187,11 +1193,11 @@ bool DataBasePlug::updateGroupReadMarkTime(std::string time){
 
 std::string DataBasePlug::getLoginBeforeGroupReadMarkTime(){
     std::string ret = "0";
-    auto func = _dbPool.enqueue([this, &ret]() {
+//    auto func = _dbPool.enqueue([this, &ret]() {
         CacheDataDao cacheDataDao(_dataBass);
         ret = cacheDataDao.getLoginBeforeGroupReadMarkTime();
-    });
-    func.get();
+//    });
+//    func.get();
     return ret;
 }
 
@@ -1208,20 +1214,20 @@ bool DataBasePlug::saveLoginBeforeGroupReadMarkTime(const std::string &time){
 
 void DataBasePlug::getBeforeImageMessage(const std::string &messageId,
                                          std::vector<std::pair<std::string, std::string>> &msgs) {
-    auto func = _dbPool.enqueue([this, &msgs, messageId]() {
+//    auto func = _dbPool.enqueue([this, &msgs, messageId]() {
         MessageDao dao(_dataBass);
         dao.getBeforeImageMessage(messageId, msgs);
-    });
-    func.get();
+//    });
+//    func.get();
 }
 
 void DataBasePlug::getNextImageMessage(const std::string &messageId,
                                        std::vector<std::pair<std::string, std::string>> &msgs) {
-    auto func = _dbPool.enqueue([this, &msgs, messageId]() {
+//    auto func = _dbPool.enqueue([this, &msgs, messageId]() {
         MessageDao dao(_dataBass);
         dao.getNextImageMessage(messageId, msgs);
-    });
-    func.get();
+//    });
+//    func.get();
 }
 
 /**
@@ -1230,11 +1236,11 @@ void DataBasePlug::getNextImageMessage(const std::string &messageId,
  */
 void DataBasePlug::getCareUsers(std::set<std::string> &users)
 {
-    auto func = _dbPool.enqueue([this, &users]() {
+//    auto func = _dbPool.enqueue([this, &users]() {
         GroupMemberDao dao(_dataBass);
         dao.getCareUsers(users);
-    });
-    func.get();
+//    });
+//    func.get();
 }
 
 void DataBasePlug::getGroupCardMaxVersion(long long &version)

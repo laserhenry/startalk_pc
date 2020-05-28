@@ -36,6 +36,7 @@ Q_SIGNALS:
 public:
     void turnBefore();
     void turnNext();
+    void onCloseWnd();
 
 protected:
     void keyPressEvent(QKeyEvent* e) override;

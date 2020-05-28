@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by lihaibin on 2019-06-26.
 //
 #include "QuickReplyDao.h"

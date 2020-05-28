@@ -256,7 +256,7 @@ QToolButton#searchBtn:hover{
 QFrame#MessageBox {
     background:rgba(48,51,55,1);
     border-radius:4px;
-    border:1px solid rgba(0,0,0,0.5);;
+    border:0px solid rgba(0,0,0,0.5);;
 }
 
 QPushButton#NoButton {
@@ -288,7 +288,7 @@ QPushButton#DeleteButton {
 
 QLabel#MessageBoxMessage {
     font-size:16px;
-    font-weight:400;
+    font-weight:500;
     color:rgba(255,255,255,1);
     line-height:24px;
 }
