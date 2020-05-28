@@ -1,7 +1,6 @@
-**StarTalk Pc 2.0 客户端**
+**StarTalk PC 2.0 客户端**
 =====
-StarTalk Pc 2.0 是基于StarTalk开源服务的Pc客户端, 支持Windows、Linux、Mac三个平台，除了部分平台性质的差别外，UI和功能都一致。
-与1.0相比，除了支持更多平台外，UI、性能等各个方面都得到了有效提升。
+StarTalk PC 2.0 是基于StarTalk开源服务的Pc客户端, 支持Windows、Linux、Mac三个平台，除了部分平台性质的差别外，UI和功能都一致。
 
 Release版本下载地址: [StarTalk官网](https://i.startalk.im/home/#/download)
 
@@ -22,22 +21,26 @@ ___
  cJson | | https://github.com/DaveGamble/cJSON | 项目中包含源码 
  breakpad | | https://github.com/google/breakpad | 
  
-1. Windows 操作系统  
-    ① Visual Studio 2017/2019  
-    ② Cmake  
-    ③ Clion(IDE建议使用Clion, 也可以根据cmakelist写vs项目)  
+1. Windows 操作系统   
+    ① Cmake
       
 2. Linux/MacOS 操作系统  
     ① Cmake  
     ② UUID  
-    ③ Clion 或者使用VIM  
-    ④ MacOS操作系统依赖库路径可能与您本地的依赖库路径不一致, 可以自行手动修改( 可以使用 ”install_name_tool“ 命令 )  
  
 Tips:  
     1> protobuf、zlib、openssl、curl几个库因为编译比较复杂，我们提供了已经编译成功的版本，位置 ${root_dir}/Depends/${name}，其他平台需要自己build  
     2> 安装Qt时请注意需要额外安装 "Qt WebEngine"、和 "Qt Network Authorization"模块。  
      QtMacExtras(MacOS)、QtX11Extras(Linux) 可能也需要额外安装，和安装的版本有关。
     3> Windows操作系统建议只安装一个版本的Qt
+
+------
+关于开发环境  
+① Windows 建议使用 visual stdio 2017/2019  
+② Linux Mac 使用Clion是个很好的选择  
+③ 强烈推荐Visual Studio Code  
+
+------
 
 ### 源码编译
 
@@ -46,7 +49,7 @@ Tips:
 $ cd ${root_dir}
 $ mkdir build
 $ cd build
-$ cmake -DCMAKE_BUILD_TYPE=Debug/Release -DSTARTALK=ON .. #根据自己需要修改build版本
+$ cmake -DCMAKE_BUILD_TYPE=Debug/Release .. #根据自己需要修改build版本
 $ make
 ```  
 
@@ -55,7 +58,7 @@ Windows参考
 $ cd ${root_dir}
 $ mkdir build
 $ cd build
-$ cmake -DCMAKE_BUILD_TYPE=Release -DSTARTALK=ON -G "CodeBlocks - NMake Makefiles" .. 
+$ cmake -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - NMake Makefiles" .. 
 $ cmake --build ${root_dir}/build --target all --
 ```
 
@@ -66,7 +69,7 @@ tips:
     1> 需要修改跟目录下的CMakeList.txt 中第三方的路径 根据自己的安装位置修改  
     2> Windows操作系统下需要设置Qt、Cmake的全局系统变量  
     3> Windows操作系统下需要使用Visual Studio的工具编译( VS 2017/2019 的开发人员命令提示符 )  
-    4> MacOs版本 cmake 增加参数 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.12  
+    4> MacOs版本 cmake 增加参数 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13  
 
 ### 关于更新
 
