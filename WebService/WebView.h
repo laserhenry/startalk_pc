@@ -215,11 +215,11 @@ public:
     void setObj(WebJsObj* obj);
 
 private:
-    WebEnginePage* _pWebPage;
-    QWebEngineView* _pWebView;
-	QWebChannel* _pWebCannel;
+    WebEnginePage* _pWebPage{};
+    QWebEngineView* _pWebView{};
+	QWebChannel* _pWebCannel{};
 
-    DownLoadWgt* _downloadWgt;
+    DownLoadWgt* _downloadWgt{};
 };
 
 

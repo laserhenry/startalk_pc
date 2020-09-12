@@ -16,8 +16,6 @@
 namespace QTalk {
 
     class UICOMSHARED_EXPORT StyleDefine {
-    private:
-        static StyleDefine* _defines;
     public:
         static StyleDefine& instance();
 
@@ -138,7 +136,7 @@ namespace QTalk {
         inline QColor getHotLineTipItemFontColor() { return _hot_line_tip_item_font_color; };
 
     private:
-        // 会话列表
+        //
         QColor _nav_normal_color = {255, 255, 255};
         QColor _nav_select_color = {213, 242, 240};
         QColor _search_normal_color = {255, 255, 255};
@@ -154,10 +152,10 @@ namespace QTalk {
         QColor _nav_name_font_select_color = {51, 51, 51};
         QColor _nav_content_font_select_color = {153, 153, 153};
         QColor _nav_time_font_select_color = {153, 153, 153};
-        // 群成员列表
+        //
         QColor _chat_group_normal_color = {248, 248, 248};
         QColor _chat_group_font_color = {51, 51, 51};
-        // 通讯录列表
+        //
         QColor _adr_normal_color = {255, 255, 255};
         QColor _adr_select_color = {213, 242, 240};
         QColor _adr_name_font_color = {51, 51, 51};

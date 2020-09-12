@@ -42,15 +42,15 @@ void UserCard::initUi()
 {
     setObjectName("UserCard");
     // title
-    QFrame* titleFrame = new QFrame(this);
+    auto* titleFrame = new QFrame(this);
     titleFrame->setObjectName("UserCard_titleFrame");
     titleFrame->setFixedHeight(50);
-    LinkButton* findFriend = new LinkButton(tr("查找并添加好友"));
-    findFriend->setAlignment(Qt::AlignBottom);
-    QHBoxLayout* titleLayout = new QHBoxLayout(titleFrame);
+//    LinkButton* findFriend = new LinkButton(tr("查找并添加好友"));
+//    findFriend->setAlignment(Qt::AlignBottom);
+    auto* titleLayout = new QHBoxLayout(titleFrame);
     titleLayout->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
-    titleLayout->addWidget(findFriend);
-    findFriend->setVisible(false);
+//    titleLayout->addWidget(findFriend);
+//    findFriend->setVisible(false);
     // top
 
 #ifdef _STARTALK
@@ -66,13 +66,13 @@ void UserCard::initUi()
     //
     _pMailBtn = new QPushButton(this);
     QPushButton* btnSendCard = new QPushButton(this);
-    _pAddFriendBtn = new QPushButton(this);
+//    _pAddFriendBtn = new QPushButton(this);
     _pBtnStar = new QPushButton(this);
     QPushButton* btnMore = new QPushButton(this);
 
     _pMailBtn->setObjectName("UserCard_SendMail");
     btnSendCard->setObjectName("UserCard_SendCard");
-    _pAddFriendBtn->setObjectName("UserCard_AddFriend");
+//    _pAddFriendBtn->setObjectName("UserCard_AddFriend");
     _pBtnStar->setObjectName("UserCard_Star");
     btnMore->setObjectName("btn_More");
 
@@ -80,13 +80,13 @@ void UserCard::initUi()
 
     _pMailBtn->setToolTip(tr("发送邮件"));
     btnSendCard->setToolTip(tr("转发名片"));
-    _pAddFriendBtn->setToolTip(tr("添加好友"));
+//    _pAddFriendBtn->setToolTip(tr("添加好友"));
     _pBtnStar->setToolTip(tr("星标联系人"));
     btnMore->setToolTip(tr("更多"));
 
     _pMailBtn->setFixedSize(30, 30);
     btnSendCard->setFixedSize(30, 30);
-    _pAddFriendBtn->setFixedSize(30, 30);
+//    _pAddFriendBtn->setFixedSize(30, 30);
     _pBtnStar->setFixedSize(30, 30);
     btnMore->setFixedSize(30, 30);
 
@@ -95,13 +95,12 @@ void UserCard::initUi()
     btnLay->setSpacing(16);
     btnLay->addWidget(_pMailBtn);
     btnLay->addWidget(btnSendCard);
-    btnLay->addWidget(_pAddFriendBtn);
+//    btnLay->addWidget(_pAddFriendBtn);
     btnLay->addWidget(_pBtnStar);
     btnLay->addWidget(btnMore);
     btnLay->addItem(new QSpacerItem(0,0,QSizePolicy::Expanding));
 
     btnSendCard->setVisible(false);
-    _pAddFriendBtn->setVisible(false);
     //
     QFrame* topFrame = new QFrame(this);
     //topFrame->setFixedHeight(140);
@@ -232,9 +231,9 @@ void UserCard::initUi()
     // add action
     _pMenu = new QMenu(this);
     _pMenu->setAttribute(Qt::WA_TranslucentBackground, true);
-    _pRemoveAct = new QAction(tr("解除好友"), _pMenu);
+//    _pRemoveAct = new QAction(tr("解除好友"), _pMenu);
     _pAddBlackListAct = new QAction(tr("加入黑名单"), _pMenu);
-    _pMenu->addAction(_pRemoveAct);
+//    _pMenu->addAction(_pRemoveAct);
     _pMenu->addAction(_pAddBlackListAct);
 
     connect(_pLeaderEdit, SIGNAL(clicked()), this, SLOT(onLeaderBtnClick()));
@@ -260,7 +259,7 @@ bool UserCard::showUserCard(const std::shared_ptr<QTalk::Entity::ImUserSupplemen
 
     QTalk::Entity::JID jid(imuserSup->XmppId.c_str());
     //
-	emit setWgtStatusSignal(jid.username() == Platform::instance().getSelfUserId());
+	emit setWgtStatusSignal(jid.username() == PLAT.getSelfUserId());
     //
     bool ret = (nullptr != info);
     if(ret)
@@ -371,10 +370,10 @@ void UserCard::gotPhoneNo(const std::string &userId, const std::string &phoneNo)
  */
 void UserCard::setFlags(int flags)
 {
-    bool isFriend = flags & EM_IS_FRIEND;
+//    bool isFriend = flags & EM_IS_FRIEND;
     bool isBlack = flags & EM_IS_BLACK;
 //    _pAddFriendBtn->setVisible(!isFriend);
-    _pRemoveAct->setEnabled(isFriend);
+//    _pRemoveAct->setEnabled(isFriend);
     _pBtnStar->setChecked(flags & EM_IS_START);
     _pAddBlackListAct->setText(isBlack ? tr("移除黑名单") : tr("加入黑名单"));
 }

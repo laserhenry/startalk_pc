@@ -118,7 +118,14 @@ void StatusWgt::switchUser(QUInt8 t, const QTalk::Entity::UID &uid, const QStrin
     _pLabelPlat->setVisible(false);
     _pStsLabel->setVisible(!_isGroupChat);
     _pmood->setVisible(!_isGroupChat);
-    _pBtnStructure->setVisible(!_isGroupChat);
+    _pBtnStructure->setVisible(!_isGroupChat && PLAT.getShowStaff());
+    _medalWgt->setVisible(t == QTalk::Enum::TwoPersonChat);
+
+    if(t == QTalk::Enum::TwoPersonChat)
+    {
+        onUpdateMedal();
+    }
+
 	if (_isGroupChat)
 	{
 //        std::string coEdit = AppSetting::instance().getCoEdit();
@@ -140,35 +147,20 @@ void StatusWgt::switchUser(QUInt8 t, const QTalk::Entity::UID &uid, const QStrin
     if (nullptr != _pLabelChatUser) {
         if (_isGroupChat) {
             if (!userName.isEmpty()) {
-                _pLabelChatUser->setText(name);
+                setName(name);
             } else {
-                std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = dbPlatForm::instance().getGroupInfo(
+                std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = DB_PLAT.getGroupInfo(
                         uid.usrId());
                 if (groupInfo)
-                    _pLabelChatUser->setText(QString::fromStdString(groupInfo->Name));
+                    setName(QString::fromStdString(groupInfo->Name));
                 else
-                    _pLabelChatUser->setText(uid.qUsrId().section("@", 0, 0));
-            }
-        } else if (_isConsultServer) {
-            std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(
-                    uid.realId());
-            if (userInfo) {
-                _pLabelChatUser->setText(QString::fromStdString(QTalk::getUserName(userInfo)));
-                _pBtnStructure->setToolTip(QString::fromStdString(userInfo->DescInfo));
-                QString mood = QString::fromStdString(userInfo->Mood);
-                _pmood->setToolTip(mood);
-                mood = mf.elidedText(mood, Qt::ElideRight, 500);
-                mood = mood.replace("\n", " ");
-                _pmood->setText(mood);
-            } else {
-                _pLabelChatUser->setText(uid.qReadJid().section("@", 0, 0));
-                _pmood->setText("");
+                    setName(uid.qUsrId().section("@", 0, 0));
             }
         } else {
-            std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(
+            std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = DB_PLAT.getUserInfo(
                     uid.realId());
             if (userInfo) {
-                _pLabelChatUser->setText(QString::fromStdString(QTalk::getUserName(userInfo)));
+                setName(QString::fromStdString(QTalk::getUserName(userInfo)));
                 _pBtnStructure->setToolTip(QString::fromStdString(userInfo->DescInfo));
                 QString mood = QString::fromStdString(userInfo->Mood);
                 _pmood->setToolTip(mood);
@@ -178,12 +170,12 @@ void StatusWgt::switchUser(QUInt8 t, const QTalk::Entity::UID &uid, const QStrin
             } else {
                 _pmood->setText("");
                 if (userName.isEmpty())
-                    _pLabelChatUser->setText(uid.qReadJid().section("@", 0, 0));
+                    setName(uid.qReadJid().section("@", 0, 0));
                 else
-                    _pLabelChatUser->setText(name);
+                    setName(name);
             }
             // 显示状态
-            auto status = Platform::instance().getUserStatus(uid.realId());
+            auto status = PLAT.getUserStatus(uid.realId());
             updateUserSts(status.data());
         }
     }
@@ -226,6 +218,8 @@ void StatusWgt::initUi() {
     //
     _pLabelChatUser = new QLabel(this);
 	_pLabelChatUser->setMinimumHeight(20);
+    _pLabelChatUser->setTextFormat(Qt::PlainText);
+    _pLabelChatUser->setWordWrap(false);
     _pLabelPlat = new HeadPhotoLab;
     _pLabelPlat->setParent(this);
     _pmood = new QLabel(this);
@@ -234,6 +228,7 @@ void StatusWgt::initUi() {
     _pBtnAddGroup = new QPushButton(this);
     _pBtnLock = new QPushButton(this);
 //    _pEdit = new QPushButton(this);
+    _medalWgt = new MedalWgt(15, this);
 
     _pLabelChatUser->setObjectName("ChatUser");
     _pLabelPlat->setObjectName("UserDept");
@@ -262,7 +257,7 @@ void StatusWgt::initUi() {
 //        _pBtnStructure->setVisible(false);
     }
 
-    std::string coEdit = AppSetting::instance().getCoEdit();
+//    std::string coEdit = AppSetting::instance().getCoEdit();
 
     auto *layout = new QHBoxLayout(this);
     layout->setContentsMargins(10, 10, 15, 10);
@@ -272,6 +267,7 @@ void StatusWgt::initUi() {
     hlayout->addWidget(_pStsLabel);
     hlayout->addWidget(_pLabelChatUser);
     hlayout->addWidget(_pLabelPlat);
+    hlayout->addWidget(_medalWgt);
     hlayout->addItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
 
     vlayout->addLayout(hlayout);
@@ -330,7 +326,10 @@ void StatusWgt::setName(const QString &name) {
     if (_pLabelChatUser) {
         QFontMetricsF f(_pLabelChatUser->font());
         _pLabelChatUser->setToolTip(name);
-        _pLabelChatUser->setText(f.elidedText(name, Qt::ElideRight, 300));
+        auto newName = name ;
+        newName.replace("\n", " ");
+        newName.replace("\r\n", " ");
+        _pLabelChatUser->setText(f.elidedText(newName, Qt::ElideRight, 300));
     }
 }
 
@@ -409,4 +408,10 @@ void StatusWgt::setMood(const QString &mood)
     QString eMood = mf.elidedText(mood, Qt::ElideRight, 300);
     eMood = eMood.replace("\n", " ");
     _pmood->setText(eMood);
+}
+
+void StatusWgt::onUpdateMedal() {
+    std::set<QTalk::StUserMedal> user_medal;
+    g_pMainPanel->getUserMedal(_uid.usrId(), user_medal);
+    _medalWgt->addMedals(user_medal, true);
 }

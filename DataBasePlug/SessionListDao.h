@@ -18,7 +18,6 @@ class SessionListDao : public DaoInterface{
 public:
     explicit SessionListDao(qtalk::sqlite::database *sqlDb = nullptr);
     bool creatTable() override;
-    bool clearData() override;
 
 public:
 //    bool insertSessionInfo(const QTalk::Entity::ImSessionInfo &imSessionInfo);
@@ -29,7 +28,7 @@ public:
 
     bool bulkremoveSessionMessage(const std::vector<std::string> &groupIds);
 
-    std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo>>> QueryImSessionInfos();
+//    std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo>>> QueryImSessionInfos();
     std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > reloadSession();
     //
     void updateUnreadCount();

@@ -6,7 +6,7 @@
 #include "../QtUtil/Utils/Log.h"
 
 MedalListDao::MedalListDao(qtalk::sqlite::database *sqlDb)
-    :DaoInterface(sqlDb)
+    :DaoInterface(sqlDb, "IM_Medal_List")
 {
 }
 
@@ -36,21 +36,6 @@ bool MedalListDao::creatTable() {
     return false;
 }
 
-bool MedalListDao::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM IM_Medal_List;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data IM_Medal_List error {0}", e.what());
-    }
-    return false;
-}
 
 void MedalListDao::insertMedalList(const std::vector<QTalk::Entity::ImMedalList> &medals) {
     if (!_pSqlDb) {
@@ -94,7 +79,7 @@ void MedalListDao::insertMedalList(const std::vector<QTalk::Entity::ImMedalList>
     catch (const std::exception& e)
     {
         _pSqlDb->exec("rollback transaction;");
-        throw std::logic_error(e.what());
+        error_log("exception :{0}", e.what());
     }
 }
 

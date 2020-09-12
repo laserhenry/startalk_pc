@@ -24,8 +24,8 @@
 extern ChatViewMainPanel *g_pMainPanel;
 class VideoMaskFrame : public QFrame {
 public:
-   explicit VideoMaskFrame(int direction = 0,QFrame *parent = Q_NULLPTR)
-   :QFrame(parent), _direction(direction){
+   explicit VideoMaskFrame(int direction = 0, QFrame *parent = Q_NULLPTR)
+   : QFrame(parent) {
         this->setAttribute(Qt::WA_TranslucentBackground,true);
     };
 public:
@@ -53,7 +53,7 @@ public:
     }
 
 private:
-    int _direction{};
+//    int _direction{};
     QString _imgPath;
     int _cur_val = 0;
     bool _downloading = false;
@@ -347,11 +347,11 @@ void VideoMessageItem::initContentLayout() {
                 {
                     maskFrame->setImage(placeHolder);
                     QPointer<VideoMessageItem> pThis(this);
-                    std::thread([pThis, thumbUrl](){
+                    QT_CONCURRENT_FUNC([pThis, thumbUrl](){
                         std::string downloadFile = ChatMsgManager::getLocalFilePath(thumbUrl.toStdString());
                         if(pThis && !downloadFile.empty())
                                 emit pThis->sgDownloadedIcon(QString::fromStdString(downloadFile));
-                    }).detach();
+                    });
                 }
             }
 
@@ -418,7 +418,7 @@ void VideoMessageItem::playVideo() {
                     if(!maskFrame->downloading())
                     {
                         maskFrame->setDownloading(true);
-                        g_pMainPanel->downloadFileWithProcess(videoUrl, localVideo, _msgInfo.msg_id);
+                        g_pMainPanel->downloadFileWithProcess(videoUrl, localVideo, _msgInfo.msg_id, this);
                     }
                 }
                 else

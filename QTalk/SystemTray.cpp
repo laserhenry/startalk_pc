@@ -20,9 +20,7 @@
 
 extern bool _bSystemRun;
 SystemTray::SystemTray(MainWindow* mainWnd)
-    : QObject(mainWnd), _pSysTrayIcon(nullptr),
-      _timer(nullptr), _pMainWindow(mainWnd),
-      _timerCount(0)
+    : QObject(mainWnd), _pMainWindow(mainWnd), _timerCount(0)
 {
     _pSysTrayIcon = new QSystemTrayIcon(this);
 
@@ -39,7 +37,7 @@ SystemTray::SystemTray(MainWindow* mainWnd)
     _popWnd = new SystemTrayPopWnd(_pMainWindow);
     _popWnd->setWindowFlags(_popWnd->windowFlags() | Qt::Popup);
     _popWnd->setFixedWidth(280);
-    auto* pSysTrayMenu = new QMenu;
+    pSysTrayMenu = new QMenu;
     pSysTrayMenu->setAttribute(Qt::WA_TranslucentBackground, true);
     auto* sysQuitAct = new QAction(tr("系统退出"));
     auto* showWmdAct = new QAction(tr("显示面板"));
@@ -55,7 +53,7 @@ SystemTray::SystemTray(MainWindow* mainWnd)
     pSysTrayMenu->addAction(showWmdAct);
     pSysTrayMenu->addSeparator();
     pSysTrayMenu->addAction(sysQuitAct);
-#ifdef _WINDOWS
+#ifndef Q_OS_MAC
     _pSysTrayIcon->setContextMenu(pSysTrayMenu);
 #endif
     _timer = new QTimer;
@@ -103,68 +101,15 @@ SystemTray::SystemTray(MainWindow* mainWnd)
 		});
 
     //
-    bool isSupportsMessages = _pSysTrayIcon->supportsMessages();
+    bool isSupportsMessages = QSystemTrayIcon::supportsMessages();
     AppSetting::instance().setNativeMessagePromptEnable(isSupportsMessages);
 	//
-
+#ifndef Q_OS_MAC
 	auto* hoverTimer = new QTimer;
 	hoverTimer->setInterval(1000);
-	connect(hoverTimer, &QTimer::timeout, [this, pSysTrayMenu]() {
-
-        bool bSysTray = _pSysTrayIcon->geometry().contains(QCursor::pos());
-	    bool bPopWnd =  _popWnd->geometry().contains(QCursor::pos());
-		if ((!_popWnd->isVisible() && bSysTray) ||
-                (_popWnd->isVisible() && (bSysTray || bPopWnd))) {
-
-			if (!pSysTrayMenu->isVisible() &&_popWnd->hasNewMessage())
-			{
-                if (!_popWnd->isVisible())
-                {
-                    _popWnd->show();
-                    //static unsigned char flag = 0;
-                    //if (flag++ % 2)
-                    //    return;
-                }
-
-				QRect rect = _pSysTrayIcon->geometry();
-                auto pos = QCursor::pos();
-#ifdef _LINUX
-                QScreen *screen = nullptr;
-    auto lstScreens = QApplication::screens();
-    for(QScreen* tmps : lstScreens)
-    {
-        if(tmps->geometry().contains(pos))
-        {
-            screen = tmps;
-            break;
-        }
-    }
-
-#else
-                QScreen *screen = QApplication::screenAt(pos);
-#endif
-				_popWnd->show();
-				auto screenRect = screen->availableGeometry();
-				auto x = qMin(screenRect.right() - _popWnd->width() - 10, rect.x());
-#ifdef _WINDOWS
-                auto y = rect.y() - _popWnd->height() - 5;
-                if (y < screenRect.top())
-                    y = screenRect.top() + 5;
-                else if (y + _popWnd->height() > screenRect.bottom())
-                    y -= (y + _popWnd->height() - screenRect.bottom()) + 5;
-                _popWnd->move(x, y);
-#else
-                _popWnd->move(x, rect.bottom());
-#endif
-			}
-		}
-		else {
-			if (_popWnd->isVisible())
-				_popWnd->setVisible(false);
-		}
-	});
+	connect(hoverTimer, &QTimer::timeout, this, &SystemTray::onHoverTimer);
 	hoverTimer->start();
-
+#endif
 }
 
 SystemTray::~SystemTray() = default;
@@ -178,8 +123,13 @@ SystemTray::~SystemTray() = default;
   */
 void SystemTray::activeTray(QSystemTrayIcon::ActivationReason reason)
 {    //
+    std::cout << reason << std::endl;
     if (reason == QSystemTrayIcon::Trigger )
     {
+#ifdef Q_OS_MAC
+        stopTimer();
+#endif
+
         if (_pMainWindow)
 			_pMainWindow->wakeUpWindow();
     }
@@ -272,13 +222,10 @@ void SystemTray::onSendLog()
     if(btn == QtMessageBox::EM_BUTTON_NO)
         return;
 
-    QtConcurrent::run([this]() {
-#ifdef _MACOS
-        pthread_setname_np("ChatViewMainPanel::packAndSendLog");
-#endif
+    QtConcurrent::run([]() {
         //db 文件
         QString logBasePath;
-        logBasePath = QString::fromStdString(Platform::instance().getAppdataRoamingPath()) + "/logs";
+        logBasePath = QString::fromStdString(PLAT.getAppdataRoamingPath()) + "/logs";
         // zip
         QString logZip = logBasePath + "/log.zip";
         if (QFile::exists(logZip))
@@ -299,4 +246,58 @@ void SystemTray::onMessageClicked() {
 //
 void SystemTray::onAppDeactivated() {
 
+}
+
+void SystemTray::onHoverTimer() {
+    bool bSysTray = _pSysTrayIcon->geometry().contains(QCursor::pos());
+    bool bPopWnd =  _popWnd->geometry().contains(QCursor::pos());
+    if ((!_popWnd->isVisible() && bSysTray) ||
+        (_popWnd->isVisible() && (bSysTray || bPopWnd))) {
+
+        if (!pSysTrayMenu->isVisible() &&_popWnd->hasNewMessage())
+        {
+            if (!_popWnd->isVisible())
+            {
+                _popWnd->setVisible(true);
+                //static unsigned char flag = 0;
+                //if (flag++ % 2)
+                //    return;
+            }
+
+            QRect rect = _pSysTrayIcon->geometry();
+            auto pos = QCursor::pos();
+#ifdef _LINUX
+            QScreen *screen = nullptr;
+    auto lstScreens = QApplication::screens();
+    for(QScreen* tmps : lstScreens)
+    {
+        if(tmps->geometry().contains(pos))
+        {
+            screen = tmps;
+            break;
+        }
+    }
+
+#else
+            QScreen *screen = QApplication::screenAt(pos);
+#endif
+            _popWnd->show();
+            auto screenRect = screen->availableGeometry();
+            auto x = qMin(screenRect.right() - _popWnd->width() - 10, rect.x());
+#ifdef _WINDOWS
+            auto y = rect.y() - _popWnd->height() - 5;
+                if (y < screenRect.top())
+                    y = screenRect.top() + 5;
+                else if (y + _popWnd->height() > screenRect.bottom())
+                    y -= (y + _popWnd->height() - screenRect.bottom()) + 5;
+                _popWnd->move(x, y);
+#else
+            _popWnd->move(x, rect.bottom());
+#endif
+        }
+    }
+    else {
+        if (_popWnd->isVisible())
+            _popWnd->setVisible(false);
+    }
 }

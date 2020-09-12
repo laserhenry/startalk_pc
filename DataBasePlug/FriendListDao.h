@@ -15,7 +15,6 @@ class FriendListDao : public DaoInterface
 public:
     explicit FriendListDao(qtalk::sqlite::database *sqlDb);
     bool creatTable() override;
-    bool clearData() override;
 
 public:
     bool bulkInsertFriends(const std::vector<QTalk::Entity::IMFriendList>& friends);

@@ -20,7 +20,7 @@ public:
 public:
 	// 获取组织架构
 	bool getNewStructure(bool = false);
-	bool getOldStructure();
+//	bool getOldStructure();
 	//
 	bool getUserCard(const UserCardParam &param, std::vector<QTalk::StUserCard>& arUserInfo);
 
@@ -33,7 +33,7 @@ public:
     void UpdateMood(const std::string& mood);
 
 private:
-	bool getUserMood(QTalk::Entity::JID* jid, std::string& mood, int& version);
+//	bool getUserMood(QTalk::Entity::JID* jid, std::string& mood, int& version);
 	bool getUserSupplement(QTalk::Entity::JID *jid, std::shared_ptr<QTalk::Entity::ImUserSupplement>& imUserSup);
 
 private:

@@ -1,6 +1,5 @@
 ﻿#include "MainWindow.h"
-#include "UIGolbalManager.h"
-#include <QEvent>
+#include "GlobalManager.h"
 #include <assert.h>
 #include <QCloseEvent>
 #include <QMenu>
@@ -27,14 +26,10 @@
 #include "../interface/view/IUICardManagerPlug.h"
 #include "../interface/view/IUILoginPlug.h"
 #include "../Platform/Platform.h"
-#include "../LogicManager/LogicManager.h"
-#include "../UICom/uicom.h"
 #include "MessageManager.h"
 #include "SystemTray.h"
 #include "../interface/view/IUIOAManagerPlug.h"
-#include "../QtUtil/Utils/Log.h"
 #include "../Platform/AppSetting.h"
-#include "../entity/UID.h"
 #include "../CustomUi/QtMessageBox.h"
 #include "MacApp.h"
 
@@ -54,44 +49,16 @@
 #define WIN_Y "WIN_Y"
 
 //class StSessionInfo;
-bool MainWindow::_sys_run = true;
+extern bool _sys_run;
 MainWindow::MainWindow(QWidget *parent) :
 #ifdef _MACOS
-    UShadowDialog(parent, true, false),
+    UShadowDialog(parent, true, false)
 #else
-    UShadowDialog(parent, true, true),
+    UShadowDialog(parent, true, true)
 #endif
-	_initUi(true),
-    _titleBarPlugin(nullptr),
-    _navigationPlugin(nullptr),
-    _chatViewPlugin(nullptr),
-    _titleBar(nullptr),
-    _navigationPanel(nullptr),
-    _chatViewPanel(nullptr),
-    _mainLayout(nullptr),
-    _bottomFrm(nullptr),
-    _bottomSplt(nullptr),
-	_pCardManagerPlug(nullptr),
-	_pCardManager(nullptr),
-    _logindlg(nullptr),
-    _pLoginPlug(nullptr),
-	_pPictureBrowser(nullptr),
-	_pPictureBrowserPlug(nullptr),
-	_pConfigLoader(nullptr),
-	_pAddressBook(nullptr),
-	_pAddressBookPlug(nullptr),
-	_pOAManager(nullptr),
-	_pOAManagerPlug(nullptr),
-    _pOfflineTimer(nullptr),
-    _login_t(0),
-    _logout_t(0),
-    _isOffline(true),
-    _noOperatorThread(nullptr)
 {
-    _pListener = new QTalkMsgListener(this);
-    // 系统设置
-    AppSetting::instance();
     //
+    new QTalkMsgListener(this);
 #if defined(_STARTALK)
     setWindowTitle("StarTalk");
 #elif defined(_QCHAT)
@@ -105,6 +72,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(_timr, &QTimer::timeout, this, &MainWindow::sendHeartBeat);
     connect(this, &MainWindow::LoginSuccess, this, &MainWindow::LoginResult);
     connect(this, &MainWindow::sgRestartWithMessage, this, &MainWindow::restartWithMessage, Qt::QueuedConnection);
+    connect(this, &MainWindow::sgCheckUpdate, this, &MainWindow::onCheckUpdater, Qt::QueuedConnection);
     //
     QHostInfo info = QHostInfo::fromName(QHostInfo::localHostName());
     for(const QHostAddress &address : info.addresses())
@@ -128,33 +96,38 @@ MainWindow::MainWindow(QWidget *parent) :
     //
     connect(addNew, &QAction::triggered, this, &MainWindow::sgRunNewInstance);
 #endif
-//    auto screens = qApp->screens();
-//
-//    for(auto* sc : screens)
-//    {
-//        qInfo() << sc->name();
-//    }
+//   auto screens = QApplication::screens();
+//   for(auto* sc : screens)
+//       qInfo() << sc->name() << sc->availableGeometry() ;
+
+#if defined(Q_OS_WIN)
+    // connect(qApp, &QApplication::screenAdded, [this](QScreen* screen){
+    //     qInfo() << screen->name() << this->geometry();
+    // });
+
+    connect(qApp, &QApplication::screenRemoved, this, &MainWindow::onScreenRemoved);
+#endif
+    // process info
+    _prcessInfo = new ProcessInfo;
+    _prcessInfo->start();
 }
 
 
 MainWindow::~MainWindow()
 {
+    _prcessInfo->terminate();
+    delete _prcessInfo;
+
     if(_pLocalServer)
         delete _pLocalServer;
 
-//   UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UILoginPlug");
-//    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UICardManager");
-//	UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UIGroupManager");
-//    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UIPictureBrowser");
-//    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UITitlebarPlug");
-//    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UINavigationPlug");
-//    UIGolbalManager::GetUIGolbalManager()->UnloadPluginQt("UIChatViewPlug");
 }
 
 
 bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *result)
 {
 #ifdef _WINDOWS
+    static const int boundaryWidth = 5;
 	MSG* msg = (MSG*)message;
 	double pixelRatio = this->devicePixelRatioF();
 	pixelRatio = qMax(pixelRatio, 1.0);
@@ -189,17 +162,6 @@ bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *r
 	return false;
 }
 
-/**
-  * @函数名
-  * @功能描述 登陆成功
-  * @参数
-  * @date 2018.9.28
-  */
-void MainWindow::synSeverFinish()
-{
-
-}
-
 void MainWindow::closeEvent(QCloseEvent *e)
 {
 	if (_sys_run)
@@ -213,7 +175,7 @@ void MainWindow::init()
 {
     initPanels();
     //
-    UIGolbalManager::getUIGolbalManager()->setStyleSheetAll();
+    GlobalManager::instance()->setStyleSheetAll();
 }
 
 /**
@@ -232,7 +194,6 @@ void MainWindow::initPanels()
     initPictureBrowser();
     initOAManager();
     initNavigation();
-//    initTScreen();
 }
 
 void MainWindow::initLayouts()
@@ -308,7 +269,7 @@ void MainWindow::initLayouts()
   */
 void MainWindow::initTitleBar()
 {
-    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UITitlebarPlug");
+    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UITitlebarPlug");
     if (plugin)
     {
         _titleBarPlugin = qobject_cast<IUITitlebarPlug *>(plugin);
@@ -316,8 +277,6 @@ void MainWindow::initTitleBar()
         {
             _titleBarPlugin->init();
             _titleBar = _titleBarPlugin->widget();
-//            UIGolbalManager::GetUIGolbalManager()->setStyleSheetForPlugin("UITitlebarPlug");
-            //
         }
     }
     assert(_titleBarPlugin);
@@ -327,7 +286,7 @@ void MainWindow::initTitleBar()
 
 void MainWindow::initCardManager()
 {
-    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UICardManager");
+    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UICardManager");
     if (plugin)
     {
         _pCardManagerPlug = qobject_cast<IUICardManagerPlug *>(plugin);
@@ -335,7 +294,6 @@ void MainWindow::initCardManager()
         {
             _pCardManagerPlug->init();
             _pCardManager = _pCardManagerPlug->widget();
-//            UIGolbalManager::GetUIGolbalManager()->setStyleSheetForPlugin("UICardManager");
         }
     }
     assert(_pCardManagerPlug);
@@ -350,7 +308,7 @@ void MainWindow::initCardManager()
   */
 void MainWindow::initNavigation()
 {
-    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UINavigationPlug");
+    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UINavigationPlug");
     if (plugin)
     {
         _navigationPlugin = qobject_cast<IUINavigationPlug *>(plugin);
@@ -358,7 +316,6 @@ void MainWindow::initNavigation()
         {
             _navigationPlugin->init();
             _navigationPanel = _navigationPlugin->widget();
-//            UIGolbalManager::GetUIGolbalManager()->setStyleSheetForPlugin("UINavigationPlug");
         }
     }
     assert(_navigationPlugin);
@@ -372,7 +329,7 @@ void MainWindow::initNavigation()
   */
 void MainWindow::initChatView()
 {
-    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UIChatViewPlug");
+    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UIChatViewPlug");
     if (plugin)
     {
         _chatViewPlugin = qobject_cast<IUIChatViewPlug *>(plugin);
@@ -380,7 +337,6 @@ void MainWindow::initChatView()
         {
             _chatViewPlugin->init();
             _chatViewPanel = _chatViewPlugin->widget();
-//            UIGolbalManager::GetUIGolbalManager()->setStyleSheetForPlugin("UIChatViewPlug");
         }
     }
     assert(_chatViewPlugin);
@@ -394,6 +350,8 @@ void MainWindow::initChatView()
   */
 void MainWindow::connectPlugs()
 {
+    connect(this, SIGNAL(sgSystemQuit()), this, SLOT(systemQuit()));
+
     qRegisterMetaType<QVector<int>>("QVector<int>");
 //    connect(_chatViewPanel, SIGNAL(recvMessageSignal()), _pSysTrayIcon, SLOT(onRecvMessage()));
     connect(_titleBar, SIGNAL(sgCurFunChanged(int)),
@@ -462,6 +420,7 @@ void MainWindow::connectPlugs()
 	connect(_titleBar, SIGNAL(feedbackLog(const QString&)), _chatViewPanel, SLOT(packAndSendLog(const QString&)));
 	connect(this, SIGNAL(systemShortCut()), _chatViewPanel, SLOT(systemShortCut()));
 	connect(_titleBar, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()), Qt::QueuedConnection);
+	connect(this, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()), Qt::QueuedConnection);
 
 	connect(_chatViewPanel, SIGNAL(sgShortCutSwitchSession(int)),
 	        _navigationPanel, SLOT(onShortCutSwitchSession(int)));
@@ -476,7 +435,7 @@ void MainWindow::connectPlugs()
 	connect(_titleBar, SIGNAL(sgSetAutoLogin(bool)), this, SLOT(setAutoLogin(bool)));
 	connect(_titleBar, SIGNAL(sgUpdateHotKey()), this, SLOT(onUpdateHotKey()));
 
-	connect(_titleBar, SIGNAL(sgSaveSysConfig()), UIGolbalManager::getUIGolbalManager(), SLOT(saveSysConfig()));
+	connect(_titleBar, SIGNAL(sgSaveSysConfig()), GlobalManager::instance(), SLOT(saveSysConfig()));
 	connect(_titleBar, SIGNAL(sgSaveSysConfig()), this, SLOT(onSaveSysConfig()));
 	connect(_titleBar, SIGNAL(msgSoundChanged()), _chatViewPanel, SLOT(onMsgSoundChanged()));
 
@@ -491,10 +450,9 @@ void MainWindow::connectPlugs()
     connect(this, SIGNAL(sgAppActive()), _navigationPanel, SLOT(onAppActive()));
     connect(_titleBar, SIGNAL(sgActiveWnd()), this, SLOT(wakeUpWindow()));
     //
-    connect(_chatViewPanel, SIGNAL(sgShockWnd()), this, SLOT(onShockWnd()));
     connect(_chatViewPanel, SIGNAL(sgUserSendMessage()),
             this, SLOT(onUserSendMessage()));
-    connect(UIGolbalManager::getUIGolbalManager(), SIGNAL(sgMousePressGlobalPos(QPoint)), _titleBar,
+    connect(GlobalManager::instance(), SIGNAL(sgMousePressGlobalPos(QPoint)), _titleBar,
             SLOT(onMousePressGolbalPos(QPoint)));
     // show draft
     connect(_chatViewPanel, SIGNAL(sgShowDraft(const QTalk::Entity::UID&, const QString&)),
@@ -524,7 +482,7 @@ void MainWindow::connectPlugs()
     connect(_pLogTimer, &QTimer::timeout, [this](){
 //        if(_pMessageManager)
         {
-#if !defined(_STARTALK) and !defined(_QCHAT)
+#if !defined(_STARTALK) && !defined(_QCHAT)
             if(_loginDate != QDate::currentDate())
             {
                 //
@@ -543,6 +501,39 @@ void MainWindow::connectPlugs()
         }
     });
     //
+#ifdef TSCREEN
+    connect(_pOAManager, SIGNAL(sgShowThrowingScreenWnd()), this, SLOT(startTScreen()));
+    connect(_titleBar, SIGNAL(sgShowThrowingScreenWnd()), this, SLOT(startTScreen()));
+#endif
+}
+
+#include <QLocalSocket>
+void MainWindow::startTScreen() {
+#ifdef _LINUX
+    return;
+#endif
+    //
+    static const char * QUNAR_THROW_SCREEN = "QUNAR_THROW_SCREEN";
+    QLocalSocket localSocket;
+    localSocket.connectToServer(QUNAR_THROW_SCREEN);
+    if (localSocket.waitForConnected(2000)) {
+        localSocket.disconnectFromServer();
+        localSocket.close();
+        return;
+    }
+    //
+    QStringList arguments;
+#if defined(_WINDOWS)
+    const QString& cmd = QString("%1/%2").arg(QApplication::applicationDirPath(), "TScreen/TScreen.exe");
+    arguments << QString("LOGIN_USER_NAME=").append(PLAT.getSelfUserId().data());
+    QProcess::startDetached(cmd, arguments);
+#elif defined(_MACOS)
+    const QString& cmd = QString("%1/%2").arg(QApplication::applicationDirPath(), "TScreen");
+    chmod(cmd.toStdString().data(), S_IRWXU);
+    arguments << QString("LOGIN_USER_NAME=").append(PLAT.getSelfName().data());
+    QProcess::startDetached(cmd, arguments);
+#endif
+
 }
 
 /**
@@ -578,7 +569,7 @@ void MainWindow::initSystemTray()
   */
 void MainWindow::initGroupManager()
 {
-	QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UIGroupManager");
+	QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UIGroupManager");
 	if (plugin)
 	{
         _pGroupManagerPlug = qobject_cast<IUIGroupManagerPlug *>(plugin);
@@ -586,7 +577,6 @@ void MainWindow::initGroupManager()
 		{
             _pGroupManagerPlug->init();
             _pGroupManager = _pGroupManagerPlug->widget();
-//            UIGolbalManager::GetUIGolbalManager()->setStyleSheetForPlugin("UIGroupManager");
 		}
 	}
 	assert(_pGroupManagerPlug);
@@ -595,7 +585,7 @@ void MainWindow::initGroupManager()
 
 void MainWindow::InitLogin(bool _enable, const QString& loginMsg)
 {
-    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UILoginPlug");
+    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UILoginPlug");
     if (plugin)
     {
         _pLoginPlug = qobject_cast<IUILoginPlug *>(plugin);
@@ -610,7 +600,7 @@ void MainWindow::InitLogin(bool _enable, const QString& loginMsg)
         }
         if (_logindlg)
         {
-            UIGolbalManager::getUIGolbalManager()->setStyleSheetForPlugin("UILoginPlug");
+            GlobalManager::instance()->setStyleSheetForPlugin("UILoginPlug");
             connect(_logindlg, SIGNAL(sgSynDataSuccess()), this, SLOT(openMainWindow()));
             connect(_logindlg, SIGNAL(systemQuitSignal()), this, SLOT(systemQuit()), Qt::QueuedConnection);
             _logindlg->show();
@@ -645,7 +635,7 @@ void MainWindow::openMainWindow()
         _pLogTimer->start();
         //
         _pLocalServer = new LocalServer;
-        _pLocalServer->runServer(qApp->applicationName());
+        _pLocalServer->runServer(QApplication::applicationName());
 	    //
 		_initUi = false;
 		init();
@@ -655,7 +645,7 @@ void MainWindow::openMainWindow()
 		//
 		_navigationPlugin->updateReadCount();
         // setwindow states
-		QString configPath = QString("%1/mainWnd").arg(Platform::instance().getConfigPath().data());
+		QString configPath = QString("%1/mainWnd").arg(PLAT.getConfigPath().data());
         //
         _pConfigLoader = new QTalk::ConfigLoader(configPath.toLocal8Bit());
         if(_pConfigLoader->reload())
@@ -768,7 +758,7 @@ void MainWindow::openMainWindow()
         connect(about, SIGNAL(triggered()), _titleBar, SLOT(onShowAboutWnd()));
 #endif
         //
-#if !defined(_STARTALK) and !defined(_QCHAT)
+#if !defined(_STARTALK) && !defined(_QCHAT)
         _loginDate = QDate::currentDate();
         QtConcurrent::run(&QTalkMsgManager::reportLogin);
 #endif
@@ -776,8 +766,6 @@ void MainWindow::openMainWindow()
         dealDumpFile();
         checkUpdater();
 	}
-
-	synSeverFinish();
 }
 
 /**
@@ -808,12 +796,11 @@ void MainWindow::onCurFunChanged(int index)
 //
 void MainWindow::onAppActive()
 {
-    qInfo() << "--- app active ---";
     emit sgResetOperator();
 
     if(_initUi)
     {
-        //_logindlg->setVisible(true);
+        
     }
     else
     {
@@ -835,12 +822,13 @@ void MainWindow::onAppActive()
 #endif
         emit sgAppActive();
         setVisible(true);
+        raise();
     }
 }
 
 void MainWindow::initPictureBrowser()
 {
-    QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UIPictureBrowser");
+    QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UIPictureBrowser");
     if (plugin)
     {
         _pPictureBrowserPlug = qobject_cast<IUIPictureBroswerPlug *>(plugin);
@@ -848,7 +836,6 @@ void MainWindow::initPictureBrowser()
         {
             _pPictureBrowserPlug->init();
             _pPictureBrowser = _pPictureBrowserPlug->widget();
-//            UIGolbalManager::GetUIGolbalManager()->setStyleSheetForPlugin("UIPictureBrowser");
         }
     }
     assert(_pPictureBrowserPlug);
@@ -864,7 +851,7 @@ void MainWindow::initPictureBrowser()
   */
 void MainWindow::initAddressBook()
 {
-	QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UIAddressBook");
+	QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UIAddressBook");
 	if (plugin)
 	{
 		_pAddressBookPlug = qobject_cast<IUIAddressBookPlug*>(plugin);
@@ -887,7 +874,7 @@ void MainWindow::initAddressBook()
   */
 void MainWindow::initOAManager()
 {
-	QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt("UIOAManager");
+	QObject* plugin = GlobalManager::instance()->getPluginInstanceQt("UIOAManager");
 	if (plugin)
 	{
 		_pOAManagerPlug = qobject_cast<IUIOAManagerPlug*>(plugin);
@@ -895,7 +882,6 @@ void MainWindow::initOAManager()
 		{
 			_pOAManagerPlug->init();
 			_pOAManager = _pOAManagerPlug->widget();
-//			UIGolbalManager::GetUIGolbalManager()->setStyleSheetForPlugin("UIOAManager");
 		}
 	}
 	assert(_pOAManagerPlug);
@@ -945,18 +931,11 @@ void MainWindow::saveWndState()
 void MainWindow::systemQuit()
 {
     _sys_run = false;
+    //
+    QLocalServer::removeServer(PLAT.getSelfXmppId().data());
+
     _logout_t = QDateTime::currentMSecsSinceEpoch();
-#ifndef _LINUX
-//    if(_pMessageManager)
-//    {
-//        _pMessageManager->sendOnlineState(_login_t, _logout_t, _ipv4Address.toStdString());
-//
-//        if(!_operators.empty())
-//        {
-//            _pMessageManager->sendOperatorStatistics(_ipv4Address.toStdString(), _operators);
-//        }
-//    }
-#endif
+
 	saveWndState();
 	QApplication::exit(0);
 }
@@ -966,7 +945,7 @@ void MainWindow::systemQuit()
  */
 void MainWindow::sendHeartBeat()
 {
-    QTalkMsgManager::sendHearBeat();
+    QtConcurrent::run(&QTalkMsgManager::sendHearBeat);
 }
 
 // 多屏处理
@@ -987,8 +966,8 @@ void MainWindow::adjustWndRect() {
         {
             thisGeo.setHeight(deskRect.height() - 100);
         }
-        thisGeo.setTopLeft(deskRect.topLeft());
-
+        thisGeo.setX(deskRect.x());
+        thisGeo.setY(deskRect.y());
         setGeometry(thisGeo);
     }
 }
@@ -1010,6 +989,8 @@ void MainWindow::onScreentShot()
 }
 
 void MainWindow::hideEvent(QHideEvent *e) {
+    if(Qt::ApplicationActive == QApplication::applicationState())
+        onAppDeactivate();
     QWidget::hideEvent(e);
 }
 
@@ -1058,16 +1039,12 @@ void MainWindow::wakeUpWindow()
 {
     QWidget* wakeUpWgt = getActiveWnd();
 
-    if(!QPointer<QWidget>(wakeUpWgt))
+    if (!wakeUpWgt)
+    {
+        qWarning() << "no active windows";
         return;
-
-#ifdef _WINDOWS
-    if (wakeUpWgt->isActiveWindow())
-		return;
-
-	bool isMax = wakeUpWgt->isMaximized();
-	wakeUpWgt->setWindowState(Qt::WindowMinimized);
-#endif // _WINDOWS
+    }
+        
 
     if(wakeUpWgt->isMinimized())
         wakeUpWgt->setWindowState((wakeUpWgt->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
@@ -1075,11 +1052,17 @@ void MainWindow::wakeUpWindow()
 	wakeUpWgt->setVisible(true);
     QApplication::setActiveWindow(wakeUpWgt);
     wakeUpWgt->raise();
-#ifdef _WINDOWS
-	if (isMax) {
-		wakeUpWgt->showMaximized();
-	}
-#endif // _WINDOWS
+
+#ifdef Q_OS_WIN
+    HWND hForgroundWnd = GetForegroundWindow();
+    DWORD dwForeID = ::GetWindowThreadProcessId(hForgroundWnd, NULL);
+    DWORD dwCurID = ::GetCurrentThreadId();
+
+    ::AttachThreadInput(dwCurID, dwForeID, TRUE);
+    ::SetForegroundWindow((HWND)winId());
+    ::AttachThreadInput(dwCurID, dwForeID, FALSE);
+#endif // Q_OS_WIN
+
 }
 
 /**
@@ -1095,25 +1078,25 @@ void MainWindow::addOperatorLog(const QString &desc)
     _operators.push_back(log);
 }
 
-/**
- *
- */
-void MainWindow::onShockWnd()
-{
-    if(!this->isMaximized() && !this->isFullScreen())
-    {
-        QRect now = this->geometry();
-        auto* animation = new QPropertyAnimation(this, "pos");
-        animation->setDuration(500);
-        animation->setStartValue(QPoint(now.x(), now.y() + 20));
-        animation->setEndValue(QPoint(now.x(), now.y() - 20));
-        animation->setEasingCurve(QEasingCurve::InOutBounce);
-        connect(animation, &QPropertyAnimation::finished, [this, now](){
-            setGeometry(now);
-        });
-        animation->start(QAbstractAnimation::DeleteWhenStopped);
-    }
-}
+///**
+// *
+// */
+//void MainWindow::onShockWnd()
+//{
+//    if(!this->isMaximized() && !this->isFullScreen())
+//    {
+//        QRect now = this->geometry();
+//        auto* animation = new QPropertyAnimation(this, "pos");
+//        animation->setDuration(500);
+//        animation->setStartValue(QPoint(now.x(), now.y() + 20));
+//        animation->setEndValue(QPoint(now.x(), now.y() - 20));
+//        animation->setEasingCurve(QEasingCurve::InOutBounce);
+//        connect(animation, &QPropertyAnimation::finished, [this, now](){
+//            setGeometry(now);
+//        });
+//        animation->start(QAbstractAnimation::DeleteWhenStopped);
+//    }
+//}
 
 /**
  *
@@ -1124,7 +1107,7 @@ void MainWindow::onSaveSysConfig()
         _noOperatorThread->setLeaveMinute();
 
     //
-    UIGolbalManager::getUIGolbalManager()->saveSysConfig();
+    GlobalManager::instance()->saveSysConfig();
 }
 
 void MainWindow::setUserStatus(bool isAway)
@@ -1139,66 +1122,72 @@ void MainWindow::onUserSendMessage()
 }
 
 void MainWindow::checkUpdater() {
+    auto version = GlobalManager::instance()->_updater_version;
+    QtConcurrent::run(&QTalkMsgManager::checkUpdater, version);
 
-    auto version = UIGolbalManager::getUIGolbalManager()->_updater_version;
-    QFuture<std::string> future = QtConcurrent::run(&QTalkMsgManager::checkUpdater, version);
-//    future.waitForFinished();
-    while(!future.isFinished())
-        QApplication::processEvents(QEventLoop::AllEvents, 100);
-
-    std::string ret = future.result();
-    if(!ret.empty())
-    {
-#if defined(_LINUX) || defined(_STARTALK) || defined(_QCHAT)
-        return;
-#endif
-//        std::ostringstream src;
-//        src << Platform::instance().getAppdataRoamingPath()
-//            << "/updater/updater."
-//            #if defined(_WINDOWS)
-//            << "exe";
-//            #elif defined(_MACOS)
-//            << "dmg";
-//            #endif
-//
-//        QString updaterPath = QString(src.str().data());
-//        QFileInfo exec_info(updaterPath);
-//        if(exec_info.exists() && exec_info.isFile())
-//        {
-//            int _ret = QtMessageBox::question(this, "更新器有更新，是否打开更新？",
-//#if defined(_WINDOWS)
-//                    "更新后请在桌面或者开始菜单中启动程序"
-//#elif defined(_MACOS)
-//                    "更新后请在Applications中启动程序"
-//#else
-//
-//#endif
-//                    );
-//            if(_ret == QtMessageBox::EM_BUTTON_YES)
-//            {
-//#if defined(_WINDOWS)
-//                QProcess::startDetached(updaterPath, QStringList());
-//#elif defined(_MACOS)
-//                QStringList params;
-//                params << updaterPath;
-//                QProcess::execute("open", params);
-//#else
-//
-//#endif
-//                exit(0);
-//            }
-//        }
-
-        int btn_ret = QtMessageBox::information(this,
-                tr("更新提示"),
-                QString(tr("更新器有更新，您可以点击 <a href=%1>%1</a> 下载更新").arg(ret.data())), QtMessageBox::EM_BUTTON_CANCEL_UPDATE);
-
-//        if(btn_ret == QtMessageBox::EM_BUTTON_YES)
-//        {
-//
-//        }
-    }
 }
+
+//
+void MainWindow::onCheckUpdater(bool hasUpdate,  bool force) {
+
+    if(!PLAT.isMainThread())
+    {
+        emit sgCheckUpdate(hasUpdate, force);
+        return;
+    }
+
+#ifdef Q_OS_LINUX
+    if(hasUpdate) {
+        QtMessageBox::information(this, tr("升级提醒"),
+                    tr("主程序有更新，麻烦您及时到官网下载最新版本"));
+        return;
+    }
+#else
+    std::ostringstream src;
+    src << PLAT.getAppdataRoamingPath()
+        << "/updater/SetUp."
+#if defined(Q_OS_WIN)
+        << "exe";
+#elif defined(Q_OS_MAC)
+        << "dmg";
+#else
+        ;
+#endif
+
+    QString updaterPath = QString(src.str().data());
+    QFileInfo exec_info(updaterPath);
+
+    if(hasUpdate) {
+        if(exec_info.exists() && exec_info.isFile())
+        {
+            int btn = QtMessageBox::EM_BUTTON_YES;
+            if(!force) (btn |= QtMessageBox::EM_BUTTON_CANCEL_UPDATE);
+
+            int _ret = QtMessageBox::question(this, tr("警告"),
+                    tr("主程序有更新，安装包已经准备完毕，是否立即打开更新？"), btn);
+            if(_ret == QtMessageBox::EM_BUTTON_YES)
+            {
+                QtConcurrent::run([this, updaterPath](){
+#if defined(_WINDOWS)
+                    QProcess::startDetached(updaterPath, QStringList());
+#elif defined(_MACOS)
+                    QStringList params;
+                    params << updaterPath;
+                    QProcess::execute("open", params);
+#else
+
+#endif
+                    emit systemQuitSignal();
+                });
+            }
+        }
+    }
+    else if (exec_info.exists()) {
+        QFile::remove(updaterPath);
+    }
+#endif
+}
+
 
 #ifdef _MACOS
 void MainWindow::onShowMinWnd() {
@@ -1220,6 +1209,16 @@ void MainWindow::onGetHistoryError() {
     emit sgRestartWithMessage(tr("获取历史记录失败, 请重新登录!"));
 }
 
+//
+void MainWindow::reLoginWithErr(const std::string &err) {
+    emit sgRestartWithMessage(err.data());
+}
+
+void MainWindow::systemQuitByEvt() {
+    emit sgSystemQuit();
+}
+
+//
 void MainWindow::restartWithMessage(const QString &msg) {
 
     QString program = QApplication::applicationFilePath();
@@ -1227,7 +1226,7 @@ void MainWindow::restartWithMessage(const QString &msg) {
     arguments << "AUTO_LOGIN=OFF"
               << QString("MSG=%1").arg(msg);
     QProcess::startDetached(program, arguments);
-    exit(0);
+    QApplication::exit(0);
 }
 
 void delDmpFun(const QString& path, const std::string& ip)
@@ -1240,14 +1239,15 @@ void delDmpFun(const QString& path, const std::string& ip)
 
         if (tmpInfo.isFile())
         {
+            auto now = QDateTime::currentMSecsSinceEpoch();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+            auto birth = tmpInfo.birthTime().toMSecsSinceEpoch();
+#else
+            auto birth = tmpInfo.lastModified().toMSecsSinceEpoch();
+#endif
+
             if (tmpInfo.suffix().toLower() == "dmp")
             {
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-                auto birth = tmpInfo.birthTime().toMSecsSinceEpoch();
-#else
-                auto birth = tmpInfo.lastModified().toMSecsSinceEpoch();
-#endif
-                auto now = QDateTime::currentMSecsSinceEpoch();
                 if(tmpInfo.size() > 0 && tmpInfo.size() <= 50 * 1024 * 1024 && now - birth < 1000 * 60 * 60 * 24 * 7)
                 {
                     std::string dumpFilePath = std::string(tmpInfo.absoluteFilePath().toLocal8Bit());
@@ -1255,6 +1255,8 @@ void delDmpFun(const QString& path, const std::string& ip)
                 }
                 QFile::remove(tmpInfo.absoluteFilePath());
             }
+            else if(now - birth > 1000 * 60 * 60 * 24)
+                QFile::remove(tmpInfo.absoluteFilePath());
         }
         else if(tmpInfo.isDir())
         {
@@ -1266,15 +1268,112 @@ void delDmpFun(const QString& path, const std::string& ip)
     }
 }
 
+////
+//qint64 calculateFolderSize(const QString& folderPath)
+//{
+//    qint64 size = 0;
+//
+//    QDir dir(folderPath);
+//    QFileInfoList infoList = dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+//    for (const auto& tmpInfo : infoList)
+//    {
+//        if(tmpInfo.isSymLink()) continue;
+//
+//        if (tmpInfo.isFile())
+//        {
+//            size += tmpInfo.size();
+//        }
+//        else if(tmpInfo.isDir())
+//        {
+//            auto infoPath = tmpInfo.absoluteFilePath();
+//            size += calculateFolderSize(infoPath);
+//        }
+//    }
+//
+//    return size;
+//}
+
+void clearCache(const QString& folderPath)
+{
+    QDir dir(folderPath);
+    QFileInfoList infoList = dir.entryInfoList(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    for (const auto& tmpInfo : infoList) {
+        if (tmpInfo.isSymLink()) continue;
+        auto now = QDateTime::currentMSecsSinceEpoch();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+        auto birth = tmpInfo.birthTime().toMSecsSinceEpoch();
+#else
+        auto birth = tmpInfo.lastModified().toMSecsSinceEpoch();
+#endif
+        if(now - birth < 1000 * 60 * 60 * 24 * 2)
+            continue;
+
+        if (tmpInfo.isFile()) {
+            QFile::remove(tmpInfo.absoluteFilePath());
+        } else if (tmpInfo.isDir()) {
+            auto infoPath = tmpInfo.absoluteFilePath();
+            clearCache(infoPath);
+        }
+    }
+}
+
 //
 void MainWindow::dealDumpFile()
 {
     QTimer::singleShot(30 * 1000, [this](){
-        // deal dump
-        QDateTime curDateTime = QDateTime::currentDateTime();
-        auto appdata = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation).toLocal8Bit();
-        QString logDirPath = QString("%1/logs/").arg(appdata.data());
-        //
-        QtConcurrent::run(delDmpFun, logDirPath, _ipv4Address.toStdString());
+        QtConcurrent::run([this](){
+            // deal dump
+            QDateTime curDateTime = QDateTime::currentDateTime();
+            auto appdata = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation).toLocal8Bit();
+            QString logDirPath = QString("%1/logs/").arg(appdata.data());
+            delDmpFun(logDirPath, _ipv4Address.toStdString());
+            // clear cache
+            auto userDir = PLAT.getAppdataRoamingUserPath();
+            clearCache((userDir + "/video").data());
+            clearCache((userDir + "/voice").data());
+            clearCache((userDir + "/temp").data());
+            clearCache((userDir + "/image/temp").data());
+            clearCache((userDir + "/image/source").data());
+            clearCache((appdata + "/HotPic").data());
+            // delete old app
+#ifndef _STARTALK
+            QString oldApp = QString("%1/apps").arg(appdata.data());
+            if(QFile::exists(oldApp))
+            {
+                QDir dir;
+                dir.setPath(oldApp);
+                qInfo() << "delete old appps" << dir.removeRecursively();
+            }
+#endif
+        });
     });
+}
+
+//
+void MainWindow::onScreenRemoved(QScreen *screen)
+{
+    Q_UNUSED(screen)
+    {
+        QTimer::singleShot(500, [this]() {
+            
+            auto screenGeometry = QApplication::primaryScreen()->availableGeometry();
+            //if(!screenGeometry.contains(this->geometry()))
+            {
+                auto geometry = this->geometry();
+                geometry.setWidth(qMin(screenGeometry.width() -100, geometry.width()) );
+                geometry.setHeight(qMin(screenGeometry.height() -100,  geometry.height()));
+                geometry.setX((screenGeometry.width() - geometry.width()) / 2);
+                geometry.setY((screenGeometry.height() - geometry.height()) / 2);
+
+                qInfo() << geometry;
+
+//                this->setGeometry(geometry);
+            }
+        });
+    }
+}
+
+#include <QMetaObject>
+bool MainWindow::event(QEvent *e) {
+    return QWidget::event(e);
 }

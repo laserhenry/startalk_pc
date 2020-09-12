@@ -28,7 +28,7 @@ MedalWgt::~MedalWgt() {
 void MedalWgt::addMedal(int medal_id) {
     if(_medals.find(medal_id) != _medals.end())
     {
-        auto info = dbPlatForm::instance().getMedal(medal_id);
+        auto info = DB_PLAT.getMedal(medal_id);
         if(info.medalId != -1)
         {
             _medals[medal_id] = info;
@@ -59,7 +59,7 @@ void MedalWgt::addMedals(const std::set<QTalk::StUserMedal> &user_medal, bool sh
         auto medal_id = item.medalId;
         if(_medals.find(medal_id) == _medals.end())
         {
-            auto info = dbPlatForm::instance().getMedal(medal_id);
+            auto info = DB_PLAT.getMedal(medal_id);
             if(info.medalId != -1)
             {
                 _medals[medal_id] = info;

@@ -100,7 +100,7 @@ protected:
             painter->drawText(QRect(rect.x() + 30, rect.y(), rect.width() - 30, rect.height()),
                     Qt::AlignVCenter, strText);
             QString headPath = index.data(EM_DATA_USERHEAD).toString();
-            bool isOnline = index.data(EM_DATA_ISONLINE).toBool();
+//            bool isOnline = index.data(EM_DATA_ISONLINE).toBool();
             painter->setRenderHints(QPainter::Antialiasing, true);
 
             QFileInfo headInfo(headPath);

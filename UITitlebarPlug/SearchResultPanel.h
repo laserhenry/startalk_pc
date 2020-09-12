@@ -20,9 +20,7 @@ class SearchThread;
 class SearchResultPanel : public UShadowDialog {
     Q_OBJECT
 public:
-    explicit SearchResultPanel(TitlebarMsgManager *messageManager,
-                               TitlebarMsgListener *messageListener,
-                               QWidget *parent = nullptr);
+    explicit SearchResultPanel(QWidget *parent);
     ~SearchResultPanel() override;
 
 public:
@@ -53,14 +51,14 @@ Q_SIGNALS:
     void sgShowFileRecordWnd(const QString&);
 
 private:
-    SearchView* _pSearchView;
-    UCButton  *_allBtn = nullptr;        // 全部
-    UCButton  *_contactBtn = nullptr;    // 联系人
-    UCButton  *_groupChatBtn = nullptr;  // 群聊
-    UCButton  *_chatRecordBtn = nullptr; // 聊天记录
-    UCButton  *_fileBtn = nullptr; // 文件
-    UCButtonGroup *_tabGroup = nullptr;
-    QLabel       *_pWnLabel = nullptr;
+    SearchView* _pSearchView {};
+    UCButton  *_allBtn {};        // 全部
+    UCButton  *_contactBtn {};    // 联系人
+    UCButton  *_groupChatBtn {};  // 群聊
+    UCButton  *_chatRecordBtn {}; // 聊天记录
+    UCButton  *_fileBtn {}; // 文件
+    UCButtonGroup *_tabGroup {};
+    QLabel       *_pWnLabel {};
 
     QString _keywords; // 搜索关键字
     int _reqType;
@@ -69,11 +67,8 @@ private:
     int _action;
     bool isGetMore;
 
-    TitlebarMsgManager *_pMessageManager;
-    TitlebarMsgListener *_pMessageListener;
-
 private:
-    SearchThread *_searchThread;
+    SearchThread *_searchThread{};
 
 };
 

@@ -15,13 +15,6 @@
 /**
  * 
  */
-CommMsgManager::CommMsgManager() {
-}
-
-
-CommMsgManager::~CommMsgManager() {
-}
-
 
 void CommMsgManager::sendDataBaseOpen() {
     DataBaseOpenMessage e;
@@ -204,13 +197,13 @@ CommMsgManager::updateFileProcess(const std::string &key, double dltotal, double
     EventBus::FireEvent(e);
 }
 
-void CommMsgManager::downloadFileComplete(const std::string &key, const std::string &localPath, bool finish) {
-    DownloadFileComplete e;
-    e.key = key;
-    e.localPath = localPath;
-    e.finish = finish;
-    //EventBus::FireEvent(e);
-}
+//void CommMsgManager::downloadFileComplete(const std::string &key, const std::string &localPath, bool finish) {
+//    DownloadFileComplete e;
+//    e.key = key;
+//    e.localPath = localPath;
+//    e.finish = finish;
+//    //EventBus::FireEvent(e);
+//}
 
 void CommMsgManager::onUpdateGroupInfo(std::shared_ptr<QTalk::StGroupInfo> info) {
     UpdateGroupInfoRet e;
@@ -245,11 +238,11 @@ void CommMsgManager::incrementConfigs(const std::map<std::string, std::string> &
     EventBus::FireEvent(config);
 }
 
-void CommMsgManager::sendGotFriends(const std::vector<QTalk::Entity::IMFriendList> &friends) {
-    AllFriends e;
-    e.friends = friends;
-    EventBus::FireEvent(e);
-}
+//void CommMsgManager::sendGotFriends(const std::vector<QTalk::Entity::IMFriendList> &friends) {
+//    AllFriends e;
+//    e.friends = friends;
+//    EventBus::FireEvent(e);
+//}
 
 void CommMsgManager::sendGotGroupList(const std::vector<QTalk::Entity::ImGroupInfo> &groups) {
     AllGroupList e;
@@ -316,6 +309,13 @@ void CommMsgManager::sendGetHistoryError() {
 void CommMsgManager::onUserMadelChanged(const std::vector<QTalk::Entity::ImUserStatusMedal> &userMedals) {
     UserMedalChangedEvt e;
     e.userMedals = userMedals;
+    EventBus::FireEvent(e);
+}
+
+void CommMsgManager::onCheckUpdate(bool hasUpdate, bool force) {
+    CheckUpdaterResultEvt e;
+    e.hasUpdate = hasUpdate;
+    e.forceUpdate = force;
     EventBus::FireEvent(e);
 }
 
@@ -396,7 +396,7 @@ CommMsgListener::CommMsgListener(Communication *pComm)
 	EventBus::AddHandler<S_RecvGroupMemberEvt>(*this);
 	EventBus::AddHandler<CreatGroupRet>(*this);
 	EventBus::AddHandler<S_InviteGroupMemberEvt>(*this);
-	EventBus::AddHandler<S_AllFriendsEvt>(*this);
+//	EventBus::AddHandler<S_AllFriendsEvt>(*this);
 	EventBus::AddHandler<S_DealBind>(*this);
 	EventBus::AddHandler<S_UpdateTimeStamp>(*this);
 	EventBus::AddHandler<S_UserConfigChanged>(*this);
@@ -416,6 +416,8 @@ CommMsgListener::CommMsgListener(Communication *pComm)
 	EventBus::AddHandler<ModifyUserMedalStatusEvt>(*this);
 	EventBus::AddHandler<NetHistoryMessage>(*this);
 	EventBus::AddHandler<LinkHistoryMessage>(*this);
+	EventBus::AddHandler<ReportLogin>(*this);
+	EventBus::AddHandler<ExceptCpuEvt>(*this);
 }
 
 CommMsgListener::~CommMsgListener() {
@@ -535,7 +537,7 @@ void CommMsgListener::onEvent(GetUserCardMessage &e) {
     if (_pComm && _pComm->_pUserManager) {
         std::vector<QTalk::StUserCard> arUserInfo;
         _pComm->_pUserManager->getUserCard(e.mapUserIds, arUserInfo);
-        _pComm->_pMsgManager->sendGotUserCard(arUserInfo);
+        CommMsgManager::sendGotUserCard(arUserInfo);
     }
 }
 
@@ -560,7 +562,7 @@ void CommMsgListener::onEvent(DownLoadHeadPhotoEvent &e) {
 //
 //	log_info("收到服务器查询名片结果Event 个数:" << e.userCards.size();
 //
-//	if (_pComm && _pComm->_pFileHelper && _pComm->_pMsgManager)
+//	if (_pComm && _pComm->_pFileHelper )
 //	{
 //		std::vector<std::string> urls;
 //
@@ -571,7 +573,7 @@ void CommMsgListener::onEvent(DownLoadHeadPhotoEvent &e) {
 //
 //		auto fun = [this]() 
 //		{
-//			_pComm->_pMsgManager->sendDownloadHeadSuccess(); 
+//			CommMsgManager::sendDownloadHeadSuccess(); 
 //		};
 //		_pComm->_pFileHelper->batchDownloadHead(urls, fun);
 //	}
@@ -585,9 +587,9 @@ void CommMsgListener::onEvent(DownLoadHeadPhotoEvent &e) {
   * @date     2018/09/30
   */
 void CommMsgListener::onEvent(DownLoadGroupHeadPhotoEvent &e) {
-    if (_pComm && _pComm->_pFileHelper && _pComm->_pMsgManager) {
+    if (_pComm && _pComm->_pFileHelper ) {
         _pComm->_pFileHelper->batchDownloadHead(e._withoutHeadPhotos);
-        _pComm->_pMsgManager->sendDownloadGroupHeadSuccess();
+        CommMsgManager::sendDownloadGroupHeadSuccess();
     }
 }
 
@@ -611,7 +613,7 @@ void CommMsgListener::onEvent(NetHeadImgEvt &e) {
 void CommMsgListener::onEvent(GetGroupMessage &e) {
     if (e.getCanceled()) return;
 
-    if (nullptr != _pComm && _pComm->_pUserGroupManager) {
+    if (nullptr != _pComm ) {
         _pComm->getGroupMemberById(e.groupId);
     }
 }
@@ -1111,10 +1113,10 @@ void CommMsgListener::onEvent(SendProductEvt& e){
     if(e.getCanceled()) return;
     if(_pComm){
         std::string userName = e.userQName;
-        std::string virtualname = e.virtualname;
+        std::string virtualName = e.virtualName;
         std::string product = e.product;
         std::string type = e.type;
-        _pComm->sendProduct(userName,virtualname,product,type);
+        _pComm->sendProduct(userName,virtualName,product,type);
     }
 }
 
@@ -1190,10 +1192,10 @@ void CommMsgListener::onEvent(S_InviteGroupMemberEvt &e) {
         _pComm->onInviteGroupMembers(e.groupId);
 }
 
-void CommMsgListener::onEvent(S_AllFriendsEvt &e) {
-    if (nullptr != _pComm)
-        _pComm->onRecvFriendList(e.friends);
-}
+//void CommMsgListener::onEvent(S_AllFriendsEvt &e) {
+//    if (nullptr != _pComm)
+//        _pComm->onRecvFriendList(e.friends);
+//}
 
 void CommMsgListener::onEvent(S_DealBind &e) {
     if (nullptr != _pComm)
@@ -1270,6 +1272,8 @@ void CommMsgListener::onEvent(GetHotLines &e) {
 }
 
 void CommMsgListener::onEvent(CheckUpdaterEvt &e) {
+    if (nullptr != _pComm)
+        _pComm->checkUpdater(e.version);
 }
 
 void CommMsgListener::onEvent(UserMedalEvt &e)
@@ -1310,4 +1314,15 @@ void CommMsgListener::onEvent(NetHistoryMessage &e) {
 
 void CommMsgListener::onEvent(LinkHistoryMessage &e) {
     LogicManager::instance()->getDatabase()->getLinkMessage(e.time, e.userid, e.realJid, e.msgList);
+}
+
+//
+void CommMsgListener::onEvent(ReportLogin &e) {
+    if(_pComm) {
+        _pComm->reportLogin();
+    }
+}
+
+void CommMsgListener::onEvent(ExceptCpuEvt &e) {
+    LogicManager::instance()->getDatabase()->addExceptCpu(e.cpu, e.time, e.stack);
 }

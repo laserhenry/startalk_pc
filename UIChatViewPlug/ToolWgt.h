@@ -7,6 +7,7 @@
 #include "QuickReplyWnd.h"
 #include "QchatMoreFun.h"
 #include "../entity/im_transfer.h"
+#include <QPointer>
 
 class QPushButton;
 class InputWgt;
@@ -34,9 +35,10 @@ private:
 	void sendJsonPrud(const QString &products);
 	void sendQuickReply(const std::string& text);
 	void sessionTransfer(const std::string& newJid,const std::string& reason);
-	void onActShowVideoDemo();
+	void onBtnHotClicked();
 
 public:
+	void showSeats(const std::vector<QTalk::Entity::ImTransfer>& transfers);
 	void sendWechat();
     void switchSession(const QUInt8 &i);
 
@@ -44,8 +46,8 @@ Q_SIGNALS:
     void showSearchWnd();
 
 private:
-	InputWgt*     _pInputWgt{};
-	ChatViewItem* _pChatItem{};
+    QPointer<InputWgt>     _pInputWgt{};
+    QPointer<ChatViewItem> _pChatItem{};
 	QPushButton* _pBtnEmoticon{};
 	QPushButton* _pBtnScreenshot{};
 	QPushButton* _pBtnScreenshotSet{};
@@ -54,7 +56,7 @@ private:
 	QPushButton* _pBtnFile{};
 	QPushButton* _pBtnVideo{};
 	QPushButton* _pBtnHistory{};
-	QPushButton* _pBtnShare{};
+//	QPushButton* _pBtnShare{};
 	QPushButton* _pBtnMultifunction{};
 	QPushButton* _pBtnCloseService{};
 	QPushButton* _pBtnTransfer{};
@@ -71,7 +73,6 @@ private:
 
 	QAction* pVideoAct{};
     QAction* pAudioAct{};
-    QAction* pActionVideo{};
 };
 
 #endif//_TOOLWGT_H_

@@ -21,8 +21,8 @@
 extern ChatViewMainPanel *g_pMainPanel;
 AudioVideoItem::AudioVideoItem(const StNetMessageResult &msgInfo, QWidget *parent) :
         MessageItemBase(msgInfo, parent),
-        _contentLab(Q_NULLPTR),
-        _pIconLabel(nullptr){
+        _pIconLabel(nullptr),
+        _contentLab(Q_NULLPTR){
     init();
 }
 
@@ -267,7 +267,7 @@ void AudioVideoItem::mousePressEvent(QMouseEvent *event) {
                 QTalk::Entity::JID jid(peerId);
                 QTalk::Entity::UID uid(jid.basename());
 //                g_pMainPanel->sendStartAudioVideoMessage(uid, QTalk::Entity::WebRTC_MsgType_VideoCall == _msgInfo.Type);
-                std::string selfId = Platform::instance().getSelfUserId();
+                std::string selfId = PLAT.getSelfUserId();
 //                AudioVideo::start2Talk(selfId, jid.username());
                 g_pMainPanel->start2Talk_old(jid.basename(),
                         QTalk::Entity::WebRTC_MsgType_VideoCall == _msgInfo.msg_type, true);
@@ -277,7 +277,7 @@ void AudioVideoItem::mousePressEvent(QMouseEvent *event) {
                 std::string groupId = QTalk::Entity::JID(_msgInfo.xmpp_id.toStdString()).basename();
                 if(groupId.empty())
                     return;
-                auto info = dbPlatForm::instance().getGroupInfo(groupId);
+                auto info = DB_PLAT.getGroupInfo(groupId);
                 g_pMainPanel->startGroupTalk(groupId.data(), QString::fromStdString(QTalk::getGroupName(info)));
             }
         }

@@ -40,7 +40,7 @@ QTalk::ConfigLoader::~ConfigLoader() {
 // load ini 文件
 bool QTalk::ConfigLoader::reload() {
     if (ini_parse(filename.c_str(), QTalk::ConfigLoaderSection::handler, &config) < 0) {
-        printf(filename.c_str());
+        printf("%s", filename.c_str());
         printf("load error \n");
         return false;
     }

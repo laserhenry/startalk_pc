@@ -28,7 +28,7 @@ namespace QTalk {
             case QTalk::Entity::MessageTypeRevoke:
             {
 
-                QString content = QObject::tr("%1撤回了一条消息").arg(info.from == Platform::instance().getSelfXmppId().data() ?
+                QString content = QObject::tr("%1撤回了一条消息").arg(info.from == PLAT.getSelfXmppId().data() ?
                                                                QObject::tr("你") : info.user_name);
                 info.body = content;
                 break;
@@ -63,7 +63,7 @@ namespace QTalk {
             {
                 QString msgFrom = info.from;
                 info.body = QObject::tr("你");
-                if (Platform::instance().getSelfXmppId() == msgFrom.toStdString())
+                if (PLAT.getSelfXmppId() == msgFrom.toStdString())
                     info.body.append(QObject::tr("抖了他一下"));
                 else
                     info.body.append(QObject::tr("收到一个窗口抖动"));
@@ -157,7 +157,7 @@ namespace QTalk {
                 }
                 else
                 {
-                    QString localEmo = EmoticonMainWgt::getInstance()->getEmoticonLocalFilePath(pkgid, shortCut);
+                    QString localEmo = EmoticonMainWgt::instance()->getEmoticonLocalFilePath(pkgid, shortCut);
                     QFileInfo info(localEmo);
                     if(localEmo.isEmpty() || !info.exists() || info.isDir())
                     {
@@ -251,7 +251,7 @@ namespace QTalk {
                     }
                     case Type_At:
                     {
-                        if ( Platform::instance().getSelfName().data() == value) {
+                        if ( PLAT.getSelfName().data() == value) {
                             StTextMessage atMsg(StTextMessage::EM_ATMSG);
                             atMsg.content = QString("@%1 ").arg(value);
                             messages.push_back(atMsg);
@@ -312,11 +312,11 @@ namespace QTalk {
     //
     void analysisAtMessage(const QString& content, std::vector<StTextMessage>& messages, const std::map<QString, QString>& atUsers)
     {
-        auto tmpStr = QString("@%1 ").arg(Platform::instance().getSelfName().data());
+        auto tmpStr = QString("@%1 ").arg(PLAT.getSelfName().data());
         static QString allStr = "@all";
         // type groupAt
         if((!atUsers.empty() &&
-           atUsers.find(Platform::instance().getSelfXmppId().data()) != atUsers.end()) || content.contains(tmpStr))
+           atUsers.find(PLAT.getSelfXmppId().data()) != atUsers.end()) || content.contains(tmpStr))
         {
             auto blocks = content.split(tmpStr);
             for(auto it = blocks.begin(); it != blocks.end();)

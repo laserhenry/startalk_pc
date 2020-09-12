@@ -23,8 +23,8 @@ UShadowDialog::UShadowDialog(QWidget *parent, bool radius, bool hasBorder) :
 #else
     _hasBorder(hasBorder),
 #endif
-    _moveAble(false),
     _isResizing(false),
+    _moveAble(false),
     _movePressed(false),
     _pMoveContentWgt(nullptr)
 {
@@ -121,16 +121,13 @@ void UShadowDialog::mouseReleaseEvent(QMouseEvent *e)
  */
 void UShadowDialog::keyPressEvent(QKeyEvent *e)
 {
-   if(e->key() == Qt::Key_Escape || e->key() == Qt::Key_Space)
-   {
-       this->close();
-   }
-
 #ifdef _MACOS
-   if(e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_W)
-   {
+    if(e->key() == Qt::Key_Escape || e->key() == Qt::Key_Space) {
+        this->close();
+    }
+    if(e->modifiers() == Qt::ControlModifier && e->key() == Qt::Key_W) {
        this->setVisible(false);
-   }
+    }
 #endif
     QDialog::keyPressEvent(e);
 }

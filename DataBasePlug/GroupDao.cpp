@@ -3,7 +3,7 @@
 #include "../QtUtil/Utils/Log.h"
 
 GroupDao::GroupDao(qtalk::sqlite::database *sqlDb) :
-        DaoInterface(sqlDb) {
+        DaoInterface(sqlDb, "IM_Group") {
 
 }
 
@@ -32,25 +32,6 @@ bool GroupDao::creatTable() {
     return query.executeStep();
 }
 
-/**
- * clearData
- * @return
- */
-bool GroupDao::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM `IM_Group`;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data IM_Group error {0}", e.what());
-        return false;
-    }
-}
 
 /**
   * @函数名
@@ -110,11 +91,9 @@ bool GroupDao::bulkInsertGroupInfo(const std::vector<QTalk::Entity::ImGroupInfo>
             query.bind(5, groupInfo.Topic);
             query.bind(6, groupInfo.LastUpdateTime);
             query.bind(7, groupInfo.ExtendedFlag);
-            bool sqlResult = query.executeStep();
+             query.executeStep();
             query.resetBindings();
-            if (!sqlResult) {
 
-            }
         }
         query.clearBindings();
         _pSqlDb->exec("commit transaction;");
@@ -159,7 +138,7 @@ bool GroupDao::setGroupMainVersion(long long version) {
         return false;
     }
     std::string sql = "update DB_Config set Value = ? where Key = 'Group' and SubKey = 'mainVersion';";
-    bool sqlResult = false;
+//     false;
     try {
         qtalk::sqlite::statement query(*_pSqlDb, sql);
         query.bind(1, std::to_string(version));
@@ -204,7 +183,7 @@ bool GroupDao::updateGroupCard(const std::vector<QTalk::Entity::ImGroupInfo> &gr
             query.bind(9, group.HeaderSrc);
             query.bind(10, group.Topic);
             query.bind(11, group.GroupId);
-            bool sqlResult = query.executeStep();
+            query.executeStep();
             query.resetBindings();
         }
         query.clearBindings();

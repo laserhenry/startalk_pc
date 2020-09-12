@@ -138,7 +138,7 @@ void PictureFrm::connects() {
     });
 
     connect(_pPicBrowser, &PictureBrowser::saveAsSignal, [this]() {
-        QString strHistoryFileDir = QString::fromStdString(Platform::instance().getHistoryDir());
+        QString strHistoryFileDir = QString::fromStdString(PLAT.getHistoryDir());
         QFileInfo oldFileInfo(_strPicPath);
         QString suffix = QTalk::qimage::getRealImageSuffix(_strPicPath).toLower();
 
@@ -148,7 +148,7 @@ void PictureFrm::connects() {
                                                            QString("%1/%2").arg(strHistoryFileDir, oldFileInfo.baseName()),
                                                            QString("(*.png);;(*.jpg);;(*.webp)"));
             if (!newPath.isEmpty()) {
-                Platform::instance().setHistoryDir(QFileInfo(newPath).absoluteDir().absolutePath().toStdString());
+                PLAT.setHistoryDir(QFileInfo(newPath).absoluteDir().absolutePath().toStdString());
                 QString newSuffix = QFileInfo(newPath).suffix().toUpper();
                 //
                 auto tmpPix = QTalk::qimage::loadImage(_strPicPath, false);
@@ -166,7 +166,7 @@ void PictureFrm::connects() {
                                                            QString("%1/%2").arg(strHistoryFileDir, oldFileInfo.baseName()),
                                                            QString("%1 (*.%1)").arg(suffix.isEmpty() ? "*" : suffix));
             if (!saveDir.isEmpty()) {
-                Platform::instance().setHistoryDir(QFileInfo(saveDir).absoluteDir().absolutePath().toStdString());
+                PLAT.setHistoryDir(QFileInfo(saveDir).absoluteDir().absolutePath().toStdString());
                 QString newPath = QString("%1").arg(saveDir);
                 if(QFileInfo(newPath).suffix().isEmpty() && !oldFileInfo.suffix().isEmpty())
                     newPath += QString(".%1").arg(oldFileInfo.suffix());
@@ -180,49 +180,96 @@ void PictureFrm::connects() {
 
 bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
 
-    static qint64 pt = 0;
+//    static qint64 pt = 0;
     switch (e->type())
     {
-        case QEvent::TouchBegin:
-        case QEvent::TouchUpdate:
-        case QEvent::TouchEnd:
-        case QEvent::TouchCancel:
+//        case QEvent::TouchBegin:
+//        case QEvent::TouchUpdate:
+//        case QEvent::TouchEnd:
+//        case QEvent::TouchCancel:
+//        {
+//            auto *touchEvent = dynamic_cast<QTouchEvent *>(e);
+//            const QList<QTouchEvent::TouchPoint>& touchPoints = touchEvent->touchPoints();
+//            if (touchPoints.count() == 2) {
+//                switch (e->type()) {
+//                    case QEvent::TouchBegin:
+////                        touch = true;
+//                        break;
+//                    case QEvent::TouchUpdate:
+//                    {
+////                        touch = true;
+//                        qint64 now = QDateTime::currentMSecsSinceEpoch();
+//                        if(now - pt < 50)
+//                            break;
+//                        pt = now;
+//                        const QTouchEvent::TouchPoint &pos0 = touchPoints.first();
+//                        const QTouchEvent::TouchPoint &pos1 = touchPoints.last();
+//                        qreal currentScaleFactor =
+//                                QLineF(pos0.pos(), pos1.pos()).length()
+//                                / QLineF(pos0.startPos(), pos1.startPos()).length();
+//                        if(_pPicItem)
+//                            _pPicItem->onScaleChange(currentScaleFactor > 1 ? ++_scaleVal : --_scaleVal,
+//                                {0, 0});
+//                        break;
+//                    }
+//                    case QEvent::TouchEnd:
+//                    case QEvent::TouchCancel:
+////                        touch = false;
+//                        break;
+//                    default:
+//                        break;
+//                }
+//
+//                break;
+//            }
+//        }
+//#ifdef Q_OS_MAC
+        case QEvent::NativeGesture:
         {
-            auto *touchEvent = dynamic_cast<QTouchEvent *>(e);
-            const QList<QTouchEvent::TouchPoint>& touchPoints = touchEvent->touchPoints();
-            if (touchPoints.count() == 2) {
-                switch (e->type()) {
-                    case QEvent::TouchBegin:
-//                        touch = true;
-                        break;
-                    case QEvent::TouchUpdate:
+            auto* evt = dynamic_cast<QNativeGestureEvent *>(e);
+            if(evt)
+            {
+                switch (evt->gestureType())
+                {
+                    case Qt::ZoomNativeGesture:
                     {
-//                        touch = true;
-                        qint64 now = QDateTime::currentMSecsSinceEpoch();
-                        if(now - pt < 50)
-                            break;
-                        pt = now;
-                        const QTouchEvent::TouchPoint &pos0 = touchPoints.first();
-                        const QTouchEvent::TouchPoint &pos1 = touchPoints.last();
-                        qreal currentScaleFactor =
-                                QLineF(pos0.pos(), pos1.pos()).length()
-                                / QLineF(pos0.startPos(), pos1.startPos()).length();
+                        if (evt->value() > 0)
+                            _scaleVal++;
+                        else
+                            _scaleVal--;
+                        //
                         if(_pPicItem)
-                            _pPicItem->onScaleChange(currentScaleFactor > 1 ? ++_scaleVal : --_scaleVal,
-                                {0, 0});
+                            _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
                         break;
                     }
-                    case QEvent::TouchEnd:
-                    case QEvent::TouchCancel:
-//                        touch = false;
+                    case Qt::SmartZoomNativeGesture:
+                    {
+                        // todo
+//                        qInfo() << evt->value();
                         break;
-                    default:
+                    }
+                    case Qt::RotateNativeGesture:
+                    case Qt::SwipeNativeGesture:
+                    case Qt::PanNativeGesture:
+                        break;
+                    case Qt::BeginNativeGesture:
+                    case Qt::EndNativeGesture:
                         break;
                 }
-
-                break;
             }
+            break;
         }
+//#endif
+//        case QEvent::Gesture:
+//        {
+//            qInfo() << "QEvent::Gesture";
+//            break;
+//        }
+//        case QEvent::GestureOverride:
+//        {
+//            qInfo() << "QEvent::GestureOverride";
+//            break;
+//        }
         case QEvent::GraphicsSceneMousePress:
         {
             _startPos = QCursor::pos();
@@ -249,22 +296,24 @@ bool PictureFrm::eventFilter(QObject *o, QEvent *e) {
         }
         case QEvent::GraphicsSceneWheel:
         {
-            qint64 now = QDateTime::currentMSecsSinceEpoch();
-            if(now - pt < 50)
-                break;
-            pt = now;
+//            qint64 now = QDateTime::currentMSecsSinceEpoch();
+//            if(now - pt < 50)
+//                break;
+//            pt = now;
 //            if(!touch)
-            {
-                auto* evt = dynamic_cast<QGraphicsSceneWheelEvent *>(e);
-                if (evt->delta() > 0)
-                    _scaleVal++;
-                else
-                    _scaleVal--;
-                //
-                if(_pPicItem)
-                    _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
-                e->accept();
-            }
+//            {
+            auto* evt = dynamic_cast<QGraphicsSceneWheelEvent *>(e);
+            if(abs(evt->delta()) != 120)
+                break;
+            if (evt->delta() > 0)
+                _scaleVal++;
+            else
+                _scaleVal--;
+            //
+            if(_pPicItem)
+                _pPicItem->onScaleChange(_scaleVal, QPoint(0, 0));
+//            e->accept();
+//            }
             break;
         }
         case QEvent::Resize:

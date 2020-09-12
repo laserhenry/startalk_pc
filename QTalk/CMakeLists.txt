@@ -5,6 +5,7 @@ include_directories(.)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
+
 find_package(Qt5 COMPONENTS Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Network)
@@ -36,7 +37,6 @@ else ()
             HotKey/qhotkey_win.cpp)
 
     file(GLOB SourceFiles *.cpp icon/Startalk.rc)
-
 endif ()
 
 
@@ -58,16 +58,20 @@ set(SOURCE_FILES
         HotKey/qhotkey.h
         HotKey/qhotkey_p.h
         HotKey/QHotkey
-        pluginmanager.cpp
-        pluginmanager.h
-        stylesheetmanager.cpp
-        stylesheetmanager.h
-        UIGolbalManager.cpp
-        UIGolbalManager.h
+        PlugManager.cpp
+        PlugManager.h
+        StyleManager.cpp
+        StyleManager.h
+        GlobalManager.cpp
+        GlobalManager.h
         NoOperationThread.cpp
         NoOperationThread.h
         LocalServer.cpp
-        LocalServer.h SystemTrayPopWnd.cpp SystemTrayPopWnd.h)
+        LocalServer.h 
+        SystemTrayPopWnd.cpp 
+        SystemTrayPopWnd.h
+        ProcessInfo.h
+        ProcessInfo.cpp)
 
 set(EXECUTABLE_OUTPUT_PATH ../bin)
 set(CMAKE_DEBUG_POSTFIX "d")

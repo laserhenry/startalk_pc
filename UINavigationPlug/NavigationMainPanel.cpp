@@ -1,6 +1,5 @@
-﻿#include "NavigationMianPanel.h"
+﻿#include "NavigationMainPanel.h"
 #include "SessionFrm.h"
-#include "MultifunctionFrm.h"
 #include "ContactFrm.h"
 #include <QDebug>
 #include <QTimer>
@@ -9,6 +8,8 @@
 #include "MessageManager.h"
 #include <QMetaType>
 #include <string>
+#include <QLabel>
+#include <QFont>
 #include <QTcpSocket>
 #include <QNetworkConfigurationManager>
 #include <QNetworkSession>
@@ -19,13 +20,12 @@
 #include "../QtUtil/Utils/Log.h"
 #include "../QtUtil/Entity/JID.h"
 
-NavigationMianPanel::NavigationMianPanel(QWidget *parent) :
+NavigationMainPanel::NavigationMainPanel(QWidget *parent) :
         QFrame(parent),
         _mainLayout(nullptr),
         _stackWdt(nullptr),
         _pSessionFrm(nullptr),
         _contactFrm(nullptr),
-        _multifunctionFrm(nullptr),
         _pTcpDisconnect(nullptr)
 //        _pConnToServerTimer(nullptr)
         {
@@ -35,9 +35,12 @@ NavigationMianPanel::NavigationMianPanel(QWidget *parent) :
     init();
 }
 
-NavigationMianPanel::~NavigationMianPanel() = default;
+NavigationMainPanel::~NavigationMainPanel() {
+    if(_messageListener)
+        delete _messageListener;
+}
 
-void NavigationMianPanel::receiveSession(R_Message mess) 
+void NavigationMainPanel::receiveSession(R_Message mess)
 {
 	QTalk::Entity::ImMessageInfo message = mess.message;
 	ReceiveSession info;
@@ -52,11 +55,11 @@ void NavigationMianPanel::receiveSession(R_Message mess)
 	info.messtype = message.Type;
 
 
-	emit sgReceiveSession(info, from == Platform::instance().getSelfXmppId());
+	emit sgReceiveSession(info, from == PLAT.getSelfXmppId());
 	//qlog_info(QString("emit sessioon id:%1").arg(info.messageId));
 }
 
-void NavigationMianPanel::sendSession(S_Message mess) {
+void NavigationMainPanel::sendSession(S_Message mess) {
     QTalk::Entity::ImMessageInfo message = mess.message;
     ReceiveSession info;
     info.chatType = (QTalk::Enum::ChatType) message.ChatType;
@@ -67,7 +70,7 @@ void NavigationMianPanel::sendSession(S_Message mess) {
     info.messageRecvTime = message.LastUpdateTime;
     info.messtype = message.Type;
 
-    info.sendJid = QString::fromStdString(Platform::instance().getSelfXmppId());
+    info.sendJid = QString::fromStdString(PLAT.getSelfXmppId());
     emit sgReceiveSession(info, true);
 }
 
@@ -77,7 +80,7 @@ void NavigationMianPanel::sendSession(S_Message mess) {
   * @author cc
   * @date 2018.9.17
   */
-void NavigationMianPanel::init() {
+void NavigationMainPanel::init() {
     this->setFocusPolicy(Qt::NoFocus);
     initLayout();
     initMessage();
@@ -90,6 +93,7 @@ void NavigationMianPanel::init() {
 //        connect(this, SIGNAL(connToServerTimerSignal(bool)), this, SLOT(connToServerTimerSlot(bool)));
     //
     QtConcurrent::run([](){
+        //
         NavigationMsgManager::getSessionData();
     });
 //
@@ -117,9 +121,9 @@ void NavigationMianPanel::init() {
   * @author cc
   * @date 2018.9.18
   */
-void NavigationMianPanel::initLayout() {
-    this->setObjectName("navigationMianPanel");
-    if (!_mainLayout) {
+void NavigationMainPanel::initLayout() {
+    this->setObjectName("navigationMainPanel");
+    if (nullptr == _mainLayout) {
         _mainLayout = new QVBoxLayout(this);
         _mainLayout->setSpacing(0);
         _mainLayout->setMargin(0);
@@ -129,29 +133,18 @@ void NavigationMianPanel::initLayout() {
         _mainLayout->addWidget(_pTcpDisconnect);
         _pTcpDisconnect->setVisible(false);
     }
-    if (!_stackWdt) {
+    if (nullptr == _stackWdt) {
         _stackWdt = new QStackedWidget(this);
         _mainLayout->addWidget(_stackWdt);
     }
-    if (!_pSessionFrm) {
+    if (nullptr == _pSessionFrm) {
         _pSessionFrm = new SessionFrm(this);
-    }
-    if (_pSessionFrm) {
         _stackWdt->addWidget(_pSessionFrm);
     }
 
-    if (!_contactFrm) {
+    if (nullptr == _contactFrm) {
         _contactFrm = new ContactFrm;
-    }
-    if (_contactFrm) {
         _stackWdt->addWidget(_contactFrm);
-    }
-
-    if (!_multifunctionFrm) {
-        _multifunctionFrm = new MultifunctionFrm;
-    }
-    if (_multifunctionFrm) {
-        _stackWdt->addWidget(_multifunctionFrm);
     }
 
     _stackWdt->setMinimumWidth(260);
@@ -165,15 +158,9 @@ void NavigationMianPanel::initLayout() {
   * @author cc
   * @date 2018.9.20
   */
-void NavigationMianPanel::initMessage() {
-    if (!_messageManager) {
-        _messageManager = new NavigationMsgManager;
-        _pSessionFrm->setMessageManager(_messageManager);
-    }
+void NavigationMainPanel::initMessage() {
     if (!_messageListener) {
         _messageListener = new NavigationMsgListener(this);
-    }
-    if (_pSessionFrm) {
     }
 }
 
@@ -183,7 +170,7 @@ void NavigationMianPanel::initMessage() {
   * @author cc
   * @date 2018.9.18
   */
-void NavigationMianPanel::connects() {
+void NavigationMainPanel::connects() {
     qRegisterMetaType<QTalk::Entity::UID>("QTalk::Entity::UID");
 
     qRegisterMetaType<QTalk::StGroupInfo>("QTalk::StGroupInfo");
@@ -193,29 +180,29 @@ void NavigationMianPanel::connects() {
 
     connect(_pSessionFrm, SIGNAL(sgSessionInfo(StSessionInfo)),
             this, SIGNAL(sgSessionInfo(StSessionInfo)));
-    connect(this, &NavigationMianPanel::sgReceiveSession, _pSessionFrm, &SessionFrm::onReceiveSession);
+    connect(this, &NavigationMainPanel::sgReceiveSession, _pSessionFrm, &SessionFrm::onReceiveSession);
     connect(this, SIGNAL(sgUpdateOnline()), _pSessionFrm, SLOT(onUpdateOnline()));
     connect(this, SIGNAL(sgUpdateOnlineUsers(std::map<std::string, std::string>)),
             _pSessionFrm, SLOT(onUpdateOnlineUsers(std::map<std::string, std::string>)));
     connect(this, SIGNAL(sgDownLoadHeadPhotosFinish()), _pSessionFrm, SLOT(onDownLoadHeadPhotosFinish()));
     connect(this, SIGNAL(sgDownLoadGroupHeadPhotosFinish()), _pSessionFrm, SLOT(onDownLoadGroupHeadPhotosFinish()));
-    connect(this, &NavigationMianPanel::setDisconnectWgtVisible, _pTcpDisconnect, &TcpDisconnect::setVisible);
-    connect(_pSessionFrm, &SessionFrm::showUserCard, this, &NavigationMianPanel::onSendShowCardSigal);
-    connect(this, &NavigationMianPanel::updateGroupInfoSignal, _pSessionFrm, &SessionFrm::onUpdateGroupInfo);
-    connect(this, &NavigationMianPanel::updateReadedCountSignal, _pSessionFrm, &SessionFrm::onUpdateReadedCount);
-    connect(this, &NavigationMianPanel::recvRevokeMessageSignal, _pSessionFrm, &SessionFrm::recvRevikeMessage);
-    connect(this, &NavigationMianPanel::loadSession, _pSessionFrm, &SessionFrm::onloadSessionData);
+    connect(this, &NavigationMainPanel::setDisconnectWgtVisible, _pTcpDisconnect, &TcpDisconnect::setVisible);
+    connect(_pSessionFrm, &SessionFrm::showUserCard, this, &NavigationMainPanel::onSendShowCardSigal);
+    connect(this, &NavigationMainPanel::updateGroupInfoSignal, _pSessionFrm, &SessionFrm::onUpdateGroupInfo);
+    connect(this, &NavigationMainPanel::updateReadedCountSignal, _pSessionFrm, &SessionFrm::onUpdateReadedCount);
+    connect(this, &NavigationMainPanel::recvRevokeMessageSignal, _pSessionFrm, &SessionFrm::recvRevikeMessage);
+    connect(this, &NavigationMainPanel::loadSession, _pSessionFrm, &SessionFrm::onloadSessionData);
     qRegisterMetaType<QTalk::Entity::UID>("QTalk::Entity::UID");
-    connect(_pSessionFrm, &SessionFrm::removeSession, this, &NavigationMianPanel::removeSession);
-    connect(_pSessionFrm, &SessionFrm::removeSession, this, &NavigationMianPanel::removeSessionAction);
-    connect(this, &NavigationMianPanel::destoryGroupSignal, _pSessionFrm, &SessionFrm::onDestroyGroup);
-    connect(this, &NavigationMianPanel::sgShortCutSwitchSession, _pSessionFrm, &SessionFrm::onShortCutSwitchSession);
-    connect(this, &NavigationMianPanel::sgChangeUserHead, _pSessionFrm, &SessionFrm::onUserHeadChange);
-    connect(this, &NavigationMianPanel::sgUserConfigChanged, _pSessionFrm, &SessionFrm::onUserConfigChanged);
+    connect(_pSessionFrm, &SessionFrm::removeSession, this, &NavigationMainPanel::removeSession);
+    connect(_pSessionFrm, &SessionFrm::removeSession, this, &NavigationMainPanel::removeSessionAction);
+    connect(this, &NavigationMainPanel::destoryGroupSignal, _pSessionFrm, &SessionFrm::onDestroyGroup);
+    connect(this, &NavigationMainPanel::sgShortCutSwitchSession, _pSessionFrm, &SessionFrm::onShortCutSwitchSession);
+    connect(this, &NavigationMainPanel::sgChangeUserHead, _pSessionFrm, &SessionFrm::onUserHeadChange);
+    connect(this, &NavigationMainPanel::sgUserConfigChanged, _pSessionFrm, &SessionFrm::onUserConfigChanged);
     //
-    connect(this, &NavigationMianPanel::sgShowDraft, _pSessionFrm, &SessionFrm::onShowDraft);
+    connect(this, &NavigationMainPanel::sgShowDraft, _pSessionFrm, &SessionFrm::onShowDraft);
 
-    connect(this, &NavigationMianPanel::sgGotMState, _pSessionFrm, &SessionFrm::onGotMState);
+    connect(this, &NavigationMainPanel::sgGotMState, _pSessionFrm, &SessionFrm::onGotMState);
 }
 
 ///**
@@ -226,7 +213,7 @@ void NavigationMianPanel::connects() {
 //  * @date     2018/10/26
 //  */
 //void NavigationMianPanel::connToServerTimerSlot(bool sts) {
-//    Q_ASSERT(Platform::instance().isMainThread());
+//    Q_ASSERT(PLAT.isMainThread());
 //    if (nullptr != _pConnToServerTimer) {
 //        sts ? _pConnToServerTimer->start() : _pConnToServerTimer->stop();
 //    }
@@ -239,7 +226,7 @@ void NavigationMianPanel::connects() {
   * @author cc
   * @date 2018.9.29
   */
-void NavigationMianPanel::onDownLoadHeadPhotosFinish() {
+void NavigationMainPanel::onDownLoadHeadPhotosFinish() {
     emit sgDownLoadHeadPhotosFinish();
 }
 
@@ -250,7 +237,7 @@ void NavigationMianPanel::onDownLoadHeadPhotosFinish() {
   * @author cc
   * @date 2018.9.30
   */
-void NavigationMianPanel::onDownLoadGroupHeadPhotosFinish() {
+void NavigationMainPanel::onDownLoadGroupHeadPhotosFinish() {
     emit sgDownLoadGroupHeadPhotosFinish();
 }
 
@@ -261,7 +248,7 @@ void NavigationMianPanel::onDownLoadGroupHeadPhotosFinish() {
   * @author cc
   * @date 2018.10.12
   */
-void NavigationMianPanel::onUpdateOnline() {
+void NavigationMainPanel::onUpdateOnline() {
     emit sgUpdateOnline();
 }
 
@@ -272,7 +259,7 @@ void NavigationMianPanel::onUpdateOnline() {
   * @author cc
   * @date 2018.10.15
   */
-void NavigationMianPanel::onUpdateOnlineUsers(const std::map<std::string, std::string> &userstatus) {
+void NavigationMainPanel::onUpdateOnlineUsers(const std::map<std::string, std::string> &userstatus) {
     emit sgUpdateOnlineUsers(userstatus);
 }
 
@@ -283,7 +270,7 @@ void NavigationMianPanel::onUpdateOnlineUsers(const std::map<std::string, std::s
   * @author   cc
   * @date     2018/10/23
   */
-void NavigationMianPanel::onTcpDisconnect() {
+void NavigationMainPanel::onTcpDisconnect() {
     _conneted = false;
     emit setDisconnectWgtVisible(true);
 //    emit connToServerTimerSignal(true);
@@ -306,7 +293,7 @@ void NavigationMianPanel::onTcpDisconnect() {
 //        return;
 //    call_time = now;
 //
-//    if (Platform::instance().isMainThread() &&
+//    if (PLAT.isMainThread() &&
 //        nullptr != _pConnToServerTimer &&
 //        _pConnToServerTimer->isActive()) {
 //
@@ -340,7 +327,7 @@ void NavigationMianPanel::onTcpDisconnect() {
 //            }
 //            tcpSocket->close();
 //            // 重连
-//            _messageManager->retryConnecToServer();
+//            NavigationMsgManager::retryConnecToServer();
 //        });
 //    }
 //}
@@ -352,9 +339,9 @@ void NavigationMianPanel::onTcpDisconnect() {
   * @author cc
   * @date 2018.11.08
   */
-void NavigationMianPanel::onNewSession(const StSessionInfo &into) {
+void NavigationMainPanel::onNewSession(const StSessionInfo &into) {
     if (_pSessionFrm) {
-        if (!Platform::instance().isMainThread()) {
+        if (!PLAT.isMainThread()) {
             throw std::runtime_error("not main thread");
         }
         _pSessionFrm->onNewSession(into);
@@ -382,35 +369,40 @@ void NavigationMianPanel::onNewSession(const StSessionInfo &into) {
   * @author   cc
   * @date     2018/10/24
   */
-void NavigationMianPanel::onLoginSuccess() {
+void NavigationMainPanel::onLoginSuccess() {
     {
         QMutexLocker locker(&_pSessionFrm->_mutex);
-        _pSessionFrm->pSessions = dbPlatForm::instance().QueryImSessionInfos();
+//        _pSessionFrm->pSessions = DB_PLAT.QueryImSessionInfos();
         _conneted = true;
-        emit loadSession();
+//        emit loadSession();
     }
     emit setDisconnectWgtVisible(false);
+    QtConcurrent::run([](){
+        //refresh data
+        NavigationMsgManager::getSessionData();
+    });
+
 //    emit connToServerTimerSignal(false);
 }
 
-void NavigationMianPanel::onSendShowCardSigal(const QString &userId) {
+void NavigationMainPanel::onSendShowCardSigal(const QString &userId) {
     emit showUserCardSignal(userId);
 }
 
 //
-void NavigationMianPanel::onUpdateGroupInfo(std::shared_ptr<QTalk::StGroupInfo> info) {
+void NavigationMainPanel::onUpdateGroupInfo(std::shared_ptr<QTalk::StGroupInfo> info) {
     emit updateGroupInfoSignal(*info);
 }
 
-void NavigationMianPanel::updateReadCount(const QTalk::Entity::UID& uid, const int &count) {
+void NavigationMainPanel::updateReadCount(const QTalk::Entity::UID& uid, const int &count) {
     emit updateReadedCountSignal(uid, count);
 }
 
-void NavigationMianPanel::recvRevokeMessage(const QTalk::Entity::UID& uid, const std::string &from) {
+void NavigationMainPanel::recvRevokeMessage(const QTalk::Entity::UID& uid, const std::string &from) {
     emit recvRevokeMessageSignal(uid, QString::fromStdString(from));
 }
 
-void NavigationMianPanel::onUpdateUserConfig(const std::vector<QTalk::Entity::ImConfig> &arConfigs) {
+void NavigationMainPanel::onUpdateUserConfig(const std::vector<QTalk::Entity::ImConfig> &arConfigs) {
 
     if (nullptr == _pSessionFrm) {
         return;
@@ -442,15 +434,12 @@ void NavigationMianPanel::onUpdateUserConfig(const std::vector<QTalk::Entity::Im
         _pSessionFrm->_arSatr = arSatr;
         _pSessionFrm->_arBlackList = arBlackList;
         //
-        if(nullptr == _pSessionFrm->pSessions)
-            _pSessionFrm->pSessions = dbPlatForm::instance().QueryImSessionInfos();
-        else
-            _pSessionFrm->pSessions = dbPlatForm::instance().reloadSession();
+        _pSessionFrm->pSessions = DB_PLAT.reloadSession();
     }
     emit loadSession();
 }
 
-void NavigationMianPanel::onUpdateUserConfig(const std::map<std::string, std::string> &deleteData,
+void NavigationMainPanel::onUpdateUserConfig(const std::map<std::string, std::string> &deleteData,
                                              const std::vector<QTalk::Entity::ImConfig>& arImConfig)
 {
     QMutexLocker locker(&_pSessionFrm->_mutex);
@@ -501,16 +490,17 @@ void NavigationMianPanel::onUpdateUserConfig(const std::map<std::string, std::st
     }
 }
 
-void NavigationMianPanel::onDestroyGroup(const std::string &groupId) {
+void NavigationMainPanel::onDestroyGroup(const std::string &groupId) {
     emit destoryGroupSignal(QString::fromStdString(groupId));
 }
 
 /**
  *
  */
-void NavigationMianPanel::jumpToNewMessage() {
-    if (!Platform::instance().isMainThread()) {
-        throw std::runtime_error("not main thread");
+void NavigationMainPanel::jumpToNewMessage() {
+    if (!PLAT.isMainThread()) {
+//        throw std::runtime_error("not main thread");
+        return;
     }
     if (_pSessionFrm)
         _pSessionFrm->jumpToNewMessage();
@@ -519,15 +509,13 @@ void NavigationMianPanel::jumpToNewMessage() {
 /**
  *
  */
-void NavigationMianPanel::onShortCutSwitchSession(int key) {
+void NavigationMainPanel::onShortCutSwitchSession(int key) {
     emit sgShortCutSwitchSession(key);
 }
 
-void NavigationMianPanel::removeSessionAction(const QTalk::Entity::UID& uid) {
-    if (_messageManager) {
-        std::string peerIdName = uid.usrId();
-        _messageManager->removeSession(peerIdName);
-    }
+void NavigationMainPanel::removeSessionAction(const QTalk::Entity::UID& uid) {
+    std::string peerIdName = uid.usrId();
+    NavigationMsgManager::removeSession(peerIdName);
 }
 
 /**
@@ -535,7 +523,7 @@ void NavigationMianPanel::removeSessionAction(const QTalk::Entity::UID& uid) {
  * @param ret
  * @param localHead
  */
-void NavigationMianPanel::onChangeHeadRet(bool ret,  const std::string& xmppId, const std::string &localHead)
+void NavigationMainPanel::onChangeHeadRet(bool ret, const std::string& xmppId, const std::string &localHead)
 {
     if(ret)
     {
@@ -543,12 +531,12 @@ void NavigationMianPanel::onChangeHeadRet(bool ret,  const std::string& xmppId, 
     }
 }
 
-void NavigationMianPanel::updateTatalReadCount()
+void NavigationMainPanel::updateTatalReadCount()
 {
     emit updateTotalUnreadCount(_pSessionFrm->getAllCount());
 }
 
-void NavigationMianPanel::onAppDeactivated() {
+void NavigationMainPanel::onAppDeactivated() {
     if (_pSessionFrm)
         _pSessionFrm->onAppDeactivated();
 }
@@ -556,11 +544,15 @@ void NavigationMianPanel::onAppDeactivated() {
 /**
  *
  */
-void NavigationMianPanel::onAppActive() {
+void NavigationMainPanel::onAppActive() {
     if (_pSessionFrm)
         _pSessionFrm->onAppActive();
 }
 
-void NavigationMianPanel::onGotMState(const QTalk::Entity::UID &uid, const QString &messageId, const long long &time) {
+void NavigationMainPanel::onGotMState(const QTalk::Entity::UID &uid, const QString &messageId, const long long &time) {
     emit sgGotMState(uid, messageId, time);
+}
+
+bool NavigationMainPanel::eventFilter(QObject *o, QEvent *e) {
+    return QObject::eventFilter(o, e);
 }

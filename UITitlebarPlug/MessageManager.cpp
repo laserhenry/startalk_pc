@@ -7,21 +7,6 @@
 #include "../Message/ChatMessage.h"
 #include "../Message/LogicBaseMessage.h"
 
-/**
-  * 发送消息类
-  * @author   cc
-  * @date     2018/09/29
-  */
-TitlebarMsgManager::TitlebarMsgManager()
-{
-
-}
-
-
-TitlebarMsgManager::~TitlebarMsgManager()
-{
-
-}
 
 /**
   * @函数名   getUserCard

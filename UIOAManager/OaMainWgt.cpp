@@ -131,7 +131,7 @@ void OaMainWgt::initUi()
                 if(AppSetting::instance().getOpenOaLinkWithAppBrowser())
                 {
                     MapCookie cookie;
-                    cookie["q_u"] = Platform::instance().getSelfUserId().data();
+                    cookie["q_u"] = PLAT.getSelfUserId().data();
                     WebService::loadUrl(url, true, cookie);
                 }
                 else
@@ -139,7 +139,16 @@ void OaMainWgt::initUi()
             }
             else if (StOAUIData::StMember::ACTION_TYPE_NATIVE == it->action_type)
             {
-
+                switch (it->native_action_type)
+                {
+                    case StOAUIData::StMember::NATIVE_TYPE_THROWING_SCREEN:
+                    {
+                        emit sgShowThrowingScreenWnd();
+                        break;
+                    }
+                    default:
+                        break;
+                }
             }
         });
 

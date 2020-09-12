@@ -54,7 +54,7 @@ private:
     PictureFrm *_pPicFrm{};
     TitleFrm *_pPTitleFrm{};
 
-    PictureMsgManager* _msgManager;
+//    PictureMsgManager* _msgManager;
 
 private:
     std::vector<std::pair<std::string, std::string> > _images; // <local, link>

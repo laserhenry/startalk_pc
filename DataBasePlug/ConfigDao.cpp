@@ -3,7 +3,7 @@
 #include "../QtUtil/Utils/Log.h"
 
 ConfigDao::ConfigDao(qtalk::sqlite::database *sqlDb)
-        : DaoInterface(sqlDb) {
+        : DaoInterface(sqlDb, "IM_Config") {
 
 }
 
@@ -30,25 +30,6 @@ bool ConfigDao::creatTable() {
     }
 }
 
-/**
- * clearData
- * @return
- */
-bool ConfigDao::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM `IM_Config`;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data IM_Config error {0}", e.what());
-        return false;
-    }
-}
 
 /**
   * @函数名   
@@ -189,7 +170,7 @@ bool ConfigDao::bulkInsertConfig(const std::vector<QTalk::Entity::ImConfig> &con
             query.bind(3, conf.ConfigValue);
             query.bind(4, conf.Version);
 
-            bool sqlResult = query.executeStep();
+             query.executeStep();
             query.resetBindings();
         }
         query.clearBindings();
@@ -219,7 +200,7 @@ bool ConfigDao::bulkRemoveConfig(const std::map<std::string, std::string> &mapCo
             query.bind(1, conf.second);
             query.bind(2, conf.first);
 
-            bool sqlResult = query.executeStep();
+             query.executeStep();
             query.resetBindings();
         }
         query.clearBindings();

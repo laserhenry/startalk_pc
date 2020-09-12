@@ -19,7 +19,7 @@ NewMessageTip::NewMessageTip(QWidget *parent)
     picLabel->setParent(this);
     picLabel->setHead(":/chatview/image1/go.png", 10, false, false, true);
     picLabel->setFixedWidth(20);
-    _pLabel = new QLabel(QString(tr("%1 条新消息")).arg(_newMessageCount));
+    _pLabel = new QLabel(QString(tr("%1 条新消息")).arg(_newMessageCount), this);
     _pLabel->setObjectName("NewMessageTipLabel");
     QHBoxLayout* lay = new QHBoxLayout(this);
     lay->addWidget(picLabel);

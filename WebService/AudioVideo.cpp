@@ -93,7 +93,7 @@ AudioVideo::AudioVideo()
 
             if(!_peerId.isEmpty())
             {
-                auto info = dbPlatForm::instance().getUserInfo(_peerId.toStdString());
+                auto info = DB_PLAT.getUserInfo(_peerId.toStdString());
                 if(info)
                 {
                     QString name = QTalk::getUserName(info).data();
@@ -204,7 +204,7 @@ AudioVideoManager::~AudioVideoManager() {
 QString get2TalkKey(const QString &peerId)
 {
     QString key;
-    QString self = Platform::instance().getSelfUserId().data();
+    QString self = PLAT.getSelfUserId().data();
     if(self < peerId)
         key.append(self).append(peerId);
     else
@@ -254,7 +254,7 @@ void AudioVideoManager::start2Talk_old(const QString& json, const std::string& p
     pAudioVideo->_isVideo = isVideo;
     pAudioVideo->_peerId = peerId.data();
     pAudioVideo->_conversationId = QString::number(QDateTime::currentMSecsSinceEpoch());
-    std::string userId = Platform::instance().getSelfUserId();
+    std::string userId = PLAT.getSelfUserId();
     QWebEngineHttpRequest req;
     QString strUrl = QString("%1/single?ver=new&plat=0").arg(NavigationManager::instance().getVideoUrl().data());
     QUrl url(strUrl);
@@ -295,7 +295,7 @@ void AudioVideoManager::onRecvWebRtcCommand(const QString &peerId, const QString
 
 
 /**
- * // invalid method
+ *
  */
 void AudioVideoManager::start2Talk(const std::string &caller, const std::string &callee)
 {
@@ -311,12 +311,11 @@ void AudioVideoManager::start2Talk(const std::string &caller, const std::string 
     auto * pAudioVideo = new AudioVideo;
     _2Talks[key] = pAudioVideo;
     pAudioVideo->isGroupVideo = false;
-    std::string userId = Platform::instance().getSelfUserId();
-    std::string ckey = Platform::instance().getClientAuthKey();
+    std::string userId = PLAT.getSelfUserId();
+    std::string ckey = PLAT.getClientAuthKey();
 
     QWebEngineHttpRequest req;
-    // invalid method
-    QUrl url("");
+    QUrl url(""); // video url todo for github
     req.setUrl(url);
     pAudioVideo->_webView->setCookie(QNetworkCookie("_caller", caller.data()), url);
     pAudioVideo->_webView->setCookie(QNetworkCookie("_callee", callee.data()), url);
@@ -345,8 +344,8 @@ void AudioVideoManager::startGroupTalk(const QString& id, const QString &name)
     auto * pAudioVideo = new AudioVideo;
     _groupTalks[id] = pAudioVideo;
 
-    std::string strCkey = Platform::instance().getClientAuthKey();
-    QString agent = QString("startalk/%1/(pc:%2)").arg(Platform::instance().getGlobalVersion().data())
+    std::string strCkey = PLAT.getClientAuthKey();
+    QString agent = QString("startalk/%1/(pc:%2)").arg(PLAT.getGlobalVersion().data())
 #if defined(_WINDOWS )
                     .arg("windows");
 #elif defined(_LINUX)
@@ -362,7 +361,7 @@ void AudioVideoManager::startGroupTalk(const QString& id, const QString &name)
     if(url.isEmpty())
     {
         url = QString("%4/conference#/login?userId=%1&roomId=%2&topic=%3")
-                .arg(Platform::instance().getSelfXmppId().data())
+                .arg(PLAT.getSelfXmppId().data())
                 .arg(id)
                 .arg(QUrl(name.toUtf8()).toEncoded().data())
                 .arg(NavigationManager::instance().getVideoUrl().data());
@@ -370,7 +369,7 @@ void AudioVideoManager::startGroupTalk(const QString& id, const QString &name)
     else
     {
         url = QString("%4?userId=%1&roomId=%2&topic=%3")
-                .arg(Platform::instance().getSelfXmppId().data())
+                .arg(PLAT.getSelfXmppId().data())
                 .arg(id)
                 .arg(QUrl(name.toUtf8()).toEncoded().data())
                 .arg(url);
@@ -378,7 +377,7 @@ void AudioVideoManager::startGroupTalk(const QString& id, const QString &name)
 
     req.setUrl(QUrl(url));
 
-    std::string ckey = Platform::instance().getClientAuthKey();
+    std::string ckey = PLAT.getClientAuthKey();
     ckey = QTalk::utils::UrlEncode(ckey);
     if(ckey.empty())
     {
@@ -392,7 +391,7 @@ void AudioVideoManager::startGroupTalk(const QString& id, const QString &name)
     pAudioVideo->_webView->setCookie(ckeyCookie, url);
 
 #ifdef _QCHAT
-    auto qvt = Platform::instance().getQvt();
+    auto qvt = PLAT.getQvt();
     QJsonDocument document = QJsonDocument::fromJson(qvt.data());
     if(!document.isNull())
     {

@@ -27,9 +27,16 @@ EmoticonView::EmoticonView(QWidget* parent)
     setAttribute(Qt::WA_X11DoNotAcceptFocus, true);
     setAttribute(Qt::WA_ShowWithoutActivating, true);
     setAttribute(Qt::WA_TranslucentBackground, true);
+    setParent(nullptr);
 }
 
-EmoticonView::~EmoticonView() = default;
+EmoticonView::~EmoticonView() {
+    if(_mov)
+    {
+        _mov->stop();
+        delete _mov;
+    }
+};
 
 void EmoticonView::paintEvent(QPaintEvent *e)
 {

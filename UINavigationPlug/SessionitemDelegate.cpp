@@ -54,15 +54,6 @@ QString GenerateTimeText(const QInt64 &time) {
     return t;
 }
 
-SessionSortModel::SessionSortModel(QObject *parent)
-    : QSortFilterProxyModel(parent)
-{
-
-}
-
-SessionSortModel::~SessionSortModel()
-= default;
-
 bool SessionSortModel::lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const {
 
     if (!source_left.isValid() || !source_right.isValid())
@@ -70,10 +61,14 @@ bool SessionSortModel::lessThan(const QModelIndex &source_left, const QModelInde
 
     bool leftTop = source_left.data(ITEM_DATATYPE_ISTOP).toBool();
     bool rightTop = source_right.data(ITEM_DATATYPE_ISTOP).toBool();
+    bool leftQ = source_left.data(ITEM_DATATYPE_QQQ).toBool();
+    bool rightQ = source_right.data(ITEM_DATATYPE_QQQ).toBool();
 
     bool ret = false;
     if(leftTop != rightTop)
         ret = leftTop > rightTop;
+    else if(leftQ != rightQ)
+        ret = leftQ > rightQ;
     else
         ret = source_left.data(ITEM_DATATYPE_LASTTIME).toLongLong() > source_right.data(ITEM_DATATYPE_LASTTIME).toLongLong();
     return ret;
@@ -83,11 +78,6 @@ bool SessionSortModel::lessThan(const QModelIndex &source_left, const QModelInde
 SessionitemDelegate::SessionitemDelegate(QWidget* parent)
     :QStyledItemDelegate(parent), _pParentWgt(parent)
 {
-}
-
-SessionitemDelegate::~SessionitemDelegate()
-{
-
 }
 
 QSize SessionitemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
@@ -134,15 +124,16 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
     QString strTime = GenerateTimeText(time);
     QString realJid = index.data(ITEM_DATATYPE_REALJID).toString();
     QString draft = index.data(ITEM_DATATYPE_DRAFT).toString();
+    bool q = index.data(ITEM_DATATYPE_QQQ).toBool();
 
     int chattype = index.data(ITEM_DATATYPE_CHATTYPE).toInt();
     if(chattype == QTalk::Enum::ConsultServer && !realJid.isNull()){//自己是客服 需要拼接显示name
         std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo  =
-                dbPlatForm::instance().getUserInfo(realJid.toStdString());
+                DB_PLAT.getUserInfo(realJid.toStdString());
         if(userInfo != nullptr){
             strName = QString("咨询: %1").arg(QTalk::getUserName(userInfo).data());
         } else{
-            std::string remark = dbPlatForm::instance().getMaskName(realJid.toStdString());
+            std::string remark = DB_PLAT.getMaskName(realJid.toStdString());
             if(remark.empty()){
                 strName = QString("咨询: %1").arg(realJid.section("@", 0, 0));
             } else{
@@ -209,6 +200,9 @@ void SessionitemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
         painter->drawText(contentRect, Qt::AlignTop, QString("%1").arg(draft));
     }
     else {
+        if(q) {
+            painter->fillRect(rect.x(), rect.y(), 6, rect.height(), QColor(255, 0, 0, 150));
+        }
 
         if (unreadCount > 0 && atCount > 0)
         {

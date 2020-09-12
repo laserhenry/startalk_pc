@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by lihaibin on 2019-02-26.
 //
 
@@ -25,8 +25,8 @@ void HotLinesConfig::getVirtualUserRole(){
     std::string strUrl = url.str();
 
     cJSON* obj = cJSON_CreateObject();
-    cJSON_AddStringToObject(obj, "username", Platform::instance().getSelfName().data());
-    cJSON_AddStringToObject(obj, "host", Platform::instance().getSelfDomain().data());
+    cJSON_AddStringToObject(obj, "username", PLAT.getSelfName().data());
+    cJSON_AddStringToObject(obj, "host", PLAT.getSelfDomain().data());
     std::string postDta = QTalk::JSON::cJSON_to_string(obj);
     cJSON_Delete(obj);
     //
@@ -62,7 +62,7 @@ void HotLinesConfig::getVirtualUserRole(){
         _pComm->addHttpRequest(req, callback);
 
         if(!hotlines.empty())
-            dbPlatForm::instance().setHotLines(hotlines);
+            DB_PLAT.setHotLines(hotlines);
     }
 }
 
@@ -70,17 +70,17 @@ void HotLinesConfig::getServiceSeat() {
     std::ostringstream url;
     url << NavigationManager::instance().getQcadminHost()
         << "/api/seat/getSeatSeStatusWithSid.qunar?qName="
-        << Platform::instance().getSelfUserId();
+        << PLAT.getSelfUserId();
     std::string strUrl = url.str();
 
     //
     auto callback = [](int code, const std::string &responseData) {
 
         if (code == 200) {
-            Platform::instance().setSeats(responseData);
+            PLAT.setSeats(responseData);
         }
     };
-    std::string qvt = Platform::instance().getQvt();
+    std::string qvt = PLAT.getQvt();
     if(qvt.empty()){
         return;
     }
@@ -102,7 +102,7 @@ void HotLinesConfig::setServiceSeat(int sid, int state) {
     std::ostringstream url;
     url << NavigationManager::instance().getQcadminHost()
         << "/api/seat/upSeatSeStatusWithSid.qunar?qName="
-        << Platform::instance().getSelfUserId()
+        << PLAT.getSelfUserId()
         << "&st="
         << state
         << "&sid="
@@ -116,7 +116,7 @@ void HotLinesConfig::setServiceSeat(int sid, int state) {
 
         }
     };
-    std::string qvt = Platform::instance().getQvt();
+    std::string qvt = PLAT.getQvt();
     if(qvt.empty()){
         return;
     }
@@ -193,9 +193,7 @@ void HotLinesConfig::getTransferSeatsList(const QTalk::Entity::UID& uid) {
                     transfers.push_back(transfer);
                 }
 
-                if(_pComm && _pComm->_pMsgManager){
-                    _pComm->_pMsgManager->setSeatList(uid,transfers);
-                }
+                CommMsgManager::setSeatList(uid,transfers);
             }
             cJSON_Delete(json);
         }
@@ -220,7 +218,7 @@ void HotLinesConfig::transferCsr(const QTalk::Entity::UID& uid,
     cJSON* obj = cJSON_CreateObject();
     cJSON_AddStringToObject(obj, "customerName", customerName.data());
     cJSON_AddStringToObject(obj, "hotlineName", shopJId.data());
-    cJSON_AddStringToObject(obj, "currentCsrName", Platform::instance().getSelfUserId().data());
+    cJSON_AddStringToObject(obj, "currentCsrName", PLAT.getSelfUserId().data());
     cJSON_AddStringToObject(obj, "newCsrName", newCsrName.data());
     cJSON_AddStringToObject(obj, "reason", reason.data());
     std::string postDta = QTalk::JSON::cJSON_to_string(obj);
@@ -255,9 +253,9 @@ void HotLinesConfig::updateQuickReply() {
     std::string strUrl = url.str();
 
     cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *username = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
+    cJSON *username = cJSON_CreateString(PLAT.getSelfUserId().c_str());
     cJSON_AddItemToObject(jsonObject, "username", username);
-    cJSON *host = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
     cJSON_AddItemToObject(jsonObject, "host", host);
     cJSON *versiong = cJSON_CreateNumber(gversion);
     cJSON_AddItemToObject(jsonObject, "groupver", versiong);
@@ -298,15 +296,15 @@ void HotLinesConfig::sendProduct(const std::string& username, const std::string&
 
     cJSON *typeJson = cJSON_CreateString(type.c_str());
     cJSON_AddItemToObject(args, "type", typeJson);
-    cJSON *seatQName = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
+    cJSON *seatQName = cJSON_CreateString(PLAT.getSelfUserId().c_str());
     cJSON_AddItemToObject(args, "seatQName", seatQName);
-    cJSON *host = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
     cJSON_AddItemToObject(args, "userHost", host);
     cJSON *userQName = cJSON_CreateString(username.c_str());
     cJSON_AddItemToObject(args, "userQName", userQName);
     cJSON *virtualId = cJSON_CreateString(virtualname.c_str());
     cJSON_AddItemToObject(args, "virtualId", virtualId);
-    cJSON *seatHost = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+    cJSON *seatHost = cJSON_CreateString(PLAT.getSelfDomain().c_str());
     cJSON_AddItemToObject(args, "seatHost", seatHost);
 
     cJSON_AddItemToObject(jsonObject, "noteArgs", args);
@@ -340,7 +338,7 @@ void HotLinesConfig::sendWechat(const QTalk::Entity::UID &uid) {
     std::string strUrl = url.str();
 
     cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *from = cJSON_CreateString(Platform::instance().getSelfXmppId().c_str());
+    cJSON *from = cJSON_CreateString(PLAT.getSelfXmppId().c_str());
     cJSON_AddItemToObject(jsonObject,"from",from);
     cJSON *to = cJSON_CreateString(uid.usrId().c_str());
     cJSON_AddItemToObject(jsonObject,"to",to);
@@ -374,7 +372,7 @@ void HotLinesConfig::getHotLineMessageList(const std::string &xmppId) {
         << "/robot/qtalk_robot/sendtips"
         << "?rexian_id=" << jid.username()
         << "&m_from=" << jid.basename()
-        << "&m_to=" << Platform::instance().getSelfXmppId();
+        << "&m_to=" << PLAT.getSelfXmppId();
 
     auto callback = [](int code, const std::string &responseData) {
         if (code == 200) {

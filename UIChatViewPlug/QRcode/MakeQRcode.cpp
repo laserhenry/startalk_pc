@@ -121,7 +121,7 @@ void MakeQRcode::onCopyAct(bool)
 {
 	if (!_pixmap.isNull())
 	{
-		QString localPath = QString("%1/image/temp/").arg(Platform::instance().getAppdataRoamingUserPath().c_str());
+		QString localPath = QString("%1/image/temp/").arg(PLAT.getAppdataRoamingUserPath().c_str());
 		QString fileName = localPath + QDateTime::currentDateTime().toString("yyyyMMddhhmmsszzz.png");
 		bool bret = _pixmap.save(fileName, "PNG");
 		if (bret) {
@@ -137,7 +137,7 @@ void MakeQRcode::onSaveAct(bool)
 {
     if(!_pixmap.isNull())
     {
-        std::string histor = Platform::instance().getHistoryDir();
+        std::string histor = PLAT.getHistoryDir();
         QString fileName = QFileDialog::getSaveFileName(g_pMainPanel, tr("请选择需要保存的目录"), histor.data());
         if(!fileName.isEmpty())
         {

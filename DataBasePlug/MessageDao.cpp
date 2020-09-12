@@ -1,7 +1,7 @@
 ﻿#include "MessageDao.h"
 #include "../entity/im_message.h"
-#include <iostream>
-#include <string.h>
+//#include <iostream>
+//#include <string.h>
 #include <climits>
 #include "../QtUtil/Utils/Log.h"
 #include "../Platform/Platform.h"
@@ -16,7 +16,7 @@
 #endif
 
 MessageDao::MessageDao(qtalk::sqlite::database *sqlDb) :
-        DaoInterface(sqlDb) {
+        DaoInterface(sqlDb, "IM_Message") {
 
 }
 
@@ -45,31 +45,7 @@ bool MessageDao::creatTable() {
                       "PRIMARY KEY(`MsgId`) )";
 
     qtalk::sqlite::statement query(*_pSqlDb, sql);
-    bool sqlResult = query.executeStep();
-    if (!sqlResult) {
-
-    }
-    return sqlResult;
-}
-
-/**
- * clearData
- * @return
- */
-bool MessageDao::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM `IM_Message`;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data IM_Message error {0}", e.what());
-        return false;
-    }
+    return query.executeStep();
 }
 
 bool MessageDao::creatIndex() {
@@ -83,51 +59,47 @@ bool MessageDao::creatIndex() {
     return query.executeStep();;
 }
 
-/**
-  * @函数名
-  * @功能描述
-  * @参数
-  * @date 2018.9.24
-  */
-bool MessageDao::insertMessageInfo(const QTalk::Entity::ImMessageInfo &imMessageInfo) {
-    try {
-        if (!_pSqlDb) {
-            return false;
-        }
-        std::string sql = "INSERT OR REPLACE INTO IM_Message(MsgId, XmppId, `ChatType`, Platform, `From`, "
-                          "`To`, Content, Type, State, Direction, ReadedTag, LastUpdateTime, "
-                          "MessageRaw, RealJid, ExtendedInfo, ExtendedFlag, `BackupInfo` ) "
-                          "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        query.bind(1, imMessageInfo.MsgId);
-        query.bind(2, imMessageInfo.XmppId);
-        query.bind(3, imMessageInfo.ChatType);
-        query.bind(4, imMessageInfo.Platform);
-        query.bind(5, imMessageInfo.From);
-        query.bind(6, imMessageInfo.To);
-        query.bind(7, imMessageInfo.Content);
-        query.bind(8, imMessageInfo.Type);
-        query.bind(9, imMessageInfo.State);
-        query.bind(10, imMessageInfo.Direction);
-        query.bind(11, imMessageInfo.ReadedTag);
-        query.bind(12, imMessageInfo.LastUpdateTime);
-        query.bind(13, imMessageInfo.MessageRaw);
-        query.bind(14, imMessageInfo.RealJid);
-        query.bind(15, imMessageInfo.ExtendedInfo);
-        query.bind(16, imMessageInfo.ExtendedFlag.c_str(), imMessageInfo.ExtendedFlag.size());
-        query.bind(17, imMessageInfo.BackupInfo);
-        bool sqlResult = query.executeStep();
-        if (!sqlResult) {
-
-        }
-        return sqlResult;
-    }
-    catch (std::exception &e) {
-
-        return false;
-    }
-}
+///**
+//  * @函数名
+//  * @功能描述
+//  * @参数
+//  * @date 2018.9.24
+//  */
+//bool MessageDao::insertMessageInfo(const QTalk::Entity::ImMessageInfo &imMessageInfo) {
+//    try {
+//        if (!_pSqlDb) {
+//            return false;
+//        }
+//        std::string sql = "INSERT OR REPLACE INTO IM_Message(MsgId, XmppId, `ChatType`, Platform, `From`, "
+//                          "`To`, Content, Type, State, Direction, ReadedTag, LastUpdateTime, "
+//                          "MessageRaw, RealJid, ExtendedInfo, ExtendedFlag, `BackupInfo` ) "
+//                          "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+//
+//        qtalk::sqlite::statement query(*_pSqlDb, sql);
+//        query.bind(1, imMessageInfo.MsgId);
+//        query.bind(2, imMessageInfo.XmppId);
+//        query.bind(3, imMessageInfo.ChatType);
+//        query.bind(4, imMessageInfo.Platform);
+//        query.bind(5, imMessageInfo.From);
+//        query.bind(6, imMessageInfo.To);
+//        query.bind(7, imMessageInfo.Content);
+//        query.bind(8, imMessageInfo.Type);
+//        query.bind(9, imMessageInfo.State);
+//        query.bind(10, imMessageInfo.Direction);
+//        query.bind(11, imMessageInfo.ReadedTag);
+//        query.bind(12, imMessageInfo.LastUpdateTime);
+//        query.bind(13, imMessageInfo.MessageRaw);
+//        query.bind(14, imMessageInfo.RealJid);
+//        query.bind(15, imMessageInfo.ExtendedInfo);
+//        query.bind(16, imMessageInfo.ExtendedFlag.c_str(), imMessageInfo.ExtendedFlag.size());
+//        query.bind(17, imMessageInfo.BackupInfo);
+//
+//        return query.executeStep();
+//    }
+//    catch (std::exception &e) {
+//        return false;
+//    }
+//}
 
 bool MessageDao::bulkUpdateSessionList(std::map<QTalk::Entity::UID, QTalk::Entity::ImSessionInfo> *sessionMap) {
     if (!_pSqlDb) {
@@ -235,7 +207,7 @@ bool MessageDao::bulkInsertMessageInfo(const std::vector<QTalk::Entity::ImMessag
                     myInfo.RealJid = imMessageInfo.RealJid;
                     myInfo.UserId = imMessageInfo.XmppId;
                     myInfo.MessType = imMessageInfo.Type;
-                    if(imMessageInfo.From == Platform::instance().getSelfXmppId()){
+                    if(imMessageInfo.From == PLAT.getSelfXmppId()){
                         myInfo.UnreadCount = 0;
                     } else{
                         myInfo.UnreadCount = ((imMessageInfo.ReadedTag & 2) == 2) ? 0 : 1;
@@ -253,7 +225,7 @@ bool MessageDao::bulkInsertMessageInfo(const std::vector<QTalk::Entity::ImMessag
                         item->second.RealJid = imMessageInfo.RealJid;
                         item->second.UserId = imMessageInfo.XmppId;
                         item->second.MessType = imMessageInfo.Type;
-                        if(imMessageInfo.From != Platform::instance().getSelfXmppId() && (imMessageInfo.ReadedTag & 2) != 2){
+                        if(imMessageInfo.From != PLAT.getSelfXmppId() && int(imMessageInfo.ReadedTag & 2) != 2){
                             item->second.UnreadCount ++;
                         }
                     }
@@ -285,11 +257,11 @@ bool MessageDao::bulkInsertMessageInfo(const std::vector<QTalk::Entity::ImMessag
             query.bind(21,imMessageInfo.ExtendedInfo);
             query.bind(22,imMessageInfo.BackupInfo);
 
-            bool sqlResult = query.executeStep();
+            auto sqlResult = query.executeStep();
             query.resetBindings();
             if (!sqlResult) {
-//                _pSqlDb->exec("rollback transaction;");
-//                return false;
+                error_log("error with insert message {}", imMessageInfo.MsgId);
+                continue;
             }
         }
         query.clearBindings();
@@ -442,10 +414,7 @@ bool MessageDao::updateMState(const std::string &messageId, const QInt64 &time) 
     try {
         query.bind(1, time);
         query.bind(2, messageId);
-        if (query.executeStep()) {
-            return true;
-        }
-        return false;
+        return query.executeStep();
     }
     catch (std::exception &e) {
         warn_log("MessageDao updateMState exception : {0}", e.what());
@@ -639,9 +608,8 @@ bool MessageDao::getMessageByMessageId(const std::string &messageId, QTalk::Enti
         return true;
     }
     catch (std::exception &e) {
-        return false;
         warn_log("MessageDao getMessageByMessageId exception : {0}", e.what());
-        throw "MessageDao getMessageByMessageId exception ";
+        return false;
     }
 
 }
@@ -1157,7 +1125,7 @@ void MessageDao::updateMessageReadFlags(const std::map<std::string, int> &readFl
 
     } catch (std::exception &e) {
         _pSqlDb->exec("rollback transaction;");
-        throw e.what();
+//        throw e.what();
     }
 }
 
@@ -1173,8 +1141,7 @@ void MessageDao::updateMessageExtendInfo(const std::string &msgId, const std::st
     query.bind(1, info);
     query.bind(2, msgId);
 
-    bool sqlResult = query.executeStep();
-    if (!sqlResult) {
+    if (!query.executeStep()) {
         warn_log("excute failed {0}, {1}", msgId, info);
     }
 }

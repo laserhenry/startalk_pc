@@ -9,11 +9,11 @@
 #include "../include/CommonDefine.h"
 
 class Communication;
-class cJSON;
+struct cJSON;
 class UserConfig
 {
 public:
-    UserConfig(Communication* comm);
+    explicit UserConfig(Communication* comm);
     ~UserConfig();
 
 public:

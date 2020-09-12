@@ -16,6 +16,8 @@
 #include <set>
 #include <thread>
 
+#define PLAT Platform::instance()
+
 /**
  */
 class PLATFORMSHARED_EXPORT Platform {
@@ -118,6 +120,9 @@ public:
 	inline void setProcessId(int id) { processId = id; };
 	inline int getProcessId() { return processId; };
 
+	inline void setShowStaff(bool show) {_showStaff = show; }
+	inline bool getShowStaff() { return _showStaff; }
+
 public:
     void setAppNetVersion(long long version);
 
@@ -182,9 +187,8 @@ private:
 	std::string _qvt;
 	std::string _seats;
 
-
 private:
-    static Platform* _platform;
+    bool        _showStaff{true};
 
 public:
     static Platform& instance();

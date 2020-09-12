@@ -28,18 +28,18 @@ void UserConfig::getUserConfigFromServer(bool sendEvt) {
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/configuration/getincreclientconfig.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     std::string strUrl = url.str();
 
     cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *username = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
+    cJSON *username = cJSON_CreateString(PLAT.getSelfUserId().c_str());
     cJSON_AddItemToObject(jsonObject, "username", username);
-    cJSON *host = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
     cJSON_AddItemToObject(jsonObject, "host", host);
     cJSON *version = cJSON_CreateNumber(configVersion);
     cJSON_AddItemToObject(jsonObject, "version", version);
@@ -82,15 +82,15 @@ void UserConfig::updateUserSetting(QUInt8 operatorType, const std::string &key, 
     std::string strUrl = url.str();
     //
     cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *username = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
+    cJSON *username = cJSON_CreateString(PLAT.getSelfUserId().c_str());
     cJSON_AddItemToObject(jsonObject, "username", username);
-    cJSON *host = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
     cJSON_AddItemToObject(jsonObject, "host", host);
-    cJSON *resource = cJSON_CreateString(Platform::instance().getSelfResource().c_str());
+    cJSON *resource = cJSON_CreateString(PLAT.getSelfResource().c_str());
     cJSON_AddItemToObject(jsonObject, "resource", resource);
     cJSON *version = cJSON_CreateNumber(configVersion);
     cJSON_AddItemToObject(jsonObject, "version", version);
-    cJSON *operate_plat = cJSON_CreateString(Platform::instance().getPlatformStr().c_str());
+    cJSON *operate_plat = cJSON_CreateString(PLAT.getPlatformStr().c_str());
     cJSON_AddItemToObject(jsonObject, "operate_plat", operate_plat);
     cJSON *type = cJSON_CreateNumber(operatorType);
     cJSON_AddItemToObject(jsonObject, "type", type);
@@ -181,13 +181,13 @@ void UserConfig::updateDbByJson(cJSON *jsObj, bool sendEvt) {
             {
                 std::map<std::string, std::string> mapConf;
                 LogicManager::instance()->getDatabase()->getConfig("kMarkupNames", mapConf);
-                dbPlatForm::instance().setMaskNames(mapConf);
+                DB_PLAT.setMaskNames(mapConf);
             }
 
             //
-            if(sendEvt && (!deleteData.empty() || !arImConfig.empty()) && _pComm && _pComm->_pMsgManager)
+            if(sendEvt && (!deleteData.empty() || !arImConfig.empty()) )
             {
-                _pComm->_pMsgManager->incrementConfigs(deleteData, arImConfig);
+                CommMsgManager::incrementConfigs(deleteData, arImConfig);
             }
 //            _pComm->updateUserConfigFromDb();
         }

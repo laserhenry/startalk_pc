@@ -51,6 +51,8 @@ private:
 
 private:
     QLocalServer *_pServer;
+
+    std::map<QLocalSocket*, QByteArray> _datas;
 };
 
 

@@ -89,13 +89,13 @@ void user_card::initUi()
     //
     _pMailBtn = new QPushButton(this);
     auto * btnSendCard = new QPushButton(this);
-    _pAddFriendBtn = new QPushButton(this);
+//    _pAddFriendBtn = new QPushButton(this);
     _pBtnStar = new QPushButton(this);
     auto * btnMore = new QPushButton(this);
 
     _pMailBtn->setObjectName("UserCard_SendMail");
     btnSendCard->setObjectName("UserCard_SendCard");
-    _pAddFriendBtn->setObjectName("UserCard_AddFriend");
+//    _pAddFriendBtn->setObjectName("UserCard_AddFriend");
     _pBtnStar->setObjectName("UserCard_Star");
     btnMore->setObjectName("btn_More");
 
@@ -103,30 +103,27 @@ void user_card::initUi()
 
     _pMailBtn->setToolTip(tr("发送邮件"));
     btnSendCard->setToolTip(tr("转发名片"));
-    _pAddFriendBtn->setToolTip(tr("添加好友"));
+//    _pAddFriendBtn->setToolTip(tr("添加好友"));
     _pBtnStar->setToolTip(tr("星标联系人"));
     btnMore->setToolTip(tr("更多"));
 
     _pMailBtn->setFixedSize(30, 30);
     btnSendCard->setFixedSize(30, 30);
-    _pAddFriendBtn->setFixedSize(30, 30);
+//    _pAddFriendBtn->setFixedSize(30, 30);
     _pBtnStar->setFixedSize(30, 30);
     btnMore->setFixedSize(30, 30);
-
-    _pAddFriendBtn->setVisible(false);
 
     auto * btnLay = new QHBoxLayout;
     btnLay->setMargin(0);
     btnLay->setSpacing(16);
     btnLay->addWidget(_pMailBtn);
     btnLay->addWidget(btnSendCard);
-    btnLay->addWidget(_pAddFriendBtn);
+//    btnLay->addWidget(_pAddFriendBtn);
     btnLay->addWidget(_pBtnStar);
     btnLay->addWidget(btnMore);
     btnLay->addItem(new QSpacerItem(0,0,QSizePolicy::Expanding));
     //
     btnSendCard->setVisible(false);
-    _pAddFriendBtn->setVisible(false);
     //
     QFrame* topFrame = new QFrame(this);
     topFrame->setObjectName("TopFrame");
@@ -291,9 +288,9 @@ void user_card::initUi()
     // add action
     _pMenu = new QMenu(this);
     _pMenu->setAttribute(Qt::WA_TranslucentBackground, true);
-    _pRemoveAct = new QAction(tr("解除好友"), _pMenu);
+//    _pRemoveAct = new QAction(tr("解除好友"), _pMenu);
     _pAddBlackListAct = new QAction(tr("加入黑名单"), _pMenu);
-    _pMenu->addAction(_pRemoveAct);
+//    _pMenu->addAction(_pRemoveAct);
     _pMenu->addAction(_pAddBlackListAct);
     //
     _pStackedShell = new StackShell(_pMainPanel);
@@ -369,7 +366,7 @@ bool user_card::showUserCard(std::shared_ptr<QTalk::Entity::ImUserSupplement> im
     bool ret = false;
     QTalk::Entity::JID jid(imuserSup->XmppId.c_str());
     //
-    _isSelf = jid.username() == Platform::instance().getSelfUserId();
+    _isSelf = jid.username() == PLAT.getSelfUserId();
 	emit setWgtStatusSignal();
     //
     ret = nullptr != info;
@@ -568,10 +565,10 @@ void user_card::addBlackListSlot()
  */
 void user_card::setFlags(int flags)
 {
-    bool isFriend = flags & EM_IS_FRIEND;
+//    bool isFriend = flags & EM_IS_FRIEND;
     bool isBlack = flags & EM_IS_BLACK;
 //    _pAddFriendBtn->setVisible(!isFriend);
-    _pRemoveAct->setEnabled(isFriend);
+//    _pRemoveAct->setEnabled(isFriend);
     _pBtnStar->setChecked(flags & EM_IS_START);
     _pAddBlackListAct->setText(isBlack ? tr("移除黑名单") : tr("加入黑名单"));
 }
@@ -596,7 +593,7 @@ bool user_card::eventFilter(QObject *o, QEvent *e)
         if(e->type() == QEvent::MouseButtonPress)
         {
             auto *evt = (QMouseEvent*)e;
-            if(evt && evt->button() == Qt::LeftButton)
+            if(PLAT.getShowStaff() && evt && evt->button() == Qt::LeftButton)
             {
                 QString structreName = _pDepartmentEdit->text();
                 if(!structreName.isEmpty())
@@ -616,13 +613,13 @@ bool user_card::eventFilter(QObject *o, QEvent *e)
     {
         if(e->type() == QEvent::MouseButtonPress)
         {
-            std::thread([this](){
+            QtConcurrent::run([this](){
                 if(_pMainPanel)
                 {
                     std::string srcHead = _pMainPanel->getSourceHead(_strHeadLink);
                     emit _pMainPanel->sgShowHeadWnd(QString::fromStdString(srcHead), _isSelf);
                 }
-            }).detach();
+            });
             this->setVisible(false);
 //            this->close();
         }
@@ -680,9 +677,8 @@ bool user_card::event(QEvent* e)
 
 void user_card::closeEvent(QCloseEvent* e)
 {
-    Q_UNUSED(e)
     QString maskName = _pUserMarks->text();
-    bool isSelf = _strUserId == Platform::instance().getSelfXmppId();
+    bool isSelf = _strUserId == PLAT.getSelfXmppId();
     QString mood = _pUserMoodEdit->text();
 
     if(nullptr == _pMainPanel) return;
@@ -695,6 +691,8 @@ void user_card::closeEvent(QCloseEvent* e)
     {
         _pMainPanel->setUserMood(mood.toStdString());
     }
+
+    UShadowDialog::closeEvent(e);
 }
 
 //
@@ -772,7 +770,7 @@ void user_card::onShowMedalDetail(int id) {
     auto itFind = std::find_if(_user_medal.begin(), _user_medal.end(), [id](const QTalk::StUserMedal& it){
         return it.medalId == id;
     });
-    auto medalInfo = dbPlatForm::instance().getMedal(id);
+    auto medalInfo = DB_PLAT.getMedal(id);
     bool isLight = itFind != _user_medal.end();
     _pStackedShell->setCurrentWgt(_pMedalDetailWnd);
     _pStackedShell->setMoverAble(true, _pMedalDetailWnd->getMoveWgt());

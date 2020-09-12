@@ -10,7 +10,7 @@
 #include "UserSupplementDao.h"
 #include "DbConfig.h"
 #include "../Platform/Platform.h"
-#include "FriendListDao.h"
+//#include "FriendListDao.h"
 #include "../entity/IM_Session.h"
 #include "../include/perfcounter.h"
 #include "CacheDataDao.h"
@@ -18,6 +18,7 @@
 #include "MedalListDao.h"
 #include "UserMedalDao.h"
 #include "TriggerConfig.h"
+#include "ProcessExceptDao.h"
 
 DataBasePlug::DataBasePlug() :
         _dbPool("db thread pool") {
@@ -96,10 +97,10 @@ void DataBasePlug::ClearDBData() {
     if (_dataBass->tableExists("IM_User") && !usrDao.clearData()) {
         error_log("IM_User  清理表失败");
     }
-    FriendListDao friendDao(_dataBass);
-    if (_dataBass->tableExists("IM_Friend_List") && !friendDao.clearData()) {
-        error_log("IM_Friend_List  清理表失败");
-    }
+//    FriendListDao friendDao(_dataBass);
+//    if (_dataBass->tableExists("IM_Friend_List") && !friendDao.clearData()) {
+//        error_log("IM_Friend_List  清理表失败");
+//    }
     GroupDao grpDao(_dataBass);
     if (_dataBass->tableExists("IM_Group") && !grpDao.clearData()) {
         error_log("IM_Group  清理表失败");
@@ -133,6 +134,11 @@ void DataBasePlug::ClearDBData() {
         error_log("IM_Medal_List  清理表失败");
     }
     UserMedalDao medalDao(_dataBass);
+    if (!medalDao.clearData()) {
+        error_log("IM_User_Status_Medal 清理表失败");
+    }
+
+    ProcessExceptDao processExceptDao(_dataBass);
     if (!medalDao.clearData()) {
         error_log("IM_User_Status_Medal 清理表失败");
     }
@@ -186,23 +192,23 @@ bool DataBasePlug::bulkDeleteSessions(const std::vector<std::string> &peerIds) {
 //    return ret;
 //}
 
-/**
-  * @函数名
-  * @功能描述 获取所有会话信息
-  * @参数
-  * @date 2018.9.21
-  */
-std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > DataBasePlug::QueryImSessionInfos() {
-    std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > ret;
-    auto func = _dbPool.enqueue([this, &ret]() {
-        perf_counter("QueryImSessionInfos");
-        SessionListDao dao(_dataBass);
-        ret = dao.QueryImSessionInfos();
-    });
-    func.get();
-
-    return ret;
-}
+///**
+//  * @函数名
+//  * @功能描述 获取所有会话信息
+//  * @参数
+//  * @date 2018.9.21
+//  */
+//std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > DataBasePlug::QueryImSessionInfos() {
+//    std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > ret;
+//    auto func = _dbPool.enqueue([this, &ret]() {
+//        perf_counter("QueryImSessionInfos");
+//        SessionListDao dao(_dataBass);
+//        ret = dao.QueryImSessionInfos();
+//    });
+//    func.get();
+//
+//    return ret;
+//}
 
 /**
  * 获取最新的session
@@ -629,11 +635,11 @@ void DataBasePlug::CreatTables() {
         // "IM_User 表创建失败";
         error_log("IM_User  表创建失败");
     }
-    FriendListDao friendDao(_dataBass);
-    if (!_dataBass->tableExists("IM_Friend_List") && !friendDao.creatTable()) {
-        // "IM_Friend_List 表创建失败";
-        error_log("IM_Friend_List  表创建失败");
-    }
+//    FriendListDao friendDao(_dataBass);
+//    if (!_dataBass->tableExists("IM_Friend_List") && !friendDao.creatTable()) {
+//         "IM_Friend_List 表创建失败";
+//        error_log("IM_Friend_List  表创建失败");
+//    }
     GroupDao grpDao(_dataBass);
     if (!_dataBass->tableExists("IM_Group") && !grpDao.creatTable()) {
         // "IM_Group 表创建失败";
@@ -673,6 +679,11 @@ void DataBasePlug::CreatTables() {
     UserMedalDao medalDao(_dataBass);
     if (!_dataBass->tableExists("IM_User_Status_Medal") && !medalDao.creatTable()) {
         error_log("IM_User_Status_Medal 表创建失败");
+    }
+
+    ProcessExceptDao processExceptDao(_dataBass);
+    if (!_dataBass->tableExists("IM_PROCESS_EXCEPT") && !processExceptDao.creatTable()) {
+        error_log("processExceptDao 表创建失败");
     }
 }
 
@@ -749,13 +760,13 @@ void DataBasePlug::modifyDbByVersion() {
     {
         // 自己发给自己的未读数清零
         SessionListDao sessionListDao(_dataBass);
-        sessionListDao.clearSelfUnRead(Platform::instance().getSelfXmppId());
+        sessionListDao.clearSelfUnRead(PLAT.getSelfXmppId());
         // 修改阅读状态 触发器
         TriggerConfig tridao(_dataBass);
         tridao.modifyUnreadCountTrigger();
     }
     //
-    dbConfig.setDbVersion(Platform::instance().getDbVersion());
+    dbConfig.setDbVersion(PLAT.getDbVersion());
 }
 
 /**
@@ -968,55 +979,55 @@ bool DataBasePlug::bulkDeleteGroupMember(const std::vector<std::string> &groupId
 }
 
 //
-bool DataBasePlug::bulkInsertFriends(const std::vector<QTalk::Entity::IMFriendList> &friends) {
-    bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, friends]() {
-        FriendListDao dao(_dataBass);
-        ret = dao.bulkInsertFriends(friends);
-    });
-    func.get();
-    return ret;
-}
-
-bool DataBasePlug::insertFriend(QTalk::Entity::IMFriendList imfriend) {
-    bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, imfriend]() {
-        FriendListDao dao(_dataBass);
-        ret = dao.insertFriend(imfriend);
-    });
-    func.get();
-    return ret;
-}
-
-bool DataBasePlug::deleteAllFriends() {
-    bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret]() {
-        FriendListDao dao(_dataBass);
-        ret = dao.deleteAllFriends();
-    });
-    func.get();
-    return ret;
-}
-
-bool DataBasePlug::deleteFriendByXmppId(const std::string &xmppId) {
-    bool ret = false;
-    auto func = _dbPool.enqueue([this, &ret, xmppId]() {
-        FriendListDao dao(_dataBass);
-        ret = dao.deleteFriendByXmppId(xmppId);
-    });
-    func.get();
-    return ret;
-}
-
-bool DataBasePlug::getAllFriends(std::vector<QTalk::Entity::IMFriendList> &friends) {
-    bool ret = false;
-//    auto func = _dbPool.enqueue([this, &ret, &friends]() {
-    FriendListDao dao(_dataBass);
-    ret = dao.getAllFriends(friends);
+//bool DataBasePlug::bulkInsertFriends(const std::vector<QTalk::Entity::IMFriendList> &friends) {
+//    bool ret = false;
+//    auto func = _dbPool.enqueue([this, &ret, friends]() {
+//        FriendListDao dao(_dataBass);
+//        ret = dao.bulkInsertFriends(friends);
 //    });
 //    func.get();
-    return ret;
-}
+//    return ret;
+//}
+
+//bool DataBasePlug::insertFriend(QTalk::Entity::IMFriendList imfriend) {
+//    bool ret = false;
+//    auto func = _dbPool.enqueue([this, &ret, imfriend]() {
+//        FriendListDao dao(_dataBass);
+//        ret = dao.insertFriend(imfriend);
+//    });
+//    func.get();
+//    return ret;
+//}
+//
+//bool DataBasePlug::deleteAllFriends() {
+//    bool ret = false;
+//    auto func = _dbPool.enqueue([this, &ret]() {
+//        FriendListDao dao(_dataBass);
+//        ret = dao.deleteAllFriends();
+//    });
+//    func.get();
+//    return ret;
+//}
+
+//bool DataBasePlug::deleteFriendByXmppId(const std::string &xmppId) {
+//    bool ret = false;
+//    auto func = _dbPool.enqueue([this, &ret, xmppId]() {
+//        FriendListDao dao(_dataBass);
+//        ret = dao.deleteFriendByXmppId(xmppId);
+//    });
+//    func.get();
+//    return ret;
+//}
+//
+//bool DataBasePlug::getAllFriends(std::vector<QTalk::Entity::IMFriendList> &friends) {
+//    bool ret = false;
+////    auto func = _dbPool.enqueue([this, &ret, &friends]() {
+//    FriendListDao dao(_dataBass);
+//    ret = dao.getAllFriends(friends);
+////    });
+////    func.get();
+//    return ret;
+//}
 
 bool DataBasePlug::getAllGroup(std::vector<QTalk::Entity::ImGroupInfo> &groups) {
     bool ret = false;
@@ -1376,4 +1387,12 @@ void DataBasePlug::modifyUserMedalStatus(const std::string& userId, int medalId,
         dao.modifyUserMedalStatus(userId, medalId, status);
     });
     func.get();
+}
+
+void DataBasePlug::addExceptCpu(double cpu, long long time, const std::string &stack) {
+    auto func = _dbPool.enqueue([this, cpu, time, stack]() {
+        ProcessExceptDao dao(_dataBass);
+        dao.addExceptCpu(cpu, time, stack);
+    });
+//    func.get();
 }

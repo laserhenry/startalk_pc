@@ -7,15 +7,9 @@
 #include "../QtUtil/lib/cjson/cJSON_inc.h"
 #include "../QtUtil/lib/cjson/cJSON.h"
 
-dbPlatForm* dbPlatForm::_platform = nullptr;
-
 dbPlatForm& dbPlatForm::instance() {
-    if (nullptr == _platform)
-    {
-        static dbPlatForm platform;
-        _platform = &platform;
-    }
-    return *_platform;
+    static dbPlatForm platform;
+    return platform;
 }
 
 //int dbPlatForm::getAtCount(const std::string & id)
@@ -66,9 +60,9 @@ std::shared_ptr<QTalk::Entity::ImGroupInfo> dbPlatForm::getGroupInfo(const std::
     return nullptr;
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > dbPlatForm::QueryImSessionInfos() {
-    return LogicManager::instance()->getDatabase()->QueryImSessionInfos();
-}
+//std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > dbPlatForm::QueryImSessionInfos() {
+//    return LogicManager::instance()->getDatabase()->QueryImSessionInfos();
+//}
 
 /**
  *

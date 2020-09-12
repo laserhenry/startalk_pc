@@ -17,7 +17,7 @@ if exist "%rootDir%\build_startalk" (
 mkdir build_startalk
 cd build_startalk
 
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSTARTALK=ON -G "CodeBlocks - NMake Makefiles" %rootDir%
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -G "CodeBlocks - NMake Makefiles" %rootDir%
 cmake --build %rootDir%/build_startalk  --target all --
 
 call %rootDir%/build_script/copy_depends.bat %rootDir% %rootDir%/build_startalk/bin 64

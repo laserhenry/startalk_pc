@@ -6,6 +6,7 @@
 #include "../include/CommonDefine.h"
 #include "../entity/UID.h"
 #include "../CustomUi/HeadPhotoLab.h"
+#include "../CustomUi/MedalWgt.h"
 
 
 enum Status
@@ -47,6 +48,7 @@ public:
 	void switchUser(QUInt8 t, const QTalk::Entity::UID &uid, const QString& userName);
 	void updateUserSts(const QString& sts);
 	void showResource(const std::string& resource);
+    void onUpdateMedal();
 
 Q_SIGNALS:
 	void updateName(const QString&);
@@ -67,7 +69,7 @@ private:
 	QPushButton* _pBtnAddGroup{};  // 增加群聊/邀请加入群
 	QPushButton* _pBtnLock{};      //锁
 //	QPushButton* _pEdit{};      //锁
-
+    MedalWgt*    _medalWgt{};
 
 private:
     bool         _isGroupChat{};

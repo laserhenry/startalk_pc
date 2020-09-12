@@ -8,7 +8,7 @@
 #include "../EventBus/EventHandler.hpp"
 #include "../EventBus/Object.hpp"
 #include "../EventBus/HandlerRegistration.hpp"
-#include "NavigationMianPanel.h"
+#include "NavigationMainPanel.h"
 #include "../Message/StatusMessage.h"
 #include "../Message/LoginMessgae.h"
 #include "../Message/GroupMessage.h"
@@ -20,29 +20,22 @@ class SynOfflineSuccees;
 
 class NavigationMsgManager : public Object {
 public:
-    NavigationMsgManager();
-
-    ~NavigationMsgManager() override;
-
-public:
     static void getSessionData();
 
-    void removeSession(std::string &peerId);
+    static void removeSession(std::string &peerId);
 
-    void sendDownLoadHeadPhotosMsg(std::vector<std::string> &_withoutHeadPhotos,
-                                   std::vector<std::string> &_withoutGroupHeadPhotos);
+    static void sendDownLoadHeadPhotosMsg(const std::vector<std::string> &_withoutHeadPhotos,
+                                   const std::set<std::string> &_withoutGroupHeadPhotos);
 
-    void sendGetUserStatus(const std::set<std::string> &users);
+    static void sendGetUserStatus(const std::set<std::string> &users);
 
-//    void retryConnecToServer();
+    static void sendReadedMessage(const std::string &messageId, const std::string& userId, QUInt8 chatType);
 
-    void sendReadedMessage(const std::string &messageId, const std::string& userId, QUInt8 chatType);
+    static void setUserSetting(bool isSetting, const std::string &key, const std::string &subKey, const std::string &value);
 
-    void setUserSetting(bool isSetting, const std::string &key, const std::string &subKey, const std::string &value);
+    static void addEmptyMessage(const QTalk::Entity::ImMessageInfo& info);
 
-    void addEmptyMessage(const QTalk::Entity::ImMessageInfo& info);
-
-    void quitGroupById(const std::string& groupId);
+    static void quitGroupById(const std::string& groupId);
 };
 
 /**
@@ -75,7 +68,7 @@ class NavigationMsgListener
           public EventHandler<MStateEvt>
           {
 public:
-    explicit NavigationMsgListener(NavigationMianPanel *navigationMianPanel);
+    explicit NavigationMsgListener(NavigationMainPanel *navigationMainPanel);
 
     ~NavigationMsgListener() override;
 
@@ -103,7 +96,7 @@ public:
     void onEvent(MStateEvt& e) override;
 
 private:
-    NavigationMianPanel *_pNavigationMianPanel;
+    NavigationMainPanel *_pNavigationMainPanel;
 };
 
 #endif // MESSAGEMANAGER_H

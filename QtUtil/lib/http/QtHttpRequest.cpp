@@ -73,7 +73,7 @@ static void unlock_cb(CURL *handle, curl_lock_data data,
 #endif // !_WINDOWS
 
 
-static CURL *innerInit(const char *url, std::ostringstream *readBuffer) {
+static CURL *innerInit(const char *url, long timeout, std::ostringstream *readBuffer) {
 
     CURL *curl = curl_easy_init();
 
@@ -87,7 +87,7 @@ static CURL *innerInit(const char *url, std::ostringstream *readBuffer) {
 
     /* only reuse addresses for a very short time */
     curl_easy_setopt(curl, CURLOPT_DNS_CACHE_TIMEOUT, 2L);
-    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, timeout);
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
@@ -103,15 +103,9 @@ static CURL *innerInit(const char *url, std::ostringstream *readBuffer) {
     return curl;
 }
 
-QtHttpRequest::QtHttpRequest(const char *url) : HttpRequest(url) {
-    _originUrl = url;
-    _httpCore = innerInit(url, &_readBuffer);
-    _headers = nullptr;
-}
-
-QtHttpRequest::QtHttpRequest(std::string &url) : HttpRequest(url) {
-    _originUrl = url;
-    _httpCore = innerInit(url.c_str(), &_readBuffer);
+QtHttpRequest::QtHttpRequest(std::string &url, long timeout) 
+    : HttpRequest(url) {
+    _httpCore = innerInit(url.c_str(), timeout, &_readBuffer);
     _headers = nullptr;
 }
 
@@ -123,7 +117,13 @@ void QtHttpRequest::setRequestMethod(RequestMethod method) {
                 curl_easy_setopt(curl, CURLOPT_POST, 1);
                 break;
             case QTalk::RequestMethod::GET:
+            {
+                // download file keep alive
+                curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L);
+                curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L);
+                curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 60L);
                 break;
+            }
             default:
                 break;
         }

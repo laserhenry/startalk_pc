@@ -14,17 +14,17 @@ WebJsObj::~WebJsObj()
 = default;
 
 void WebJsObj::getCkey() {
-    QString jsCommend = QString("sgsetCkey('%1');").arg(Platform::instance().getClientAuthKey().data());
+    QString jsCommend = QString("sgsetCkey('%1');").arg(PLAT.getClientAuthKey().data());
     emit runScript(jsCommend);
 }
 
 void WebJsObj::getUserId() {
-    QString jsCommend = QString("sgsetUserId('%1');").arg(Platform::instance().getSelfUserId().data());
+    QString jsCommend = QString("sgsetUserId('%1');").arg(PLAT.getSelfUserId().data());
     emit runScript(jsCommend);
 }
 
 void WebJsObj::getMyNick() {
-    QString jsCommend = QString("sgsetMyNick('%1')").arg(Platform::instance().getSelfUserId().data());
+    QString jsCommend = QString("sgsetMyNick('%1')").arg(PLAT.getSelfUserId().data());
     emit runScript(jsCommend);
 }
 

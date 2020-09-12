@@ -3,15 +3,9 @@
 
 #include "NavigationManager.h"
 
-NavigationManager* NavigationManager::_navManager = nullptr;
-
 NavigationManager& NavigationManager::instance() {
-    if (nullptr == _navManager)
-    {
-        static NavigationManager navManager;
-        _navManager = &navManager;
-    }
-    return *_navManager;
+    static NavigationManager navManager;
+    return navManager;
 }
 
 NavigationManager::NavigationManager()

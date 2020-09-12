@@ -23,7 +23,7 @@ SearchManager::SearchManager(Communication *pComm) :
 void SearchManager::GetSearchResult(SearchInfoEvent &e) {
 
     std::string searchUrl = NavigationManager::instance().getSearchUrl();
-    std::string userId = Platform::instance().getSelfXmppId();
+    std::string userId = PLAT.getSelfXmppId();
 
     cJSON *gObj = cJSON_CreateObject();
     cJSON_AddNumberToObject(gObj, "start", e.start);

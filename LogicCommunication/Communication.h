@@ -55,7 +55,7 @@ public:
     // 获取导航信息
     bool getNavInfo(const std::string &navAddr, QTalk::StNav &nav);
     //
-    void setLoginNav(const QTalk::StNav &nav);
+    static void setLoginNav(const QTalk::StNav &nav);
     // 登陆后同步服务器
     void synSeverData();
     // 获取用户的状态
@@ -123,6 +123,8 @@ public:
     void getMedalUser(int medalId, std::vector<QTalk::StMedalUser>& metalUsers);
     //
     bool modifyUserMedalStatus(int medalId, bool wear);
+    //
+    void reportLogin();
 
 public: // 群组相关
 
@@ -153,15 +155,17 @@ public:
     //
     void onInviteGroupMembers(const std::string &groupId);
     //
-    void onRecvFriendList(const std::vector<QTalk::Entity::IMFriendList> &friends);
+//    void onRecvFriendList(const std::vector<QTalk::Entity::IMFriendList> &friends);
     //
     void onUserJoinGroup(const std::string& groupId, const std::string& memberId, int affiliation);
     //
     void onStaffChanged();
+    //
+    void checkUpdater(int ver);
 
 private:
     // 获取好友列表
-    void getFriendList();
+//    void getFriendList();
 
 public:
     void setServiceSeat(int sid, int seat);
@@ -188,7 +192,7 @@ public:
     void getNewLoginToken(const std::string u, const std::string p,std::map<std::string,std::string> &map);
 
 public:
-    CommMsgManager *_pMsgManager;
+//    CommMsgManager *_pMsgManager;
     FileHelper *_pFileHelper;
     UserManager *_pUserManager;
     GroupManager *_pUserGroupManager;
@@ -215,7 +219,7 @@ private:
     int _port;
 
 private:
-    const int _threadPoolCount = 3;
+    static const int _threadPoolCount = 5;
     STLazyQueue<std::pair<std::string, UserCardMapParam>> *userCardQueue;
     std::vector<ThreadPool *> _httpPool;
 };

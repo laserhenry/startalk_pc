@@ -3,11 +3,10 @@
 
 #include "../UICom/Config/configobject.h"
 
-class StyleSheetManager : public QObject
+class StyleManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit StyleSheetManager(QObject *parent = NULL);
     void setStyleSheets(int theme, const std::string& font);
     void setStylesForApp(int theme, const std::string& font);
     void setStyleSheetForPlugin(const QString& plgName, int theme);

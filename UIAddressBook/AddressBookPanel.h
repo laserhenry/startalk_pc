@@ -17,7 +17,7 @@
 #include "StaffDelegate.h"
 #include "StaffStructure.h"
 #include "../entity/im_config.h"
-#include "../entity/im_friend_list.h"
+//#include "../entity/im_friend_list.h"
 #include "../entity/im_group.h"
 #include "../entity/im_userSupplement.h"
 #include "../UICom/UIEntity.h"
@@ -43,7 +43,7 @@ public:
 	void updateUserConfig(const std::vector<QTalk::Entity::ImConfig> &arConfigs);
 	void updateUserConfig(const std::map<std::string, std::string> &deleteData,
                           const std::vector<QTalk::Entity::ImConfig>& arImConfig);
-	void onRecvFriends(const std::vector<QTalk::Entity::IMFriendList>& friends);
+//	void onRecvFriends(const std::vector<QTalk::Entity::IMFriendList>& friends);
 	void onRecvGroups(const std::vector<QTalk::Entity::ImGroupInfo>& groups);
 
 	void onListItemClicked(const QString& id, const QUInt8& type);
@@ -90,35 +90,34 @@ Q_SIGNALS:
 
 private:
 	QSplitter *_mainSplitter;
-	QStackedLayout* _rightLay;
-	QVBoxLayout*    _leftLay;
+	QStackedLayout* _rightLay{};
+	QVBoxLayout*    _leftLay{};
 	QLabel    *     _pEmptyLabel;
 
 private: //ui
 	QMap<QUInt8, NavigationItem*> _mapNavItems;
 	QMap<QUInt8, QWidget*>        _mapItemWidgets;
 	UserCard*                     _pUserCard;
-	QTreeView*                    _pStaffView;
-    StaffDelegate*                _pStaffDelegate;
-	StaffStructure*               _pStaffStructure;
+	QTreeView*                    _pStaffView{};
+    StaffDelegate*                _pStaffDelegate{};
+	StaffStructure*               _pStaffStructure{};
 
 private: //data
 	QVector<std::string>         _arStarContact; // 星标联系人
 	QVector<std::string>         _arBlackList; // 黑名单
-	QVector<std::string>         _arFriends;   // 好友
+//	QVector<std::string>         _arFriends;   // 好友
 	QVector<QTalk::Entity::ImGroupInfo> _arGroups; // 群组列表
 	QMap<std::string, std::string> _mapMaskNames;
 	//
 	QMap<std::string, std::vector<std::string>> mapGroupMembers;
 
 private:
-	QStandardItem*             _pShowItem;
+	QStandardItem*             _pShowItem{};
 
 private: //mutex
 	QMutex    _mutex;
 
 private:
-	AddressBookMsgManager* _pMsgManager;
 	AddressBookListener*   _pMsgListener;
 	std::shared_ptr<QTalk::Entity::ImUserSupplement> _imuserSup;
     std::shared_ptr<QTalk::Entity::ImUserInfo>   _userInfo;
@@ -133,7 +132,7 @@ private:
         QStandardItem* item = nullptr;
     };
 
-    QStandardItemModel*            _pStaffModel;
+    QStandardItemModel*            _pStaffModel{};
     StStrcuture *_pstStrcuture;
     QTalk::util::spin_mutex sm;
 

@@ -12,7 +12,7 @@
 QRcode::QRcode(QWidget* parent)
     :UShadowDialog(parent, true, false)
 {
-    Qt::WindowFlags flags = Qt::X11BypassWindowManagerHint | Qt::WindowStaysOnTopHint;
+//    Qt::WindowFlags flags = Qt::X11BypassWindowManagerHint | Qt::WindowStaysOnTopHint;
     //setWindowFlags(windowFlags() | flags);
 
     //

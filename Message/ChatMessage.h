@@ -261,7 +261,7 @@ class SignalReadState : public Event
 {
 public:
     SignalReadState(const std::map<std::string, QInt32>& mapRead, const std::string& userId,const std::string& realJid)
-        :mapReadState(mapRead), userId(userId),realJid(realJid) {
+        : userId(userId),realJid(realJid), mapReadState(mapRead) {
     };
 
 public:
@@ -287,8 +287,8 @@ public:
     }
 
 public:
-    const std::string& groupId;
     const std::map<std::string, int >& mapReadCount;
+    const std::string& groupId;
 };
 
 // delete delete
@@ -301,8 +301,8 @@ public:
     }
 
 public:
-    const std::string& groupId;
     const std::vector<std::string>& msgIds;
+    const std::string& groupId;
 };
 
 class RevokeMessage : public Event
@@ -376,8 +376,8 @@ public:
     }
 
 public:
-    std::string _desc;
     std::string _strLogPath;
+    std::string _desc;
 };
 
 class ReportDump : public Event
@@ -395,11 +395,21 @@ public:
     QInt64 crashTime;
 };
 
+class ReportLogin : public Event {};
+
 class CheckUpdaterEvt : public Event
 {
 public:
     int version = 0;
     std::string updater_link;
+};
+
+
+class CheckUpdaterResultEvt : public Event
+{
+public:
+    bool hasUpdate {};
+    bool forceUpdate{};
 };
 
 class LogReportMessageRet : public Event
@@ -411,8 +421,8 @@ public:
     }
 
 public:
-    bool _success;
     std::string _strLogRetMsg;
+    bool _success;
 };
 
 class RecvVideoMessage : public Event
@@ -471,10 +481,10 @@ public:
     }
 
 public:
-    bool        withProcess;
     std::string localPath;
+    bool        withProcess;
+    std::string process_key;
     std::string fileUrl;
-	std::string process_key;
 };
 
 class RecentSessionEvt : public Event
@@ -506,9 +516,9 @@ public:
     : messageId(messageId), msgs(msgs), isNext(isNext){ };
 
 public:
-    bool isNext;
     const std::string& messageId;
     std::vector<std::pair<std::string, std::string>> & msgs;
+    bool isNext;
 };
 
 

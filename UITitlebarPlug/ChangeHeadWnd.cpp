@@ -128,7 +128,7 @@ void ChangeHeadWnd::onChangeHeadWnd(const QString& headPath)
  */
 void ChangeHeadWnd::showChangeHeadWnd()
 {
-    std::string hisDir = Platform::instance().getHistoryDir();
+    std::string hisDir = PLAT.getHistoryDir();
 
     QString headPath = QFileDialog::getOpenFileName(this, tr("选择头像文件"),
             QString::fromStdString(hisDir), "image (*.jpg *.jpeg *.png *.bmp *.gif)");

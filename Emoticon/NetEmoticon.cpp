@@ -110,7 +110,7 @@ void NetEmoDetailWgt::updateDownloadProcess(const QString& pkgId, double dtotal,
 		_isDownloading = false;
 		_pDownloadBtn->setEnabled(false);
 		_pDownloadBtn->setText(tr("安装中..."));
-		EmoticonMainWgt::getInstance()->installEmoticon(pkgId);
+        EmoticonMainWgt::instance()->installEmoticon(pkgId);
 	}
 	else
 	{
@@ -236,7 +236,7 @@ void NetEmoticon::initUi()
 //	setLayout(layout);
 
 	connect(_pNetEmoLst, &QListWidget::itemClicked, this, &NetEmoticon::onEmoLstItemClick);
-	connect(EmoticonMainWgt::getInstance(), &EmoticonMainWgt::sgGotNetEmo, this, &NetEmoticon::initItems);
+	connect(EmoticonMainWgt::instance(), &EmoticonMainWgt::sgGotNetEmo, this, &NetEmoticon::initItems);
 }
 
 void NetEmoticon::initItems()
@@ -250,7 +250,7 @@ void NetEmoticon::initItems()
     _mapEmoDetailWgt.clear();
 
 
-    ArStNetEmoticon arNetEmo = EmoticonMainWgt::getInstance()->getNetEmoticonInfo();
+    ArStNetEmoticon arNetEmo = EmoticonMainWgt::instance()->getNetEmoticonInfo();
     for (const auto& emo : arNetEmo)
     {
         if (emo->iconPath.empty())
@@ -272,11 +272,11 @@ void NetEmoticon::initItems()
                                     STDSTR2QSTR(emo->emoName), STDSTR2QSTR(emo->desc), emo->filesize, _mapEmo.contains(STDSTR2QSTR(emo->pkgid)));
         _mapEmoDetailWgt[lstItem] = detailWgt;
         _pStackedNetDetailWgt->addWidget(detailWgt);
-        connect(detailWgt, &NetEmoDetailWgt::downloadEmoticon, EmoticonMainWgt::getInstance(), &EmoticonMainWgt::downloadNetEmoticon);
-        connect(EmoticonMainWgt::getInstance(), &EmoticonMainWgt::updateProcessSignal, detailWgt, &NetEmoDetailWgt::updateDownloadProcess);
-        connect(EmoticonMainWgt::getInstance(), &EmoticonMainWgt::installedEmotion, detailWgt, &NetEmoDetailWgt::onInstalledEmoticon);
-        connect(EmoticonMainWgt::getInstance(), &EmoticonMainWgt::installEmoticonError, detailWgt, &NetEmoDetailWgt::onInstallError);
-        connect(EmoticonMainWgt::getInstance(), &EmoticonMainWgt::removeEmoticon, detailWgt, &NetEmoDetailWgt::onRemoveLocalEmotion);
+        connect(detailWgt, &NetEmoDetailWgt::downloadEmoticon, EmoticonMainWgt::instance(), &EmoticonMainWgt::downloadNetEmoticon);
+        connect(EmoticonMainWgt::instance(), &EmoticonMainWgt::updateProcessSignal, detailWgt, &NetEmoDetailWgt::updateDownloadProcess);
+        connect(EmoticonMainWgt::instance(), &EmoticonMainWgt::installedEmotion, detailWgt, &NetEmoDetailWgt::onInstalledEmoticon);
+        connect(EmoticonMainWgt::instance(), &EmoticonMainWgt::installEmoticonError, detailWgt, &NetEmoDetailWgt::onInstallError);
+        connect(EmoticonMainWgt::instance(), &EmoticonMainWgt::removeEmoticon, detailWgt, &NetEmoDetailWgt::onRemoveLocalEmotion);
     }
 }
 

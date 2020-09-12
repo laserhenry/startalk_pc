@@ -197,11 +197,8 @@ void WebService::loadUrl(const QUrl &url, bool showUrl, const MapCookie& cookies
 void WebService::loadUrl(const QUrl &url, const std::string &domain, bool showUrl, const MapCookie &cookies) {
     if (nullptr == _service)
     {
-        if(_mutex.try_lock())
-        {
-            _service = new WebService;
-            _mutex.unlock();
-        }
+        static WebService webService;
+        _service = &webService;
     }
 
     if(nullptr != _service)
@@ -216,8 +213,8 @@ void WebService::loadUrl(const QUrl &url, const std::string &domain, bool showUr
             _service->setVisible(false);
         }
 
-        std::string strCkey = Platform::instance().getClientAuthKey();
-        QString agent = QString("startalk/%1/(pc:%2)").arg(Platform::instance().getGlobalVersion().data())
+        std::string strCkey = PLAT.getClientAuthKey();
+        QString agent = QString("startalk/%1/(pc:%2)").arg(PLAT.getGlobalVersion().data())
 #if defined(_WINDOWS )
                         .arg("windows");
 #elif defined(_LINUX)

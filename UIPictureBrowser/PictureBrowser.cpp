@@ -13,6 +13,7 @@
 #include <QKeyEvent>
 #include <QApplication>
 #include <QFileInfo>
+#include <QtConcurrent>
 
 PictureBrowser::PictureBrowser(QWidget *parent)
         : UShadowDialog(nullptr, true)
@@ -20,8 +21,9 @@ PictureBrowser::PictureBrowser(QWidget *parent)
         , _hasBefore(false)
         , _hasNext(false)
 {
-    _msgManager = new PictureMsgManager;
+//    _msgManager = new PictureMsgManager;
     setWindowFlags(windowFlags() | Qt::Widget);
+    setAttribute(Qt::WA_QuitOnClose, false);
     initUi();
 
     connect(this, &PictureBrowser::sgGotSourceImg, this, &PictureBrowser::gotSourceImg);
@@ -90,14 +92,11 @@ void PictureBrowser::showPicture(const QString &picPath, const QString& linkPath
         activateWindow();
 
         _curLink = linkPath.toStdString();
-        std::thread([this, linkPath](){
-            if(_msgManager)
-            {
-                std::string srcImg = _msgManager->getSourceImage(linkPath.toStdString());
-                if(!srcImg.empty())
-                        emit sgGotSourceImg(linkPath, QString::fromStdString(srcImg), true);
-            }
-        }).detach();
+        QtConcurrent::run([this, linkPath](){
+            std::string srcImg =PictureMsgManager::getSourceImage(linkPath.toStdString());
+            if(!srcImg.empty())
+                emit sgGotSourceImg(linkPath, QString::fromStdString(srcImg), true);
+        });
     }
 }
 
@@ -223,7 +222,7 @@ void PictureBrowser::gotSourceImg(const QString &link, const QString &srcImg, bo
 void PictureBrowser::turnBefore()
 {
     {
-        QMutexLocker locker(&_mutex);
+//        QMutexLocker locker(&_mutex);
         if(!_images.empty() && _curIndex > 0)
         {
             _curIndex--;
@@ -245,7 +244,7 @@ void PictureBrowser::turnBefore()
 void PictureBrowser::turnNext()
 {
     {
-        QMutexLocker locker(&_mutex);
+//        QMutexLocker locker(&_mutex);
         if(!_images.empty() && _curIndex < _images.size() - 1)
         {
             _curIndex++;
@@ -279,14 +278,11 @@ void PictureBrowser::loadImage(bool isFirst)
     {
         imgPath = QString::fromStdString(QTalk::GetImagePathByUrl(_curLink));
         _pPicFrm->setEnabled(false);
-        std::thread([isFirst, this](){
-            if(_msgManager)
-            {
-                std::string srcImg = _msgManager->getSourceImage(_curLink);
-                if(!srcImg.empty())
-                    emit sgGotSourceImg(QString::fromStdString(_curLink), QString::fromStdString(srcImg), isFirst);
-            }
-        }).detach();
+        QtConcurrent::run([isFirst, this](){
+            std::string srcImg =PictureMsgManager::getSourceImage(_curLink);
+            if(!srcImg.empty())
+                emit sgGotSourceImg(QString::fromStdString(_curLink), QString::fromStdString(srcImg), isFirst);
+        });
     }
     info = QFileInfo(imgPath);
     if(info.exists() && info.isFile())
@@ -319,31 +315,28 @@ void PictureBrowser::getBeforeImgs(const std::string &msgId)
 
     isGetting = true;
 
-    std::thread([msgId, this](){
-        if(_msgManager)
+    QtConcurrent::run([msgId, this](){
+        std::vector<std::pair<std::string, std::string>> msgs;
+        PictureMsgManager::getBeforeImgMessages(msgId, msgs);
+        QMutexLocker locker(&_mutex);
+        if(msgs.empty())
         {
-            std::vector<std::pair<std::string, std::string>> msgs;
-            _msgManager->getBeforeImgMessages(msgId, msgs);
-            QMutexLocker locker(&_mutex);
-            if(msgs.empty())
-            {
-                _hasBefore = false;
-            }
-            else
-            {
-                if(msgs.size() < 20)
-                    _hasBefore = false;
-
-                for(const auto& msg : msgs)
-                {
-                    analyseMessage(msg.first, QString::fromStdString(msg.second), false);
-                }
-            }
-            _pPTitleFrm->setBeforeBtnEnable(true);
-
-            isGetting = false;
+            _hasBefore = false;
         }
-    }).detach();
+        else
+        {
+            if(msgs.size() < 20)
+                _hasBefore = false;
+
+            for(const auto& msg : msgs)
+            {
+                analyseMessage(msg.first, QString::fromStdString(msg.second), false);
+            }
+        }
+        _pPTitleFrm->setBeforeBtnEnable(true);
+
+        isGetting = false;
+    });
 }
 
 /**
@@ -360,32 +353,29 @@ void PictureBrowser::getNextImgs(const std::string &msgId)
 
     isGetting = true;
 
-    std::thread([msgId, this](){
-        if(_msgManager)
+    QtConcurrent::run([msgId, this](){
+        std::vector<std::pair<std::string, std::string>> msgs;
+        PictureMsgManager::getNextImgMessages(msgId, msgs);
+        if(msgs.empty())
         {
-            std::vector<std::pair<std::string, std::string>> msgs;
-            _msgManager->getNextImgMessages(msgId, msgs);
-            if(msgs.empty())
-            {
-                _hasNext = false;
-            }
-            else
-            {
-                if(msgs.size() < 20)
-                    _hasNext = false;
-
-                QMutexLocker locker(&_mutex);
-                for(const auto& msg : msgs)
-                {
-                    analyseMessage(msg.first, QString::fromStdString(msg.second), true);
-                }
-
-            }
-            _pPTitleFrm->setNextBtnEnable(true);
-
-            isGetting = false;
+            _hasNext = false;
         }
-    }).detach();
+        else
+        {
+            if(msgs.size() < 20)
+                _hasNext = false;
+
+            QMutexLocker locker(&_mutex);
+            for(const auto& msg : msgs)
+            {
+                analyseMessage(msg.first, QString::fromStdString(msg.second), true);
+            }
+
+        }
+        _pPTitleFrm->setNextBtnEnable(true);
+
+        isGetting = false;
+    });
 }
 
 void PictureBrowser::changeEvent(QEvent *event)

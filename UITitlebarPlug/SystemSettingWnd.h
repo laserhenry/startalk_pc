@@ -18,6 +18,7 @@ class ActionLabel;
 class QListWidgetItem;
 class SKRecorder;
 class QTextEdit;
+class QSpinBox;
 class SettingCheckBox : public QCheckBox
 {
 public:
@@ -48,7 +49,7 @@ protected:
 class SystemSettingWnd  : public UShadowDialog{
     Q_OBJECT
 public:
-    explicit SystemSettingWnd(TitlebarMsgManager *messageManager,QWidget * parent = nullptr);
+    explicit SystemSettingWnd(QWidget * parent = nullptr);
     ~SystemSettingWnd() override;
 
 Q_SIGNALS:
@@ -77,7 +78,7 @@ private:
     void initSession(QVBoxLayout* itemLay); //会话设置
     void initAutoReply(QVBoxLayout* itemLay); //自动回复
     void initFolder(QVBoxLayout* itemLay); //文件目录
-    void initFriendAuthority(QVBoxLayout* itemLay); //好友权限
+//    void initFriendAuthority(QVBoxLayout* itemLay); //好友权限
     void initFontSetting(QVBoxLayout* itemLay); //字体设置
     void initOtherSetting(QVBoxLayout* itemLay); //其他设置
     void initVersionInfo(QVBoxLayout* itemLay); //版本信息
@@ -90,9 +91,11 @@ private:
 private slots:
     void setAutoReplyMessage();
     void onAutoReplyClicked(int);
-    void onLeveMinuteChanged(int);
+    void onLeaveMinuteChanged(int);
     void onScaleFactorChanged(int);
     void onFontLevelChanged(int);
+    void onReplyStartTimeChanged(int);
+    void onReplyEndTimeChanged(int);
 
 private:
     QListWidget *_settingListWidget{};
@@ -100,14 +103,14 @@ private:
     QMap<QListWidgetItem*, ActionLabel*> _mapSettingItems{};
     QMap<QFrame*, ActionLabel*> _mapSettingWgt{};
 
+    QSpinBox *_autoReplyStartTimeSpinBox{};
+    QSpinBox *_autoReplyEndTimeSpinBox{};
+
 private:
     QTextEdit* _pAutoReplyEdit{};
-    QComboBox* _pAutoPeplyCombobox{};
+//    QComboBox* _pAutoPeplyCombobox{};
 
     SettingCheckBox* blackTheme{};
-
-private:
-    TitlebarMsgManager *_pMessageManager{};
 
 private:
 
@@ -128,7 +131,7 @@ private:
         EM_SETTING_SUGGESTION,
         // todo 暂时不显示
 
-        EM_SETTING_FRIEND,
+//        EM_SETTING_FRIEND,
     };
 
     enum {EM_USER_FOLDER, EM_FILE_FOLDER};

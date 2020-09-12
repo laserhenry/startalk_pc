@@ -98,6 +98,7 @@ private:
     void onItemChanged();
     void onDisconnected();
     void onSendMessageFailed(const QString& msgId);
+    void onDownloadFileFailed(const QString& msgId);
 
 public:
     void freeView();
@@ -111,6 +112,7 @@ Q_SIGNALS:
     void sgDisConnected();
     void updateRevokeSignal(const QString& fromId, const QString& messageId, const long long&);
     void sgSendFailed(const QString& msgId);
+    void sgDownloadFileFailed(const QString& msgId);
     void sgGotMState(const QString& msgId, const long long& time);
     void sgEnableScroll();
 

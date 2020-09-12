@@ -17,8 +17,6 @@
 
 WebView::WebView(QWidget* parent)
     : QFrame(parent)
-    , _pWebView(nullptr)
-    , _pWebPage(nullptr)
 {
     _pWebView = new QWebEngineView(this);
 	_pWebCannel = new QWebChannel(this);
@@ -41,9 +39,9 @@ WebView::WebView(QWidget* parent)
     _pWebPage->profile()->setPersistentCookiesPolicy(QWebEngineProfile::AllowPersistentCookies);
     _pWebPage->profile()->setRequestInterceptor(new WebEngineUrlRequestInterceptor(this));
     _pWebPage->setWebChannel(_pWebCannel);
-    connect(_pWebPage, &WebEnginePage::contentsSizeChanged, [this](const QSizeF &size){
-
-    });
+//    connect(_pWebPage, &WebEnginePage::contentsSizeChanged, [this](const QSizeF &size){
+//
+//    });
 
     connect(_pWebPage->profile(), &QWebEngineProfile::downloadRequested, this, &WebView::onDownLoadFile);
     connect(_pWebPage, &WebEnginePage::sgFullScreen, this, &WebView::sgFullScreen);
@@ -62,7 +60,10 @@ WebView::WebView(QWidget* parent)
     QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::AllowRunningInsecureContent, true);
 }
 
-WebView::~WebView() = default;
+WebView::~WebView() 
+{
+
+}
 
 void WebView::setObj(WebJsObj *obj) {
     _pWebCannel->registerObject("client", obj);

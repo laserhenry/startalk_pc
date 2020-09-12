@@ -12,7 +12,7 @@
 #include "../QtUtil/lib/cjson/cJSON_inc.h"
 #include "../entity/UID.h"
 
-#define PRODUCT_SUGGEST_URL ""
+#define PRODUCT_SUGGEST_URL "http://tu.qunar.com/guide_product.php"
 
 class QchatMoreFun{
 public:

@@ -122,8 +122,23 @@ bool SystemTrayDelegate::editorEvent(QEvent *e, QAbstractItemModel *model, const
 
 /** **/
 SystemTrayPopWnd::SystemTrayPopWnd(QWidget *parent)
-    :UShadowDialog(parent, true)
+    :UShadowDialog(nullptr, true)
 {
+    Qt::WindowFlags flags = Qt::WindowDoesNotAcceptFocus | Qt::WindowContextHelpButtonHint | Qt::FramelessWindowHint
+        | Qt::WindowFullscreenButtonHint | Qt::WindowCloseButtonHint | Qt::WindowTitleHint |
+        Qt::WindowStaysOnTopHint;
+
+#ifdef _WINDOWS
+    flags |= Qt::Tool;
+#else
+    flags |= Qt::Widget;
+#endif
+
+    setWindowFlags(flags);
+    // 设置不抢主窗口焦点
+    setAttribute(Qt::WA_X11DoNotAcceptFocus, true);
+    setAttribute(Qt::WA_ShowWithoutActivating, true);
+    setAttribute(Qt::WA_TranslucentBackground, true);
     // title
     auto* titleFrm = new QFrame(this);
     titleFrm->setObjectName("SystemTrayTitleFrm");

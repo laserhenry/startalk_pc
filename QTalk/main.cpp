@@ -45,19 +45,14 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
     // high dpi
-    QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+    //QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
 #endif
     // 缩放因子
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope,
-#ifdef _STARTALK
-                       "qunar.com", "startalk");
-#else
-                       "qunar.com", "qtalk");
-#endif
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qunar.com", "");
     if(settings.contains("QT_SCALE_ENABLE_V2"))
         settings.remove("QT_SCALE_ENABLE_V2");
 
-    bool scale_enable = true;
+    bool scale_enable = false;
     if(settings.contains("QT_SCALE_ENABLE"))
         scale_enable = settings.value("QT_SCALE_ENABLE").toBool();
     else

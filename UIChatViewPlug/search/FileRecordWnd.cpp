@@ -132,7 +132,7 @@ void FileRecordDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
 }
 
 QSize FileRecordDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const {
-    auto size = QStyledItemDelegate::sizeHint(option, index);
+//    auto size = QStyledItemDelegate::sizeHint(option, index);
     return {_pParentView->width(), 100};
 }
 

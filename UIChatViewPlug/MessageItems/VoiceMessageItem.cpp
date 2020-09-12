@@ -211,9 +211,8 @@ void VoiceMessageItem::initContentLayout() {
     }
     pixLabel->setAlignment(Qt::AlignVCenter);
     //
-    cJSON* json = cJSON_Parse(_msgInfo.body.toUtf8());
-    if(nullptr == json)
-    {
+    cJSON* json = cJSON_Parse((_msgInfo.extend_info.isEmpty() ? _msgInfo.body : _msgInfo.extend_info).toUtf8());
+    if(nullptr == json) {
         _contentFrm->setFixedWidth(50);
     }
     else
@@ -225,19 +224,20 @@ void VoiceMessageItem::initContentLayout() {
         _spaceFrm->setFixedWidth(qMin(seconds * 15, 300));
         _contentFrm->setFixedWidth(qMin(seconds * 15, 300) + 30);
         //
-        local_path = Platform::instance().getAppdataRoamingUserPath() + "/voice/" + local_path + ".amr";
+        local_path = PLAT.getAppdataRoamingUserPath() + "/voice/" + local_path + ".amr";
         //
         QPointer<VoiceMessageItem> pThis(this);
-        std::thread([pThis, _voicePath](){
+        QT_CONCURRENT_FUNC([pThis, _voicePath](){
             if(g_pMainPanel)
             {
                 if(pThis) {
                     ChatMsgManager::sendDownLoadFile(pThis->local_path, _voicePath, pThis->_msgInfo.msg_id.toStdString());
                 }
             }
-        }).detach();
+        });
 
     }
+    cJSON_Delete(json);
     _contentFrm->setFixedHeight(40);
     //
     _pTimer = new QTimer(this);

@@ -23,12 +23,12 @@ NavigationItem::NavigationItem(const QUInt8& itemType, QWidget *parent)
             _pTextLabel->setText(tr("星标联系人"));
             break;
         }
-        case EM_ITEM_TYPE_FRIENDLIST:
-        {
-            _pIconLabel->setHead(":/Resource/friendList.png", 15, false, false);
-            _pTextLabel->setText(tr("好友列表"));
-            break;
-        }
+//        case EM_ITEM_TYPE_FRIENDLIST:
+//        {
+//            _pIconLabel->setHead(":/Resource/friendList.png", 15, false, false);
+//            _pTextLabel->setText(tr("好友列表"));
+//            break;
+//        }
         case EM_ITEM_TYPE_GROUPLIST:
         {
             _pIconLabel->setHead(":/Resource/groupList.png", 15, false, false);

@@ -37,7 +37,7 @@ public:
 class LoginMessage : public Event {
 public:
     LoginMessage(std::string userName, std::string password )
-            : strUserName(std::move(userName)), strPassword(std::move(password)), ret(false) {
+            : ret(false), strUserName(std::move(userName)), strPassword(std::move(password)) {
     }
 
 public:
@@ -85,11 +85,11 @@ class GetSessionData : public Event {
 class GetNavAddrInfo : public Event {
 public:
     explicit GetNavAddrInfo(const std::string &nav)
-            : navAddr(nav), ret(false) {}
+            : ret(false), navAddr(nav) {}
 
 public:
     bool ret;
-    const std::string &navAddr;
+    std::string navAddr;
 };
 
 class GetNavDomain : public Event {
@@ -117,7 +117,7 @@ class LoginProcessMessage : public Event
 {
 public:
     explicit LoginProcessMessage(const std::string& statusMessage, bool &status)
-        : message(statusMessage), status(status){}
+        :  status(status), message(statusMessage) {}
 public:
     bool& status;
     std::string message;

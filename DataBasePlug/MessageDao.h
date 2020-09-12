@@ -22,13 +22,12 @@ class MessageDao : public DaoInterface{
 public:
     explicit MessageDao(qtalk::sqlite::database *sqlDb = nullptr);
     bool creatTable();
-    bool clearData();
 
 public:
     bool creatIndex();
 
 public:
-    bool insertMessageInfo(const QTalk::Entity::ImMessageInfo &imMessageInfo);
+//    bool insertMessageInfo(const QTalk::Entity::ImMessageInfo &imMessageInfo);
 
     bool bulkInsertMessageInfo(const std::vector<QTalk::Entity::ImMessageInfo> &msgList,
                                std::map<QTalk::Entity::UID, QTalk::Entity::ImSessionInfo> *sessionMap);

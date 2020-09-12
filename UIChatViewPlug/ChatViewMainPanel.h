@@ -36,6 +36,7 @@
 
 
 #include "sound/amr/WavOutput.h"
+#include "DropWnd.h"
 
 #define QT_CONCURRENT_FUNC QtConcurrent::run
 
@@ -88,7 +89,6 @@ Q_SIGNALS:
 	void sgWakeUpWindow();
     void sgOperator(const QString& desc);
     void showQRcode();
-    void sgShockWnd();
     void sgUserSendMessage();
     void sgShowNotify(const QTalk::StNotificationParam&);
     void sgShowDraft(const QTalk::Entity::UID&, const QString&);
@@ -135,6 +135,7 @@ public:
 
 public:
 	void insertAt(const QString& groupId, const QString& userId);
+    void clapSomebody(const QString& groupId, const QString& userId);
 	void showUserCard(const QString& userId);
 	void removePrompt(MessagePrompt* prompt);
     //
@@ -200,6 +201,16 @@ public:
     //
     void getUserMedal(const std::string& xmppId, std::set<QTalk::StUserMedal>& medal);
 
+public:
+    void showDropWnd(const QPixmap& mask, const QString& name);
+    void cancelDrop();
+
+protected:
+    void dropEvent(QDropEvent *e) override;
+    void dragEnterEvent(QDragEnterEvent *e) override;
+    void dragLeaveEvent(QDragLeaveEvent *e) override;
+    void dragMoveEvent(QDragMoveEvent *e) override;
+
 protected:
 	void initPlug(); // 加载截屏 表情插件
 	void showPrompt(const QTalk::Entity::ImMessageInfo &msg);
@@ -230,7 +241,10 @@ public:
     void onSendSignal(const QString& json, const QString& id);
 
 public:
-    void downloadFileWithProcess(const QString& url, const QString& path, const QString& key);
+    void downloadFileWithProcess(const QString& url, const QString& path, const QString& key, QWidget *item);
+
+private slots:
+    void onHttpError(QNetworkReply::NetworkError err);
 
 public:
     GIFManager*       gifManager;
@@ -248,14 +262,16 @@ private:
 	QMap<QTalk::Entity::UID, QString> _his_input_data;
 	QMap<QString, QString>       _mapHeadPath;//头像路径
 	QVector<MessagePrompt*>      _arMessagePrompt;
-	QLabel*                     _pEmptyLabel;
+    QLabel*                     _pEmptyLabel{};
 //	QLabel*                     _pLoadingLabel{};
-	SnipScreenTool*              _pSnipScreenTool;
-    CodeShowWnd*      _pCodeShowWnd;
-    SendCodeWnd*      _pSendCodeWnd;
-    SelectUserWnd*    _pSelectUserWnd;
+    SnipScreenTool*              _pSnipScreenTool{};
+    CodeShowWnd*      _pCodeShowWnd{};
+    SendCodeWnd*      _pSendCodeWnd{};
+    SelectUserWnd*    _pSelectUserWnd{};
 
-    QRcode*           _pQRcode;
+    QRcode*           _pQRcode{};
+
+    DropWnd           *_dropWnd{};
 
 private:
 	QMutex             _mutex;
@@ -267,9 +283,9 @@ private:
 	QTalk::ConfigLoader* _pFileMsgConfig;
 
 private:
-    QMediaPlayer* _pPlayer;
+    QMediaPlayer* _pPlayer{};
 #ifndef _WINDOWS
-    QMediaPlayer* _pVoicePlayer = nullptr;
+    QMediaPlayer* _pVoicePlayer {};
 #endif // !_WINDOWS
 
 private:

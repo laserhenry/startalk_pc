@@ -20,22 +20,19 @@
 class GroupManagerMsgManager : public Object
  {
 public:
-    GroupManagerMsgManager();
-    ~GroupManagerMsgManager() override;
-
-public:
-    void getStructure(std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>>& structure);
-    void getGroupMembers(std::map<std::string, std::set<std::string>>& structure);
-    void addGroupMember(const std::vector<std::string>& members, const std::string& groupId);
-    void creatGroup(const std::string& groupId, const std::string& groupName);
-    void getUserInfo(std::shared_ptr<QTalk::Entity::ImUserInfo>& info);
+    static void getStructure(std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>>& structure);
+    static void getGroupMembers(std::map<std::string, std::set<std::string>>& structure);
+    static void addGroupMember(const std::vector<std::string>& members, const std::string& groupId);
+    static void creatGroup(const std::string& groupId, const std::string& groupName);
+    static void getUserInfo(std::shared_ptr<QTalk::Entity::ImUserInfo>& info);
     static void getRecentSession(std::vector<QTalk::StShareSession> &ss);
 
 };
 
 class UIGroupManager;
 class GroupMsgListener : public EventHandler<CreatGroupRet>, public EventHandler<DestroyGroupRet>
-        , public EventHandler<AllFriends>, public EventHandler<AllGroupList>
+//        , public EventHandler<AllFriends>
+        , public EventHandler<AllGroupList>
         , public EventHandler<UpdateUserConfigMsg>
         , public EventHandler<IncrementConfig>
         , public EventHandler<IncrementUser>
@@ -47,7 +44,7 @@ public:
 public:
     void onEvent(CreatGroupRet& e) override;
     void onEvent(DestroyGroupRet& e) override;
-    void onEvent(AllFriends &e) override;
+//    void onEvent(AllFriends &e) override;
     void onEvent(AllGroupList& e) override ;
     void onEvent(UpdateUserConfigMsg& e) override ;
     void onEvent(IncrementConfig& e) override ;

@@ -94,9 +94,11 @@ public:
 
     QFrame *sendBtnFrm{};
 
+public:
+    QString            _name;
+
 private:
     QString            _strConversionId;
-    QString            _name;
     QVBoxLayout*       _leftLay  = nullptr;
     QHBoxLayout*       _sendBtnLay = nullptr;
     QPushButton*       _sendBtn = nullptr;

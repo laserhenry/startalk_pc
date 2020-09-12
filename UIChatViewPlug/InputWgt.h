@@ -8,6 +8,7 @@
 #include <QVector>
 #include <vector>
 #include <QMutexLocker>
+#include <QPointer>
 #include <QListView>
 #include <QStandardItemModel>
 #include <QSortFilterProxyModel>
@@ -61,6 +62,8 @@ public:
     QString translateText();
     //
     void setContentByJson(const QString& json);
+    //
+    void dealMimeData(const QMimeData* mimeData);
 
 Q_SIGNALS:
     void sgTranslated(const QString&);
@@ -68,9 +71,9 @@ Q_SIGNALS:
 
 protected:
     void keyPressEvent(QKeyEvent *e) override;
-    void dropEvent(QDropEvent *e) override;
-    void dragEnterEvent(QDragEnterEvent *e) override;
-    void dragMoveEvent(QDragMoveEvent *e) override;
+//    void dropEvent(QDropEvent *e) override;
+//    void dragEnterEvent(QDragEnterEvent *e) override;
+//    void dragMoveEvent(QDragMoveEvent *e) override;
     void hideEvent(QHideEvent *e) override;
     void focusOutEvent(QFocusEvent *e) override;
     void inputMethodEvent(QInputMethodEvent *e) override ;
@@ -88,10 +91,10 @@ protected:
     void onCopy();
 
 private:
-    ChatMainWgt *_pMainWgt;
-    ChatViewItem *_pChatView;
-    QMenu *_pMenu;
-    AtMessageView         *_atView;
+    QPointer<ChatMainWgt> _pMainWgt{};
+    QPointer<ChatViewItem> _pChatView{};
+    QMenu                 *_pMenu{};
+    AtMessageView         *_atView{};
 
 private:
     QMutex                       _mutex;

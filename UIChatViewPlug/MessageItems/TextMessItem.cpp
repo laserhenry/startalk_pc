@@ -226,8 +226,8 @@ void TextMessItem::setMessageContent(bool delMov) {
                         }
                     }
 
-                    QFileInfo imageInfo(imagePath);
-                    if(imageInfo.suffix().toUpper() == "GIF" && _mapMovies.find(msg.content) == _mapMovies.end())
+                    auto suffix = QTalk::qimage::getRealImageSuffix(imagePath);
+                    if(suffix.toUpper() == "GIF" && _mapMovies.find(msg.content) == _mapMovies.end())
                     {
                         _mapMovies[msg.content] = nullptr;
 //                        imagePath = QTalk::qimage::getGifImagePath(imagePath, imageWidth, imageHeight);
@@ -549,7 +549,18 @@ void TextMessItem::copyText() {
                 if(!pixmap.isNull())
                 {
                     mimeData->setImageData(pixmap.toImage());
+
+                    cJSON* obj = cJSON_CreateObject();
+                    cJSON_AddNumberToObject(obj, "type", 2); // 1  文字 2 图片 ...
+                    cJSON_AddStringToObject(obj, "imageLink", link.toStdString().data());
+                    cJSON_AddStringToObject(obj, "image", imagePath.toStdString().data());
+                    cJSON_AddItemToArray(objs, obj);
+
+                    std::string userData = QTalk::JSON::cJSON_to_string(objs);
+                    mimeData->setData("userData", userData.data());
+
                     QApplication::clipboard()->setMimeData(mimeData);
+                    cJSON_Delete(objs);
                     return;
                 }
             }

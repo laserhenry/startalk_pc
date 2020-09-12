@@ -4,7 +4,7 @@
 #include <QMutexLocker>
 #include "MainWindow.h"
 
-class UIGolbalManager;
+class GlobalManager;
 
 class LogicManager;
 
@@ -19,17 +19,17 @@ public:
     ~QTalkApp() override;
 
 protected:
-    void initLogSys();
-
-
-
+    static void initLogSys();
     bool notify(QObject *receiver, QEvent *e) Q_DECL_OVERRIDE;
-
-    void initTTF();
+    bool event(QEvent *event) override;
+    static void initTTF();
 
 private:
-    UIGolbalManager *_pUiManager;
-    LogicManager *_pLogicManager;
+    void onApplicationStateChange(Qt::ApplicationState state);
+
+private:
+    GlobalManager *_pUiManager{};
+    LogicManager *_pLogicManager{};
 
 public:
     MainWindow *_pMainWnd;

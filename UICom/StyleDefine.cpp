@@ -7,15 +7,10 @@
 
 namespace QTalk {
 
-    StyleDefine* StyleDefine::_defines = nullptr;
     StyleDefine & StyleDefine::instance()
     {
-        if (nullptr == _defines)
-        {
-            static StyleDefine define;
-            _defines = &define;
-        }
-        return *_defines;
+        static StyleDefine define;
+        return define;
     }
     //
 }

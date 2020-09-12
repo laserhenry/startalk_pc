@@ -7,6 +7,7 @@
 #include <QAction>
 #include <QImage>
 #include <QFileInfo>
+#include <QSettings>
 #include <QScrollBar>
 #include <QApplication>
 #include "../Platform/Platform.h"
@@ -65,10 +66,10 @@ GroupMember::addMember(const std::string &xmppid,
         item->setData(searchKey, EM_ITEMDATA_TYPE_SEARCHKEY);
         item->setData(isOnline, EM_ITEMDATA_TYPE_ISONLINE);
         item->setData(
-                QString::fromStdString(dbPlatForm::instance().getMaskName(xmppid)),
+                QString::fromStdString(DB_PLAT.getMaskName(xmppid)),
                 EM_ITEMDATA_TYPE_MASKNAME);
         item->setData(userType, EM_ITEMDATA_TYPE_USERTYPE);
-        if (strId.toStdString() == Platform::instance().getSelfXmppId()) {
+        if (strId.toStdString() == PLAT.getSelfXmppId()) {
             if (userType == 1) {
                 _selfIsCreator = true;
                 _selfIsAdmin = false;
@@ -128,8 +129,8 @@ void GroupMember::deleteMember(const std::string &xmppid) {
 void GroupMember::updateGroupMember(const std::string& memberJid, const std::string& nick, int affiliation) {
 
     std::string userId = Entity::JID(memberJid).basename();
-    std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(memberJid);
-    bool isOnline = Platform::instance().isOnline(userId);
+    std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = DB_PLAT.getUserInfo(memberJid);
+    bool isOnline = PLAT.isOnline(userId);
 
     std::lock_guard<QTalk::util::spin_mutex> lock(_sm);
     if (_mapMemberItem.contains(memberJid)) {
@@ -184,7 +185,7 @@ void GroupMember::updateMemberInfo(const std::vector<StUserCard> &users) {
 
             _mapMemberItem[user.xmppId]->setData(QString::fromStdString(name), EM_ITEMDATA_TYPE_USERNAME);
             _mapMemberItem[user.xmppId]->setData(
-                    QString::fromStdString(dbPlatForm::instance().getMaskName(user.xmppId)),
+                    QString::fromStdString(DB_PLAT.getMaskName(user.xmppId)),
                     EM_ITEMDATA_TYPE_MASKNAME);
         }
     }
@@ -264,7 +265,7 @@ void GroupMember::initUi() {
         _pModel->setFilterRegExp(strContent.toLower());
     });
 
-    connect(_pMemberList, &QListView::doubleClicked, [this](const QModelIndex &index) {
+    connect(_pMemberList, &QListView::doubleClicked, [](const QModelIndex &index) {
 
         if(!index.isValid())
             return;
@@ -344,14 +345,14 @@ void GroupMember::onSearchBtnClick() {
     _pSearchLineEdit->setFocus();
     //
     QString strContent = _pSearchLineEdit->text();
-    if(tr("导出群成员") == strContent)
+    if("导出群成员" == strContent)
     {
         int ret = QtMessageBox::question(g_pMainPanel, tr("提示"), tr("是否导出群成员?"));
         if(ret == QtMessageBox::EM_BUTTON_YES)
         {
             _pSearchLineEdit->clear();
 
-            std::string historyDir = Platform::instance().getHistoryDir();
+            std::string historyDir = PLAT.getHistoryDir();
             historyDir += "/" + _groupId + ".txt";
             QString path = QFileDialog::getSaveFileName(g_pMainPanel, tr("请选择导出目录"), historyDir.data());
             if(!path.isEmpty())
@@ -376,6 +377,17 @@ void GroupMember::onSearchBtnClick() {
 
         }
     }
+    else if("斗图神器" == strContent)
+    {
+        QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qunar.com", QApplication::applicationName());
+        bool showDoutu = false;
+        if(settings.contains("QT_DOU_TU"))
+            showDoutu = settings.value("QT_DOU_TU").toBool();
+        showDoutu = !showDoutu;
+        settings.setValue("QT_DOU_TU", showDoutu);
+        
+        QtMessageBox::information(g_pMainPanel, tr("提醒"), showDoutu ? tr("斗图神器已启动, 重启应用后生效") : tr("斗图神器已关闭, 重启应用后生效"));
+    }
 }
 
 /**
@@ -396,7 +408,7 @@ bool GroupMember::eventFilter(QObject *o, QEvent *e) {
 
             unsigned int affline = index.data(EM_ITEMDATA_TYPE_USERTYPE).toUInt();
             std::string xmppId(index.data(EM_ITEMDATA_TYPE_XMPPID).toByteArray());
-            if (xmppId == Platform::instance().getSelfXmppId()) {
+            if (xmppId == PLAT.getSelfXmppId()) {
                 _setAdminAction->setVisible(false);
                 _removeGroupAction->setVisible(false);
             } else {
@@ -446,11 +458,10 @@ bool GroupMember::eventFilter(QObject *o, QEvent *e) {
 void GroupMember::updateHead() {
 
     {
-        std::lock_guard<QTalk::util::spin_mutex> lock(_sm);
         unsigned int onlineCount = 0;
         for (const auto item : _mapMemberItem) {
             std::string xmppId(item->data(EM_ITEMDATA_TYPE_XMPPID).toByteArray());
-            bool isOnline = Platform::instance().isOnline(xmppId);
+            bool isOnline = PLAT.isOnline(xmppId);
             if(isOnline)
                 onlineCount++;
 

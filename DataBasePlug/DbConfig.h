@@ -12,7 +12,6 @@ class DbConfig : public DaoInterface
 public:
     explicit DbConfig(qtalk::sqlite::database * sqlDb = nullptr);
     bool creatTable() override;
-    bool clearData() override;
 
 public:
     bool getDbVersion(int &version);

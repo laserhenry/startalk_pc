@@ -18,7 +18,6 @@ class MedalListDao : public DaoInterface{
 public:
     explicit MedalListDao(qtalk::sqlite::database *sqlDb);
     bool creatTable() override;
-    bool clearData() override;
 
 public:
     void insertMedalList(const std::vector<QTalk::Entity::ImMedalList>& medals);

@@ -20,6 +20,7 @@
 #include "LocalServer.h"
 #include "../UICom/UIEntity.h"
 #include <QStackedLayout>
+#include "ProcessInfo.h"
 
 #ifdef _MACOS
 #include <QMacNativeWidget>
@@ -38,17 +39,18 @@ class IUIGroupManagerPlug;
 class IUIPictureBroswerPlug;
 class IUIAddressBookPlug;
 class IUIOAManagerPlug;
+class IUITScreenPlug;
 class SystemTray;
 class MainWindow : public UShadowDialog
 {
     Q_OBJECT
+
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
 	
 public:
-    void synSeverFinish();
 	void OnLoginSuccess(const std::string& strSessionId);
     void onAppActive();
     void onAppDeactivate();
@@ -56,15 +58,21 @@ public:
     void initSystemTray();
     //
     void checkUpdater();
+    void onCheckUpdater(bool hasUpdate, bool force);
     void onGetHistoryError();
     QWidget* getActiveWnd();
+    //
+    void reLoginWithErr(const std::string &err);
+    //
+    void systemQuitByEvt();
 
 public:
 	inline IUILoginPlug* getLoginPlug() { return _pLoginPlug; }
 
 Q_SIGNALS:
 	void LoginSuccess(bool);
-	void synDataSuccees();
+	void sgCheckUpdate(bool, bool);
+	void systemQuitSignal();
 	void appDeactivated();
 	void systemShortCut();
 	void sgAppActive();
@@ -72,6 +80,7 @@ Q_SIGNALS:
 	void sgResetOperator();
 	void sgRestartWithMessage(const QString&);
     void sgJumtoSession(const StSessionInfo&);
+    void sgSystemQuit();
 
 public slots:
 	void InitLogin(bool, const QString& loginMsg);
@@ -85,13 +94,15 @@ public slots:
     //
     void addOperatorLog(const QString& desc);
     void setUserStatus(bool);
+    void startTScreen();
 
 private slots:
     //
-    void onShockWnd();
+//    void onShockWnd();
     void onSaveSysConfig();
     void onUserSendMessage();
     void restartWithMessage(const QString& msg);
+    void onScreenRemoved(QScreen *screen);
 
 #ifdef _MACOS
     void onShowMinWnd();
@@ -103,6 +114,7 @@ protected:
 	void keyPressEvent(QKeyEvent* e) override;
     void changeEvent(QEvent * event) override;
 	bool nativeEvent(const QByteArray & eventType, void * message, long * result) override;
+	bool event(QEvent* e) override ;
 
 private:
     void init();
@@ -119,6 +131,8 @@ private:
 	void initAddressBook();
 	//
 	void initOAManager();
+	//
+//	void initTScreen();
 	// 心跳timer
     void sendHeartBeat();
     // 初始化位置超出屏幕处理
@@ -163,14 +177,9 @@ private:
 protected:
     QMenuBar*   _pWindowMenuBar{};
     QAction*    _pFeedBackLog{};
-
 #endif
 
-public:
-    static bool _sys_run;
-
 private:
-	QTalkMsgListener  *_pListener{};
 	IUILoginPlug      *_pLoginPlug{};
 	QDialog           *_logindlg{};
 
@@ -181,7 +190,7 @@ private:
     enum {WND_INVALID, WND_NORMAL, WND_MAXSIZE, WND_FULLSCREEN};
 
 private:
-	bool _initUi;
+	bool _initUi{true};
 	NoOperationThread  *_noOperatorThread{};
 
 private:
@@ -190,21 +199,21 @@ private:
     STLazyQueue<bool> *_pScreentShotQueue{};
 
 private:
-    qint64 _login_t;
-    qint64 _logout_t;
+    qint64 _login_t{};
+    qint64 _logout_t{};
     QTimer *_pOfflineTimer{};
-    bool _isOffline; // 是否离线(包括逻辑离线)
+    bool   _isOffline{}; // 是否离线(包括逻辑离线)
     QString _ipv4Address;
 
     QMutex _logMutex;
     QTimer* _pLogTimer{};
     std::vector<QTalk::StActLog> _operators;
 
-	int boundaryWidth = 5;
-
 private:
     LocalServer* _pLocalServer{};
-
     QDate        _loginDate{};
+
+private:
+    ProcessInfo* _prcessInfo{};
 };
 #endif // MAINWINDOW_H

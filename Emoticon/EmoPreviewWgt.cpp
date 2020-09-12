@@ -37,7 +37,7 @@ QTableWidget*  EmoPreviewWgt::addEmoticon(const QMap<UnorderMapKey, StEmoticonIt
 	wgt->setWindowFlags(Qt::FramelessWindowHint);
 	wgt->setColumnCount(_colCount);
 	wgt->setFocusPolicy(Qt::NoFocus);
-	std::string dirPath = Platform::instance().getLocalEmoticonPath(id.toStdString());
+	std::string dirPath = PLAT.getLocalEmoticonPath(id.toStdString());
 
 	int row = 0, col = 0;
 	auto it = arEmos.begin();

@@ -677,7 +677,7 @@ void FileSendReceiveMessItem::sendDownLoadFile(const std::string &strLocalPath, 
 }
 
 void FileSendReceiveMessItem::sendNDownLoadFile(const QString &strUri, const QString &strLocalPath) {
-    g_pMainPanel->downloadFileWithProcess(strUri, strLocalPath, _msgInfo.msg_id);
+    g_pMainPanel->downloadFileWithProcess(strUri, strLocalPath, _msgInfo.msg_id, this);
 }
 
 /**
@@ -813,7 +813,7 @@ void FileSendReceiveMessItem::onSaveAsAct() {
     QFileInfo fileInfo(filePath);
 
 	QString suffix = QFileInfo(_msgInfo.file_info.fileName).suffix();
-	QString historyPath = QString::fromStdString(Platform::instance().getHistoryDir());
+	QString historyPath = QString::fromStdString(PLAT.getHistoryDir());
 	QString fileName = QFileDialog::getSaveFileName(this,
 		tr("另存为"),
 		historyPath + "/" + _msgInfo.file_info.fileName,
@@ -826,7 +826,7 @@ void FileSendReceiveMessItem::onSaveAsAct() {
         std::string fileMd5 = QTalk::utils::getFileMd5(filePath.toLocal8Bit().data());
         if(_msgInfo.file_info.fileMd5.toStdString() == fileMd5)
         {
-            Platform::instance().setHistoryDir(QFileInfo(fileName).absoluteDir().absolutePath().toStdString());
+            PLAT.setHistoryDir(QFileInfo(fileName).absoluteDir().absolutePath().toStdString());
 
             QFile::copy(filePath, fileName);
             LiteMessageBox::success(QString(tr("文件已另存为:%1")).arg(fileName));
@@ -860,7 +860,7 @@ void FileSendReceiveMessItem::onOpenFilePath()
         }
     } else {
 
-        std::thread([info](){
+        QT_CONCURRENT_FUNC([info](){
 
 #if defined(_WINDOWS)
             QStringList params;
@@ -880,7 +880,7 @@ void FileSendReceiveMessItem::onOpenFilePath()
 #else
             QDesktopServices::openUrl(QUrl::fromLocalFile(info.absolutePath()));
 #endif
-        }).detach();
+        });
 
     }
 }
@@ -905,6 +905,14 @@ void FileSendReceiveMessItem::onOpenFile(bool) {
 void FileSendReceiveMessItem::onUploadFailed() {
     _contentButtomFrmMessLab->setText(tr("上传失败"));
     isUpLoad = false;
+}
+
+void FileSendReceiveMessItem::onDownloadFailed() {
+    isDownLoad = false;
+    _contentButtomFrmDownLoadBtn->show();
+    _contentButtomFrmMenuBtn->show();
+    _contentButtomFrmProgressBar->hide();
+    _contentButtomFrmOPenFileBtn->hide();
 }
 
 void FileSendReceiveMessItem::downloadOrUploadSuccess() {

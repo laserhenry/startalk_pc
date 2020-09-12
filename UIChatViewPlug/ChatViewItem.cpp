@@ -56,8 +56,8 @@ ChatViewItem::ChatViewItem()
 
     connect(_pToolWgt, &ToolWgt::showSearchWnd, this, &ChatViewItem::onShowSearchWnd);
 
-//    qRegisterMetaType<std::vector<Entity::ImTransfer>>("std::vector<Entity::ImTransfer>");
-//    connect(this,&ChatViewItem::sgShowSeats,_pToolWgt,&ToolWgt::showSeats);
+    qRegisterMetaType<std::vector<Entity::ImTransfer>>("std::vector<Entity::ImTransfer>");
+    connect(this,&ChatViewItem::sgShowSeats,_pToolWgt,&ToolWgt::showSeats);
     connect(this, &ChatViewItem::sgDeleteLater, this, &ChatViewItem::deleteLater, Qt::QueuedConnection);
 
     //
@@ -78,13 +78,13 @@ ChatViewItem::~ChatViewItem() {
         delete _pGroupSidebar;
         _pGroupSidebar = nullptr;
     }
-    if (nullptr != _pInputWgt) {
-        delete _pInputWgt;
-        _pInputWgt = nullptr;
-    }
     if (nullptr != _pToolWgt) {
         delete _pToolWgt;
         _pToolWgt = nullptr;
+    }
+    if (nullptr != _pInputWgt) {
+        delete _pInputWgt;
+        _pInputWgt = nullptr;
     }
     if(nullptr != _pSearchMainWgt)
     {

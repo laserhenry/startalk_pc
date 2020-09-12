@@ -254,14 +254,14 @@ void MessageRecordManager::updateSearchList() {
 //        item->setData(info.name.data(), EM_SEARCH_LIST_DATA_NAME);
         if(EM_ACTION_HS_SINGLE == info.type && info.from != info.to)
         {
-            std::string selfXmppId = Platform::instance().getSelfXmppId();
+            std::string selfXmppId = PLAT.getSelfXmppId();
             std::string id = selfXmppId == info.from ? info.to : info.from;
 
             if(!_select_user.empty() && id == _select_user)
                 selectItem = item;
 
             item->setData(QTalk::getUserNameNoMask(id).data(), EM_SEARCH_LIST_DATA_NAME);
-            auto user_info = dbPlatForm::instance().getUserInfo(id);
+            auto user_info = DB_PLAT.getUserInfo(id);
             if(user_info)
                 item->setData(QTalk::GetHeadPathByUrl(user_info->HeaderSrc).data(), EM_SEARCH_LIST_DATA_HEAD);
         }
@@ -276,7 +276,7 @@ void MessageRecordManager::updateSearchList() {
 
         item->setData(info.type, EM_SEARCH_LIST_DATA_TO_TYPE);
         item->setData(info.key.data(), EM_SEARCH_LIST_DATA_KEY);
-        if(info.type == QTalk::Search::EM_ACTION_HS_MUC || info.to == info.from || Platform::instance().getSelfXmppId() == info.from)
+        if(info.type == QTalk::Search::EM_ACTION_HS_MUC || info.to == info.from || PLAT.getSelfXmppId() == info.from)
             item->setData(info.to.data(), EM_SEARCH_LIST_DATA_XMPP_ID);
         else
             item->setData(info.from.data(), EM_SEARCH_LIST_DATA_XMPP_ID);

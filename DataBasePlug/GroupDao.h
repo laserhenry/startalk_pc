@@ -16,7 +16,6 @@ class GroupDao : public DaoInterface {
 public:
     explicit GroupDao(qtalk::sqlite::database *sqlDb = nullptr);
     bool creatTable() override;
-    bool clearData() override;
 
 public:
     bool insertGroupInfo(const QTalk::Entity::ImGroupInfo &userInfo);

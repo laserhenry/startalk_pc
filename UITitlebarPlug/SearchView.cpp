@@ -162,10 +162,10 @@ void addHistoryItem(QStandardItemModel *model, const std::vector<StHistory>& his
 //        pItem->setData(it.name.data(), EM_ITEM_ROLE_NAME);
         if(EM_ACTION_HS_SINGLE == it.type)
         {
-            std::string selfXmppId = Platform::instance().getSelfXmppId();
+            std::string selfXmppId = PLAT.getSelfXmppId();
             std::string id = selfXmppId == it.from ? it.to : it.from;
             pItem->setData(QTalk::getUserNameNoMask(id).data(), EM_ITEM_ROLE_NAME);
-            auto user_info = dbPlatForm::instance().getUserInfo(id);
+            auto user_info = DB_PLAT.getUserInfo(id);
             if(user_info)
                 pItem->setData(QTalk::GetHeadPathByUrl(user_info->HeaderSrc).data(), EM_ITEM_ROLE_ICON);
         }
@@ -274,7 +274,7 @@ void SearchView::addOpenWithIdItem(const QString& keyId) {
     id = id.trimmed().toLower();
     if(!id.contains("@"))
     {
-        id += QString("@%1").arg(Platform::instance().getSelfDomain().data());
+        id += QString("@%1").arg(PLAT.getSelfDomain().data());
     }
 
     auto* pItem = new QStandardItem;

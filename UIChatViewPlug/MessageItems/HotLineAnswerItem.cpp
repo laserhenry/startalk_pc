@@ -388,7 +388,11 @@ void HotLineAnswerItem::initContentLayout() {
                         linkFormat.setForeground(QBrush(QTalk::StyleDefine::instance().getLinkUrl()));
                         linkFormat.setAnchor(true);
                         linkFormat.setAnchorHref(msg.content);
+#if QT_DEPRECATED_SINCE(5, 13)
+                        linkFormat.setAnchorNames(QStringList() << msg.content);
+#else
                         linkFormat.setAnchorName(msg.content);
+#endif
                         _textBrowser->textCursor().insertText(msg.content, linkFormat);
                         break;
                     }

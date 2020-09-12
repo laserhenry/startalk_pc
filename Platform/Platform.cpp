@@ -18,20 +18,13 @@
 #include <algorithm>
 #endif
 
-Platform* Platform::_platform = nullptr;
-
-
 Platform::Platform()
     : _mapUserStatus(5000) {
 }
 
 Platform& Platform::instance() {
-    if (nullptr == _platform)
-    {
-        static Platform platform;
-        _platform = &platform;
-    }
-    return *_platform;
+    static Platform platform;
+    return platform;
 }
 
 void Platform::setExecutePath(const std::string & exePath)
@@ -163,7 +156,7 @@ std::string Platform::getSelfName() {
 
     if(_strSelfName.empty())
     {
-        std::shared_ptr<QTalk::Entity::ImUserInfo> info = dbPlatForm::instance().getUserInfo(_strUserId + "@" + _strDomain);
+        std::shared_ptr<QTalk::Entity::ImUserInfo> info = DB_PLAT.getUserInfo(_strUserId + "@" + _strDomain);
         if (nullptr != info)
             _strSelfName = QTalk::getUserNameNoMask(info);
     }
@@ -484,7 +477,7 @@ namespace QTalk {
       */
     std::string GetHeadPathByUrl(const std::string &url) {
         std::ostringstream src;
-        src << Platform::instance().getAppdataRoamingUserPath()
+        src << PLAT.getAppdataRoamingUserPath()
             << "/image/headphoto/"
             << GetFileNameByUrl(url);
 
@@ -508,7 +501,7 @@ namespace QTalk {
     }
     std::string GetImagePathByUrl(const std::string &url) {
         std::ostringstream src;
-        src << Platform::instance().getAppdataRoamingUserPath()
+        src << PLAT.getAppdataRoamingUserPath()
             << "/image/temp/"
             << GetFileNameByUrl(url);
 
@@ -517,7 +510,7 @@ namespace QTalk {
 
     std::string GetSrcImagePathByUrl(const std::string &url) {
         std::ostringstream src;
-        src << Platform::instance().getAppdataRoamingUserPath()
+        src << PLAT.getAppdataRoamingUserPath()
             << "/image/source/"
             << GetFileNameByUrl(url);
 
@@ -526,7 +519,7 @@ namespace QTalk {
 
     std::string getCollectionPath(const std::string &netPath) {
         std::ostringstream src;
-        src << Platform::instance().getAppdataRoamingUserPath()
+        src << PLAT.getAppdataRoamingUserPath()
             << "/emoticon/collection/"
             << GetFileNameByUrl(netPath);
 
@@ -535,7 +528,7 @@ namespace QTalk {
 
     std::string getOAIconPath(const std::string &netPath) {
         std::ostringstream src;
-        src << Platform::instance().getAppdataRoamingUserPath()
+        src << PLAT.getAppdataRoamingUserPath()
             << "/oaIcon/"
             << GetFileNameByUrl(netPath);
 
@@ -547,7 +540,7 @@ namespace QTalk {
         std::string ret;
         if(userInfo)
         {
-            ret = dbPlatForm::instance().getMaskName(userInfo->XmppId);
+            ret = DB_PLAT.getMaskName(userInfo->XmppId);
             if(ret.empty())
                 ret = userInfo->NickName;
             if(ret.empty())
@@ -564,7 +557,7 @@ namespace QTalk {
         std::string ret;
         if(!xmppId.empty())
         {
-            auto info = dbPlatForm::instance().getUserInfo(xmppId);
+            auto info = DB_PLAT.getUserInfo(xmppId);
             ret = getUserName(info);
         }
         return ret;
@@ -590,7 +583,7 @@ namespace QTalk {
         std::string ret;
         if(!xmppId.empty())
         {
-            auto info = dbPlatForm::instance().getUserInfo(xmppId);
+            auto info = DB_PLAT.getUserInfo(xmppId);
             ret = getUserNameNoMask(info);
         }
         return ret;
@@ -600,7 +593,7 @@ namespace QTalk {
     {
         //
         std::ostringstream src;
-        src << Platform::instance().getAppdataRoamingUserPath()
+        src << PLAT.getAppdataRoamingUserPath()
             << "/video/"
             << GetFileNameByUrl(url);
 
@@ -624,7 +617,7 @@ namespace QTalk {
         std::string ret;
         if(!xmppId.empty())
         {
-            auto info = dbPlatForm::instance().getGroupInfo(xmppId);
+            auto info = DB_PLAT.getGroupInfo(xmppId);
             ret = getGroupName(info);
         }
         return ret;
@@ -633,7 +626,7 @@ namespace QTalk {
     std::string getMedalPath(const std::string& link)
     {
         std::ostringstream src;
-        src << Platform::instance().getAppdataRoamingUserPath()
+        src << PLAT.getAppdataRoamingUserPath()
             << "/image/medal/"
             << GetFileNameByUrl(link);
 

@@ -11,9 +11,6 @@
 #include <dlfcn.h>
 #endif
 
-
-LogicManager *LogicManager::_pLogicManager = nullptr;
-
 LogicManager::LogicManager() :
         _dataBase(nullptr), _logicBase(nullptr) {
 
@@ -68,6 +65,8 @@ void LogicManager::loadLibrary() {
         strLibraryName += ".dylib";
         dll = dlopen(strLibraryName.c_str(), RTLD_NOW);
         if (!dll) {
+            char * err = dlerror();
+//            error_log("init {0} error :{1}", strLibraryName, err);
             continue;
         }
         dlerror();
@@ -88,12 +87,14 @@ void LogicManager::loadLibrary() {
         dll = dlopen (strLibraryName.c_str(), RTLD_NOW);
         if (!dll) {
             char * err = dlerror();
+            error_log("init {0} error :{1}", strLibraryName, err);
             continue;
         }
         Handle handle = (Handle)dlsym(dll, "Handle");
         if (handle == NULL)
         {
              dlclose(dll);
+             error_log("init {0} error :init error", strLibraryName);
              continue;
         }
         // 调用构造
@@ -186,20 +187,21 @@ void LogicManager::loadLibrary() {
 //}
 
 LogicManager::~LogicManager() {
-    for(const auto& pair : _logicPlugs)
-    {
-        if(pair.second)
-            delete pair.second;
-    }
+
+    if(_logicPlugs["LogicCommunication"])
+        delete _logicPlugs["LogicCommunication"];
+    if(_logicPlugs["LogicBase"])
+        delete _logicPlugs["LogicBase"];
+    if(_logicPlugs["DataBasePlug"])
+        delete _logicPlugs["DataBasePlug"];
     _logicPlugs.clear();
 }
 
 
 LogicManager *LogicManager::instance() {
-    if (nullptr == _pLogicManager) {
-        _pLogicManager = new LogicManager();
-    }
-    return _pLogicManager;
+
+    static LogicManager manager;
+    return &manager;
 }
 
 /**

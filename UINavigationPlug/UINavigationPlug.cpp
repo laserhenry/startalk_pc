@@ -20,7 +20,7 @@ void UINavigationPlug::init()
 {
     if (!_mainPanel)
     {
-        _mainPanel = new NavigationMianPanel;
+        _mainPanel = new NavigationMainPanel;
     }
 }
 

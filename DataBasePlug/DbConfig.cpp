@@ -6,7 +6,7 @@
 #include "../QtUtil/Utils/Log.h"
 
 DbConfig::DbConfig(qtalk::sqlite::database *sqlDb)
-        : DaoInterface(sqlDb) {
+        : DaoInterface(sqlDb, "DB_Config") {
 
 }
 
@@ -25,25 +25,6 @@ bool DbConfig::creatTable() {
     return query.executeStep();
 }
 
-/**
- * clearData
- * @return
- */
-bool DbConfig::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM `DB_Config`;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data DB_Config error {0}", e.what());
-        return false;
-    }
-}
 
 bool DbConfig::getDbVersion(int &version) {
     if (!_pSqlDb) {

@@ -20,6 +20,7 @@ public:
 Q_SIGNALS:
 	void updateStartContact();
 	void updateUiSignal();
+    void sgShowThrowingScreenWnd();
 
 protected:
 	void initUi();
@@ -29,16 +30,15 @@ protected:
 	void updateUi();
 
 private:
-	QSplitter     *_pSplitter;
-	QStackedLayout* _pRightLay;
-	QLabel        *_pEmptyLabel;
-	QVBoxLayout   * _pLeftLay;
+	QSplitter     *_pSplitter{};
+	QStackedLayout* _pRightLay{};
+	QLabel        *_pEmptyLabel{};
+	QVBoxLayout   * _pLeftLay{};
 
 private:
 	QMap<int, OANavigationItem*> _mapNavItems;
 	QMap<int, OaMainWgt*>        _mapMainWgt;
 
 private:
-	MessageManager* _pMsgManager;
 	std::vector<QTalk::StOAUIData> _uidata;
 };

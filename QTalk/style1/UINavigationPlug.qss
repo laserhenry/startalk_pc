@@ -1,5 +1,5 @@
 ﻿
-QFrame#navigationMianPanel{
+QFrame#navigationMainPanel{
 	background:rgba(255,255,255,1);
 }
 

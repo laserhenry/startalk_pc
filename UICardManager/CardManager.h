@@ -7,11 +7,12 @@
 #include <mutex>
 #include <map>
 #include <set>
+#include <QPointer>
 #include "../include/ThreadPool.h"
 #include "../UICom/UIEntity.h"
 #include "../entity/im_userSupplement.h"
 #include "../entity/im_config.h"
-#include "../entity/im_friend_list.h"
+//#include "../entity/im_friend_list.h"
 #include "../entity/im_group.h"
 #include "../include/CommonStrcut.h"
 #include "../include/Spinlock.h"
@@ -40,7 +41,7 @@ public:
     void updateUserConfig(const std::map<std::string, std::string> &deleteData,
                           const std::vector<QTalk::Entity::ImConfig>& arImConfig);
 
-    void onRecvFriends(const std::vector<QTalk::Entity::IMFriendList> &friends);
+//    void onRecvFriends(const std::vector<QTalk::Entity::IMFriendList> &friends);
 
     void starUser(const std::string &userId);
 
@@ -61,8 +62,6 @@ public:
     void destroyGroup(const QString &groupId);
 
     std::string getSourceHead(const std::string& headLink);
-
-    void deleteGroupCard();
 
 Q_SIGNALS:
 
@@ -100,15 +99,15 @@ private:
 private: //data
     QVector<std::string> _arStarContact; // 星标联系人
     QVector<std::string> _arBlackList; // 黑名单
-    QVector<std::string> _arFriends;   // 好友
+//    QVector<std::string> _arFriends;   // 好友
     QMap<std::string, std::string> _mapMaskNames; //
 
 private:
-    user_card *_pUserCard;
-    GroupCard *_groupCard;
+    QPointer<user_card> _pUserCard;
+    QPointer<GroupCard> _groupCard;
 
-    UserCardMsgManager *_pMsgManager;
-    UserCardMessageListener *_pMsgListener;
+//    UserCardMsgManager *_pMsgManager;
+    UserCardMessageListener *_pMsgListener = nullptr;
     std::shared_ptr<QTalk::Entity::ImUserSupplement> _imuserSup;
     std::shared_ptr<QTalk::Entity::ImUserInfo>   _userInfo;
     std::shared_ptr<QTalk::Entity::ImGroupInfo> _imGroupSup;

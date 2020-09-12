@@ -108,7 +108,9 @@ void ScanQRcode::onScanSuccess(const QString& ret)
         QString groupId = ret.section("id=", 1, 1);
         std::string selfId = g_pMainPanel->getSelfUserId();
         //
-        QtMessageBox::information(g_pMainPanel, tr("提醒"), QString(tr("即将加入群聊%1")).arg(groupId.section("@", 0, 0)));
+        int retBtn = QtMessageBox::question(g_pMainPanel, tr("提醒"), QString(tr("是否加入群聊%1")).arg(groupId.section("@", 0, 0)));
+        if(retBtn != QtMessageBox::EM_BUTTON_YES)
+            return;
         //
         std::vector<std::string> members;
         members.push_back(selfId);
@@ -140,7 +142,7 @@ void ScanQRcode::onScanSuccess(const QString& ret)
 void ScanQRcode::scanPixmap(const QPixmap& pix, bool flag)
 {
     QPointer<ScanQRcode> pThis(this);
-    std::thread([pThis, pix, flag](){
+    QT_CONCURRENT_FUNC([pThis, pix, flag](){
         QImage img = pix.toImage();
         int width = 0, height = 0;
         if(!pThis) return;
@@ -165,5 +167,5 @@ void ScanQRcode::scanPixmap(const QPixmap& pix, bool flag)
         {
             emit g_pMainPanel->sgShowInfoMessageBox(tr("无法识别二维码"));
         }
-    }).detach();
+    });
 }

@@ -18,9 +18,7 @@ UserManager::UserManager(Communication *pComm)
 }
 
 
-UserManager::~UserManager() {
-
-}
+UserManager::~UserManager() = default;
 
 /**
   * @函数名   getStructure
@@ -39,11 +37,11 @@ bool UserManager::getNewStructure(bool sendEvt) {
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/update/getUpdateUsers.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     cJSON *jsonObject = cJSON_CreateObject();
     cJSON *version = cJSON_CreateNumber(maxVersion);
@@ -55,6 +53,9 @@ bool UserManager::getNewStructure(bool sendEvt) {
     std::vector<Entity::ImUserInfo> arUserInfo;
     std::vector<std::string> arDeletes;
     auto callback = [postData, &retSts, &arUserInfo, &arDeletes](int code, const std::string &responseData) {
+
+        info_log("-- {}", responseData) ;
+
         if (code == 200) {
             cJSON *resData = cJSON_Parse(responseData.c_str());
 
@@ -69,7 +70,10 @@ bool UserManager::getNewStructure(bool sendEvt) {
                 cJSON *data = cJSON_GetObjectItem(resData, "data");
 
                 int version = QTalk::JSON::cJSON_SafeGetIntValue(data, "version");
-                std::string domain = Platform::instance().getSelfDomain();
+                cJSON_bool invisible = QTalk::JSON::cJSON_SafeGetBoolValue(data, "invisible");
+                PLAT.setShowStaff(!invisible);
+
+                std::string domain = PLAT.getSelfDomain();
                 // update
                 cJSON *update = cJSON_GetObjectItem(data, "update");
                 int size = cJSON_GetArraySize(update);
@@ -124,89 +128,88 @@ bool UserManager::getNewStructure(bool sendEvt) {
             LogicManager::instance()->getDatabase()->bulkInsertUserInfo(arUserInfo);
             LogicManager::instance()->getDatabase()->bulkDeleteUserInfo(arDeletes);
             //
-            if(sendEvt && _pComm && _pComm->_pMsgManager)
-            {
-                _pComm->_pMsgManager->gotIncrementUser(arUserInfo, arDeletes);
+            if(sendEvt && _pComm) {
+                CommMsgManager::gotIncrementUser(arUserInfo, arDeletes);
             }
         }
     }
 
     return retSts;
 }
-
-bool UserManager::getOldStructure() {
-    //{"version":1905, "domain":"ejabhost1"}
-    // 获取组织架构版本号
-    int maxVersion = 0;
-    LogicManager::instance()->getDatabase()->getUserVersion(maxVersion);
-    //
-    std::ostringstream url;
-    url << NavigationManager::instance().getApiUrl()
-        << "/get_increment_users"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
-    cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *version = cJSON_CreateNumber(maxVersion);
-    cJSON_AddItemToObject(jsonObject, "version", version);
-    cJSON *domain = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
-    cJSON_AddItemToObject(jsonObject, "domain", domain);
-    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
-    cJSON_Delete(jsonObject);
-
-    bool retSts = false;
-    std::vector<Entity::ImUserInfo> arUserInfo;
-    auto callback = [postData, &retSts, &arUserInfo](int code, std::string responseData) {
-
-        if (code == 200) {
-            cJSON *data = cJSON_Parse(responseData.c_str());
-
-            if (data == nullptr) {
-                error_log("json paring error"); return;
-            }
-
-            bool ret = (bool)JSON::cJSON_SafeGetBoolValue(data, "ret");
-            if (ret) {
-                cJSON *msgList = cJSON_GetObjectItem(data, "data");
-                int size = cJSON_GetArraySize(msgList);
-
-                for (int i = 0; i < size; i++) {
-                    Entity::ImUserInfo user;
-                    cJSON *item = cJSON_GetArrayItem(msgList, i);
-
-                    user.UserId = cJSON_GetObjectItem(item, "U")->valuestring;
-                    user.XmppId = user.UserId + "@" + cJSON_GetObjectItem(item, "Domain")->valuestring;
-                    user.Name = cJSON_GetObjectItem(item, "N")->valuestring;
-                    user.DescInfo = cJSON_GetObjectItem(item, "D")->valuestring;
-                    user.IncrementVersion = cJSON_GetObjectItem(item, "V")->valueint;
-                    user.SearchIndex = cJSON_GetObjectItem(item, "F")->valuestring;
-                    user.SearchIndex += cJSON_GetObjectItem(item, "S")->valuestring;
-                    arUserInfo.push_back(user);
-                }
-
-                cJSON_Delete(data);
-
-                retSts = true;
-            }
-        }
-    };
-
-
-    if (_pComm) {
-        HttpRequest req(url.str(), RequestMethod::POST);
-        //        req.header["Content-Type"] = "application/json";
-        req.body = postData;
-        _pComm->addHttpRequest(req, callback);
-
-        if (retSts) {
-            retSts = LogicManager::instance()->getDatabase()->bulkInsertUserInfo(arUserInfo);
-        }
-    }
-
-    return retSts;
-}
+//
+//bool UserManager::getOldStructure() {
+//    //{"version":1905, "domain":"ejabhost1"}
+//    // 获取组织架构版本号
+//    int maxVersion = 0;
+//    LogicManager::instance()->getDatabase()->getUserVersion(maxVersion);
+//    //
+//    std::ostringstream url;
+//    url << NavigationManager::instance().getApiUrl()
+//        << "/get_increment_users"
+//        << "?v=" << PLAT.getClientVersion()
+//        << "&p=" << PLAT.getPlatformStr()
+//        << "&u=" << PLAT.getSelfUserId()
+//        << "&k=" << PLAT.getServerAuthKey()
+//        << "&d=" << PLAT.getSelfDomain();
+//    cJSON *jsonObject = cJSON_CreateObject();
+//    cJSON *version = cJSON_CreateNumber(maxVersion);
+//    cJSON_AddItemToObject(jsonObject, "version", version);
+//    cJSON *domain = cJSON_CreateString(PLAT.getSelfDomain().c_str());
+//    cJSON_AddItemToObject(jsonObject, "domain", domain);
+//    std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
+//    cJSON_Delete(jsonObject);
+//
+//    bool retSts = false;
+//    std::vector<Entity::ImUserInfo> arUserInfo;
+//    auto callback = [postData, &retSts, &arUserInfo](int code, std::string responseData) {
+//
+//        if (code == 200) {
+//            cJSON *data = cJSON_Parse(responseData.c_str());
+//
+//            if (data == nullptr) {
+//                error_log("json paring error"); return;
+//            }
+//
+//            bool ret = (bool)JSON::cJSON_SafeGetBoolValue(data, "ret");
+//            if (ret) {
+//                cJSON *msgList = cJSON_GetObjectItem(data, "data");
+//                int size = cJSON_GetArraySize(msgList);
+//
+//                for (int i = 0; i < size; i++) {
+//                    Entity::ImUserInfo user;
+//                    cJSON *item = cJSON_GetArrayItem(msgList, i);
+//
+//                    user.UserId = cJSON_GetObjectItem(item, "U")->valuestring;
+//                    user.XmppId = user.UserId + "@" + cJSON_GetObjectItem(item, "Domain")->valuestring;
+//                    user.Name = cJSON_GetObjectItem(item, "N")->valuestring;
+//                    user.DescInfo = cJSON_GetObjectItem(item, "D")->valuestring;
+//                    user.IncrementVersion = cJSON_GetObjectItem(item, "V")->valueint;
+//                    user.SearchIndex = cJSON_GetObjectItem(item, "F")->valuestring;
+//                    user.SearchIndex += cJSON_GetObjectItem(item, "S")->valuestring;
+//                    arUserInfo.push_back(user);
+//                }
+//
+//                cJSON_Delete(data);
+//
+//                retSts = true;
+//            }
+//        }
+//    };
+//
+//
+//    if (_pComm) {
+//        HttpRequest req(url.str(), RequestMethod::POST);
+//        //        req.header["Content-Type"] = "application/json";
+//        req.body = postData;
+//        _pComm->addHttpRequest(req, callback);
+//
+//        if (retSts) {
+//            retSts = LogicManager::instance()->getDatabase()->bulkInsertUserInfo(arUserInfo);
+//        }
+//    }
+//
+//    return retSts;
+//}
 
 /**
   * @函数名   getUserCard获取用户列表
@@ -222,11 +225,11 @@ bool UserManager::getUserCard(const UserCardParam &param, std::vector<StUserCard
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/domain/get_vcard_info.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     cJSON *objs = cJSON_CreateArray();
 
@@ -323,9 +326,7 @@ bool UserManager::getUserCard(const UserCardParam &param, std::vector<StUserCard
 
         if (retSts) {
             retSts = LogicManager::instance()->getDatabase()->setUserCardInfo(arUserInfo);
-            if (_pComm && _pComm->_pMsgManager) {
-                _pComm->_pMsgManager->sendGotUserCard(arUserInfo);
-            }
+            CommMsgManager::sendGotUserCard(arUserInfo);
         }
     }
 
@@ -337,7 +338,7 @@ void UserManager::getUserFullInfo(std::shared_ptr<QTalk::Entity::ImUserSupplemen
     //
     debug_log("请求名片 userId:{0}", imUserSup->XmppId);
     // 强制从服务器获取最新卡片
-    QTalk::Entity::JID jid(userInfo->XmppId.c_str());
+    QTalk::Entity::JID jid(userInfo->XmppId);
     UserCardParam param;
     std::vector<StUserCard> arUserInfo;
     param[jid.domainname()][jid.username()] = 0;
@@ -345,7 +346,7 @@ void UserManager::getUserFullInfo(std::shared_ptr<QTalk::Entity::ImUserSupplemen
     if(arUserInfo.size() == 1)
     {
         auto info = arUserInfo[0];
-        userInfo = dbPlatForm::instance().getUserInfo(userInfo->XmppId);
+        userInfo = DB_PLAT.getUserInfo(userInfo->XmppId);
         if(nullptr == userInfo)
         {
             userInfo = std::make_shared<QTalk::Entity::ImUserInfo>();
@@ -376,85 +377,82 @@ void UserManager::getUserFullInfo(std::shared_ptr<QTalk::Entity::ImUserSupplemen
     // 刷新显示mood
     std::string mood = userInfo->Mood;
     std::string id = userInfo->XmppId;
-    std::thread([this, id, mood](){
-        if(_pComm && _pComm->_pMsgManager)
-        {
-            _pComm->_pMsgManager->updateMoodRet(id, mood);
-        }
+    std::thread([ id, mood](){
+        CommMsgManager::updateMoodRet(id, mood);
     }).detach();
 }
-
-// get user mood
-bool UserManager::getUserMood(QTalk::Entity::JID *jid, std::string &mood, int &version) {
-
-    debug_log("请求mood userId:{0}", jid->username());
-
-    std::ostringstream url;
-    url << NavigationManager::instance().getApiUrl()
-        << "/get_user_profile"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
-
-    cJSON *objs = cJSON_CreateArray();
-    cJSON *obj = cJSON_CreateObject();
-    cJSON *domain = cJSON_CreateString(jid->domainname().c_str());
-    cJSON_AddItemToObject(obj, "domain", domain);
-    cJSON *user = cJSON_CreateString(jid->username().c_str());
-    cJSON_AddItemToObject(obj, "user", user);
-    cJSON *v = cJSON_CreateNumber(version);
-    cJSON_AddItemToObject(obj, "version", v);
-    cJSON_AddItemToArray(objs, obj);
-
-    std::string postData = QTalk::JSON::cJSON_to_string(objs);
-    cJSON_Delete(objs);
-
-    bool retSts = false;
-    auto callback = [postData, jid, &retSts, &mood, &version](int code, std::string responsData) {
-
-        if (code == 200) {
-            cJSON *data = cJSON_Parse(responsData.c_str());
-
-            if (data == nullptr) {
-                error_log("json paring error"); return;
-            }
-
-            int ret = cJSON_GetObjectItem(data, "ret")->valueint;
-            if (ret) {
-                cJSON *msgList = cJSON_GetObjectItem(data, "data");
-
-                int size = cJSON_GetArraySize(msgList);
-                if (size == 1) {
-                    cJSON *item = cJSON_GetArrayItem(msgList, 0);
-                    mood = cJSON_GetObjectItem(item, "M")->valuestring;
-                    version = atoi(cJSON_GetObjectItem(item, "V")->valuestring);
-
-                }
-                retSts = true;
-                debug_log("请求mood success userId:{0} mood:{1}", jid->username(), mood);
-            }
-
-            cJSON_Delete(data);
-        } else {
-            debug_log("请求mood error userId:{0} msg: {1}", jid->username(), responsData);
-        }
-    };
-
-    if (_pComm) {
-        HttpRequest req(url.str(), RequestMethod::POST);
-        req.header["Content-Type"] = "application/json";
-        req.body = postData;
-        _pComm->addHttpRequest(req, callback);
-
-        if (retSts) {
-            retSts = LogicManager::instance()->getDatabase()->insertOrUpdateUserMood(jid->basename(), mood, version);
-        }
-    }
-
-    return retSts;
-}
+//
+//// get user mood
+//bool UserManager::getUserMood(QTalk::Entity::JID *jid, std::string &mood, int &version) {
+//
+//    debug_log("请求mood userId:{0}", jid->username());
+//
+//    std::ostringstream url;
+//    url << NavigationManager::instance().getApiUrl()
+//        << "/get_user_profile"
+//        << "?v=" << PLAT.getClientVersion()
+//        << "&p=" << PLAT.getPlatformStr()
+//        << "&u=" << PLAT.getSelfUserId()
+//        << "&k=" << PLAT.getServerAuthKey()
+//        << "&d=" << PLAT.getSelfDomain();
+//
+//    cJSON *objs = cJSON_CreateArray();
+//    cJSON *obj = cJSON_CreateObject();
+//    cJSON *domain = cJSON_CreateString(jid->domainname().c_str());
+//    cJSON_AddItemToObject(obj, "domain", domain);
+//    cJSON *user = cJSON_CreateString(jid->username().c_str());
+//    cJSON_AddItemToObject(obj, "user", user);
+//    cJSON *v = cJSON_CreateNumber(version);
+//    cJSON_AddItemToObject(obj, "version", v);
+//    cJSON_AddItemToArray(objs, obj);
+//
+//    std::string postData = QTalk::JSON::cJSON_to_string(objs);
+//    cJSON_Delete(objs);
+//
+//    bool retSts = false;
+//    auto callback = [postData, jid, &retSts, &mood, &version](int code, std::string responsData) {
+//
+//        if (code == 200) {
+//            cJSON *data = cJSON_Parse(responsData.c_str());
+//
+//            if (data == nullptr) {
+//                error_log("json paring error"); return;
+//            }
+//
+//            int ret = cJSON_GetObjectItem(data, "ret")->valueint;
+//            if (ret) {
+//                cJSON *msgList = cJSON_GetObjectItem(data, "data");
+//
+//                int size = cJSON_GetArraySize(msgList);
+//                if (size == 1) {
+//                    cJSON *item = cJSON_GetArrayItem(msgList, 0);
+//                    mood = cJSON_GetObjectItem(item, "M")->valuestring;
+//                    version = atoi(cJSON_GetObjectItem(item, "V")->valuestring);
+//
+//                }
+//                retSts = true;
+//                debug_log("请求mood success userId:{0} mood:{1}", jid->username(), mood);
+//            }
+//
+//            cJSON_Delete(data);
+//        } else {
+//            debug_log("请求mood error userId:{0} msg: {1}", jid->username(), responsData);
+//        }
+//    };
+//
+//    if (_pComm) {
+//        HttpRequest req(url.str(), RequestMethod::POST);
+//        req.header["Content-Type"] = "application/json";
+//        req.body = postData;
+//        _pComm->addHttpRequest(req, callback);
+//
+//        if (retSts) {
+//            retSts = LogicManager::instance()->getDatabase()->insertOrUpdateUserMood(jid->basename(), mood, version);
+//        }
+//    }
+//
+//    return retSts;
+//}
 
 // leader and userno
 bool
@@ -466,18 +464,18 @@ UserManager::getUserSupplement(QTalk::Entity::JID *jid, std::shared_ptr<QTalk::E
     url << NavigationManager::instance().getLeaderUrl();
 
     cJSON *obj = cJSON_CreateObject();
-    cJSON *platform = cJSON_CreateString(Platform::instance().getPlatformStr().c_str());
+    cJSON *platform = cJSON_CreateString(PLAT.getPlatformStr().c_str());
     cJSON_AddItemToObject(obj, "platform", platform);
     cJSON *qtalk_id = cJSON_CreateString(jid->username().c_str());
     cJSON_AddItemToObject(obj, "qtalk_id", qtalk_id);
     cJSON *user_id = cJSON_CreateString(jid->username().c_str());
     cJSON_AddItemToObject(obj, "user_id", user_id);
-    cJSON *ckey = cJSON_CreateString(Platform::instance().getClientAuthKey().c_str());
+    cJSON *ckey = cJSON_CreateString(PLAT.getClientAuthKey().c_str());
     cJSON_AddItemToObject(obj, "ckey", ckey);
 
     std::string postData = QTalk::JSON::cJSON_to_string(obj);
 
-    std::cout << Platform::instance().getClientAuthKey() << std::endl;
+    std::cout << PLAT.getClientAuthKey() << std::endl;
 
     cJSON_Delete(obj);
     bool retSts = false;
@@ -531,18 +529,18 @@ bool UserManager::getPhoneNo(const std::string &userId, std::string &phoneNo) {
 
     debug_log("请求PhoneNo userId: {0}", userId);
 
-    QTalk::Entity::JID *jid = new QTalk::Entity::JID(userId);
+    auto *jid = new QTalk::Entity::JID(userId);
 
     std::ostringstream url;
     url << NavigationManager::instance().getPhoneNumAddr();
 
-    std::string self_id = Platform::instance().getSelfUserId();
+    std::string self_id = PLAT.getSelfUserId();
 
     cJSON *obj = cJSON_CreateObject();
-    cJSON_AddStringToObject(obj, "platform", Platform::instance().getPlatformStr().c_str());
+    cJSON_AddStringToObject(obj, "platform", PLAT.getPlatformStr().c_str());
     cJSON_AddStringToObject(obj, "qtalk_id", jid->username().c_str());
     cJSON_AddStringToObject(obj, "user_id", self_id.data());
-    cJSON_AddStringToObject(obj, "ckey", Platform::instance().getClientAuthKey().c_str());
+    cJSON_AddStringToObject(obj, "ckey", PLAT.getClientAuthKey().c_str());
 
     std::string postData = QTalk::JSON::cJSON_to_string(obj);
 
@@ -550,7 +548,7 @@ bool UserManager::getPhoneNo(const std::string &userId, std::string &phoneNo) {
 
     bool ret = false;
     std::string errMsg;
-    auto callback = [this, postData, jid, &ret, &phoneNo, &errMsg](int code, const std::string &responseData) {
+    auto callback = [ postData, jid, &ret, &phoneNo, &errMsg](int code, const std::string &responseData) {
 
         if (code == 200) {
             cJSON *data = cJSON_Parse(responseData.c_str());
@@ -598,21 +596,20 @@ bool UserManager::getPhoneNo(const std::string &userId, std::string &phoneNo) {
  */
 bool UserManager::changeUserHead(const std::string &headurl)
 {
-
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/profile/set_profile.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
 
     cJSON *obj = cJSON_CreateObject();
     cJSON *objs = cJSON_CreateArray();
-    cJSON_AddStringToObject(obj, "user", Platform::instance().getSelfUserId().data());
-    cJSON_AddStringToObject(obj, "domain", Platform::instance().getSelfDomain().data());
+    cJSON_AddStringToObject(obj, "user", PLAT.getSelfUserId().data());
+    cJSON_AddStringToObject(obj, "domain", PLAT.getSelfDomain().data());
     cJSON_AddStringToObject(obj, "url", headurl.data());
     cJSON_AddItemToArray(objs, obj);
     std::string postData = QTalk::JSON::cJSON_to_string(objs);
@@ -620,7 +617,7 @@ bool UserManager::changeUserHead(const std::string &headurl)
 
     bool retSts = false;
     StUserCard userCard = StUserCard();
-    auto callback = [postData, headurl, &retSts, &userCard](int code, std::string responsData) {
+    auto callback = [postData, headurl, &retSts, &userCard](int code, const std::string& responsData) {
 
         if (code == 200) {
             cJSON *dataObj = cJSON_Parse(responsData.c_str());
@@ -698,15 +695,15 @@ bool UserManager::changeUserHead(const std::string &headurl)
  */
 void UserManager::UpdateMood(const std::string &mood)
 {
-    QTalk::Entity::JID selfId(Platform::instance().getSelfXmppId().data());
+    QTalk::Entity::JID selfId(PLAT.getSelfXmppId().data());
 
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/profile/set_profile.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
         << "&u=" << selfId.username()
-        << "&k=" << Platform::instance().getServerAuthKey()
+        << "&k=" << PLAT.getServerAuthKey()
         << "&d=" << selfId.domainname();
 
     //
@@ -769,10 +766,7 @@ void UserManager::UpdateMood(const std::string &mood)
 
             LogicManager::instance()->getDatabase()->setUserCardInfo(arUserInfos);
             //
-            if(_pComm && _pComm->_pMsgManager)
-            {
-                _pComm->_pMsgManager->updateMoodRet(selfId.basename(), mood);
-            }
+            CommMsgManager::updateMoodRet(selfId.basename(), mood);
         }
     }
 }

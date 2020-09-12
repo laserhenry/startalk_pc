@@ -8,28 +8,21 @@
 #include "../QtUtil/Utils/Log.h"
 #include "../Platform/Platform.h"
 
-NavigationMsgManager::NavigationMsgManager() {
-
-}
-
-NavigationMsgManager::~NavigationMsgManager() {
-
-}
-
 /**
   * @函数名
   * @功能描述
   * @参数
   * @date 2018.9.29
   */
-void NavigationMsgManager::sendDownLoadHeadPhotosMsg(std::vector<std::string> &_withoutHeadPhotos,
-                                                     std::vector<std::string> &_withoutGroupHeadPhotos) {
+void NavigationMsgManager::sendDownLoadHeadPhotosMsg(const std::vector<std::string> &_withoutHeadPhotos,
+                                                     const std::set<std::string> &_withoutGroupHeadPhotos) {
     DownLoadHeadPhotoEvent event;
     event._withoutHeadPhotos = _withoutHeadPhotos;
     EventBus::FireEvent(event);
 
     DownLoadGroupHeadPhotoEvent eventg;
-    eventg._withoutHeadPhotos = _withoutGroupHeadPhotos;
+    eventg._withoutHeadPhotos.resize(_withoutGroupHeadPhotos.size());
+    std::copy(_withoutGroupHeadPhotos.begin(), _withoutGroupHeadPhotos.end(), eventg._withoutHeadPhotos.begin());
     EventBus::FireEvent(eventg);
 }
 
@@ -107,8 +100,8 @@ void NavigationMsgManager::quitGroupById(const std::string& groupId) {
   * @参数
   * @date 2018.9.20
   */
-NavigationMsgListener::NavigationMsgListener(NavigationMianPanel *navigationMianPanel) :
-        _pNavigationMianPanel(navigationMianPanel) {
+NavigationMsgListener::NavigationMsgListener(NavigationMainPanel *navigationMainPanel) :
+        _pNavigationMainPanel(navigationMainPanel) {
 	EventBus::AddHandler<R_Message>(*this);
 	EventBus::AddHandler<S_Message>(*this);
 	EventBus::AddHandler<DownloadHeadSuccess>(*this);
@@ -143,7 +136,7 @@ NavigationMsgListener::~NavigationMsgListener() {
   * @date 2018.9.20
   */
 void NavigationMsgListener::onEvent(R_Message &e) {
-    _pNavigationMianPanel->receiveSession(e);
+    _pNavigationMainPanel->receiveSession(e);
 }
 
 /**
@@ -153,7 +146,7 @@ void NavigationMsgListener::onEvent(R_Message &e) {
   * @date 2018.10.26
   */
 void NavigationMsgListener::onEvent(S_Message &e) {
-    _pNavigationMianPanel->sendSession(e);
+    _pNavigationMainPanel->sendSession(e);
 }
 
 
@@ -165,8 +158,8 @@ void NavigationMsgListener::onEvent(S_Message &e) {
   */
 void NavigationMsgListener::onEvent(DownloadHeadSuccess &e) {
 
-    if (_pNavigationMianPanel) {
-        _pNavigationMianPanel->onDownLoadHeadPhotosFinish();
+    if (_pNavigationMainPanel) {
+        _pNavigationMainPanel->onDownLoadHeadPhotosFinish();
     }
 }
 
@@ -178,8 +171,8 @@ void NavigationMsgListener::onEvent(DownloadHeadSuccess &e) {
   * @date 2018.9.30
   */
 void NavigationMsgListener::onEvent(DownloadGroupHeadSuccess &e) {
-    if (_pNavigationMianPanel) {
-        _pNavigationMianPanel->onDownLoadGroupHeadPhotosFinish();
+    if (_pNavigationMainPanel) {
+        _pNavigationMainPanel->onDownLoadGroupHeadPhotosFinish();
     }
 }
 
@@ -190,8 +183,8 @@ void NavigationMsgListener::onEvent(DownloadGroupHeadSuccess &e) {
   * @date 2018.10.12
   */
 void NavigationMsgListener::onEvent(UpdateOnlineEvent &e) {
-    if (_pNavigationMianPanel) {
-        _pNavigationMianPanel->onUpdateOnline();
+    if (_pNavigationMainPanel) {
+        _pNavigationMainPanel->onUpdateOnline();
     }
 }
 
@@ -202,8 +195,8 @@ void NavigationMsgListener::onEvent(UpdateOnlineEvent &e) {
   * @date 2018.10.15
   */
 void NavigationMsgListener::onEvent(GetUsersOnlineSucessEvent &e) {
-    if (_pNavigationMianPanel) {
-        _pNavigationMianPanel->onUpdateOnlineUsers(e._userstatus);
+    if (_pNavigationMainPanel) {
+        _pNavigationMainPanel->onUpdateOnlineUsers(e._userstatus);
     }
 }
 
@@ -218,8 +211,8 @@ void NavigationMsgListener::onEvent(GetUsersOnlineSucessEvent &e) {
 void NavigationMsgListener::onEvent(DisconnectToServer &e) {
     if (e.getCanceled()) return;
 
-    if (_pNavigationMianPanel) {
-        _pNavigationMianPanel->onTcpDisconnect();
+    if (_pNavigationMainPanel) {
+        _pNavigationMainPanel->onTcpDisconnect();
     }
 }
 
@@ -249,8 +242,8 @@ void NavigationMsgListener::onEvent(SynOfflineSuccees &e) {
     if (e.getCanceled()) {
         return;
     }
-    if (nullptr != _pNavigationMianPanel) {
-        _pNavigationMianPanel->onLoginSuccess();
+    if (nullptr != _pNavigationMainPanel) {
+        _pNavigationMainPanel->onLoginSuccess();
     }
 }
 
@@ -258,8 +251,8 @@ void NavigationMsgListener::onEvent(UpdateGroupInfoRet &e) {
     if (e.getCanceled()) {
         return;
     }
-    if (nullptr != _pNavigationMianPanel) {
-        _pNavigationMianPanel->onUpdateGroupInfo(e.groupinfo);
+    if (nullptr != _pNavigationMainPanel) {
+        _pNavigationMainPanel->onUpdateGroupInfo(e.groupinfo);
     }
 }
 
@@ -267,8 +260,8 @@ void NavigationMsgListener::onEvent(SignalReadState &e) {
 
     if (e.getCanceled()) return;
 
-    if (nullptr != _pNavigationMianPanel) {
-        _pNavigationMianPanel->updateReadCount(QTalk::Entity::UID(e.userId,e.realJid), e.mapReadState.size());
+    if (nullptr != _pNavigationMainPanel) {
+        _pNavigationMainPanel->updateReadCount(QTalk::Entity::UID(e.userId, e.realJid), e.mapReadState.size());
     }
 }
 
@@ -276,10 +269,10 @@ void NavigationMsgListener::onEvent(GroupReadState &e) {
 
     if (e.getCanceled()) return;
 
-    if (nullptr != _pNavigationMianPanel) {
+    if (nullptr != _pNavigationMainPanel) {
         auto it = e.mapReadCount.begin();
         for (; it != e.mapReadCount.end(); it++) {
-            _pNavigationMianPanel->updateReadCount(QTalk::Entity::UID(it->first,it->first), it->second);
+            _pNavigationMainPanel->updateReadCount(QTalk::Entity::UID(it->first, it->first), it->second);
         }
     }
 }
@@ -288,16 +281,16 @@ void NavigationMsgListener::onEvent(RevokeMessage &e) {
 
     if (e.getCanceled()) return;
 
-    if (nullptr != _pNavigationMianPanel) {
-        _pNavigationMianPanel->recvRevokeMessage(e.uid, e.messageFrom);
+    if (nullptr != _pNavigationMainPanel) {
+        _pNavigationMainPanel->recvRevokeMessage(e.uid, e.messageFrom);
     }
 }
 
 void NavigationMsgListener::onEvent(S_RevokeMessage &e) {
     if (e.getCanceled()) return;
 
-    if (nullptr != _pNavigationMianPanel) {
-        _pNavigationMianPanel->recvRevokeMessage(e.uid, e.messageFrom);
+    if (nullptr != _pNavigationMainPanel) {
+        _pNavigationMainPanel->recvRevokeMessage(e.uid, e.messageFrom);
     }
 }
 
@@ -305,16 +298,16 @@ void NavigationMsgListener::onEvent(UpdateUserConfigMsg &e) {
 
     if (e.getCanceled()) return;
 
-    if (nullptr != _pNavigationMianPanel) {
-        _pNavigationMianPanel->onUpdateUserConfig(e.arConfigs);
+    if (nullptr != _pNavigationMainPanel) {
+        _pNavigationMainPanel->onUpdateUserConfig(e.arConfigs);
     }
 }
 
 void NavigationMsgListener::onEvent(DestroyGroupRet &e) {
     if (e.getCanceled()) return;
 
-    if (_pNavigationMianPanel) {
-        _pNavigationMianPanel->onDestroyGroup(e.groupId);
+    if (_pNavigationMainPanel) {
+        _pNavigationMainPanel->onDestroyGroup(e.groupId);
     }
 }
 
@@ -326,10 +319,10 @@ void NavigationMsgListener::onEvent(ChangeHeadRetMessage &e)
 {
     if(e.getCanceled()) return;
 
-    if(_pNavigationMianPanel)
+    if(_pNavigationMainPanel)
     {
-        std::string xmppId = Platform::instance().getSelfXmppId();
-        _pNavigationMianPanel->onChangeHeadRet(e.ret, xmppId, e.localHead);
+        std::string xmppId = PLAT.getSelfXmppId();
+        _pNavigationMainPanel->onChangeHeadRet(e.ret, xmppId, e.localHead);
     }
 }
 
@@ -337,13 +330,13 @@ void NavigationMsgListener::onEvent(UserCardMessgae &e)
 {
     if(e.getCanceled()) return;
 
-    if(_pNavigationMianPanel)
+    if(_pNavigationMainPanel)
     {
         auto userCards = e.userCards;
         for(const auto& userCard : userCards)
         {
             std::string localHead = QTalk::GetHeadPathByUrl(userCard.headerSrc);
-            _pNavigationMianPanel->onChangeHeadRet(true, userCard.xmppId, localHead);
+            _pNavigationMainPanel->onChangeHeadRet(true, userCard.xmppId, localHead);
         }
     }
 }
@@ -351,19 +344,19 @@ void NavigationMsgListener::onEvent(UserCardMessgae &e)
 void NavigationMsgListener::onEvent(IncrementConfig &e) {
     if(e.getCanceled()) return;
 
-    if (nullptr != _pNavigationMianPanel) {
-        _pNavigationMianPanel->onUpdateUserConfig(e.deleteData, e.arImConfig);
+    if (nullptr != _pNavigationMainPanel) {
+        _pNavigationMainPanel->onUpdateUserConfig(e.deleteData, e.arImConfig);
     }
 }
 
 void NavigationMsgListener::onEvent(RecvVideoMessage &e) {
-    if (nullptr != _pNavigationMianPanel) {
+    if (nullptr != _pNavigationMainPanel) {
 
     }
 }
 
 void NavigationMsgListener::onEvent(MStateEvt &e) {
-    if (nullptr != _pNavigationMianPanel) {
-        _pNavigationMianPanel->onGotMState(QTalk::Entity::UID(e.userId, e.realJid), e.messageId.data(), e.time);
+    if (nullptr != _pNavigationMainPanel) {
+        _pNavigationMainPanel->onGotMState(QTalk::Entity::UID(e.userId, e.realJid), e.messageId.data(), e.time);
     }
 }

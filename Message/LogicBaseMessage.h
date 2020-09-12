@@ -24,12 +24,12 @@ public:
     std::string groupId;
 };
 
-// 好友列表
-class S_AllFriendsEvt : public Event
-{
-public:
-    std::vector<QTalk::Entity::IMFriendList> friends;
-};
+//// 好友列表
+//class S_AllFriendsEvt : public Event
+//{
+//public:
+//    std::vector<QTalk::Entity::IMFriendList> friends;
+//};
 
 // deal bind
 class S_DealBind : public Event{};

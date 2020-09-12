@@ -8,11 +8,8 @@
 #include <memory>
 #include "../UICom/Config/configobject.h"
 
-class PluginManager
+class PlugManager
 {
-public:
-    explicit PluginManager(QObject *parent = nullptr);
-
 public:
     void LoadPluginAllQt();
     bool UnloadPluginQt(const QString &key);

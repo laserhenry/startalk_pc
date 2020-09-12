@@ -1,8 +1,8 @@
 ﻿#if _MSC_VER >= 1600
 #pragma execution_character_set("utf-8")
 #endif
-#ifndef NAVIGATIONMIANPANEL_H
-#define NAVIGATIONMIANPANEL_H
+#ifndef NAVIGATIONMAINPANEL_H
+#define NAVIGATIONMAINPANEL_H
 
 #include <QFrame>
 #include <QStackedWidget>
@@ -16,7 +16,6 @@
 
 class SessionFrm;
 class ContactFrm;
-class MultifunctionFrm;
 struct StSessionInfo;
 class NavigationMsgManager;
 class NavigationMsgListener;
@@ -40,13 +39,13 @@ public:
 };
 
 class TcpDisconnect;
-class NavigationMianPanel : public QFrame
+class NavigationMainPanel : public QFrame
 {
 	Q_OBJECT
 
 public:
-    explicit NavigationMianPanel(QWidget *parent = 0);
-    ~NavigationMianPanel() override;
+    explicit NavigationMainPanel(QWidget *parent = 0);
+    ~NavigationMainPanel() override;
 
 public:
     void receiveSession(R_Message mess);
@@ -76,6 +75,9 @@ public slots:
     void onShortCutSwitchSession(int);
     void onAppDeactivated();
     void onAppActive();
+
+protected:
+    bool eventFilter(QObject* o, QEvent* e) override ;
 
 private:
     void init();
@@ -119,13 +121,12 @@ private:
     QStackedWidget * _stackWdt;
     SessionFrm * _pSessionFrm;
     ContactFrm * _contactFrm;
-    MultifunctionFrm * _multifunctionFrm;
 	TcpDisconnect*    _pTcpDisconnect;
-    NavigationMsgManager * _messageManager{};
+//    NavigationMsgManager * _messageManager{};
     NavigationMsgListener * _messageListener{};
 
 private:
 	bool             _conneted = false;
 };
 
-#endif // NAVIGATIONMIANPANEL_H
+#endif // NAVIGATIONMAINPANEL_H

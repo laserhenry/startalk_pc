@@ -10,7 +10,6 @@ class ConfigDao : public DaoInterface
 public:
 	explicit ConfigDao(qtalk::sqlite::database *sqlDb);
 	bool creatTable() override;
-	bool clearData() override;
 
 public:
     bool getConfigVersion(int& version);

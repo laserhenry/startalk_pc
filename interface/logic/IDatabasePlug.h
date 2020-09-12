@@ -14,7 +14,7 @@
 #include "../../include/im_enum.h"
 #include "../../entity/im_userSupplement.h"
 #include "../../entity/im_config.h"
-#include "../../entity/im_friend_list.h"
+//#include "../../entity/im_friend_list.h"
 #include "../../include/CommonStrcut.h"
 #include "../../entity/im_qr_group.h"
 #include "../../entity/im_qr_content.h"
@@ -42,7 +42,7 @@ public:
     // recent session contains user only
     virtual void geContactsSession(std::vector<QTalk::StShareSession> &sessions) = 0;
     // make and get session
-    virtual std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > QueryImSessionInfos() = 0;
+//    virtual std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > QueryImSessionInfos() = 0;
     // get session
     virtual std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > reloadSession() = 0;
 
@@ -184,12 +184,12 @@ public:
     virtual bool getAllConfig(std::vector<QTalk::Entity::ImConfig> &configs) = 0;
 
     // friend
-public:
-    virtual bool bulkInsertFriends(const std::vector<QTalk::Entity::IMFriendList> &friends) = 0;
-    virtual bool insertFriend(QTalk::Entity::IMFriendList imfriend) = 0;
-    virtual bool deleteAllFriends() = 0;
-    virtual bool deleteFriendByXmppId(const std::string &xmppId) = 0;
-    virtual bool getAllFriends(std::vector<QTalk::Entity::IMFriendList> &friends) = 0;
+//public:
+//    virtual bool bulkInsertFriends(const std::vector<QTalk::Entity::IMFriendList> &friends) = 0;
+//    virtual bool insertFriend(QTalk::Entity::IMFriendList imfriend) = 0;
+//    virtual bool deleteAllFriends() = 0;
+//    virtual bool deleteFriendByXmppId(const std::string &xmppId) = 0;
+//    virtual bool getAllFriends(std::vector<QTalk::Entity::IMFriendList> &friends) = 0;
 
     //Im_Cache_Data
 public:
@@ -218,6 +218,9 @@ public:
     virtual void getMedalList(std::vector<QTalk::Entity::ImMedalList>& medals) = 0;
     virtual void getMedalUsers(int medalId, std::vector<QTalk::StMedalUser>& metalUsers) = 0;
     virtual void modifyUserMedalStatus(const std::string& userId, int medalId, int status) = 0;
+
+public:
+    virtual void addExceptCpu(double cpu, long long time, const std::string& stack) = 0;
 };
 
 #endif // IDATABASEPLUG_H

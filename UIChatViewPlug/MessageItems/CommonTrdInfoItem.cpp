@@ -37,7 +37,7 @@ void load(const StNetMessageResult& msgInfo)
 
         //        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
         MapCookie cookies;
-        cookies["ckey"] = QString::fromStdString(Platform::instance().getClientAuthKey());
+        cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
         if (/**userDftBrowser ||**/
             linkUrl.contains(NavigationManager::instance().getShareUrl().data()) ||
             linkUrl.contains("tu.qunar.com/vote/vote_list.php") ||
@@ -50,8 +50,8 @@ void load(const StNetMessageResult& msgInfo)
             else
                 linkUrl += "?";
             //
-            linkUrl = QString("%5username=%1&company=%2&group_id=%3&rk=%4").arg(Platform::instance().getSelfUserId().data())
-                    .arg("qunar").arg(msgInfo.xmpp_id).arg(Platform::instance().getServerAuthKey().data()).arg(linkUrl);
+            linkUrl = QString("%5username=%1&company=%2&group_id=%3&rk=%4").arg(PLAT.getSelfUserId().data())
+                    .arg("qunar").arg(msgInfo.xmpp_id).arg(PLAT.getServerAuthKey().data()).arg(linkUrl);
             WebService::loadUrl(QUrl(linkUrl), false, cookies);
         }
         else

@@ -59,8 +59,8 @@ void AboutWnd::initUi()
     auto * mainLay = new QVBoxLayout(mainFrm);
     mainLay->setContentsMargins(0, 0, 0, 20);
     //
-    std::string version = Platform::instance().getGlobalVersion();
-    std::string build = Platform::instance().get_build_date_time();
+    std::string version = PLAT.getGlobalVersion();
+    std::string build = PLAT.get_build_date_time();
     _pVersionLabel = new QLabel(QString("Version: (%1)").arg(version.data()), this);
     _pCopyrightLabel = new QLabel(" Copyright ©2017 Qunar.com", this);
     _pBuildDateTimeLabel = new QLabel(QString("build At: %1").arg(build.data()), this);

@@ -18,7 +18,6 @@ class NavManager : public UShadowDialog
 	Q_OBJECT
 public:
     explicit NavManager(LoginPanel *loginPanel);
-    ~NavManager() override;
 
 public:
     QString getDefaultNavUrl();

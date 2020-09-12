@@ -11,26 +11,23 @@ QchatMoreFun::QchatMoreFun(QTalk::Entity::UID _uid, QTalk::Enum::ChatType &_chat
 }
 
 void QchatMoreFun::showSuggestProducts() {
-
-    assert(PRODUCT_SUGGEST_URL != "");
-
     std::ostringstream url;
     url << PRODUCT_SUGGEST_URL
         << "?username="
-        << Platform::instance().getSelfUserId()
+        << PLAT.getSelfUserId()
         << "&rk="
-        << Platform::instance().getClientAuthKey()
+        << PLAT.getClientAuthKey()
         << "&domain="
-        << Platform::instance().getSelfDomain()
+        << PLAT.getSelfDomain()
         << "&q_d="
-        << Platform::instance().getSelfDomain();
+        << PLAT.getSelfDomain();
 
     if(chatType == QTalk::Enum::ConsultServer){
         url << "&qchatid=5&type=consult"
             << "&user_id="
             << uid.usrId()
             << "&realfrom="
-            << Platform::instance().getSelfXmppId()
+            << PLAT.getSelfXmppId()
             << "&realto="
             << uid.realId();
     } else if(chatType == QTalk::Enum::GroupChat){
@@ -45,8 +42,8 @@ void QchatMoreFun::showSuggestProducts() {
 
     std::string strUrl = url.str();
     MapCookie cookies;
-    cookies["ckey"] = QString::fromStdString(Platform::instance().getClientAuthKey());
-    std::string qvt = Platform::instance().getQvt();
+    cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
+    std::string qvt = PLAT.getQvt();
     if(!qvt.empty()){
         cJSON *qvtJson = cJSON_GetObjectItem(cJSON_Parse(qvt.data()),"data");
         std::string qcookie = cJSON_GetObjectItem(qvtJson,"qcookie")->valuestring;

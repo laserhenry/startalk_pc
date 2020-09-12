@@ -6,7 +6,6 @@ include_directories(.)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
-
 if (APPLE)
     ADD_DEFINITIONS(-D_MACOS)
 elseif (UNIX)
@@ -159,8 +158,13 @@ set(SOURCE_FILES
         search/SearchUserView.cpp
         search/SearchUserView.h
         search/ImageDelegate.cpp
-        search/ImageDelegate.h ChatViewItem.cpp ChatViewItem.h ChatMainDelegate.cpp ChatMainDelegate.h ChatMainSoreModel.cpp ChatMainSoreModel.h)
+        search/ImageDelegate.h
+        ChatViewItem.cpp ChatViewItem.h
+        ChatMainDelegate.cpp ChatMainDelegate.h
+        ChatMainSoreModel.cpp ChatMainSoreModel.h
+        DropWnd.cpp DropWnd.h)
 
+include_directories(douTu/c-gumbo)
 
 set(LIBRARY_OUTPUT_PATH ../bin)
 set(CMAKE_DEBUG_POSTFIX "d")
@@ -229,7 +233,7 @@ elseif (WIN32)
         link_directories(Depends/amr/lib/x64)
     endif()
 
-    ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${WIN_SOURCE_FILE})
+    ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${WIN_SOURCE_FILE} ${DOU_TU_SOURCE})
 
     target_link_libraries(${PROJECT_NAME}
             Qt5::Widgets
@@ -252,7 +256,7 @@ elseif (WIN32)
             qzxing
             libopencore-amrnb.a)
 else ()
-    ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+    ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${DOU_TU_SOURCE})
 
     target_link_libraries(${PROJECT_NAME}
             Qt5::Widgets

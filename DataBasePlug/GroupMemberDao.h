@@ -11,8 +11,7 @@ class GroupMemberDao : public DaoInterface
 {
 public:
 	explicit GroupMemberDao(qtalk::sqlite::database *sqlDb);
-	bool creatTable();
-	bool clearData();
+	bool creatTable() override;
 
 public:
 	bool getGroupMemberById(const std::string& groupId, std::map<std::string, QTalk::StUserCard>& member, std::map<std::string, QUInt8>& userRole);

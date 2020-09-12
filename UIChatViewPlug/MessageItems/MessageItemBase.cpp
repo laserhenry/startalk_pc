@@ -115,46 +115,71 @@ MessageItemBase::~MessageItemBase()= default;
 
 bool MessageItemBase::eventFilter(QObject *o, QEvent *e)
 {
-    if((o == _headLab || (_nameLab && o == _nameLab)) && g_pMainPanel)
+    if((o == _headLab /*|| (_nameLab && o == _nameLab)*/) && g_pMainPanel)
     {
-        if(e->type() == QEvent::MouseButtonDblClick)
+        // if(e->type() == QEvent::MouseButtonDblClick)
+        // {
+        //     if(_msgInfo.type == QTalk::Enum::GroupChat)
+        //     {
+        //         _isPressEvent = false;
+
+        //         StSessionInfo sessionInfo;
+        //         sessionInfo.userId = _msgInfo.from;
+        //         sessionInfo.chatType = QTalk::Enum::TwoPersonChat;
+        //         emit g_pMainPanel->sgOpenNewSession(sessionInfo);
+        //     }
+
+        // }
+        // else 
+        if(e->type() == QEvent::MouseButtonPress)
         {
-            if(_msgInfo.type == QTalk::Enum::GroupChat)
-            {
-                _isPressEvent = false;
+            // _isPressEvent = true;
+            // _alreadyRelease = false;
+            // g_pMainPanel->insertAt(_msgInfo.xmpp_id, _msgInfo.from);
 
-                StSessionInfo sessionInfo;
-                sessionInfo.userId = _msgInfo.from;
-                sessionInfo.chatType = QTalk::Enum::TwoPersonChat;
-                emit g_pMainPanel->sgOpenNewSession(sessionInfo);
-            }
-
-        }
-        else if(e->type() == QEvent::MouseButtonPress)
-        {
-            _isPressEvent = true;
-            _alreadyRelease = false;
-            QTimer::singleShot(350, [this](){
-                if(_isPressEvent){
-
-                    if(!_alreadyRelease && _msgInfo.type == QTalk::Enum::GroupChat)
-                    {
-                        g_pMainPanel->insertAt(_msgInfo.xmpp_id, _msgInfo.from);
-                    }
-                    else
-                    {
-                        if(_msgInfo.type == QTalk::Enum::ChatType::ConsultServer){
-                            g_pMainPanel->showUserCard(_msgInfo.real_id);
-                        } else{
-                            g_pMainPanel->showUserCard(_msgInfo.from);
-                        }
-                    }
+            //
+            auto showUserCard = [this](){
+                if(_msgInfo.type == QTalk::Enum::ChatType::ConsultServer){
+                    g_pMainPanel->showUserCard(_msgInfo.real_id);
+                } else{
+                    g_pMainPanel->showUserCard(_msgInfo.from.section("/", 0, 0));
                 }
+            };
+            QMenu menu;
+            QAction atAct("@");
+            QAction sendMessageAct(tr("发送即时消息"));
+            QAction paiAct("拍一拍");
+            QAction cardAct(tr("资料卡片"));
+            menu.setAttribute(Qt::WA_TranslucentBackground, true);
+            
+            if(_msgInfo.type == QTalk::Enum::GroupChat) {
+                menu.addAction(&sendMessageAct);
+                menu.addAction(&atAct);
+                connect(&atAct, &QAction::triggered, [this](){
+                    g_pMainPanel->insertAt(_msgInfo.xmpp_id, _msgInfo.from.section("/", 0, 0));
+                });
+                connect(&sendMessageAct, &QAction::triggered, [this](){
+                    StSessionInfo sessionInfo;
+                    sessionInfo.userId = _msgInfo.from.section("/", 0, 0);
+                    sessionInfo.chatType = QTalk::Enum::TwoPersonChat;
+                    emit g_pMainPanel->sgOpenNewSession(sessionInfo);
+                });
+            }
+            menu.addAction(&paiAct);
+            menu.addAction(&cardAct);
+            connect(&paiAct, &QAction::triggered, [this](){
+                g_pMainPanel->clapSomebody(_msgInfo.xmpp_id, _msgInfo.from.section("/", 0, 0));
             });
+            connect(&cardAct, &QAction::triggered, showUserCard);
+
+            auto pos = _headLab->geometry().center();
+            pos = mapToGlobal(pos);
+            menu.exec(pos);
+            // g_pMainPanel->setFocus();
         }
         else if(e->type() == QEvent::MouseButtonRelease)
         {
-            _alreadyRelease = true;
+            // _alreadyRelease = true;
         }
         else if(e->type() == QEvent::Enter)
         {
@@ -191,6 +216,15 @@ bool MessageItemBase::eventFilter(QObject *o, QEvent *e)
     }
 
     return QObject::eventFilter(o, e);
+}
+
+bool MessageItemBase::event(QEvent *e)
+{
+//    if(e->type() == QEvent::Show)
+//    {
+//        info_log("show message item {0} -> {1}", _msgInfo.xmpp_id.toStdString(), _msgInfo.msg_id.toStdString());
+//    }
+    return QFrame::event(e);
 }
 
 void MessageItemBase::setReadState(const QInt32& state)
@@ -251,7 +285,7 @@ void MessageItemBase::checkShareCheckBtn(bool check)
 
 void MessageItemBase::onDisconnected() {
 
-    if(!Platform::instance().isMainThread())
+    if(!PLAT.isMainThread())
     {
         emit sgDisconnected();
         return;

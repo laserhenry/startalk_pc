@@ -135,7 +135,7 @@ private:
     LinkButton* _pMedalDetail = nullptr;
 
 	QPushButton* _pSendMessageBtn = nullptr;
-	QPushButton* _pAddFriendBtn = nullptr;
+//	QPushButton* _pAddFriendBtn = nullptr;
 	QPushButton* _pMailBtn = nullptr;
 	QPushButton* _pBtnStar = nullptr;
 
@@ -148,7 +148,7 @@ private:
 
 private:
 	QMenu* _pMenu = nullptr;
-	QAction* _pRemoveAct = nullptr;    // 删除好友
+//	QAction* _pRemoveAct = nullptr;    // 删除好友
 	QAction* _pAddBlackListAct = nullptr; // 加入黑名单
 
 private:
@@ -182,7 +182,7 @@ public:
 		EM_IS_INVALID = 0,
 		EM_IS_START = 1,
 		EM_IS_BLACK = 2,
-		EM_IS_FRIEND = 4,
+//		EM_IS_FRIEND = 4,
 	};
 };
 

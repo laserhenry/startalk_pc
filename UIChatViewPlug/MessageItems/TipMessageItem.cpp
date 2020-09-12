@@ -32,9 +32,9 @@ TipMessageItem::~TipMessageItem()
 
 void TipMessageItem::openURL(QString url) {
     MapCookie cookies;
-    cookies["ckey"] = QString::fromStdString(Platform::instance().getClientAuthKey());
+    cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
 #ifdef _QCHAT
-    std::string qvt = Platform::instance().getQvt();
+    std::string qvt = PLAT.getQvt();
     if(!qvt.empty()){
         cJSON *qvtJson = cJSON_GetObjectItem(cJSON_Parse(qvt.data()),"data");
         std::string qcookie = cJSON_GetObjectItem(qvtJson,"qcookie")->valuestring;
@@ -45,7 +45,7 @@ void TipMessageItem::openURL(QString url) {
         cookies["_v"] = QString::fromStdString(vcookie);
         cookies["_t"] = QString::fromStdString(tcookie);
     }
-    WebService::loadUrl(QUrl(url), false, cookies);
+    WebService::loadUrl(QUrl(url),".qunar.com", false, cookies);
 #else
     WebService::loadUrl(QUrl(url), false, cookies);
 #endif

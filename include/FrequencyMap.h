@@ -101,15 +101,17 @@ public:
 
     void remove(const T& t)
     {
-        std::unique_lock<std::mutex> lock(_mutex);
+        _mutex.lock();
         auto it = std::find_if(_mapItems.begin(), _mapItems.end(), [t](auto &pair){
             return pair.first == t;
         });
         if(it != _mapItems.end())
         {
             _mapItems.erase(it);
+            _mutex.unlock();
             _del_func(it->first, it->second);
-        }
+        } else
+            _mutex.unlock();
     }
 
     typename std::list<std::pair<T, R> >::iterator begin()
@@ -126,6 +128,8 @@ private:
     std::list<std::pair<T, R> >  _mapItems; //
     unsigned int                 _maxListSize{};
     std::function<void(const T& t, const R& r)> _del_func;
+
+public:
     std::mutex                    _mutex;
 };
 

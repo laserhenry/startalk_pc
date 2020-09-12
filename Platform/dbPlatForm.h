@@ -18,6 +18,8 @@
 #include "../include/CommonStrcut.h"
 #include "../include/Spinlock.h"
 
+#define DB_PLAT dbPlatForm::instance()
+
 /**
 * @description: ${description}
 * @author: cc
@@ -43,16 +45,13 @@ public:
     QTalk::Entity::ImMedalList getMedal(const int & id);
     void getAllMedals(std::vector<QTalk::Entity::ImMedalList> &medals);
 
-private:
-    static dbPlatForm* _platform;
-
 public:
     static dbPlatForm& instance();
 
 public:
     std::shared_ptr<QTalk::Entity::ImUserInfo> getUserInfo(const std::string &xmppId, const bool &readDb = false);
     std::shared_ptr<QTalk::Entity::ImGroupInfo> getGroupInfo(const std::string &xmppId, const bool &readDb = false);
-    std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > QueryImSessionInfos();
+//    std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > QueryImSessionInfos();
     std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > reloadSession();
     std::vector<QTalk::StUserCard> getGroupMemberInfo(const std::vector<std::string>& arMembers);
 

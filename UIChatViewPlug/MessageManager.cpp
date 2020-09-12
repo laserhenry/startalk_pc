@@ -127,15 +127,10 @@ void ChatMsgManager::sendMessage(S_Message& e) {
 
     g_pMainPanel->addSending(e.message.MsgId);
 
-    std::thread([e](){
-#ifdef _MACOS
-        pthread_setname_np("ChatMsgManager::sendMessage");
-#endif
-        debug_log("send message type:{0} id:{1}", e.message.Type, e.message.Content);
-
+    QT_CONCURRENT_FUNC([e](){
         S_Message ne(e);
         EventBus::FireEvent(ne);
-    }).detach();
+    });
 
 }
 

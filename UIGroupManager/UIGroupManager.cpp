@@ -29,30 +29,13 @@
 #include "../QtUtil/Entity/JID.h"
 
 UIGroupManager::UIGroupManager()
-        : UShadowDialog(nullptr, true)
-        , _pSearchWgt(nullptr)
-        , _pLstWgt(nullptr)
-        , _plstModel(nullptr)
-        , _pTipLabel(nullptr)
-        , _pTitleLabel(nullptr)
-        , _pGroupNameEdit(nullptr)
-        , _pGroupNaemFrm(nullptr)
-        , _pTreeWgt(nullptr)
-        , _pTreeModel(nullptr)
-        , _batchAddMemberBtn(nullptr)
-        , _batchAddMemberWnd(nullptr)
-        , _type(EM_TYPE_INVALID)
-        , _pItemDelegate(nullptr)
-        , _pRecentItem(nullptr){
+        : UShadowDialog(nullptr, true){
 
 #ifndef _LINUX
     auto flags = Qt::X11BypassWindowManagerHint | Qt::WindowStaysOnTopHint | Qt::Tool;
     setWindowFlags(this->windowFlags() | flags);
 #endif
-
     initUi();
-    //
-    _pMsgManager = new GroupManagerMsgManager;
     _pMsgListener = new GroupMsgListener(this);
 
     connect(this, &UIGroupManager::initDataFinish, this, &UIGroupManager::updateUi, Qt::QueuedConnection);
@@ -61,7 +44,11 @@ UIGroupManager::UIGroupManager()
 
 }
 
-UIGroupManager::~UIGroupManager() = default;
+UIGroupManager::~UIGroupManager()
+{
+    if (_pMsgListener)
+        delete _pMsgListener;
+}
 
 //
 void UIGroupManager::onCreatGroup(const QString &memberId) {
@@ -72,7 +59,7 @@ void UIGroupManager::onCreatGroup(const QString &memberId) {
     _pTreeWgt->setVisible(true);
     _batchAddMemberBtn->setVisible(true);
     //
-    std::shared_ptr<QTalk::Entity::ImUserInfo> info = dbPlatForm::instance().getUserInfo(memberId.toStdString());
+    std::shared_ptr<QTalk::Entity::ImUserInfo> info = DB_PLAT.getUserInfo(memberId.toStdString());
     if (info) {
         QString headrSrc = QString(QTalk::GetHeadPathByUrl(info->HeaderSrc).c_str());
         if (QFileInfo(headrSrc).isDir() || !QFile::exists(headrSrc)) {
@@ -228,7 +215,7 @@ void UIGroupManager::initUi() {
     splitter->setCollapsible(0, false);
     splitter->setCollapsible(1, false);
     //
-    QFrame* mainFrm = new QFrame(this);
+    auto* mainFrm = new QFrame(this);
     mainFrm->setObjectName("mainFrm");
     auto* mainLay = new QVBoxLayout(mainFrm);
     mainLay->setMargin(6);
@@ -249,9 +236,9 @@ void UIGroupManager::initUi() {
         this->setVisible(false);
     });
 
-    connect(splitter, &QSplitter::splitterMoved, [this](int pos, int index) {
-        qreal maxW = _pTreeWgt->width();
-    });
+//    connect(splitter, &QSplitter::splitterMoved, [this](int pos, int index) {
+//        qreal maxW = _pTreeWgt->width();
+//    });
 
     connect(okBtn, &QPushButton::clicked, [this]() {
 
@@ -442,18 +429,15 @@ void UIGroupManager::resetUi(const QString &memberId) {
     }
     //
     _pRecentItem->setData(true, EM_STAFF_DATATYPE_EXTEND);
-    _pFriendItem->setData(false, EM_STAFF_DATATYPE_EXTEND);
+//    _pFriendItem->setData(false, EM_STAFF_DATATYPE_EXTEND);
     _pStarItem->setData(false, EM_STAFF_DATATYPE_EXTEND);
     _pTreeWgt->setExpanded(_pRecentItem->index(), true);
-    _pTreeWgt->setExpanded(_pFriendItem->index(), false);
+//    _pTreeWgt->setExpanded(_pFriendItem->index(), false);
     _pTreeWgt->setExpanded(_pStarItem->index(), false);
     _pTreeWgt->scrollTo(_pTreeModel->index(0, 0), QAbstractItemView::PositionAtTop);
 }
 
 void UIGroupManager::sendAddGroupMemberMessage(const QString &groupId, const QList<QString> &members, bool showTip) {
-    if (nullptr == _pMsgManager)
-        return;
-
     if(showTip && members.size() > 50)
     {
         int ret = QtMessageBox::question(this, tr("提示"), QString(tr("选择的群成员已超过50人，是否继续？")));
@@ -466,13 +450,10 @@ void UIGroupManager::sendAddGroupMemberMessage(const QString &groupId, const QLi
         member.push_back(id.toStdString());
     }
     _mapGroupMembers.remove(groupId);
-    _pMsgManager->addGroupMember(member, groupId.toStdString());
+    GroupManagerMsgManager::addGroupMember(member, groupId.toStdString());
 }
 
 void UIGroupManager::creatGroup() {
-    if (nullptr == _pMsgManager)
-        return;
-
     if(_mapLstWgtItem.size() > 50)
     {
         int ret = QtMessageBox::question(this, tr("提示"), QString(tr("选择的群成员已超过50人，是否继续？")));
@@ -482,13 +463,13 @@ void UIGroupManager::creatGroup() {
         }
     }
 
-    QString groupId = QString("%1@conference.%2").arg(QTalk::utils::getMessageId().data()).arg(Platform::instance().getSelfDomain().c_str());
+    QString groupId = QString("%1@conference.%2").arg(QTalk::utils::getMessageId().data()).arg(PLAT.getSelfDomain().c_str());
     _mapGroupMembers[groupId] = _mapLstWgtItem.keys();
     QString groupName = _pGroupNameEdit->text();
     if(groupName.isEmpty())
     {
         auto members = _mapGroupMembers[groupId];
-        QString selfId = Platform::instance().getSelfXmppId().data();
+        QString selfId = PLAT.getSelfXmppId().data();
         if(!members.contains(selfId))
             members.push_front(selfId);
 
@@ -508,7 +489,7 @@ void UIGroupManager::creatGroup() {
             groupName.chop(1);
     }
     //
-    _pMsgManager->creatGroup(groupId.toStdString(), groupName.toStdString());
+    GroupManagerMsgManager::creatGroup(groupId.toStdString(), groupName.toStdString());
 }
 
 void UIGroupManager::onCreatGroupRet(bool ret, const std::string &groupId) {
@@ -529,7 +510,7 @@ void UIGroupManager::onBatchAddMember(const QString &ids)
     tmpIds.replace(" ", "");
 
     QStringList lstItems = tmpIds.split(";");
-    QString domain = QString::fromStdString(Platform::instance().getSelfDomain());
+    QString domain = QString::fromStdString(PLAT.getSelfDomain());
     std::vector<std::string> arMembers;
     for(const auto& item : lstItems)
     {
@@ -543,7 +524,7 @@ void UIGroupManager::onBatchAddMember(const QString &ids)
         arMembers.push_back(id.toStdString());
 
     }
-    auto infos = dbPlatForm::instance().getGroupMemberInfo(arMembers);
+    auto infos = DB_PLAT.getGroupMemberInfo(arMembers);
     for(const auto& info : infos)
     {
         QString icon = QString::fromStdString(info.headerSrc);
@@ -613,7 +594,7 @@ QStandardItem* UIGroupManager::creatItem(QStandardItem *item, const std::string 
 //        userinfo = std::make_shared<QTalk::Entity::ImUserInfo>();
 //        userinfo->XmppId = xmppId;
 //        if(_pMsgManager)
-//            _pMsgManager->getUserInfo(userinfo);
+//            GroupManagerMsgManager::getUserInfo(userinfo);
 //
 //        if(userinfo)
 //        {
@@ -676,55 +657,49 @@ void UIGroupManager::initGroupMembers()
     }
 }
 
-void UIGroupManager::onRecvFriends(const std::vector<QTalk::Entity::IMFriendList> &friends)
-{
-    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    _friends = friends;
-    flags = (flags << 1);
-    if(EM_ALL == flags)
-            emit initDataFinish();
-}
+//void UIGroupManager::onRecvFriends(const std::vector<QTalk::Entity::IMFriendList> &friends)
+//{
+//    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+//    _friends = friends;
+//    flags = (flags << 1);
+//    if(EM_ALL == flags)
+//            emit initDataFinish();
+//}
 
 //
 void UIGroupManager::initData()
 {
     auto func = [this]() {
-#ifdef _MACOS
-        pthread_setname_np("UIGroupManager::getStructure");
-#endif
-        if (_pMsgManager) {
-            {
-                std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-                // 组织架构
-                std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>> structure;
-                _pMsgManager->getStructure(structure);
+        {
+            std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+            // 组织架构
+            std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>> structure;
+            GroupManagerMsgManager::getStructure(structure);
 
-                std::for_each(structure.begin(), structure.end(), [this](std::shared_ptr<QTalk::Entity::ImUserInfo> info) {
-                    if(info)
-                    {
-                        _structure[info->XmppId] = info;
-                        std::string name = QTalk::getUserNameNoMask(info);
-                        _mapUserName[info->XmppId.data()] = name.data();
-                    }
-                });
+            std::for_each(structure.begin(), structure.end(), [this](std::shared_ptr<QTalk::Entity::ImUserInfo> info) {
+                if(info)
+                {
+                    _structure[info->XmppId] = info;
+                    std::string name = QTalk::getUserNameNoMask(info);
+                    _mapUserName[info->XmppId.data()] = name.data();
+                }
+            });
 
-                flags = (flags << 1);
+            flags = (flags << 1);
 
-                // 所有群以及群成员
-                std::map<std::string, std::set<std::string>> mapGroupMembers;
-                _pMsgManager->getGroupMembers(mapGroupMembers);
-                if(!mapGroupMembers.empty())
-                    _groupmemebers = mapGroupMembers;
+            // 所有群以及群成员
+            std::map<std::string, std::set<std::string>> mapGroupMembers;
+            GroupManagerMsgManager::getGroupMembers(mapGroupMembers);
+            if(!mapGroupMembers.empty())
+                _groupmemebers = mapGroupMembers;
 
-                flags = (flags << 1);
-                if(flags == EM_ALL )
-                        emit initDataFinish();
-            }
+            flags = (flags << 1);
+            if(flags == EM_ALL )
+                    emit initDataFinish();
         }
     };
-    //
-    std::thread t(func);
-    t.detach();
+
+    QtConcurrent::run(func);
 }
 
 /**
@@ -748,14 +723,14 @@ void UIGroupManager::updateUi()
     //
 //    initGroupMembers();
     //
-    initFriends();
-    QApplication::processEvents(QEventLoop::AllEvents, 100);
+//    initFriends();
+//    QApplication::processEvents(QEventLoop::AllEvents, 100);
     //
     initStarUser();
-    QApplication::processEvents(QEventLoop::AllEvents, 100);
+//    QApplication::processEvents(QEventLoop::AllEvents, 100);
     //
     initRecentSession();
-    QApplication::processEvents(QEventLoop::AllEvents, 100);
+    QApplication::processEvents(QEventLoop::AllEvents, 500);
     //
     initStructure();
 }
@@ -776,21 +751,21 @@ void UIGroupManager::onUpdateSession(const std::vector<QTalk::StShareSession> & 
     }
 }
 
-void UIGroupManager::initFriends()
-{
-    _pFriendItem = new QStandardItem;
-    _pFriendItem->setData(tr("从好友选择"), EM_STAFF_DATATYPE_TEXT);
-    _pFriendItem->setData(":/GroupManager/image1/friendList.png", EM_STAFF_DATATYPE_ICONPATH);
-    _pFriendItem->setData(EM_ROW_TYPE_TITLE, EM_STAFF_DATATYPE_ROW_TYPE);
-    _pFriendItem->setData(false, EM_STAFF_DATATYPE_EXTEND);
-    //
-    _pTreeModel->appendRow(_pFriendItem);
-    //
-    for(const auto& frie : _friends)
-    {
-        _mapItems[frie.XmppId][EM_FRIEND] = creatItem(_pFriendItem, frie.XmppId);
-    }
-}
+//void UIGroupManager::initFriends()
+//{
+//    _pFriendItem = new QStandardItem;
+//    _pFriendItem->setData(tr("从好友选择"), EM_STAFF_DATATYPE_TEXT);
+//    _pFriendItem->setData(":/GroupManager/image1/friendList.png", EM_STAFF_DATATYPE_ICONPATH);
+//    _pFriendItem->setData(EM_ROW_TYPE_TITLE, EM_STAFF_DATATYPE_ROW_TYPE);
+//    _pFriendItem->setData(false, EM_STAFF_DATATYPE_EXTEND);
+//    //
+//    _pTreeModel->appendRow(_pFriendItem);
+//    //
+//    for(const auto& frie : _friends)
+//    {
+//        _mapItems[frie.XmppId][EM_FRIEND] = creatItem(_pFriendItem, frie.XmppId);
+//    }
+//}
 
 /**
   * @函数名
@@ -922,15 +897,15 @@ void UIGroupManager::initRecentSessionData()
  */
 void UIGroupManager::initStructure()
 {
-    static int index = 0;
+//    static int index = 0;
 
     for(const auto& it : _structure)
     {
-        if(++index == 10)
-        {
-            QApplication::processEvents(QEventLoop::AllEvents, 100);
-            index = 0;
-        }
+//        if(++index == 10)
+//        {
+//            QApplication::processEvents(QEventLoop::AllEvents, 100);
+//            index = 0;
+//        }
         //
         const auto& info = it.second;
         if(info)

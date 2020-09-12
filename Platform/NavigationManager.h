@@ -7,17 +7,14 @@
 
 class PLATFORMSHARED_EXPORT NavigationManager {
 
-private:
-    static NavigationManager* _navManager;
-
 public:
     static NavigationManager& instance();
 
 private:
     // 导航相关
-    long long navVersion;
+    long long navVersion{};
     std::string navUrl;
-    bool debug;
+//    bool debug{};
 
     // Xmpp服务地址
     std::string xmppHost;
@@ -50,13 +47,13 @@ private:
     std::string qcGrabOrderUrl; //抢单
     std::string qcOrderManager; //订单管理
     std::string accountConfigUrl; //账号管理
-    bool readFlag;
+    bool readFlag{};
     //
     std::string searchUrl;
 
     // 广告相关
     std::string adUrl;
-    int adSec;
+    int adSec{};
 
     // othet
     std::string mailSuffix;
@@ -65,7 +62,7 @@ private:
     std::string qcadminHost;
 
     //ability
-    bool showmsgstat;
+    bool showmsgstat{};
     std::string qcGrabOrder;
 
     //login

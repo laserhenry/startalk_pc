@@ -4,11 +4,10 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <thread>
+#include <QtConcurrent>
 
 OAManagerPanel::OAManagerPanel()
         : QWidget() {
-    //
-    _pMsgManager = new MessageManager;
     //
     initUi();
     //
@@ -90,18 +89,12 @@ void OAManagerPanel::dealNavItem() {
  *
  */
 void OAManagerPanel::getLayoutData() {
-    if (_pMsgManager) {
-        std::thread t([this]() {
-#ifdef _MACOS
-            pthread_setname_np("OAManagerPanel::getLayoutData");
-#endif
-            bool ret = _pMsgManager->getOAUiData(_uidata);
-            if (ret) {
-                emit updateUiSignal();
-            }
-        });
-        t.detach();
-    }
+    QtConcurrent::run([this]() {
+        bool ret = MessageManager::getOAUiData(_uidata);
+        if (ret) {
+            emit updateUiSignal();
+        }
+    });
 }
 
 /**
@@ -117,6 +110,7 @@ void OAManagerPanel::updateUi() {
         _mapNavItems[id] = new OANavigationItem(id, name, path, this);
         auto* tmpOaWgt = new OaMainWgt(id, name, it->members, this);
         _mapMainWgt[id] = tmpOaWgt;
+        connect(tmpOaWgt, &OaMainWgt::sgShowThrowingScreenWnd, this, &OAManagerPanel::sgShowThrowingScreenWnd);
 
         _pRightLay->addWidget(_mapMainWgt[id]);
         if (_mapNavItems.size() == 1) {

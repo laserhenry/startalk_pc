@@ -6,7 +6,7 @@
 #include "../QtUtil/Utils/Log.h"
 
 FriendListDao::FriendListDao(qtalk::sqlite::database *sqlDb)
-        : DaoInterface(sqlDb) {
+        : DaoInterface(sqlDb, "IM_Friend_List") {
 
 }
 
@@ -33,25 +33,6 @@ bool FriendListDao::creatTable() {
     }
 }
 
-/**
- * clearData
- * @return
- */
-bool FriendListDao::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM `IM_Friend_List`;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data IM_Friend_List error {0}", e.what());
-        return false;
-    }
-}
 
 bool FriendListDao::bulkInsertFriends(const std::vector<QTalk::Entity::IMFriendList> &friends) {
     if (!_pSqlDb) {

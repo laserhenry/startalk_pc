@@ -20,7 +20,7 @@ void sendTextMessage(const std::string &text,
     if (g_pMainPanel && loginUser == g_pMainPanel->getSelfUserId()) {
         // 发送消息
         long long sendtime;
-        sendtime = QDateTime::currentDateTime().toMSecsSinceEpoch() - Platform::instance().getServerDiffTime() * 1000;
+        sendtime = QDateTime::currentDateTime().toMSecsSinceEpoch() - PLAT.getServerDiffTime() * 1000;
         std::string msgId = QTalk::utils::getMessageId();
 
         QTalk::Entity::ImMessageInfo message;
@@ -33,7 +33,7 @@ void sendTextMessage(const std::string &text,
         message.Type = QTalk::Entity::MessageTypeText;
         message.Content = text;
         message.Direction = QTalk::Entity::MessageDirectionSent;
-        message.UserName = Platform::instance().getSelfName();
+        message.UserName = PLAT.getSelfName();
 
         S_Message e;
         e.message = message;

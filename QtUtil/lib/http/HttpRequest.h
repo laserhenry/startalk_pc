@@ -31,9 +31,7 @@ namespace QTalk {
 
         class HttpRequest {
         public:
-            explicit HttpRequest(const char *url) { _originUrl = url; };
-
-            explicit HttpRequest(std::string &url) { _originUrl = url; };
+            explicit HttpRequest(const std::string &url) { _originUrl = url; };
 
             ~HttpRequest() = default;
 
@@ -57,7 +55,7 @@ namespace QTalk {
             setProcessCallback(const std::string& key,
                     std::function<void(StProcessParam)> fun) = 0;
 
-        private:
+        protected:
             std::string _originUrl;
         };
     };

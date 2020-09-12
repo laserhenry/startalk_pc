@@ -7,7 +7,7 @@
 #include <sstream>
 
 UserDao::UserDao(qtalk::sqlite::database *sqlDb) :
-        DaoInterface(sqlDb) {
+        DaoInterface(sqlDb, "IM_User") {
 
 }
 
@@ -37,26 +37,6 @@ bool UserDao::creatTable() {
 
     qtalk::sqlite::statement query(*_pSqlDb, sql);
     return query.executeStep();
-}
-
-/**
- *
- * @return
- */
-bool UserDao::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM `IM_User`;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data IM_User error {0}", e.what());
-        return false;
-    }
 }
 
 /**
@@ -170,7 +150,7 @@ bool UserDao::bulkInsertUserInfo(const std::vector<QTalk::Entity::ImUserInfo> &u
             query.bind(12, userInfo.userType);
             query.bind(13, userInfo.isVisible);
             // add end
-            bool sqlResult = query.executeStep();
+             query.executeStep();
             query.resetBindings();
 
         }

@@ -32,7 +32,7 @@ SearchItemBase::SearchItemBase(const StNetMessageResult &info, QWidget *parent)
     :QFrame(parent)
 {
     QString name = QTalk::getUserName(info.from.toStdString()).data();
-    int dir = (Platform::instance().getSelfXmppId() == info.from.toStdString());
+    int dir = (PLAT.getSelfXmppId() == info.from.toStdString());
     title = new NameTitleLabel(dir, name, QDateTime::fromMSecsSinceEpoch(info.time).toString("yyyy-MM-dd hh:mm:ss"));
 
     _pDetailBtn = new QToolButton(this);
@@ -165,7 +165,11 @@ SearchTextItem::SearchTextItem(const StNetMessageResult& info, QWidget *parent)
                     linkFormat.setForeground(QBrush(QTalk::StyleDefine::instance().getLinkUrl()));
                     linkFormat.setAnchor(true);
                     linkFormat.setAnchorHref(msg.content);
+#if QT_DEPRECATED_SINCE(5, 13)
+                    linkFormat.setAnchorNames(QStringList() << msg.content);
+#else
                     linkFormat.setAnchorName(msg.content);
+#endif
                     _pBrowser->textCursor().insertText(msg.content, linkFormat);
 
                     _pBrowser->setCurrentCharFormat(f);
@@ -217,7 +221,7 @@ void SearchTextItem::downloadEmoticon(const QString& pkgid, const QString& short
 {
     QPointer<SearchTextItem> pThis(this);
     QT_CONCURRENT_FUNC([pThis, pkgid, shortCut](){
-        QString localPath = EmoticonMainWgt::getInstance()->downloadEmoticon(pkgid, shortCut);
+        QString localPath = EmoticonMainWgt::instance()->downloadEmoticon(pkgid, shortCut);
         if(pThis)
         {
             auto image = QTalk::qimage::loadImage(localPath, false);
@@ -358,13 +362,13 @@ void SearchCommonTrdItem::mousePressEvent(QMouseEvent *e) {
             else
                 linkUrl += "?";
             //
-            linkUrl = QString("%5username=%1&company=%2&group_id=%3&rk=%4").arg(Platform::instance().getSelfUserId().data())
-                    .arg("qunar").arg(_xmppId).arg(Platform::instance().getServerAuthKey().data()).arg(linkUrl);
+            linkUrl = QString("%5username=%1&company=%2&group_id=%3&rk=%4").arg(PLAT.getSelfUserId().data())
+                    .arg("qunar").arg(_xmppId).arg(PLAT.getServerAuthKey().data()).arg(linkUrl);
         }
 
 //        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
         MapCookie cookies;
-        cookies["ckey"] = QString::fromStdString(Platform::instance().getClientAuthKey());
+        cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
         if (/**userDftBrowser ||**/
             linkUrl.contains(NavigationManager::instance().getShareUrl().data()) ||
             linkUrl.contains("tu.qunar.com/vote/vote_list.php") ||
@@ -429,7 +433,7 @@ SearchAudioVideoItem::SearchAudioVideoItem(const StNetMessageResult& info, QWidg
     :SearchItemBase(info, parent)
 {
     QString content = tr("视频通话");
-    bool isCalled = info.from == Platform::instance().getSelfXmppId().data();
+    bool isCalled = info.from == PLAT.getSelfXmppId().data();
     if(!info.extend_info.isEmpty())
     {
         QJsonDocument document = QJsonDocument::fromJson(info.extend_info.toUtf8());

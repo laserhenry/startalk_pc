@@ -34,7 +34,7 @@ public:
     virtual void setGroupAdmin(const std::string& groupId, const std::string &nickName,
                                const std::string &memberJid, bool isAdmin) = 0;
     // 获取好友列表
-    virtual void getFriendList() = 0;
+//    virtual void getFriendList() = 0;
     // 获取群成员
     virtual void getGroupMemberById(const std::string &groupId) = 0;
     //邀请用户入群

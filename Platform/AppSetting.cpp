@@ -6,48 +6,26 @@
 #include "../QtUtil/lib/cjson/cJSON.h"
 #include "../QtUtil/lib/cjson/cJSON_inc.h"
 
-AppSetting* AppSetting::_appSetting = nullptr;
-
 AppSetting::AppSetting()
 : _newMsgAudioNotify(true)
-, _newMsgTipWindowNotify(true)
-, _phoneAnyReceive(false)
-, _openWithAppBrowser(true)
-, _hotCutEnable(true)
-, _sessionShowTopAndUnread(false) //会话列表紧显示未读和置顶
-, _sessionListLimitEnable(false)  //是否开启会话列表加载的会话数
-, _sessionListLimit(false)        //会话列表最大会话数
-, _sendMsgType(AppSetting::SendMsgKey::Enter)      //发送消息类型
-, _sessionAutoRecover(false)      //是否开启会话自动回收
-, _sessionAutoRecoverCount(500) //同时存在的会话数
-, _msgHistoryLimitEnable(false)   //是否开启会话框消息条数限制
-, _msgHistoryLimit(500)         //会话框历史消息条数
-, _msgFontSetEnable(false)        //是否开启消息字号设置
-, _msgFontSize(AppSetting::MsgFontSize::Normal)      //字号
-, _leaveCheckEnable(false)
-, _leaveMinute(5)
-, _autoReplyMsg("不在办公室")
-, _addFriendMode(AppSetting::AddFriendMode::AllAgree)
-, _themeMode(1)
-, _autoStartUp(false)            // 开机自启动
-, _exitMainClose(false)        // 关闭会话框，退出程序
-, _groupDestroyNotify(true)   // 群组销毁提示
-, _shockWindow(true)          // 窗口震动
-, _recordLogEnable(false)      // 是否记录日志
-, _escCloseMain(false)         // ESC是否退出主窗口
-, _showGroupMembers(true)     // 是否展示群成员列表
-, _switchChatScrollToBottom(false) //切换会话是否滚动到最低下
-, _autoLoginEnable(false)            // 是否自动登录
-, _openOaWithAppBrowser(true)
-, _screentShotHideWndFlag(false)
-, _showSendMessageBtn(false)
-, _strongWarn(true)
-, _showMoodFlag(true)
-, _autoReplyPreset(true)
-, _supportNativeMessagePrompt(false)
-, _useNativeMessagePrompt(false)
-, _autoDeleteSession(true)
-, _fontLevel(FONT_LEVEL_NORMAL)
+        , _newMsgTipWindowNotify(true)
+        , _phoneAnyReceive(false)
+        , _strongWarn(true)
+        , _hotCutEnable(true)
+        , _screentShotHideWndFlag(false)
+        , _showMoodFlag(true)
+        , _autoDeleteSession(true)
+        , _leaveCheckEnable(false)
+//        , _leaveMinute(5)
+//        , _autoReplyPreset(true)
+        , _autoReplyMsg("不在办公室")
+        , _themeMode(1)
+        , _fontLevel(FONT_LEVEL_NORMAL)
+        , _autoStartUp(false)            // 开机自启动
+        , _openOaWithAppBrowser(true)
+        , _showSendMessageBtn(false)
+        , _supportNativeMessagePrompt(false)
+        , _useNativeMessagePrompt(false)
 {
 
 }
@@ -63,7 +41,6 @@ void AppSetting::initAppSetting(const std::string& setting)
 		_newMsgTipWindowNotify = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "NEWMSGTIPWINDOW", _newMsgTipWindowNotify);
 		_screenshotKey = QTalk::JSON::cJSON_SafeGetStringValue(obj, "SCREENSHOT", _screenshotKey.data());
 		_wakeWndKey = QTalk::JSON::cJSON_SafeGetStringValue(obj, "WAKEWND", _wakeWndKey.data());
-		_openWithAppBrowser = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "OPENWITHAPPBROWSER", _openWithAppBrowser);
 		_openOaWithAppBrowser = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "OPENOAWITHAPPBROWSER", _openOaWithAppBrowser);
         _screentShotHideWndFlag = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "SCREENTSHOTHIDEWNDFLAG", _screentShotHideWndFlag);
         _showSendMessageBtn = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "SHOWSENDMESSAGEBTN", _showSendMessageBtn);
@@ -73,12 +50,15 @@ void AppSetting::initAppSetting(const std::string& setting)
         _showMoodFlag = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "SHOWMOODFLAG", true);
         _autoStartUp = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "AUTOSTARTUP", false);
         _leaveCheckEnable = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "LEAVECHECKENABLE", false);
-        _autoReplyPreset = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "AUTOREPLYPRESET", true);
+        _awaysAutoReply = (bool)QTalk::JSON::cJSON_SafeGetBoolValue(obj, "AWAYSAUTOREPLY", false);
         _autoReplyMsg = QTalk::JSON::cJSON_SafeGetStringValue(obj, "AUTOREPLYMSG");
-        _autoReplyCusMsg = QTalk::JSON::cJSON_SafeGetStringValue(obj, "AUTOREPLYCUSMSG");
+//        _autoReplyCusMsg = QTalk::JSON::cJSON_SafeGetStringValue(obj, "AUTOREPLYCUSMSG");
         _leaveMinute = QTalk::JSON::cJSON_SafeGetIntValue(obj, "LEAVEMINUTE", 5);
         _useNativeMessagePrompt = QTalk::JSON::cJSON_SafeGetBoolValue(obj, "USENATIVEMESSAGEPROMPT", false);
         _autoDeleteSession = QTalk::JSON::cJSON_SafeGetBoolValue(obj, "AUTODELETESESSION", true);
+
+        _autoReplyStartTime = QTalk::JSON::cJSON_SafeGetIntValue(obj, "AUTOREPLYSTARTTIME", 0);
+        _autoReplyEndTime = QTalk::JSON::cJSON_SafeGetIntValue(obj, "AUTOREPLYENDTIME", 24);
 
 		cJSON_Delete(obj);
 	}
@@ -86,12 +66,8 @@ void AppSetting::initAppSetting(const std::string& setting)
 
 AppSetting & AppSetting::instance()
 {
-	if (nullptr == _appSetting)
-	{
-		static AppSetting appSetting;
-		_appSetting = &appSetting;
-	}
-	return *_appSetting;
+    static AppSetting appSetting;
+	return appSetting;
 	
 }
 
@@ -179,110 +155,13 @@ void AppSetting::setWakeWndHotKey(const std::string& hotKey) {
     _wakeWndKey = hotKey;
 }
 
-int  AppSetting::getSearchUserFlag() {
-    return _searchUserFlag;
-}        //搜索快捷键
-
-void AppSetting::setSearchUserFlag(int flagValue) {
-    _searchUserFlag = flagValue;
-}
-
-int  AppSetting::getSearchUserKey() {
-    return _searchUserKey;
-}
-
-void AppSetting::setSearchUserKey(int keyValue) {
-    _searchUserKey = keyValue;
-}
-
-// 会话设置
-bool AppSetting::getSessionShowTopAndUnread() {
-    return _sessionShowTopAndUnread;
-} //会话列表紧显示未读和置顶
-
-void AppSetting::setSessionShowTopAndUnread(bool flag) {
-    _sessionShowTopAndUnread = flag;
-}
-
-bool AppSetting::getSessionListLimitEnable() {
-    return _sessionListLimitEnable;
-}  //是否开启会话列表加载的会话数
-
-void AppSetting::setSessionListLimitEnable(bool flag) {
-    _sessionListLimitEnable = flag;
-}
-
-int  AppSetting::getSessionListLimit() {
-    return _sessionListLimit;
-}        //会话列表最大会话数
-
-void AppSetting::setSessionListLimit(int limit){
-    _sessionListLimit = limit;
-}
-
-AppSetting::SendMsgKey AppSetting::getSendMsgType() {
-    return _sendMsgType;
-}      //发送消息类型
-
-void AppSetting::setSendMsgType(AppSetting::SendMsgKey key) {
-    _sendMsgType = key;
-}
-
-bool AppSetting::getSessionAutoRecover() {
-    return _sessionAutoRecover;
-}      //是否开启会话自动回收
-
-void AppSetting::setSessionAutoRecover(bool flag) {
-    _sessionAutoRecover = flag;
-}
-
-int  AppSetting::getSessionAutoRecoverCount() {
-    return _sessionAutoRecoverCount;
-} //同时存在的会话数
-
-void AppSetting::setSessionAutoRecoverCount(int count) {
-    _sessionAutoRecoverCount = count;
-}
-
-bool AppSetting::getMsgHistoryLimitEnable() {
-    return _msgHistoryLimitEnable;
-}   //是否开启会话框消息条数限制
-
-void AppSetting::setMsgHistoryLimitEnable(bool flag) {
-    _msgHistoryLimitEnable = flag;
-}
-
-int  AppSetting::getMsgHistoryLimit() {
-    return _msgHistoryLimit;
-}         //会话框历史消息条数
-
-void AppSetting::setMsgHistoryLimit(int limit) {
-    _msgHistoryLimit = limit;
-}
-
-bool AppSetting::getMsgFontSetEnable() {
-    return _msgFontSetEnable;
-}        //是否开启消息字号设置
-
-void AppSetting::setMsgFontSetEnable(bool flag) {
-    _msgFontSetEnable = flag;
-}
-
-AppSetting::MsgFontSize AppSetting::getMsgFontSize() {
-    return _msgFontSize;
-}      //字号
-
-void AppSetting::setMsgFontSize(AppSetting::MsgFontSize size) {
-    _msgFontSize = size;
-}
-
 // 自动回复
-bool AppSetting::getLeaveCheckEnable() {
+bool AppSetting::getAutoReplyEnable() {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
     return _leaveCheckEnable;
 }
 
-void AppSetting::setLeaveCheckEnable(bool flag) {
+void AppSetting::setAutoReplyEnable(bool flag) {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
     _leaveCheckEnable = flag;
 }
@@ -297,14 +176,14 @@ void AppSetting::setLeaveMinute(int minute) {
     _leaveMinute = minute;
 }
 
-bool AppSetting::getAutoReplyPreset() {
+bool AppSetting::getAwaysAutoReply() {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    return _autoReplyPreset;
+    return _awaysAutoReply;
 }
 
-void AppSetting::setAutoReplyPreset(bool flag) {
+void AppSetting::setAwaysAutoReply(bool flag) {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    _autoReplyPreset = flag;
+    _awaysAutoReply = flag;
 }
 
 std::string AppSetting::getAutoReplyMsg() {
@@ -317,14 +196,47 @@ void AppSetting::setAutoReplyMsg(std::string msg) {
     _autoReplyMsg = std::move(msg);
 }
 
-std::string AppSetting::getAutoReplyCusMsg() {
+//std::string AppSetting::getAutoReplyCusMsg() {
+//    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+//    return _autoReplyCusMsg;
+//}
+//
+//void AppSetting::setAutoReplyCusMsg(std::string msg) {
+//    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+//    _autoReplyCusMsg = std::move(msg);
+//}
+
+void AppSetting::setAutoReplyStartTime(int time)
+{
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    return _autoReplyCusMsg;
+    _autoReplyStartTime = time;
 }
 
-void AppSetting::setAutoReplyCusMsg(std::string msg) {
+void AppSetting::setAutoReplyEndTime(int time)
+{
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    _autoReplyCusMsg = std::move(msg);
+    _autoReplyEndTime = time;
+}
+
+//
+bool AppSetting::withinEnableTime(int hour)
+{
+    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+    return hour >= _autoReplyStartTime && hour <= _autoReplyEndTime;
+}
+
+//
+int AppSetting::getAutoReplyStartTime()
+{
+    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+    return _autoReplyStartTime;
+}
+
+//
+int AppSetting::getAutoReplyEndTime()
+{
+    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+    return _autoReplyEndTime;
 }
 
 // 文件目录
@@ -346,31 +258,6 @@ std::string AppSetting::getFileSaveDirectory() {
 void AppSetting::setFileSaveDirectory(const std::string& fileSaveDirectory) {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
     _fileSaveDirectory = fileSaveDirectory;
-}
-
-// 好友权限
-AppSetting::AddFriendMode AppSetting::getAddFriendMode() {
-    return _addFriendMode;
-}
-
-void AppSetting::setAddFriendMode(AddFriendMode mode) {
-    _addFriendMode = mode;
-}
-
-std::string AppSetting::getQuestion() {
-    return _question;
-}
-
-void AppSetting::setQuestion(std::string question) {
-    _question = question;
-}
-
-std::string AppSetting::getAnswer() {
-    return _answer;
-}
-
-void AppSetting::setAnswer(std::string answer) {
-    _answer = answer;
 }
 
 // 皮肤设置
@@ -426,77 +313,6 @@ void AppSetting::setSelfStart(bool flag) {
     _autoStartUp = flag;
 }
 
-//
-void AppSetting::setLogLevel(int level)
-{
-    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    _logLevel = level;
-}
-
-//
-int AppSetting::getLogLevel()
-{
-    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    return _logLevel;
-}
-
-
-bool AppSetting::getExitMainClose() {
-    return _exitMainClose;
-}        // 关闭会话框，退出程序
-
-void AppSetting::setExitMainClose(bool flag) {
-    _exitMainClose = flag;
-}
-
-bool AppSetting::getGroupDestroyNotify() {
-    return _groupDestroyNotify;
-}   // 群组销毁提示
-
-void AppSetting::setGroupDestroyNotify(bool flag) {
-    _groupDestroyNotify = flag;
-}
-
-bool AppSetting::getShockWindow() {
-    return _shockWindow;
-}          // 窗口震动
-
-void AppSetting::setShockWindow(bool flag) {
-    _shockWindow = flag;
-}
-
-bool AppSetting::getRecordLogEnable() {
-    return _recordLogEnable;
-}      // 是否记录日志
-
-void AppSetting::setRecordLogEnable(bool flag) {
-    _recordLogEnable = flag;
-}
-
-bool AppSetting::getESCCloseMain() {
-    return _escCloseMain;
-}         // ESC是否退出主窗口
-
-void AppSetting::setESCCloseMain(bool flag) {
-    _escCloseMain = flag;
-}
-
-bool AppSetting::getShowGroupMembers() {
-    return _showGroupMembers;
-}     // 是否展示群成员列表
-
-void AppSetting::setShowGroupMembers(bool flag) {
-    _showGroupMembers = flag;
-}
-
-bool AppSetting::getSwitchChatScrollToBottom() {
-    return _switchChatScrollToBottom;
-} //切换会话是否滚动到最低下
-
-void AppSetting::setSwitchChatScrollToBottom(bool flag) {
-    _switchChatScrollToBottom = flag;
-}
-
 bool AppSetting::getAutoLoginEnable() {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
     return _autoLoginEnable;
@@ -507,16 +323,6 @@ void AppSetting::setAutoLoginEnable(bool flag) {
     _autoLoginEnable = flag;
 }
 
-bool AppSetting::getOpenLinkWithAppBrowser()
-{
-    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    return _openWithAppBrowser;
-}
-
-void AppSetting::setOpenLinkWithAppBrowser(bool flag) {
-    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    _openWithAppBrowser = flag;
-}
 
 bool AppSetting::getOpenOaLinkWithAppBrowser() {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
@@ -583,15 +389,26 @@ bool AppSetting::getAutoDeleteSession()
     return _autoDeleteSession;
 }
 
-std::string AppSetting::getCoEdit() {
+void AppSetting::setNewVersion(int ver) {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    return _coEditor;
+    _newVersion = ver;
 }
 
-void AppSetting::setCoEdit(const std::string& edit) {
+
+int AppSetting::getNewVersion() {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-    _coEditor = edit;
+    return _newVersion ;
 }
+
+//std::string AppSetting::getCoEdit() {
+//    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+//    return _coEditor;
+//}
+//
+//void AppSetting::setCoEdit(const std::string& edit) {
+//    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+//    _coEditor = edit;
+//}
 
 /**
  *
@@ -607,7 +424,6 @@ std::string AppSetting::saveAppSetting() {
 	cJSON_AddBoolToObject(obj, "NEWMSGTIPWINDOW", _newMsgTipWindowNotify);
 	cJSON_AddStringToObject(obj, "SCREENSHOT", _screenshotKey.data());
 	cJSON_AddStringToObject(obj, "WAKEWND", _wakeWndKey.data());
-	cJSON_AddBoolToObject(obj, "OPENWITHAPPBROWSER", _openWithAppBrowser);
 	cJSON_AddBoolToObject(obj, "OPENOAWITHAPPBROWSER", _openOaWithAppBrowser);
 	cJSON_AddBoolToObject(obj, "SCREENTSHOTHIDEWNDFLAG", _screentShotHideWndFlag);
 	cJSON_AddBoolToObject(obj, "SHOWSENDMESSAGEBTN", _showSendMessageBtn);
@@ -617,12 +433,15 @@ std::string AppSetting::saveAppSetting() {
     cJSON_AddBoolToObject(obj, "SHOWMOODFLAG", _showMoodFlag);
     cJSON_AddBoolToObject(obj, "AUTOSTARTUP", _autoStartUp);
     cJSON_AddBoolToObject(obj, "LEAVECHECKENABLE", _leaveCheckEnable);
-    cJSON_AddBoolToObject(obj, "AUTOREPLYPRESET", _autoReplyPreset);
+    cJSON_AddBoolToObject(obj, "AWAYSAUTOREPLY", _awaysAutoReply);
     cJSON_AddStringToObject(obj, "AUTOREPLYMSG", _autoReplyMsg.data());
-    cJSON_AddStringToObject(obj, "AUTOREPLYCUSMSG", _autoReplyCusMsg.data());
+//    cJSON_AddStringToObject(obj, "AUTOREPLYCUSMSG", _autoReplyCusMsg.data());
     cJSON_AddNumberToObject(obj, "LEAVEMINUTE", _leaveMinute);
     cJSON_AddBoolToObject(obj, "USENATIVEMESSAGEPROMPT", _useNativeMessagePrompt);
     cJSON_AddBoolToObject(obj, "AUTODELETESESSION", _autoDeleteSession);
+
+    cJSON_AddNumberToObject(obj, "AUTOREPLYSTARTTIME", _autoReplyStartTime);
+    cJSON_AddNumberToObject(obj, "AUTOREPLYENDTIME", _autoReplyEndTime);
 
 	ret = QTalk::JSON::cJSON_to_string(obj);
 	cJSON_Delete(obj);

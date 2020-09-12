@@ -32,6 +32,19 @@ public:
     std::string errorMessage;
 };
 
+// 重新获取导航信息
+class RefreshNavEvt : public Event {};
+
+// 回到登录窗口
+class GoBackLoginWndEvt : public Event {
+public:
+    std::string reason; // message
+};
+
+// 系统退出
+class SystemQuitEvt : public Event {};
+
+//
 class GetHistoryError : public Event{};
 
 //
@@ -47,6 +60,7 @@ public:
     std::string ip;
 };
 
+//
 class OperatorStatistics : public Event
 {
 public:
@@ -57,5 +71,13 @@ public:
     const std::string ip;
     const std::vector<QTalk::StActLog> operators;
 
+};
+
+//
+class ExceptCpuEvt : public Event {
+public:
+    double cpu;
+    long long time;
+    std::string stack;
 };
 #endif

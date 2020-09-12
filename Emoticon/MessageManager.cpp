@@ -101,7 +101,7 @@ void EmoMsgListener::onEvent(FileProcessMessage& e)
 {
 	if (e.getCanceled()) return;
 
-	EmoticonMainWgt::getInstance()->updateDownloadNetEmotiocnProcess(e.key, e.downloadTotal, e.downloadNow);
+    EmoticonMainWgt::instance()->updateDownloadNetEmotiocnProcess(e.key, e.downloadTotal, e.downloadNow);
 }
 
 /**
@@ -112,12 +112,12 @@ void EmoMsgListener::onEvent(UpdateUserConfigMsg &e)
 {
 	if (e.getCanceled()) return;
 
-	EmoticonMainWgt::getInstance()->updateCollectionConfig(e.arConfigs);
+    EmoticonMainWgt::instance()->updateCollectionConfig(e.arConfigs);
 }
 
 void EmoMsgListener::onEvent(IncrementConfig &e)
 {
     if (e.getCanceled()) return;
 
-    EmoticonMainWgt::getInstance()->updateCollectionConfig(e.deleteData, e.arImConfig);
+    EmoticonMainWgt::instance()->updateCollectionConfig(e.deleteData, e.arImConfig);
 }

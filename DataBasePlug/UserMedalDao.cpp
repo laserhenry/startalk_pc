@@ -7,7 +7,7 @@
 #include "../QtUtil/Entity/JID.h"
 
 UserMedalDao::UserMedalDao(qtalk::sqlite::database *sqlDb)
-    :DaoInterface(sqlDb)
+    :DaoInterface(sqlDb, "IM_User_Status_Medal")
 {
 
 }
@@ -32,22 +32,6 @@ bool UserMedalDao::creatTable() {
     }
     catch (const std::exception &e) {
         error_log("CREATE TABLE IM_User_Status_Medal error {0}", e.what());
-    }
-    return false;
-}
-
-bool UserMedalDao::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM IM_User_Status_Medal;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data IM_User_Status_Medal error {0}", e.what());
     }
     return false;
 }
@@ -90,7 +74,7 @@ void UserMedalDao::insertMedals(const std::vector<QTalk::Entity::ImUserStatusMed
     catch (const std::exception& e)
     {
         _pSqlDb->exec("rollback transaction;");
-        throw std::logic_error(e.what());
+        error_log("exception {0}", e.what());
     }
 }
 

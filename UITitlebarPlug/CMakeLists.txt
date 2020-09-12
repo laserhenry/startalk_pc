@@ -8,6 +8,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(Qt5Widgets)
+find_package(Qt5Concurrent)
 
 #
 set(SOURCE_FILES
@@ -69,4 +70,6 @@ ADD_LIBRARY(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${MAC_SOURCE_FILE})
 
 #添加链接库
 target_link_libraries(${PROJECT_NAME}
-        Qt5::Widgets EventBus Platform CustomUi qzxing QtUtil)
+        Qt5::Widgets
+        Qt5::Concurrent
+        EventBus Platform CustomUi qzxing QtUtil)

@@ -707,7 +707,10 @@ void LocalSearchMainWgt::onGetBeforeFileMessage(qint64 time)
         _pLoadingContent->movie()->start();
         _pStackedWidget->setCurrentWidget(_pLoadingContent);
     }
-
+    //
+    QModelIndex index{};
+    if(time != 0 && _pFileModel->rowCount() > 0)
+        index = _pFileSortModel->index(0, 0);
     //
     dealFileMessages(std::bind(&ChatMsgManager::getUserFileHistoryMessage,
                                  time, _uid));
@@ -717,8 +720,10 @@ void LocalSearchMainWgt::onGetBeforeFileMessage(qint64 time)
         _pLoadingContent->movie()->stop();
         _pStackedWidget->setCurrentWidget(_pFileListWgt);
     }
-    auto index = _pFileSortModel->index(0, 0);
-    _pFileListWgt->scrollTo(index, QAbstractItemView::PositionAtTop);
+    if(time == 0)
+        _pFileListWgt->scrollToBottom();
+    else if(index.isValid())
+        _pFileListWgt->scrollTo(index, QAbstractItemView::PositionAtCenter);
 }
 
 //
@@ -792,6 +797,7 @@ void LocalSearchMainWgt::onGetImageMessage(qint64 time) {
                         _pImageModel->insertRow(row++, items);
                         items.clear();
                     }
+                    _pImageView->setRowHeight(row, 50);
                     _pImageModel->insertRow(row++, QList<QStandardItem*>() << new QStandardItem << item);
                 }
 
@@ -808,16 +814,20 @@ void LocalSearchMainWgt::onGetImageMessage(qint64 time) {
                     break;
                 }
             }
+            _pImageView->setRowHeight(row, 105);
             _pImageModel->insertRow(row++, items);
         }
     }
-
     //
     if(_pLoadingContent)
     {
         _pLoadingContent->movie()->stop();
         _pStackedWidget->setCurrentWidget(_pImageView);
     }
+    //
+    QApplication::processEvents(QEventLoop::AllEvents, 300);
+    if(time == 0)
+        _pImageView->scrollToBottom();
 }
 
 //
@@ -882,6 +892,11 @@ void LocalSearchMainWgt::onGetLinkMessage(qint64 time) {
         _pLoadingContent->movie()->stop();
         _pStackedWidget->setCurrentWidget(_pLinkListView);
     }
+
+    //
+    QApplication::processEvents(QEventLoop::AllEvents, 300);
+    if(time == 0)
+        _pLinkListView->scrollToBottom();
 }
 
 void LocalSearchMainWgt::closeEvent(QCloseEvent *e) {

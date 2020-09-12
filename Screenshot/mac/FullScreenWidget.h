@@ -95,8 +95,6 @@ protected:
 	void mouseReleaseEvent(QMouseEvent *event);  
 	void mouseMoveEvent(QMouseEvent *event);
 	void mouseDoubleClickEvent(QMouseEvent *event);
-    virtual void timerEvent(QTimerEvent *);
-
     void contextMenuEvent(QContextMenuEvent *event);
 	QRect m_toolbarrect;
 private:

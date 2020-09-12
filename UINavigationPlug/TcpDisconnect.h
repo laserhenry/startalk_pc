@@ -5,14 +5,14 @@
 #endif
 #include <QFrame>
 
-class NavigationMianPanel;
+class NavigationMainPanel;
 class QLabel;
 class TcpDisconnect : public QFrame
 {
 	Q_OBJECT
 
 public:
-	explicit TcpDisconnect(NavigationMianPanel* pMainPanel, QWidget *parent = nullptr);
+	explicit TcpDisconnect(NavigationMainPanel* pMainPanel, QWidget *parent = nullptr);
 	~TcpDisconnect() override;
 
 public:
@@ -26,7 +26,7 @@ Q_SIGNALS:
     void sgSetText(const QString&);
 
 private:
-	NavigationMianPanel* _pMainPanel;
+	NavigationMainPanel* _pMainPanel;
 	QLabel*              _pTextLabel;
 };
 

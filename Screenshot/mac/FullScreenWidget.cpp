@@ -879,9 +879,6 @@ void FullScreenWidget::drawShotPictureInfo() {
                      QPoint(rec2ndBorder.x() + 59, rec2ndBorder.y() + 77));
 }
 
-void FullScreenWidget::timerEvent(QTimerEvent *) {
-}
-
 void FullScreenWidget::contextMenuEvent(QContextMenuEvent *event) {
     // 不能进行重载了,不区分焦点的位置。
 }

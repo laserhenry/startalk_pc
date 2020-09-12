@@ -20,9 +20,11 @@ QtMessageBox::QtMessageBox(QWidget* parent, int type, const QString& message, co
     if(parent == nullptr)
         this->setParent(UICom::getInstance()->getAcltiveMainWnd());
 
-    QLabel* pixLabel = new QLabel(this);
+    auto* pixLabel = new QLabel(this);
     mainMessageLabel = new QLabel(this);
     subMessageLabel = new QLabel(this);
+    mainMessageLabel->setTextFormat(Qt::PlainText);
+    subMessageLabel->setTextFormat(Qt::PlainText);
     //
     pixLabel->setFixedSize(22, 22);
     mainMessageLabel->setAlignment(Qt::AlignTop);

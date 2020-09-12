@@ -85,10 +85,15 @@ void PicItem::onScaleChange(int scaleVal, const QPoint &p) {
     }
 
     qreal multiple;
+#ifdef Q_OS_MAC
+    static const qreal sca = 1.05;
+#else
+    static const qreal sca = 1.1;
+#endif
     if (scaleVal > 0)
-        multiple = pow(1.1, scaleVal);
+        multiple = pow(sca, scaleVal);
     else
-        multiple = pow(1 / 1.1, -scaleVal);
+        multiple = pow(1 / sca, -scaleVal);
 
     setTransformOriginPoint(p);
     setScale(multiple);

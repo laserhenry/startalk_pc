@@ -12,7 +12,7 @@
 #include "../include/CommonStrcut.h"
 #include "../Message/GroupMessage.h"
 #include "../Message/StatusMessage.h"
-#include "../entity/im_friend_list.h"
+//#include "../entity/im_friend_list.h"
 #include "../entity/im_group.h"
 #include "../Message/UselessMessage.h"
 #include "../Message/LogicBaseMessage.h"
@@ -21,58 +21,55 @@
 class CommMsgManager : public Object
 {
 public:
-	CommMsgManager();
-	virtual ~CommMsgManager();
-
-public:
-    void sendDataBaseOpen();
-	void LoginSuccess(const std::string& strSessionId);
+    static void sendDataBaseOpen();
 //	void sendReconnectResult();
 //	void OnRecvIQMessage(IQMessageEvt& e);
     // 登录失败消息
-    void sendLoginErrMessage(const std::string& message);
-    void sendGetHistoryError();
-    void sendGotStructure(bool ret);
-    void sendSynOfflineSuccess();
-	void sendGotUserCard(const std::vector<QTalk::StUserCard> &userCard);
-    void sendGotUsersStatus(const std::map<std::string, std::string> &userStatus);
-	void sendDownloadHeadSuccess();
-	void sendGotGroupCard();
-	void sendDownloadGroupHeadSuccess();
-    void sendOnlineUpdate();
-	void gotGroupMember(GroupMemberMessage& e);
-	void updateGroupMemberInfo(const std::string& groupId, const std::vector<QTalk::StUserCard>& userCards);
-	void gotGroupTopic(const std::string& groupId, const std::string& topic);
-	void updateFileProcess(const std::string& key, double dltotal, double dlnow, double ultotal, double ulnow, double speed, double leftTime);
-	void downloadFileComplete(const std::string& key,const std::string& localPath,bool finish);
-	void onUpdateGroupInfo(std::shared_ptr<QTalk::StGroupInfo> info);
-	void onGroupJoinMember(std::shared_ptr<QTalk::StGroupMember> member);
+    static void sendLoginErrMessage(const std::string& message);
+    static void sendGetHistoryError();
+    static void sendGotStructure(bool ret);
+    static void sendSynOfflineSuccess();
+	static void sendGotUserCard(const std::vector<QTalk::StUserCard> &userCard);
+    static void sendGotUsersStatus(const std::map<std::string, std::string> &userStatus);
+	static void sendDownloadHeadSuccess();
+	static void sendGotGroupCard();
+	static void sendDownloadGroupHeadSuccess();
+    static void sendOnlineUpdate();
+	static void gotGroupMember(GroupMemberMessage& e);
+	static void updateGroupMemberInfo(const std::string& groupId, const std::vector<QTalk::StUserCard>& userCards);
+	static void gotGroupTopic(const std::string& groupId, const std::string& topic);
+	static void updateFileProcess(const std::string& key, double dltotal, double dlnow, double ultotal, double ulnow, double speed, double leftTime);
+//	static void downloadFileComplete(const std::string& key,const std::string& localPath,bool finish);
+	static void onUpdateGroupInfo(std::shared_ptr<QTalk::StGroupInfo> info);
+	static void onGroupJoinMember(std::shared_ptr<QTalk::StGroupMember> member);
 
-    void updateUserConfigs(const std::vector<QTalk::Entity::ImConfig>& arConfigs);
-    void incrementConfigs(const std::map<std::string, std::string> &deleteData,
+    static void updateUserConfigs(const std::vector<QTalk::Entity::ImConfig>& arConfigs);
+    static void incrementConfigs(const std::map<std::string, std::string> &deleteData,
             const std::vector<QTalk::Entity::ImConfig>& arImConfig);
     //
-    void sendLoginProcessMessage(const std::string& message);
+    static void sendLoginProcessMessage(const std::string& message);
 	//
-	void sendGotFriends(const std::vector<QTalk::Entity::IMFriendList>& friends);
-	void sendGotGroupList(const std::vector<QTalk::Entity::ImGroupInfo>& groups);
+//    static void sendGotFriends(const std::vector<QTalk::Entity::IMFriendList>& friends);
+    static void sendGotGroupList(const std::vector<QTalk::Entity::ImGroupInfo>& groups);
 
-    void removeSession(const std::string& peerId);
+    static void removeSession(const std::string& peerId);
 	//
-	void sendLogReportRet(bool isSuccess, const std::string& msg);
-	void sendFileWritedMessage(const std::string& localPath);
+    static void sendLogReportRet(bool isSuccess, const std::string& msg);
+    static void sendFileWritedMessage(const std::string& localPath);
 	//
-	void changeHeadRetMessage(bool ret, const std::string& locaHead);
+    static void changeHeadRetMessage(bool ret, const std::string& locaHead);
 	//
-	void updateMoodRet(const std::string& userId, const std::string& mood);
+    static void updateMoodRet(const std::string& userId, const std::string& mood);
 
 	//qchat 会话转移
-	void setSeatList(QTalk::Entity::UID uid,std::vector<QTalk::Entity::ImTransfer> transfers);
+    static void setSeatList(QTalk::Entity::UID uid,std::vector<QTalk::Entity::ImTransfer> transfers);
 	//
-	void gotIncrementUser(const std::vector<QTalk::Entity::ImUserInfo> &arUserInfo,
+    static void gotIncrementUser(const std::vector<QTalk::Entity::ImUserInfo> &arUserInfo,
 	        const std::vector<std::string> &arDeletes);
 
-	void onUserMadelChanged(const std::vector<QTalk::Entity::ImUserStatusMedal>& userMedals);
+    static void onUserMadelChanged(const std::vector<QTalk::Entity::ImUserStatusMedal>& userMedals);
+	//
+	static void onCheckUpdate(bool hasUpdate, bool force);
 };
 
 // 
@@ -152,7 +149,7 @@ class CommMsgListener :
 		, public EventHandler<S_RecvGroupMemberEvt>
 		, public EventHandler<CreatGroupRet>
 		, public EventHandler<S_InviteGroupMemberEvt>
-		, public EventHandler<S_AllFriendsEvt>
+//		, public EventHandler<S_AllFriendsEvt>
 		, public EventHandler<S_DealBind>
 		, public EventHandler<S_UpdateTimeStamp>
 		, public EventHandler<S_UserConfigChanged>
@@ -170,6 +167,8 @@ class CommMsgListener :
 		, public EventHandler<GetMedalUserEvt>
 		, public EventHandler<ModifyUserMedalStatusEvt>
 		, public EventHandler<NetHistoryMessage>
+		, public EventHandler<ReportLogin>
+		, public EventHandler<ExceptCpuEvt>
 
 {
 public:
@@ -256,7 +255,7 @@ public:
 	//
 	void onEvent(S_InviteGroupMemberEvt& e) override ;
 	//
-    void onEvent(S_AllFriendsEvt& e) override ;
+//    void onEvent(S_AllFriendsEvt& e) override ;
     //
     void onEvent(S_DealBind& e) override ;
     //
@@ -286,6 +285,10 @@ public:
     void onEvent(ModifyUserMedalStatusEvt& e) override;
     //
     void onEvent(NetHistoryMessage &e) override ;
+    //
+    void onEvent(ReportLogin &e) override ;
+    //
+    void onEvent(ExceptCpuEvt &e) override ;
 
 private:
 	Communication*       _pComm;

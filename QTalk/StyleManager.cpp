@@ -1,9 +1,9 @@
-﻿#include "stylesheetmanager.h"
+﻿#include "StyleManager.h"
 #include <QFile>
 #include <QApplication>
 #include <set>
 #include <QDebug>
-#include "UIGolbalManager.h"
+#include "GlobalManager.h"
 #include "../interface/view/UIPluginInterface.h"
 
 //
@@ -31,23 +31,18 @@ void adjustFontSize(QString& qss)
     }
 }
 
-StyleSheetManager::StyleSheetManager(QObject *parent)
-{
-
-}
-
 /**
   * @函数名
   * @功能描述
   * @参数
   * @date 2018.9.17
   */
-void StyleSheetManager::setStyleSheets(int theme, const std::string& font)
+void StyleManager::setStyleSheets(int theme, const std::string& font)
 {
     // 设置app qss
     setStylesForApp(theme, font);
     //
-    std::shared_ptr<QMap<QString, QObject *> > plugins = UIGolbalManager::getUIGolbalManager()->getAllPluginInstanceQt();
+    std::shared_ptr<QMap<QString, QObject *> > plugins = GlobalManager::instance()->getAllPluginInstanceQt();
     for (const QString& pluginName : plugins->keys()) {
         QObject * plugin = plugins->value(pluginName);
         if (plugin)
@@ -77,7 +72,7 @@ void StyleSheetManager::setStyleSheets(int theme, const std::string& font)
   * @参数
   * @date 2018.9.17
   */
-void StyleSheetManager::setStylesForApp(int theme, const std::string& font)
+void StyleManager::setStylesForApp(int theme, const std::string& font)
 {
     QString qss;
     //
@@ -120,7 +115,7 @@ void StyleSheetManager::setStylesForApp(int theme, const std::string& font)
   * @参数
   * @date 2018.9.17
   */
-void StyleSheetManager::setStyleSheetForPlugin(const QString& plgName, int theme)
+void StyleManager::setStyleSheetForPlugin(const QString& plgName, int theme)
 {
     QString styleSheetPath = QString(":/style/style%1/%2.qss").arg(theme).arg(plgName);
 //    QJsonObject obj = Get("styles").toObject();
@@ -128,7 +123,7 @@ void StyleSheetManager::setStyleSheetForPlugin(const QString& plgName, int theme
     if (QFile::exists(styleSheetPath))
     {
         QFile file(styleSheetPath);
-        QObject* plugin = UIGolbalManager::getUIGolbalManager()->getPluginInstanceQt(plgName);
+        QObject* plugin = GlobalManager::instance()->getPluginInstanceQt(plgName);
         if (plugin)
         {
             auto *plug = dynamic_cast<UIPluginInterface *>(plugin);

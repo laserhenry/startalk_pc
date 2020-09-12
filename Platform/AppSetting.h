@@ -22,16 +22,11 @@ public:
         MostBig,
     };
 
-    enum SendMsgKey {
-        Enter,
-        CtrlEnter,
-    };
-
-    enum AddFriendMode {
-        AllAgree,           //全部接受
-        QuestionAndAnswer,  //需要问答
-        NeedAgree,          //需要确认
-    };
+//    enum AddFriendMode {
+//        AllAgree,           //全部接受
+//        QuestionAndAnswer,  //需要问答
+//        NeedAgree,          //需要确认
+//    };
 
 public:
     std::string saveAppSetting();
@@ -55,10 +50,6 @@ public:
     void setScreenshotHotKey(const std::string& hotKey);
     std::string getWakeWndHotKey();        //截图快捷键
     void setWakeWndHotKey(const std::string& hotKey);
-    int  getSearchUserFlag();        //搜索快捷键
-    void setSearchUserFlag(int flagValue);
-    int  getSearchUserKey();
-    void setSearchUserKey(int keyValue);
 
     void setScreentShotHideWndFlag(bool hide);
     bool getScreentShotHideWndFlag();
@@ -72,49 +63,29 @@ public:
     void setAutoDeleteSession(bool autoDelete);
     bool getAutoDeleteSession();
 
-    bool getSessionShowTopAndUnread(); //会话列表紧显示未读和置顶
-    void setSessionShowTopAndUnread(bool flag);
-    bool getSessionListLimitEnable();  //是否开启会话列表加载的会话数
-    void setSessionListLimitEnable(bool flag);
-    int  getSessionListLimit();        //会话列表最大会话数
-    void setSessionListLimit(int limit);
-    SendMsgKey getSendMsgType();      //发送消息类型
-    void setSendMsgType(SendMsgKey key);
-    bool getSessionAutoRecover();      //是否开启会话自动回收
-    void setSessionAutoRecover(bool flag);
-    int  getSessionAutoRecoverCount(); //同时存在的会话数
-    void setSessionAutoRecoverCount(int count);
-    bool getMsgHistoryLimitEnable();   //是否开启会话框消息条数限制
-    void setMsgHistoryLimitEnable(bool flag);
-    int  getMsgHistoryLimit();         //会话框历史消息条数
-    void setMsgHistoryLimit(int limit);
-    bool getMsgFontSetEnable();        //是否开启消息字号设置
-    void setMsgFontSetEnable(bool flag);
-    MsgFontSize getMsgFontSize();      //字号
-    void setMsgFontSize(MsgFontSize size);
     // 自动回复
-    bool getLeaveCheckEnable();
-    void setLeaveCheckEnable(bool flag);
+    bool getAutoReplyEnable();
+    void setAutoReplyEnable(bool flag);
     int  getLeaveMinute();
     void setLeaveMinute(int minute);
-    bool getAutoReplyPreset();
-    void setAutoReplyPreset(bool flag);
+    bool getAwaysAutoReply();
+    void setAwaysAutoReply(bool flag);
     std::string getAutoReplyMsg();
     void setAutoReplyMsg(std::string msg);
-    std::string getAutoReplyCusMsg();
-    void setAutoReplyCusMsg(std::string msg);
+//    std::string getAutoReplyCusMsg();
+//    void setAutoReplyCusMsg(std::string msg);
+
+    void setAutoReplyStartTime(int time);
+    void setAutoReplyEndTime(int time);
+    bool withinEnableTime(int hour);
+    int getAutoReplyStartTime();
+    int getAutoReplyEndTime();
+
     // 文件目录
     std::string getUserDirectory();
     void setUserDirectory(const std::string& userDirectory);
     std::string getFileSaveDirectory();
     void setFileSaveDirectory(const std::string& fileSaveDirectory);
-    // 好友权限
-    AddFriendMode getAddFriendMode();
-    void setAddFriendMode(AddFriendMode mode);
-    std::string getQuestion();
-    void setQuestion(std::string question);
-    std::string getAnswer();
-    void setAnswer(std::string answer);
     // 皮肤设置
     int getThemeMode();
     void setThemeMode(int mode);
@@ -124,28 +95,11 @@ public:
     bool getSelfStart();            // 开机自启动
     void setSelfStart(bool flag);
 
-    void setLogLevel(int level);
-    int getLogLevel();
+//    void setLogLevel(int level);
+//    int getLogLevel();
 
-    bool getExitMainClose();        // 关闭会话框，退出程序
-    void setExitMainClose(bool flag);
-    bool getGroupDestroyNotify();   // 群组销毁提示
-    void setGroupDestroyNotify(bool flag);
-    bool getShockWindow();          // 窗口震动
-    void setShockWindow(bool flag);
-    bool getRecordLogEnable();      // 是否记录日志
-    void setRecordLogEnable(bool flag);
-    bool getESCCloseMain();         // ESC是否退出主窗口
-    void setESCCloseMain(bool flag);
-    bool getShowGroupMembers();     // 是否展示群成员列表
-    void setShowGroupMembers(bool flag);
-    bool getSwitchChatScrollToBottom(); //切换会话是否滚动到最低下
-    void setSwitchChatScrollToBottom(bool flag);
     bool getAutoLoginEnable();            // 是否自动登录
     void setAutoLoginEnable(bool flag);
-
-    bool getOpenLinkWithAppBrowser(); // 使用内置浏览器打开聊天链接
-    void setOpenLinkWithAppBrowser(bool flag);
 
     bool getOpenOaLinkWithAppBrowser(); // 使用内置浏览器打开OA链接
     void setOpenOaLinkWithAppBrowser(bool flag);
@@ -161,8 +115,8 @@ public:
     void setUseNativeMessagePrompt(bool flag) { _useNativeMessagePrompt = flag; };
     bool getUseNativeMessagePrompt() { return _supportNativeMessagePrompt && _useNativeMessagePrompt; };
 
-    void setCoEdit(const std::string& coEdit);
-    std::string getCoEdit();
+//    void setCoEdit(const std::string& coEdit);
+//    std::string getCoEdit();
 
     enum {FONT_LEVEL_NORMAL = 0, FONT_LEVEL_BIG, FONT_LEVEL_SMALL};
     void setFontLevel(int level);
@@ -170,6 +124,10 @@ public:
     //
     void setLanguage(int language);
     int getLanguage();
+
+public:
+    void setNewVersion(int version);
+    int getNewVersion();
 
 private:
 
@@ -184,8 +142,6 @@ private:
     bool _hotCutEnable;          //热键是否开启
     std::string  _screenshotKey; // 截图快捷键
     std::string  _wakeWndKey; // 唤醒屏幕快捷键
-    int  _searchUserFlag;        //搜索快捷键
-    int  _searchUserKey;
     bool _screentShotHideWndFlag;
 
     // 会话设置
@@ -193,32 +149,19 @@ private:
     bool _showMoodFlag;
     bool _autoDeleteSession;
 
-    bool _sessionShowTopAndUnread; //会话列表紧显示未读和置顶
-    bool _sessionListLimitEnable;  //是否开启会话列表加载的会话数
-    int  _sessionListLimit;        //会话列表最大会话数
-    SendMsgKey  _sendMsgType;      //发送消息类型
-    bool _sessionAutoRecover;      //是否开启会话自动回收
-    int  _sessionAutoRecoverCount; //同时存在的会话数
-    bool _msgHistoryLimitEnable;   //是否开启会话框消息条数限制
-    int  _msgHistoryLimit;         //会话框历史消息条数
-    bool _msgFontSetEnable;        //是否开启消息字号设置
-    MsgFontSize _msgFontSize;      //字号
-
     // 自动回复
     bool _leaveCheckEnable;
-    int  _leaveMinute;
-    bool _autoReplyPreset;
+    int  _leaveMinute{5};
+//    bool _autoReplyPreset;
     std::string _autoReplyMsg;
-    std::string _autoReplyCusMsg;
+//    std::string _autoReplyCusMsg;
+    int _autoReplyStartTime{0};
+    int _autoReplyEndTime{24};
+    bool _awaysAutoReply{false};
 
     // 文件目录
     std::string _userDirectory;
     std::string _fileSaveDirectory;
-
-    // 好友权限
-    AddFriendMode _addFriendMode;
-    std::string _question;
-    std::string _answer;
 
     // 皮肤设置
     int _themeMode;
@@ -228,32 +171,21 @@ private:
 
     // 其他设置
     bool _autoStartUp;            // 开机自启动
-    bool _exitMainClose;        // 关闭会话框，退出程序
-    bool _groupDestroyNotify;   // 群组销毁提示
-    bool _shockWindow;          // 窗口震动
-    bool _recordLogEnable;      // 是否记录日志
-    bool _escCloseMain;         // ESC是否退出主窗口
-    bool _showGroupMembers;     // 是否展示群成员列表
-    bool _switchChatScrollToBottom; //切换会话是否滚动到最低下
-    bool _autoLoginEnable;            // 是否自动登录
-    bool _openWithAppBrowser;
+    bool _autoLoginEnable;
     bool _openOaWithAppBrowser;
     bool _showSendMessageBtn;
     int _channel;
-    int _logLevel;
+//    int _logLevel;
     //
     bool _supportNativeMessagePrompt;
     bool _useNativeMessagePrompt;
     //
-    bool _showQuanWnd = false;
-
-    std::string _coEditor;
+    int _newVersion {};
 
 public:
     bool with_ssl = true;
 
 private:
-	static AppSetting* _appSetting;
     QTalk::util::spin_mutex sm;
 
 public:

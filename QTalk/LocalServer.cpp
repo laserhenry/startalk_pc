@@ -23,7 +23,7 @@ LocalServer::LocalServer() {
 }
 
 LocalServer::~LocalServer() {
-
+    _pServer->close();
 }
 
 void LocalServer::runServer(const QString &listenName) {
@@ -39,6 +39,9 @@ void LocalServer::runServer(const QString &listenName) {
 void LocalServer::onNewClient() {
     auto socket = _pServer->nextPendingConnection();
     connect(socket, &QLocalSocket::readyRead, this, &LocalServer::socketReadyReadHandler);
+    connect(socket, &QLocalSocket::disconnected, [this, socket](){
+        _datas.erase(socket);
+    });
     connect(socket, &QLocalSocket::disconnected, socket, &QLocalSocket::deleteLater);
 }
 
@@ -71,9 +74,9 @@ void sendBaseInfo(QLocalSocket* socket)
     obj.insert("type", package_response);
     obj.insert("response_type", request_base_info);
     QJsonObject detail;
-    detail.insert("login_user", Platform::instance().getSelfXmppId().data());
-    detail.insert("login_nav", Platform::instance().getLoginNav().data());
-    detail.insert("ckey", Platform::instance().getClientAuthKey().data());
+    detail.insert("login_user", PLAT.getSelfXmppId().data());
+    detail.insert("login_nav", PLAT.getLoginNav().data());
+    detail.insert("ckey", PLAT.getClientAuthKey().data());
     obj.insert("data", detail);
     QJsonDocument document;
     document.setObject(obj);
@@ -94,7 +97,7 @@ void sendUserInfo(QLocalSocket* socket, const QJsonArray& users)
     {
         QJsonObject userInfo;
         std::string userId = tmp.toString().toStdString();
-        auto info = dbPlatForm::instance().getUserInfo(userId);
+        auto info = DB_PLAT.getUserInfo(userId);
         userInfo.insert("user_id", tmp);
         if(info)
         {
@@ -129,7 +132,7 @@ void LocalServer::dealMessage(QLocalSocket* socket, const QByteArray& arrayData)
     QJsonDocument document = QJsonDocument::fromJson(arrayData, &error);
     if(document.isEmpty())
     {
-        qInfo() << "LocalServer json error" << error.errorString();
+        qWarning() << "LocalServer json error" << error.errorString();
     }
     else
     {
@@ -185,14 +188,19 @@ void LocalServer::socketReadyReadHandler()
     auto* socket = dynamic_cast<QLocalSocket*>(sender());
     if (socket)
     {
-        auto data = socket->readAll();
-        while (!data.isEmpty())
+        auto& data = _datas[socket];
+        data += socket->readAll();
+        if (data.size() > sizeof(int))
         {
             //
             int headerlen = sizeof(int);
             auto header = data.left(headerlen);
-            data = data.mid(headerlen);
             int len = *(int*)((void*)header.data());
+//            if (data.size() < len + sizeof(int))
+//                data += socket->readAll();
+            if (data.size() < len + sizeof(int))
+                return;
+            data = data.mid(headerlen);
             //
             auto body = data.left(len);
             data = data.mid(len);

@@ -11,8 +11,9 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QDesktopServices>
+#include <QDebug>
+#include <QSharedPointer>
 
-NTMessageBox *NTMessageBox::_box = nullptr;
 NTMessageBox::NTMessageBox(QWidget* parent, const QString& message, int buttons)
         : UShadowDialog(parent, true), _retButton(EM_BUTTON_INVALID)
 {
@@ -82,6 +83,11 @@ NTMessageBox::NTMessageBox(QWidget* parent, const QString& message, int buttons)
 #endif
 }
 
+NTMessageBox::~NTMessageBox()
+{
+    qInfo() << mainMessageLabel->text() << "delete";
+}
+
 void NTMessageBox::keyPressEvent(QKeyEvent *e) {
     if(e == QKeySequence::Copy)
     {
@@ -112,7 +118,7 @@ void NTMessageBox::keyPressEvent(QKeyEvent *e) {
 }
 
 int NTMessageBox::showMessage(QWidget *parent, const QString &message, int buttons) {
-    _box = new NTMessageBox(parent, message, buttons);
+    auto _box = QSharedPointer<NTMessageBox>(new NTMessageBox(parent, message, buttons));
     _box->showModel();
     _box->_evtLoop->exec();
     int ret = _box->_retButton;

@@ -1,9 +1,13 @@
 ﻿#include "GroupMemberDao.h"
 #include "../QtUtil/Utils/Log.h"
+#include <time.h>
+#ifdef _WINDOWS
+#include<windows.h>
+#endif
 
 
 GroupMemberDao::GroupMemberDao(qtalk::sqlite::database *sqlDb)
-        : DaoInterface(sqlDb) {
+        : DaoInterface(sqlDb, "IM_Group_Member") {
 
 }
 
@@ -42,25 +46,6 @@ bool GroupMemberDao::creatTable() {
     }
 }
 
-/**
- * clearData
- * @return
- */
-bool GroupMemberDao::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM `IM_Group_Member`;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data IM_Group_Member error {0}", e.what());
-        return false;
-    }
-}
 
 /**
   * @函数名   getGroupInfoById
@@ -128,7 +113,7 @@ bool GroupMemberDao::bulkInsertGroupMember(const std::string &groupId, const std
             query.bind(1, groupId);
             query.bind(2, member.first);
             query.bind(3, member.second);
-            bool sqlResult = query.executeStep();
+            auto sqlResult = query.executeStep();
             query.resetBindings();
 
             if (!sqlResult) {
@@ -189,12 +174,16 @@ void GroupMemberDao::getCareUsers(std::set<std::string>& users)
         return;
     }
 
+
     std::string sql = "select distinct memberId from IM_Group_Member where GroupId in "
-                      "(select distinct xmppid from IM_SessionList where ChatType = 1 order by LastUpdateTime desc limit 20 ) "
+                      "(select distinct xmppid from IM_SessionList where ChatType = 1 and LastUpdateTime > ? order by LastUpdateTime desc limit 20 ) "
                       "union "
                       "select distinct xmppid from IM_SessionList where ChatType = 0";
 
     qtalk::sqlite::statement query(*_pSqlDb, sql);
+    time_t now = time(0);
+    long long lastTime = (now - 5 * 24 * 60 * 60) * 1000;
+    query.bind(1, lastTime);
 
     while (query.executeNext())
     {

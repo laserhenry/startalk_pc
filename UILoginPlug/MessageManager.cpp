@@ -3,14 +3,6 @@
 #include "LoginPanel.h"
 #include "../QtUtil/Utils/Log.h"
 #include <QDebug>
-UILoginMsgManager::UILoginMsgManager()
-{
-}
-
-
-UILoginMsgManager::~UILoginMsgManager()
-{
-}
 
 // 发送登陆消息
 bool UILoginMsgManager::SendLoginMessage(const std::string& userName, const std::string& password)

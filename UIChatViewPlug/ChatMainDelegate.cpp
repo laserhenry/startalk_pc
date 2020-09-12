@@ -172,8 +172,11 @@ QWidget* ChatMainDelegate::creatWgt(const QModelIndex &index)
         }
     }
 
-    auto *base = dynamic_cast<MessageItemBase*>(item);
+//    info_log("create message item {0} -> {1}", info.xmpp_id.toStdString(), info.msg_id.toStdString());
+    auto *base = qobject_cast<MessageItemBase*>(item);
     if(!base) return item;
+    //
+
     base->showShareCheckBtn(showShare);
     _mapItems.insert(info.msg_id, base);
     if (info.state) {
@@ -279,7 +282,11 @@ QSize getsize(const std::vector<StTextMessage>& messages, qreal width)
                 linkFormat.setForeground(QBrush(QTalk::StyleDefine::instance().getLinkUrl()));
                 linkFormat.setAnchor(true);
                 linkFormat.setAnchorHref(msg.content);
+#if QT_DEPRECATED_SINCE(5, 13)
+                linkFormat.setAnchorNames(QStringList() << msg.content);
+#else
                 linkFormat.setAnchorName(msg.content);
+#endif
                 pBrowser->textCursor().insertText(msg.content, linkFormat);
 
                 pBrowser->setCurrentCharFormat(f);
@@ -297,8 +304,8 @@ QSize getsize(const std::vector<StTextMessage>& messages, qreal width)
     }
     
     pBrowser->document()->setTextWidth(width);
-    auto docSize = pBrowser->document()->size();
-    QSize ret((int)width, docSize.height() + 43);
+    QSizeF docSize = pBrowser->document()->size();
+    QSize ret((int)width, (int)docSize.height() + 43);
     delete pBrowser;
     return ret;
 }

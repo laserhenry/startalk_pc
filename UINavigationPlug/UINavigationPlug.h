@@ -3,7 +3,7 @@
 
 #include "uinavigationplug_global.h"
 #include "../interface/view/IUINavigationPlug.h"
-#include "NavigationMianPanel.h"
+#include "NavigationMainPanel.h"
 
 class UINAVIGATIONPLUGSHARED_EXPORT UINavigationPlug : public QObject, public IUINavigationPlug
 {
@@ -25,7 +25,7 @@ private:
     void updateReadCount() override;
 
 private:
-    NavigationMianPanel * _mainPanel;
+    NavigationMainPanel * _mainPanel;
 
 };
 

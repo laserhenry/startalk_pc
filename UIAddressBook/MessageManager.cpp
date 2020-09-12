@@ -3,14 +3,6 @@
 #include "AddressBookPanel.h"
 #include "../QtUtil/Utils/Log.h"
 
-
-AddressBookMsgManager::AddressBookMsgManager() {
-}
-
-
-AddressBookMsgManager::~AddressBookMsgManager() {
-}
-
 /**
  *
  * @param imUserSup
@@ -110,7 +102,7 @@ void AddressBookMsgManager::getUserInfo(std::shared_ptr<QTalk::Entity::ImUserInf
 AddressBookListener::AddressBookListener(AddressBookPanel *mainPanel)
         : _mainPanel(mainPanel) {
 	EventBus::AddHandler<UpdateUserConfigMsg>(*this);
-	EventBus::AddHandler<AllFriends>(*this);
+//	EventBus::AddHandler<AllFriends>(*this);
 	EventBus::AddHandler<AllGroupList>(*this);
 	EventBus::AddHandler<CreatGroupRet>(*this);
 	EventBus::AddHandler<DestroyGroupRet>(*this);
@@ -130,13 +122,13 @@ void AddressBookListener::onEvent(UpdateUserConfigMsg &e) {
     }
 }
 
-void AddressBookListener::onEvent(AllFriends &e) {
-    if (e.getCanceled()) return;
-
-    if (_mainPanel) {
-        _mainPanel->onRecvFriends(e.friends);
-    }
-}
+//void AddressBookListener::onEvent(AllFriends &e) {
+//    if (e.getCanceled()) return;
+//
+//    if (_mainPanel) {
+//        _mainPanel->onRecvFriends(e.friends);
+//    }
+//}
 
 void AddressBookListener::onEvent(AllGroupList &e) {
     if (e.getCanceled()) return;

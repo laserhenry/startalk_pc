@@ -15,7 +15,7 @@
 SessionBtn::SessionBtn(QWidget *parnet)
     : QToolButton(parnet), _unreadCount(0)
 {
-    //setUnreadCount(dbPlatForm::instance().getAllUnreadCount());
+    //setUnreadCount(DB_PLAT.getAllUnreadCount());
 //    connect(this, &SessionBtn::clicked, this, &SessionBtn::setUnreadCount);
 }
 

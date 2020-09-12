@@ -89,7 +89,6 @@ protected:
 private:
     void init();
     void connects();
-    void adaptiveResolution();
 
 private slots:
     void showSmall();
@@ -125,43 +124,43 @@ Q_SIGNALS:
 #endif
     void sgShowMessageRecordWnd(const QString&, const QString&);
     void sgShowFileRecordWnd(const QString&);
+    void sgShowThrowingScreenWnd();
 
 private:
-    QFrame * _leftCorFrm;
-    SeachEditPanel * _searchFrm;
-    QToolButton * _pQuickBtn; // 二维码
-    SessionBtn * _sessionBtn; // 会话
-    QToolButton * _contactBtn; // 联系人
-    QToolButton * _multifunctionBtn; // 多功能
-    HeadPhotoLab *_userBtn;
-    QFrame * _maxminFrm;
-    QToolButton * _minimizeBtn;
-    QToolButton * _maximizeBtn;
-    QToolButton * _restoreBtn;
-    QToolButton * _closeBtn;
-    QHBoxLayout * _hbox;
+    QFrame         * _leftCorFrm{};
+    SeachEditPanel * _searchFrm{};
+    QToolButton    * _pQuickBtn{}; // 二维码
+    SessionBtn     * _sessionBtn{}; // 会话
+    QToolButton    * _contactBtn{}; // 联系人
+    QToolButton    * _multifunctionBtn{}; // 多功能
+    HeadPhotoLab   *_userBtn{};
+    QFrame         * _maxminFrm{};
+    QToolButton    * _minimizeBtn{};
+    QToolButton    * _maximizeBtn{};
+    QToolButton    * _restoreBtn{};
+    QToolButton    * _closeBtn{};
+    QHBoxLayout    * _hbox{};
 
-    QWidget *_pCtrlWdt;
+    QWidget        *_pCtrlWdt{};
     MainPanelProperty _property;
-    SearchResultPanel *_pSearchResultPanel;
+    SearchResultPanel *_pSearchResultPanel{};
     //
 private:
-    DropMenu*    _dropMenu;
-    QMenu*      _pQuickMenu;
+    DropMenu*    _dropMenu{};
+    QMenu*       _pQuickMenu{};
 
 
 private:
-    AboutWnd* _pAboutWnd;
-    SystemSettingWnd* _pSystemSettingWnd;
-    ChangeHeadWnd* _pChangeHeadWnd;
+    AboutWnd*         _pAboutWnd{};
+    SystemSettingWnd* _pSystemSettingWnd{};
+    ChangeHeadWnd*    _pChangeHeadWnd{};
 
 private:
-	TitlebarMsgManager*  _pMessageManager;
-	TitlebarMsgListener* _pMessageListener;
+	TitlebarMsgListener* _pMessageListener{};
 
 private:
     QPoint chickPos;
-    bool _press;
+    bool _press{};
 
 private:
     QString _headPath;

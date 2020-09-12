@@ -13,41 +13,34 @@
 
 #define DEM_NAV_KEYS "navKeys"
 #define DEM_DEFAULT_KEY "defaultKey"
-#ifdef _QCHAT
+#define DEM_CONFIG_VERSION "version"
+
 #define DEM_DEFAULT_NAV ""
-#else
-#define DEM_DEFAULT_NAV ""
-#endif
 
 #define DEM_ROOT_TAG "NavConfig"
 
 NavManager::NavManager(LoginPanel *loginPanel)
-    : UShadowDialog(loginPanel, true)
-    , _pLoginPanel(loginPanel)
+        : UShadowDialog(loginPanel, true)
+        , _pLoginPanel(loginPanel)
 {
     initConfig();
     initUi();
 }
 
-NavManager::~NavManager()
-{
-
-}
-
 void NavManager::initConfig()
 {
-    std::string configDirPath = Platform::instance().getConfigPath();
+    std::string configDirPath = PLAT.getConfigPath();
     std::string oldConfig = configDirPath + "/NavConf";
     std::string newConfig = configDirPath + "/NavConf.data";
 
-	QFileInfo oldConfigInfo(oldConfig.data());
-	bool initoldconfig = false;
+    QFileInfo oldConfigInfo(oldConfig.data());
+    bool initoldconfig = false;
     if (oldConfigInfo.exists() && (oldConfigInfo.size() > 0) && !QFile::exists(newConfig.data()))
     {
         auto* _pConfigloader = new QTalk::ConfigLoader(oldConfig.c_str());
         if(_pConfigloader->reload())
         {
-			initoldconfig = true;
+            initoldconfig = true;
             // 读取配置文件
             QString keys = QString::fromStdString(_pConfigloader->getString(DEM_NAV_KEYS));
             // 读取配置
@@ -92,7 +85,7 @@ void NavManager::initConfig()
 //                delete _pConfigloader;
         }
     }
-	//
+    //
     if(!initoldconfig)
     {
 
@@ -103,14 +96,14 @@ void NavManager::initConfig()
             QDir dir;
             dir.mkpath(configDirPath.data());
         }
+
         //
         if(QFile::exists(newConfig.data()))
         {
             QTalk::qConfig::loadConfig(newConfig.data(), false, navConfig);
             if(navConfig->tagName == DEM_ROOT_TAG &&
-                navConfig->hasAttribute(DEM_DEFAULT_KEY) &&
-                !navConfig->children.empty())
-            {
+               navConfig->hasAttribute(DEM_DEFAULT_KEY) &&
+               !navConfig->children.empty()) {
                 _defaultKey = navConfig->attribute(DEM_DEFAULT_KEY);
 
                 for(const auto& item : navConfig->children)
@@ -123,33 +116,37 @@ void NavManager::initConfig()
 
                     _mapNav[stNav.name] = stNav;
                 }
-                delete navConfig;
-                return;
+
+                if(navConfig) {
+                    delete navConfig;
+                    navConfig = nullptr;
+                    return;
+                }
             }
-            delete navConfig;
+            else {
+                qWarning() << "invalid nav config, --> delete it";
+                QFile::remove(configDirPath.data());
+            }
         }
 //        else
         {
 #ifndef _STARTALK
-        // 默认设置
-        StNav stNav;
-#ifdef _QCHAT
-        stNav.name = "QChat";
-#else
-        stNav.name = "QTalk";
-#endif
-        stNav.domain = _pLoginPanel->getDomainByNav(DEM_DEFAULT_NAV);
-        stNav.url = DEM_DEFAULT_NAV;
-        stNav.debug = false;
+            // 默认设置
+            StNav stNav;
+            stNav.name = "QTalk";
+            stNav.domain = _pLoginPanel->getDomainByNav(DEM_DEFAULT_NAV);
+            stNav.url = DEM_DEFAULT_NAV;
+            stNav.debug = false;
 
-        _mapNav[stNav.name] = stNav;
-        _defaultKey = stNav.name;
+            _mapNav[stNav.name] = stNav;
+            _defaultKey = stNav.name;
 
-        saveConfig();
+            saveConfig();
 #endif
         }
-
-        delete navConfig;
+        if(navConfig) {
+            delete navConfig;
+        }
     }
 
 }
@@ -223,7 +220,7 @@ void NavManager::initUi()
  */
 void NavManager::saveConfig()
 {
-    std::string newConfig = Platform::instance().getConfigPath() + "/NavConf.data";
+    std::string newConfig = PLAT.getConfigPath() + "/NavConf.data";
     auto* navConfig = new QTalk::StConfig(DEM_ROOT_TAG);
 
     for(const StNav& nav : _mapNav.values())
@@ -247,6 +244,8 @@ void NavManager::saveConfig()
     {
         navConfig->setAttribute(DEM_DEFAULT_KEY,
                                 _defaultKey.isEmpty() ?  navConfig->children[0]->attribute("name") : _defaultKey);
+
+        navConfig->setAttribute(DEM_CONFIG_VERSION, 1);
         //
         QTalk::qConfig::saveConfig(newConfig.data(), false, navConfig);
     }
@@ -282,7 +281,7 @@ void NavManager::onSaveConf()
 QString NavManager::getNavName()
 {
     bool debug = _mapNav[_defaultKey].debug;
-	QString ret = _mapNav[_defaultKey].domain;
+    QString ret = _mapNav[_defaultKey].domain;
     if(debug)
     {
         ret += "_debug";

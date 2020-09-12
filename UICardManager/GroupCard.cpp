@@ -38,8 +38,6 @@ GroupCard::GroupCard(CardManager* cardManager)
 GroupCard::~GroupCard()
 {
     qInfo() << "delete GroupCard";
-    if(_pCardManager)
-        _pCardManager->deleteGroupCard();
 }
 
 void GroupCard::initUi()
@@ -344,12 +342,12 @@ void GroupCard::showGroupMember(const std::map<std::string, QTalk::StUserCard>& 
         if(userRole.find(it->first) != userRole.end())
             role = userRole.at(it->first);
         //
-        bool isOnline = Platform::instance().isOnline(QTalk::Entity::JID(it->first).basename());
+        bool isOnline = PLAT.isOnline(QTalk::Entity::JID(it->first).basename());
 
         if(role == 1)
         {
             std::string userId = QTalk::Entity::JID(it->first).username();
-            std::string selfId = Platform::instance().getSelfUserId();
+            std::string selfId = PLAT.getSelfUserId();
             _pDestroyGroupBtn->setVisible(userId == selfId);
         }
 
@@ -508,7 +506,7 @@ void GroupCard::onSendMail() {
             return;
 
         QString mailUrl = QString("mailto:");
-        auto selfDomain = Platform::instance().getSelfDomain();
+        auto selfDomain = PLAT.getSelfDomain();
         for(const auto& u : groupMembers)
         {
             QTalk::Entity::JID jid(u);

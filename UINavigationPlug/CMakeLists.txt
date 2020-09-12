@@ -19,11 +19,9 @@ set(SOURCE_FILES
         image1.qrc
         MessageManager.cpp
         MessageManager.h
-        MultifunctionFrm.cpp
-        MultifunctionFrm.h
         navigation.json
-        NavigationMianPanel.cpp
-        NavigationMianPanel.h
+        NavigationMainPanel.cpp
+        NavigationMainPanel.h
         SessionFrm.cpp
         SessionFrm.h
         SessionItemFrm.cpp

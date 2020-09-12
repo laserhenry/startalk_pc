@@ -11,7 +11,7 @@
 #include "../entity/im_user.h"
 #include "../entity/im_userSupplement.h"
 #include "../entity/im_config.h"
-#include "../entity/im_friend_list.h"
+//#include "../entity/im_friend_list.h"
 #include "../entity/im_transfer.h"
 #include "../entity/UID.h"
 #include "../entity/im_qr_group.h"
@@ -82,11 +82,11 @@ public:
     std::vector<QTalk::Entity::ImConfig> arImConfig;
 };
 
-class AllFriends : public Event
-{
-public:
-    std::vector<QTalk::Entity::IMFriendList> friends;
-};
+//class AllFriends : public Event
+//{
+//public:
+//    std::vector<QTalk::Entity::IMFriendList> friends;
+//};
 
 class UserCardInfo : public Event
 {
@@ -113,8 +113,8 @@ public:
             :mood(std::move(mood)), userId(std::move(userId)){}
 
 public:
-    std::string userId;
     std::string mood;
+    std::string userId;
 };
 
 class SwitchUserStatusEvt : public Event
@@ -158,7 +158,7 @@ public:
 class GetSeatListEvt : public Event
 {
 public:
-	GetSeatListEvt(QTalk::Entity::UID _uid) :uid(std::move(_uid)) {}
+	explicit GetSeatListEvt(QTalk::Entity::UID _uid) :uid(std::move(_uid)) {}
 
 public:
 	QTalk::Entity::UID uid;
@@ -181,19 +181,19 @@ class SessionTransferEvt : public Event
 {
 
 public:
-	SessionTransferEvt(QTalk::Entity::UID _uid,std::string _newCsrName,std::string _reason)
-			:uid(std::move(_uid)),newCsrName(std::move(_newCsrName)),reason(std::move(_reason)) {}
+	SessionTransferEvt(QTalk::Entity::UID _uid, std::string _newCsrName, std::string _reason)
+			: uid(std::move(_uid)), newCsrName(std::move(_newCsrName)), reason(std::move(_reason)) {}
 
 public:
-	std::string reason;
-	std::string newCsrName;
-	QTalk::Entity::UID uid;
+    QTalk::Entity::UID uid;
+    std::string newCsrName;
+    std::string reason;
 };
 
 class SendWechatEvt : public Event
 {
 public:
-	SendWechatEvt(QTalk::Entity::UID _uid) :uid(std::move(_uid)) {}
+	explicit SendWechatEvt(QTalk::Entity::UID _uid) :uid(std::move(_uid)) {}
 
 public:
 	QTalk::Entity::UID uid;
@@ -204,15 +204,15 @@ class SendProductEvt : public Event
 public:
 	SendProductEvt(std::string userQName,std::string virtualname, std::string product,std::string type)
 			:userQName(std::move(userQName)),
-			virtualname(std::move(virtualname)),
+			virtualName(std::move(virtualname)),
 			product(std::move(product)),
 			type(std::move(type)) {}
 
 public:
 	std::string userQName;
-	std::string virtualname;
-	std::string type;
-	std::string product;
+	std::string virtualName;
+    std::string product;
+    std::string type;
 };
 
 class FeedBackLogEvt : public Event
@@ -257,12 +257,12 @@ class GetHotLines : public Event {
 class UserMedalEvt: public Event {
 public:
     UserMedalEvt(std::string xmppId, std::set<QTalk::StUserMedal>& medal)
-        :medal(medal), xmppId(std::move(xmppId)) {
+        : medal(medal), xmppId(std::move(xmppId)) {
     }
 
 public:
-    std::string xmppId;
     std::set<QTalk::StUserMedal>& medal;
+    std::string xmppId;
 };
 
 class UserMedalChangedEvt : public Event

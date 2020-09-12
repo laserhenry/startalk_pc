@@ -73,7 +73,7 @@ private:
     QLabel*    _pUserMaskLabel; // 备注
 
     QPushButton* _pSendMessageBtn;
-    QPushButton* _pAddFriendBtn;
+//    QPushButton* _pAddFriendBtn;
     QPushButton* _pMailBtn;
     QPushButton* _pBtnStar;
 
@@ -110,7 +110,7 @@ public:
         EM_IS_INVALID = 0,
         EM_IS_START = 1,
         EM_IS_BLACK = 2,
-        EM_IS_FRIEND = 4,
+//        EM_IS_FRIEND = 4,
     };
 };
 

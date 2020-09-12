@@ -24,7 +24,6 @@
 #include "../CustomUi/QtMessageBox.h"
 #include "../Platform/AppSetting.h"
 #include "../Platform/NavigationManager.h"
-#include "../include/Line.h"
 
 #ifdef _WINDOWS
 #include <windows.h>
@@ -41,9 +40,8 @@
 
 
 LoginPanel::LoginPanel(QWidget *parent) :
-        QDialog(parent), _pStLoginConfig(nullptr), _pDefaultConfig(nullptr), _pLocalServer(nullptr)
-        , _userNameCompleter(nullptr){
-    _pManager = new UILoginMsgManager;
+        QDialog(parent){
+//    _pManager = new UILoginMsgManager;
     _pListener = new UILoginMsgListener(this);
     _mousePressed = false;
 
@@ -58,6 +56,9 @@ LoginPanel::LoginPanel(QWidget *parent) :
 }
 
 LoginPanel::~LoginPanel() {
+    if(_pListener)
+        delete _pListener;
+    
     if (nullptr != _pStLoginConfig) {
         delete _pStLoginConfig;
         _pStLoginConfig = nullptr;
@@ -257,7 +258,7 @@ void LoginPanel::initLayout() {
             QStringList arguments;
             arguments << "AUTO_LOGIN=OFF" << "START_BY_STARTER=YES";
             QProcess::startDetached(program, arguments);
-            exit(0);
+            QApplication::exit(0);
         }
     });
 }
@@ -369,7 +370,7 @@ bool LoginPanel::eventFilter(QObject *o, QEvent *e) {
             if(nav.empty())
                 emit AuthFailedSignal(tr("导航不能为空!"));
 
-            bool ret = _pManager->getNavInfo(nav);
+            bool ret = UILoginMsgManager::getNavInfo(nav);
             if (!ret)
                 emit AuthFailedSignal(tr("导航获取失败, 请检查网络连接!"));
 #ifdef _QCHAT
@@ -410,7 +411,7 @@ void LoginPanel::loadConf() {
 
     //    if(_pManager)
     //    {
-    //        _pManager->startUpdater(strUsers.toStdString());
+    //        UILoginMsgManager::startUpdater(strUsers.toStdString());
     //    }
 
     //}).detach();
@@ -418,7 +419,7 @@ void LoginPanel::loadConf() {
 	std::string usrDir = AppSetting::instance().getUserDirectory();
 
     //
-    _strConfPath = QString("%1/login.data").arg(Platform::instance().getConfigPath().c_str());
+    _strConfPath = QString("%1/login.data").arg(PLAT.getConfigPath().c_str());
     if(nullptr != _pStLoginConfig)
         delete _pStLoginConfig;
 
@@ -572,7 +573,7 @@ void LoginPanel::initloginWnd() {
     serverLay->addWidget(_severBtn);
     serverLay->addSpacerItem(new QSpacerItem(10, 10, QSizePolicy::Expanding));
     // version label
-    std::string globalversion = Platform::instance().getGlobalVersion();
+    std::string globalversion = PLAT.getGlobalVersion();
     QLabel *verLabel = new QLabel(QString("V.%1").arg(globalversion.c_str()), this);
     verLabel->setObjectName("GlobalVersion");
     verLabel->setAlignment(Qt::AlignCenter);
@@ -747,69 +748,67 @@ void LoginPanel::onLoginBtnClicked()
     //
     QTalk::qConfig::saveConfig(_strConfPath, true, _pStLoginConfig);
     // 开始登陆
-    if (_pManager != nullptr) {
-        // 获取导航信息
-        std::string nav = _pNavManager->getDefaultNavUrl().toStdString();
+    // 获取导航信息
+    std::string nav = _pNavManager->getDefaultNavUrl().toStdString();
 
-        if(nav.empty())
-        {
-            emit AuthFailedSignal(tr("导航不能为空!"));
-        }
-        //
-        Platform::instance().setLoginNav(nav);
-        //
-        Platform::instance().setNavName(navName.toStdString());
-        //
-        _pStsLabel->setText(tr("正在获取导航信息"));
-        QFuture<bool> curRet = QtConcurrent::run(_pManager, &UILoginMsgManager::getNavInfo, nav);
+    if(nav.empty())
+    {
+        emit AuthFailedSignal(tr("导航不能为空!"));
+    }
+    //
+    PLAT.setLoginNav(nav);
+    //
+    PLAT.setNavName(navName.toStdString());
+    //
+    _pStsLabel->setText(tr("正在获取导航信息"));
+    QFuture<bool> curRet = QtConcurrent::run(&UILoginMsgManager::getNavInfo, nav);
 //        curRet.waitForFinished();
-        while (!curRet.isFinished())
-            QApplication::processEvents(QEventLoop::AllEvents, 100);
+    while (!curRet.isFinished())
+        QApplication::processEvents(QEventLoop::AllEvents, 100);
 
-        bool ret = curRet.result();
-        if (!ret) {
-            emit AuthFailedSignal(tr("导航获取失败, 请检查网络连接!"));
-            return;
-        }
-        // check server host
-        const std::string host = NavigationManager::instance().getXmppHost();
-        const int port = NavigationManager::instance().getProbufPort();
-        if (port == 0 || host.empty()) {
-            warn_log("nav info error (port == 0 || domain.empty())");
-            emit AuthFailedSignal(tr("获取服务器地址失败!"));
-            return;
-        }
-        // try connect to server
-        if(0)
-        {
-            auto future = QtConcurrent::run([this, host, port](){
-                _pStsLabel->setText(tr("正在尝试连接服务器"));
-                std::unique_ptr<QTcpSocket> tcpSocket(new QTcpSocket);
-                tcpSocket->connectToHost(host.data(), port);
-                if(!tcpSocket->waitForConnected(5000))
-                {
-                    tcpSocket->abort();
-                    return false;
-                }
-                tcpSocket->close();
-                return true;
-            });
-            while (!future.isFinished())
-                QApplication::processEvents(QEventLoop::AllEvents, 500);
-
-            if(!future.result())
+    bool ret = curRet.result();
+    if (!ret) {
+        emit AuthFailedSignal(tr("导航获取失败, 请检查网络连接!"));
+        return;
+    }
+    // check server host
+    const std::string host = NavigationManager::instance().getXmppHost();
+    const int port = NavigationManager::instance().getProbufPort();
+    if (port == 0 || host.empty()) {
+        warn_log("nav info error (port == 0 || domain.empty())");
+        emit AuthFailedSignal(tr("获取服务器地址失败!"));
+        return;
+    }
+    // try connect to server
+    if(0)
+    {
+        auto future = QtConcurrent::run([this, host, port](){
+            _pStsLabel->setText(tr("正在尝试连接服务器"));
+            std::unique_ptr<QTcpSocket> tcpSocket(new QTcpSocket);
+            tcpSocket->connectToHost(host.data(), port);
+            if(!tcpSocket->waitForConnected(5000))
             {
-                emit AuthFailedSignal(tr("连接服务器失败!"));
-                return;
+                tcpSocket->abort();
+                return false;
             }
-        }
-        // login
-        _pStsLabel->setText(tr("正在验证账户信息"));
-        ret = _pManager->SendLoginMessage(strName.toStdString(), strPassword.toStdString());
-        if (!ret) {
-//            emit AuthFailedSignal(tr("账户或密码错误!"));
+            tcpSocket->close();
+            return true;
+        });
+        while (!future.isFinished())
+            QApplication::processEvents(QEventLoop::AllEvents, 500);
+
+        if(!future.result())
+        {
+            emit AuthFailedSignal(tr("连接服务器失败!"));
             return;
         }
+    }
+    // login
+    _pStsLabel->setText(tr("正在验证账户信息"));
+    ret = UILoginMsgManager::SendLoginMessage(strName.toStdString(), strPassword.toStdString());
+    if (!ret) {
+//            emit AuthFailedSignal(tr("账户或密码错误!"));
+        return;
     }
 }
 
@@ -841,13 +840,13 @@ void LoginPanel::onAuthFailed(const QString &msg) {
 void LoginPanel::getTokenByQVT(const std::string& newQvt,bool isAutoLogin){
     std::map<std::string,std::string> userMap;
     if(isAutoLogin){
-        std::string currentQvt = _pManager->getQchatQvt();
-        Platform::instance().setQvt(currentQvt);
-        userMap = _pManager->getQchatToken(currentQvt);
+        std::string currentQvt = UILoginMsgManager::getQchatQvt();
+        PLAT.setQvt(currentQvt);
+        userMap = UILoginMsgManager::getQchatToken(currentQvt);
     } else{
-        Platform::instance().setQvt(newQvt);
-        _pManager->saveQvtToDB(newQvt);
-        userMap = _pManager->getQchatToken(newQvt);
+        PLAT.setQvt(newQvt);
+        UILoginMsgManager::saveQvtToDB(newQvt);
+        userMap = UILoginMsgManager::getQchatToken(newQvt);
     }
     _userNameEdt->setText(QString::fromStdString(userMap["name"]));
     _passworldEdt->setText(QString::fromStdString(userMap["password"]));
@@ -858,16 +857,13 @@ void LoginPanel::getTokenByQVT(const std::string& newQvt,bool isAutoLogin){
  * @return
  */
 QString LoginPanel::getDomainByNav(const QString &nav) {
-    if (_pManager) {
-        return QString::fromStdString(_pManager->getNavDomain(nav.toStdString()));
-    }
-    return QString();
+    return QString::fromStdString(UILoginMsgManager::getNavDomain(nav.toStdString()));
 }
 
 void LoginPanel::saveHeadPath() {
     if (_pDefaultConfig) {
-        std::string selfUserId = Platform::instance().getSelfXmppId();
-        std::shared_ptr<QTalk::Entity::ImUserInfo> info = dbPlatForm::instance().getUserInfo(selfUserId, true);
+        std::string selfUserId = PLAT.getSelfXmppId();
+        std::shared_ptr<QTalk::Entity::ImUserInfo> info = DB_PLAT.getUserInfo(selfUserId, true);
         if (info) {
             std::string head = QTalk::GetHeadPathByUrl(info->HeaderSrc);
             _pDefaultConfig->setAttribute(CONFIG_KEY_HEADPATH, QString::fromStdString(head));
@@ -902,7 +898,7 @@ void LoginPanel::loginError(const std::string &errMs) {
     }
     else if("out_of_date" == errMs)
     {
-        errorMsg = tr("登录超时");
+        errorMsg = tr("登录凭证失效");
     }
     else
     {
@@ -920,7 +916,7 @@ void LoginPanel::loginSuccess()
     static bool isListen = false;
 #ifndef _DEBUG
     // 监听
-    QString strName = Platform::instance().getSelfUserId().data();
+    QString strName = PLAT.getSelfUserId().data();
     QString domain = _pNavManager->getDefaultDomain();
     QString listenName = QString("%1@%2").arg(strName, domain);
     if(!isListen && _pLocalServer)
@@ -930,7 +926,7 @@ void LoginPanel::loginSuccess()
         _pLocalServer->listen(listenName);
     }
 #endif
-    if (_rememberPassBtn->isChecked()) {
+    if (_pDefaultConfig && _rememberPassBtn->isChecked()) {
         _pDefaultConfig->setAttribute(CONFIG_KEY_SAVEPASSWORD, true);
         _pDefaultConfig->setAttribute(CONFIG_KEY_AUTOLOGIN, _autoLoginBtn->isChecked());
     }
@@ -947,7 +943,7 @@ void LoginPanel::enableAutoLogin(bool enable)
 bool LoginPanel::event(QEvent *e) {
     if(e->type() == QEvent::Show)
     {
-        qsrand(QTime(0, 0, 0).secsTo(QTime::currentTime()));
+
         QString strStyle = QString("QFrame#loginMainFrm {"
                                    "border-image:url(:/login/image1/loginbj/%1.png); }").arg(qrand() % 18 + 1);
         _loginMainFrm->setStyleSheet(strStyle);

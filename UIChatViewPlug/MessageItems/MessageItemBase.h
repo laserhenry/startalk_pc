@@ -33,7 +33,7 @@ public:
     ~MessageItemBase() override;
 
 public:
-    virtual QSize itemWdtSize() = 0;
+    virtual QSize itemWdtSize() { return {0,0};};
     inline int messageType() { return _msgInfo.msg_type; };
     void updateMessageInfo(const StNetMessageResult& messageInfo);
 
@@ -52,6 +52,7 @@ Q_SIGNALS:
 
 protected:
     bool eventFilter(QObject *o, QEvent *e) override;
+    bool event(QEvent* e) override;
 
 public:
     StNetMessageResult _msgInfo;
@@ -71,8 +72,8 @@ protected:
     HeadPhotoLab *_resending{};
 
 private:
-    bool _isPressEvent;
-    bool _alreadyRelease;
+    // bool _isPressEvent{};
+    // bool _alreadyRelease{};
 
 public:
     enum readState

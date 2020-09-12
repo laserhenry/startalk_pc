@@ -1,17 +1,12 @@
 ﻿#include "SessionFrm.h"
-#include <QFileInfo>
 #include <QEvent>
 #include <QMenu>
 #include <QAction>
-#include <QTime>
-#include <QDebug>
-#include <iostream>
-#include <QJsonObject>
-#include <thread>
 #include <QTimer>
 #include <QScrollBar>
 #include <set>
 #include <QJsonArray>
+#include <QWindowStateChangeEvent>
 #include <QJsonDocument>
 #include <QtConcurrent>
 #include "../CustomUi/HeadPhotoLab.h"
@@ -22,7 +17,7 @@
 #include "../QtUtil/Entity/JID.h"
 #include "../QtUtil/Utils/Log.h"
 #include "../QtUtil/Utils/utils.h"
-#include "NavigationMianPanel.h"
+#include "NavigationMainPanel.h"
 #include "../Platform/dbPlatForm.h"
 #include "../include/perfcounter.h"
 #include "../CustomUi/QtMessageBox.h"
@@ -37,15 +32,13 @@
 
 using namespace QTalk::Entity;
 
-SessionFrm::SessionFrm(NavigationMianPanel *parent) :
+SessionFrm::SessionFrm(NavigationMainPanel *parent) :
         QFrame(nullptr),
-        _sessionmainLayout(nullptr),
-        _pSessionView(nullptr),
-        _normalTopRow(0),
-        _messageManager(nullptr),
-        _mainPanel(parent),
         _jumpIndex(0),
-        pSessions(nullptr) {
+        _normalTopRow(0),
+        pSessions(nullptr),
+        _mainPanel(parent)
+{
     init();
 }
 
@@ -63,22 +56,11 @@ void SessionFrm::connects() {
     //
     connect(_noticeAct, &QAction::triggered, this, &SessionFrm::onUnNoticeAct);
     //
-    connect(_addFriendAct, &QAction::triggered, this, &SessionFrm::onAddFriendAct);
+//    connect(_addFriendAct, &QAction::triggered, this, &SessionFrm::onAddFriendAct);
     connect(_starAct, &QAction::triggered, this, &SessionFrm::onStarAct);
     connect(_blackAct, &QAction::triggered, this, &SessionFrm::onBlackAct);
     connect(_clearUnreadAct, &QAction::triggered, this, &SessionFrm::onClearUnreadAct);
     connect(_quitGroupAct, &QAction::triggered, this, &SessionFrm::onQuitGroupAct);
-}
-
-/**
-  * @函数名
-  * @功能描述
-  * @参数
-  * @author cc
-  * @date 2018.9.29
-  */
-void SessionFrm::setMessageManager(NavigationMsgManager *messageManager) {
-    _messageManager = messageManager;
 }
 
 /**
@@ -118,10 +100,10 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
             userId = userId.left(pos);
         }
         std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo =
-                dbPlatForm::instance().getGroupInfo(userId.toStdString(), true);
+                DB_PLAT.getGroupInfo(userId.toStdString(), true);
         if (groupInfo) {
             name = QString::fromStdString(groupInfo->Name);
-            QString userpath = QString::fromStdString(Platform::instance().getAppdataRoamingUserPath());
+            QString userpath = QString::fromStdString(PLAT.getAppdataRoamingUserPath());
             QString headfilename = QString::fromStdString(groupInfo->HeaderSrc);
             if (headfilename.isEmpty()) {
                 _normalGroupHeadPhotos.push_back(userId.toStdString());
@@ -134,7 +116,7 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
                     headPath = rheadpath;
                 } else {
                     _withoutGroupHeadPhotos.push_back(userId.toStdString());
-                    _withoutGroupHeadPhotoSrcs.push_back(groupInfo->HeaderSrc);
+                    _withoutGroupHeadPhotoSrcs.insert(groupInfo->HeaderSrc);
                 }
             }
         }
@@ -145,12 +127,12 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
         }
         //客服consult消息 头像要显示客人 而不是店铺
         std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo =
-                dbPlatForm::instance().getUserInfo(
+                DB_PLAT.getUserInfo(
                         mess.chatType == QTalk::Enum::ConsultServer ? realJid.toStdString() : userId.toStdString(),
                         true);
         if (userInfo) {
 //            name = QString::fromStdString(QTalk::getUserName(userInfo));
-            QString userpath = QString::fromStdString(Platform::instance().getAppdataRoamingUserPath());
+            QString userpath = QString::fromStdString(PLAT.getAppdataRoamingUserPath());
             QString headfilename = QString::fromStdString(userInfo->HeaderSrc);
             if (headfilename.isEmpty() && (userInfo->HeadVersion != 0)) {
                 _normalHeadPhotos.push_back(userId.toStdString());
@@ -178,25 +160,24 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
             notCurItem = !(UID(userId, realJid) == _curUserId);
         }
 
-        if (mess.sendJid != _strSelfId) {
+        if (mess.sendJid != _strSelfId.data()) { //不是自己
             if (notCurItem) {
                 if (mess.chatType == QTalk::Enum::GroupChat) {
                     unsigned int atCount = item->data(ITEM_DATATYPE_ATCOUNT).toUInt();
                     if (mess.messageContent.contains("@all"))
                         atCount |= 0x000F;
                     else if (mess.messageContent.contains(
-                            QString("@%1").arg(Platform::instance().getSelfName().data())))
+                            QString("@%1").arg(PLAT.getSelfName().data())))
                         atCount |= 0x00F0;
 
                     item->setData(atCount, ITEM_DATATYPE_ATCOUNT);
+                    item->setData(atCount > 0, ITEM_DATATYPE_QQQ);
                 }
             } else {
-                if (_messageManager) {
-                    // 发送消息已读
-                    debug_log("send read mask u:{0} messageId:{1}", realJid.toStdString(), mess.messageId.toStdString());
-                    _messageManager->sendReadedMessage(mess.messageId.toStdString(), realJid.toStdString(),
-                                                       mess.chatType);
-                }
+                // 发送消息已读
+                debug_log("send read mask u:{0} messageId:{1}", realJid.toStdString(), mess.messageId.toStdString());
+                NavigationMsgManager::sendReadedMessage(mess.messageId.toStdString(), realJid.toStdString(),
+                                                   mess.chatType);
             }
         }
         //
@@ -243,10 +224,10 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
             item->setToolTip(name);
 
             if (mess.chatType == QTalk::Enum::GroupChat ||
-                id == Platform::instance().getSelfUserId()) {
+                id == PLAT.getSelfUserId()) {
                 item->setData(true, ITEM_DATATYPE_ISONLINE);
             } else {
-                bool isOnline = Platform::instance().isOnline(id);
+                bool isOnline = PLAT.isOnline(id);
                 item->setData(isOnline, ITEM_DATATYPE_ISONLINE);
             }
         }
@@ -279,10 +260,21 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
     QString userName;
     if (mess.chatType == QTalk::Enum::GroupChat) {
         std::shared_ptr<QTalk::Entity::ImUserInfo> info
-                = dbPlatForm::instance().getUserInfo(mess.sendJid.toStdString());
+                = DB_PLAT.getUserInfo(mess.sendJid.toStdString());
         if (info) {
             userName = QString::fromStdString(QTalk::getUserName(info));
         }
+    }
+    else {
+        std::shared_ptr<QTalk::Entity::ImUserInfo> info
+                = DB_PLAT.getUserInfo(mess.sendJid.toStdString());
+        if (info) {
+            userName = QString::fromStdString(QTalk::getUserName(info));
+        }
+    }
+
+    if(mess.messtype == QTalk::Entity::MessageTypeShock && _strSelfId.data() != mess.sendJid) {
+        item->setData(true, ITEM_DATATYPE_QQQ);
     }
 
     item->setData(GenerateContent(mess.messageContent, mess.chatType, mess.messtype,
@@ -291,9 +283,7 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
     _pSessionView->update();
     _pModel->sort(0);
     //
-    if (_messageManager) {
-        _messageManager->sendDownLoadHeadPhotosMsg(_withoutHeadPhotos, _withoutGroupHeadPhotoSrcs);
-    }
+    NavigationMsgManager::sendDownLoadHeadPhotosMsg(_withoutHeadPhotos, _withoutGroupHeadPhotoSrcs);
 }
 
 /**
@@ -352,10 +342,10 @@ void SessionFrm::onloadSessionData() {
                 headPath = ":/QTalk/image1/defaultGroupHead.png";
 #endif
                 std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo =
-                        dbPlatForm::instance().getGroupInfo(sessionInfo->XmppId);
+                        DB_PLAT.getGroupInfo(sessionInfo->XmppId);
                 if (groupInfo) {
                     name = QString::fromStdString(groupInfo->Name);
-                    QString userpath = QString::fromStdString(Platform::instance().getAppdataRoamingUserPath());
+                    QString userpath = QString::fromStdString(PLAT.getAppdataRoamingUserPath());
                     QString headfilename = QString::fromStdString(groupInfo->HeaderSrc);
                     if (headfilename.isEmpty()) {
                         _normalGroupHeadPhotos.push_back(sessionInfo->XmppId);
@@ -368,7 +358,7 @@ void SessionFrm::onloadSessionData() {
                             headPath = rheadpath;
                         } else {
                             _withoutGroupHeadPhotos.push_back(sessionInfo->XmppId);
-                            _withoutGroupHeadPhotoSrcs.push_back(groupInfo->HeaderSrc);
+                            _withoutGroupHeadPhotoSrcs.insert(groupInfo->HeaderSrc);
                         }
                     }
                 }
@@ -379,13 +369,12 @@ void SessionFrm::onloadSessionData() {
                 headPath = ":/QTalk/image1/headPortrait.png";
 #endif
                 //客服consult消息 头像要显示客人 而不是店铺
-                std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo =
-                        dbPlatForm::instance().getUserInfo(
+                auto userInfo = DB_PLAT.getUserInfo(
                                 sessionInfo->ChatType == QTalk::Enum::ConsultServer ? sessionInfo->RealJid
                                                                                     : sessionInfo->XmppId);
                 if (userInfo) {
 //                    name = QString::fromStdString(QTalk::getUserName(userInfo));
-                    QString userpath = QString::fromStdString(Platform::instance().getAppdataRoamingUserPath());
+                    QString userpath = QString::fromStdString(PLAT.getAppdataRoamingUserPath());
                     QString headfilename = QString::fromStdString(userInfo->HeaderSrc);
                     if (headfilename.isEmpty() && (userInfo->HeadVersion != 0)) {
                         _normalHeadPhotos.push_back(sessionInfo->XmppId);
@@ -421,8 +410,15 @@ void SessionFrm::onloadSessionData() {
 
             QString userName;
             if (sessionInfo->ChatType == QTalk::Enum::GroupChat) {
-                std::shared_ptr<QTalk::Entity::ImUserInfo> info = dbPlatForm::instance().getUserInfo(
+                std::shared_ptr<QTalk::Entity::ImUserInfo> info = DB_PLAT.getUserInfo(
                         sessionInfo->UserId);
+                if (nullptr != info) {
+                    userName = QString::fromStdString(QTalk::getUserName(info));
+                }
+            }
+            else {
+                std::shared_ptr<QTalk::Entity::ImUserInfo> info = DB_PLAT.getUserInfo(
+                        sessionInfo->XmppId);
                 if (nullptr != info) {
                     userName = QString::fromStdString(QTalk::getUserName(info));
                 }
@@ -436,18 +432,18 @@ void SessionFrm::onloadSessionData() {
             item->setData(QString::fromStdString(sessionInfo->LastMessageId), ITEM_DATATYPE_LAST_MESSAGE_ID);
 
             QString sessionName;
-            if (SYSTEM_XMPPID == QTalk::Entity::JID(sessionInfo->XmppId.c_str()).username() ||
-                RBT_SYSTEM == QTalk::Entity::JID(sessionInfo->XmppId.c_str()).username()) {
+            if (SYSTEM_XMPPID == QTalk::Entity::JID(sessionInfo->XmppId).username() ||
+                RBT_SYSTEM == QTalk::Entity::JID(sessionInfo->XmppId).username()) {
                 QString syshead = ":/UINavigationPlug/image1/system.png";
                 sessionName = tr(SYSTEM_NAME);
                 item->setData(syshead, ITEM_DATATYPE_HEADPATH);
                 item->setData(true, ITEM_DATATYPE_ISONLINE);
-            } else if (RBT_NOTICE == QTalk::Entity::JID(sessionInfo->XmppId.c_str()).username()) {
+            } else if (RBT_NOTICE == QTalk::Entity::JID(sessionInfo->XmppId).username()) {
                 QString noticehead = ":/UINavigationPlug/image1/atom_ui_rbt_notice.png";
                 sessionName = tr(RBT_NOTICE_NAME);
                 item->setData(noticehead, ITEM_DATATYPE_HEADPATH);
                 item->setData(true, ITEM_DATATYPE_ISONLINE);
-            } else if(RBT_QIANGDAN == QTalk::Entity::JID(sessionInfo->XmppId.c_str()).username()){
+            } else if(RBT_QIANGDAN == QTalk::Entity::JID(sessionInfo->XmppId).username()){
                 QString qhead = ":/UINavigationPlug/image1/atom_ui_robot_qiangdan.png";
                 sessionName = tr(RBT_QIANGDAN_NAME);
                 item->setData(qhead, ITEM_DATATYPE_HEADPATH);
@@ -470,7 +466,9 @@ void SessionFrm::onloadSessionData() {
                 emit _mainPanel->sgShowUnreadMessage(sessionInfo->ChatType,
                                                      uid, sessionName, sessionInfo->LastUpdateTime, sessionInfo->UnreadCount);
             }
-
+//            if(sessionInfo->MessType == QTalk::Entity::MessageTypeShock) {
+//                item->setData(true, ITEM_DATATYPE_QQQ);
+//            }
             item->setData(GenerateContent(QString::fromStdString(sessionInfo->Content), sessionInfo->ChatType,
                                           sessionInfo->MessType, userName), ITEM_DATATYPE_MESSAGECONTENT);
             //is top
@@ -484,12 +482,12 @@ void SessionFrm::onloadSessionData() {
             }
         }
     }
-    if (_messageManager) {
-        _messageManager->sendDownLoadHeadPhotosMsg(_withoutHeadPhotos, _withoutGroupHeadPhotoSrcs);
-    }
 
-    _strSelfId = QString("%1@%2").arg(Platform::instance().getSelfUserId().c_str())
-            .arg(Platform::instance().getSelfDomain().c_str());
+    QtConcurrent::run([this](){
+        NavigationMsgManager::sendDownLoadHeadPhotosMsg(_withoutHeadPhotos, _withoutGroupHeadPhotoSrcs);
+    });
+
+    _strSelfId = PLAT.getSelfXmppId();
     onUpdateOnline(); // 加载完会话后刷新下在线状态
     // sort
     _pModel->sort(0);
@@ -524,7 +522,7 @@ void SessionFrm::onItemSelectChanged(const QModelIndex &index) {
         _curUserId = UID(sessionInfo.userId, sessionInfo.realJid);
     }
     if (sessionInfo.userName.isEmpty()) {
-        std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = dbPlatForm::instance().getGroupInfo(
+        std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = DB_PLAT.getGroupInfo(
                 sessionInfo.userId.toStdString(),
                 true);
         if (nullptr != groupInfo) {
@@ -535,6 +533,11 @@ void SessionFrm::onItemSelectChanged(const QModelIndex &index) {
     }
     // draft
     _sessionMap[uid]->setData("", ITEM_DATATYPE_DRAFT);
+    {
+
+        _sessionMap[uid]->setData(false, ITEM_DATATYPE_QQQ);
+        _pModel->sort(0);
+    }
     //if (sessionInfo.chatType != QTalk::Enum::GroupChat) {
     unsigned int count = _sessionMap[uid]->data(ITEM_DATATYPE_UNREADCOUNT).toUInt();
     _sessionMap[uid]->setData(0, ITEM_DATATYPE_UNREADCOUNT);
@@ -546,23 +549,20 @@ void SessionFrm::onItemSelectChanged(const QModelIndex &index) {
     }
     _sessionMap[uid]->setData(0, ITEM_DATATYPE_ATCOUNT);
 
-    QtConcurrent::run([this, sessionInfo, index, count]() {
-#ifdef _MACOS
-        pthread_setname_np("SessionFrm::onItemSelectChanged");
-#endif
-        if (_messageManager && sessionInfo.chatType != QTalk::Enum::GroupChat) {
+    QtConcurrent::run([ sessionInfo, index, count]() {
+        if (sessionInfo.chatType != QTalk::Enum::GroupChat) {
             QString userid = sessionInfo.userId;
             std::set<std::string> users;
             users.insert(sessionInfo.chatType == QTalk::Enum::ConsultServer ? sessionInfo.realJid.toStdString()
                                                                             : userid.toStdString());
-            _messageManager->sendGetUserStatus(users);
+            NavigationMsgManager::sendGetUserStatus(users);
         }
-        if (_messageManager && count > 0) {
+        if (count > 0) {
             //if(sessionInfo.chatType == QTalk::Enum::TwoPersonChat)
             {
                 // 发送消息已读
                 QString messageId = index.data(ITEM_DATATYPE_LAST_MESSAGE_ID).toString();
-                _messageManager->sendReadedMessage(messageId.toStdString(), sessionInfo.realJid.toStdString(),
+                NavigationMsgManager::sendReadedMessage(messageId.toStdString(), sessionInfo.realJid.toStdString(),
                                                    sessionInfo.chatType);
             }
         }
@@ -570,12 +570,6 @@ void SessionFrm::onItemSelectChanged(const QModelIndex &index) {
 
     //
     if(sessionInfo.userId.startsWith(RBT_QIANGDAN)){
-//        static UID static_uid;
-//        if(uid == static_uid)
-//            return;
-//        else
-//            static_uid = uid;
-        _pMultifunctionFrm->openQiangDan();
     } else{
         emit sgSessionInfo(sessionInfo);
     }
@@ -593,11 +587,11 @@ void SessionFrm::onDownLoadHeadPhotosFinish() {
     // todo
     for (const std::string &xmppid : _withoutHeadPhotos) {
         std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo =
-                dbPlatForm::instance().getUserInfo(xmppid, true);
+                DB_PLAT.getUserInfo(xmppid, true);
         if (userInfo) {
             QString headfilename = QString::fromStdString(userInfo->HeaderSrc);
             GenerateHeadPhotoName(headfilename);
-            QString userpath = QString::fromStdString(Platform::instance().getAppdataRoamingUserPath());
+            QString userpath = QString::fromStdString(PLAT.getAppdataRoamingUserPath());
             QString rheadpath = userpath + "/image/headphoto/" + headfilename;
             QFileInfo headfile(rheadpath);
             if (headfile.isFile() && headfile.exists()) {
@@ -623,11 +617,11 @@ void SessionFrm::onDownLoadGroupHeadPhotosFinish() {
     // 刷新群聊天头像
     for (const std::string &xmppid : _withoutGroupHeadPhotos) {
         std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo =
-                dbPlatForm::instance().getGroupInfo(xmppid, true);
+                DB_PLAT.getGroupInfo(xmppid, true);
         if (groupInfo) {
             QString headfilename = QString::fromStdString(groupInfo->HeaderSrc);
             GenerateHeadPhotoName(headfilename);
-            QString userpath = QString::fromStdString(Platform::instance().getAppdataRoamingUserPath());
+            QString userpath = QString::fromStdString(PLAT.getAppdataRoamingUserPath());
             QString rheadpath = userpath + "/image/headphoto/" + headfilename;
             QFileInfo headfile(rheadpath);
             if (headfile.isFile() && headfile.exists()) {
@@ -686,8 +680,7 @@ void SessionFrm::onNewSession(const StSessionInfo &info) {
     ReceiveSession mess;
 
     mess.xmppId = info.userId;
-    if(dbPlatForm::instance().isHotLine(mess.xmppId.toStdString()))
-    {
+    if(DB_PLAT.isHotLine(mess.xmppId.toStdString())) {
         mess.chatType = QTalk::Enum::Consult;
     }
     else
@@ -708,24 +701,22 @@ void SessionFrm::onNewSession(const StSessionInfo &info) {
         mess.messageRecvTime = QDateTime::currentDateTime().toMSecsSinceEpoch();
         mess.messageId = QString::fromStdString(messagedId);
         //
-        if (_messageManager) {
-            QTalk::Entity::ImMessageInfo msgInfo;
-            msgInfo.MsgId = messagedId;
-            msgInfo.XmppId = uid.usrId();
-            msgInfo.RealJid = uid.realId();
-            msgInfo.ChatType = info.chatType;
-            msgInfo.Platform = 0;
-            msgInfo.From = _strSelfId.toStdString();
-            msgInfo.To = uid.usrId();
-            msgInfo.Content = "";
-            msgInfo.Type = QTalk::Entity::MessageTypeEmpty;
-            msgInfo.State = 1;
-            msgInfo.Direction = QTalk::Entity::MessageDirectionSent;
-            msgInfo.LastUpdateTime = mess.messageRecvTime;
-            msgInfo.SendJid = _strSelfId.toStdString();
+        QTalk::Entity::ImMessageInfo msgInfo;
+        msgInfo.MsgId = messagedId;
+        msgInfo.XmppId = uid.usrId();
+        msgInfo.RealJid = uid.realId();
+        msgInfo.ChatType = info.chatType;
+        msgInfo.Platform = 0;
+        msgInfo.From = _strSelfId;
+        msgInfo.To = uid.usrId();
+        msgInfo.Content = "";
+        msgInfo.Type = QTalk::Entity::MessageTypeEmpty;
+        msgInfo.State = 1;
+        msgInfo.Direction = QTalk::Entity::MessageDirectionSent;
+        msgInfo.LastUpdateTime = mess.messageRecvTime;
+        msgInfo.SendJid = _strSelfId;
 
-            _messageManager->addEmptyMessage(msgInfo);
-        }
+        NavigationMsgManager::addEmptyMessage(msgInfo);
     }
     //
     onReceiveSession(mess, true);
@@ -755,11 +746,8 @@ void SessionFrm::init() {
 void SessionFrm::initLayout() {
     if (nullptr == _sessionmainLayout) {
         _sessionmainLayout = new QVBoxLayout(this);
+        _sessionmainLayout->setMargin(0);
     }
-    if(nullptr == _pMultifunctionFrm){
-        _pMultifunctionFrm = new MultifunctionFrm(this);
-    }
-    _sessionmainLayout->setMargin(0);
     if (nullptr == _pSessionView) {
         _pSessionView = new QListView(this);
         _pSessionView->setObjectName("SessionView");
@@ -801,7 +789,7 @@ void SessionFrm::initLayout() {
     _clearUnreadAct = new QAction(tr("一键清除未读"), _pContextMenu);
     _toTopOrCancelTopAct = new QAction(_pContextMenu);
     _noticeAct = new QAction(_pContextMenu);
-    _addFriendAct = new QAction(_pContextMenu);
+//    _addFriendAct = new QAction(_pContextMenu);
     _starAct = new QAction(_pContextMenu);
     _blackAct = new QAction(_pContextMenu);
     _quitGroupAct = new QAction(tr("退出群聊"), _pContextMenu);
@@ -809,7 +797,7 @@ void SessionFrm::initLayout() {
     _pContextMenu->addAction(_toTopOrCancelTopAct);
     _pContextMenu->addAction(_noticeAct);
     _pContextMenu->addSeparator();
-    _pContextMenu->addAction(_addFriendAct);
+//    _pContextMenu->addAction(_addFriendAct);
     _pContextMenu->addAction(_starAct);
     _pContextMenu->addAction(_blackAct);
     _pContextMenu->addAction(_showCardAct);
@@ -843,40 +831,53 @@ void SessionFrm::GenerateHeadPhotoName(QString &photosrc) {
   * @date 2018.10.15
   */
 void SessionFrm::setUserStatus(const QTalk::Entity::UID &uid, bool check) {
-    QTalk::Entity::JID jid(uid.usrId().data());
+    QTalk::Entity::JID jid(uid.usrId());
+    auto jid_userName = jid.username();
     //系统消息 机器人 群 自己 单独处理
     QStandardItem *item = _sessionMap.value(uid);
     if (nullptr != item) {
-        if ((item->data(ITEM_DATATYPE_CHATTYPE).toInt() == QTalk::Enum::GroupChat)) {
+        auto chatType = item->data(ITEM_DATATYPE_CHATTYPE).toInt();
+        if (chatType == QTalk::Enum::GroupChat) {
             return;
         }
-        if (jid.username() == SYSTEM_XMPPID || jid.username() == RBT_SYSTEM || jid.username() == RBT_NOTICE || jid.username() == RBT_QIANGDAN) {
+
+        if (chatType == QTalk::Enum::ConsultServer) {
             item->setData(true, ITEM_DATATYPE_ISONLINE);
             return;
         }
-        if (jid.basename() == Platform::instance().getSelfXmppId()) {
+
+        if (jid_userName == SYSTEM_XMPPID
+            #ifdef _QCHAT
+        || jid_userName == RBT_SYSTEM || jid_userName == RBT_NOTICE || jid_userName == RBT_QIANGDAN
+            #endif
+        ) {
+            item->setData(true, ITEM_DATATYPE_ISONLINE);
+            return;
+        }
+        if (jid_userName == PLAT.getSelfUserId()) {
             item->setData(true, ITEM_DATATYPE_ISONLINE);
             return;
         }
     }
     //单人在线状态 为了兼容consult 迭代判断usrId||realId
-    if(check)
+//    if(check)
+//    {
+//        QMapIterator<QTalk::Entity::UID, QStandardItem *> mapIterator(_sessionMap);
+//        while (mapIterator.hasNext()) {
+//            QTalk::Entity::UID uidNext = mapIterator.next().key();
+//            if (uidNext.usrId() == jid.basename() || uidNext.realId() == jid.basename()) {
+//                QStandardItem *item = mapIterator.value();
+//                if (nullptr == item) continue;
+//                //
+//                bool isOnline = PLAT.isOnline(jid.basename());
+//                item->setData(isOnline, ITEM_DATATYPE_ISONLINE);
+//            }
+//        }
+//    }
+//    else
+    if(_sessionMap.contains(uid))
     {
-        QMapIterator<QTalk::Entity::UID, QStandardItem *> mapIterator(_sessionMap);
-        while (mapIterator.hasNext()) {
-            QTalk::Entity::UID uidNext = mapIterator.next().key();
-            if (uidNext.usrId() == jid.basename() || uidNext.realId() == jid.basename()) {
-                QStandardItem *item = mapIterator.value();
-                if (nullptr == item) continue;
-                //
-                bool isOnline = Platform::instance().isOnline(jid.basename());
-                item->setData(isOnline, ITEM_DATATYPE_ISONLINE);
-            }
-        }
-    }
-    else if(_sessionMap.contains(uid))
-    {
-        bool isOnline = Platform::instance().isOnline(uid.realId());
+        bool isOnline = PLAT.isOnline(uid.realId());
         item->setData(isOnline, ITEM_DATATYPE_ISONLINE);
     }
 }
@@ -893,12 +894,9 @@ bool SessionFrm::eventFilter(QObject *o, QEvent *e) {
             _noticeAct->setText(unNotice ? tr("取消免打扰") : tr("消息免打扰"));
             _quitGroupAct->setVisible(chatType == QTalk::Enum::GroupChat);
             if (chatType == QTalk::Enum::GroupChat) {
-                _addFriendAct->setVisible(false);
                 _starAct->setVisible(false);
                 _blackAct->setVisible(false);
             } else {
-                // todo
-                _addFriendAct->setVisible(false);
                 //
                 bool isStar = std::find(_arSatr.begin(), _arSatr.end(), id) != _arSatr.end();
                 bool isBlack = std::find(_arBlackList.begin(), _arBlackList.end(), id) != _arBlackList.end();
@@ -906,8 +904,6 @@ bool SessionFrm::eventFilter(QObject *o, QEvent *e) {
                 _blackAct->setText(isBlack ? tr("移出黑名单") : tr("加入黑名单"));
             }
             _pContextMenu->exec(QCursor::pos());
-
-            _addFriendAct->setVisible(true);
             _starAct->setVisible(true);
             _blackAct->setVisible(true);
         } else if (e->type() == QEvent::MouseMove) {
@@ -928,6 +924,9 @@ bool SessionFrm::event(QEvent *e) {
     } else if (e->type() == QEvent::Leave) {
         if (_pSessionScrollBar->isVisible())
             _pSessionScrollBar->setVisible(false);
+    } else if(e->type() == QEvent::WindowActivate || e->type() == QEvent::Show) {
+        if(_curUserId.isEmpty())
+            onAppActive();
     }
     return QFrame::event(e);
 }
@@ -936,7 +935,7 @@ void SessionFrm::onUpdateGroupInfo(const QTalk::StGroupInfo &gInfo) {
     UID uid(gInfo.groupId);
     if (_sessionMap.contains(uid)) {
         QStandardItem *item = _sessionMap[uid];
-        auto info = dbPlatForm::instance().getGroupInfo(gInfo.groupId, true);
+        auto info = DB_PLAT.getGroupInfo(gInfo.groupId, true);
         if(nullptr == info)
             return;
         QString name = QString::fromStdString(info->Name);
@@ -953,7 +952,7 @@ void SessionFrm::onUpdateGroupInfo(const QTalk::StGroupInfo &gInfo) {
 QString SessionFrm::GenerateContent(const QString &content, const QUInt8 &chatType, const int &msgType,
                                     const QString &userName) {
     QString ret = "";
-    if (chatType == QTalk::Enum::GroupChat && !userName.isEmpty()) {
+    if (chatType == QTalk::Enum::GroupChat && !userName.isEmpty() && msgType != QTalk::Entity::MessageTypeGroupNotify) {
         ret += userName + ":";
     }
 
@@ -1059,7 +1058,7 @@ void SessionFrm::onUpdateReadedCount(const QTalk::Entity::UID &uid, const int &c
         }
 
 //         if (chatType == QTalk::Enum::GroupChat) {
-//             int atCount = dbPlatForm::instance().getAtCount(uid.usrId());
+//             int atCount = DB_PLAT.getAtCount(uid.usrId());
 //             _sessionMap[uid]->setData(atCount, ITEM_DATATYPE_ATCOUNT);
 //         }
         //
@@ -1071,9 +1070,9 @@ void SessionFrm::recvRevikeMessage(const QTalk::Entity::UID &uid, const QString 
     if (_sessionMap.contains(uid) && nullptr != _sessionMap[uid]) {
         QString userName = tr("你");
 
-        if (fromId != _strSelfId) {
+        if (fromId.toStdString() != _strSelfId) {
             std::shared_ptr<QTalk::Entity::ImUserInfo> info =
-                    dbPlatForm::instance().getUserInfo(fromId.toStdString());
+                    DB_PLAT.getUserInfo(fromId.toStdString());
             if (info && !info->Name.empty()) {
                 userName = QString::fromStdString(QTalk::getUserName(info));
             } else {
@@ -1133,10 +1132,7 @@ void SessionFrm::onToTopAct(bool) {
     UID uid(peerId, realJid);
     auto itFind = _sessionMap.find(uid);
     if (itFind != _sessionMap.end() && nullptr != *itFind) {
-        if (_messageManager) {
-            //
-            _messageManager->setUserSetting(isTop, "kStickJidDic", uid.toStdString(), val.toStdString());
-        }
+        NavigationMsgManager::setUserSetting(isTop, "kStickJidDic", uid.toStdString(), val.toStdString());
     }
 }
 
@@ -1188,18 +1184,16 @@ void SessionFrm::onUnNoticeAct(bool) {
     UID uid(peerId, realJid);
     auto itFind = _sessionMap.find(uid);
     if (itFind != _sessionMap.end() && nullptr != *itFind) {
-        if (_messageManager) {
-            _messageManager->setUserSetting(unNotice, "kNoticeStickJidDic", peerId.toStdString(), val.toStdString());
-        }
+        NavigationMsgManager::setUserSetting(unNotice, "kNoticeStickJidDic", peerId.toStdString(), val.toStdString());
     }
 }
 
-/**
- *
- */
-void SessionFrm::onAddFriendAct(bool) {
-    //
-}
+///**
+// *
+// */
+//void SessionFrm::onAddFriendAct(bool) {
+//    //
+//}
 
 /**
  * 星标联系人
@@ -1218,9 +1212,7 @@ void SessionFrm::onStarAct(bool) {
 
     auto itFind = _sessionMap.find(uid);
     if (itFind != _sessionMap.end() && nullptr != *itFind) {
-        if (_messageManager) {
-            _messageManager->setUserSetting(isStar, "kStarContact", peerId.toStdString(), val.toStdString());
-        }
+        NavigationMsgManager::setUserSetting(isStar, "kStarContact", peerId.toStdString(), val.toStdString());
     }
 }
 
@@ -1241,9 +1233,7 @@ void SessionFrm::onBlackAct(bool) {
 
     auto itFind = _sessionMap.find(uid);
     if (itFind != _sessionMap.end() && nullptr != *itFind) {
-        if (_messageManager) {
-            _messageManager->setUserSetting(isBlack, "kBlackList", peerId.toStdString(), val.toStdString());
-        }
+        NavigationMsgManager::setUserSetting(isBlack, "kBlackList", peerId.toStdString(), val.toStdString());
     }
 }
 
@@ -1279,11 +1269,11 @@ QString SessionFrm::getUserName(const std::string &id, bool isGroup) {
 
     if (!id.empty()) {
         if (isGroup) {
-            std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = dbPlatForm::instance().getGroupInfo(id);
+            std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = DB_PLAT.getGroupInfo(id);
             if (groupInfo && !groupInfo->Name.empty())
                 return QString::fromStdString(groupInfo->Name);
         } else {
-            std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(id);
+            std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = DB_PLAT.getUserInfo(id);
             if (userInfo)
                 return QString::fromStdString(QTalk::getUserName(userInfo));
         }
@@ -1357,14 +1347,14 @@ void SessionFrm::onClearUnreadAct(bool) {
     _totalUnReadCount = 0;
     emit _mainPanel->updateTotalUnreadCount(_totalUnReadCount);
 
-    std::thread([mapUnreadIds, this]() {
+    QtConcurrent::run([mapUnreadIds, this]() {
         auto itr = mapUnreadIds.begin();
         for (; itr != mapUnreadIds.end(); itr++) {
             QString messageId = _sessionMap[itr.key()]->data(ITEM_DATATYPE_LAST_MESSAGE_ID).toString();
             emit _mainPanel->sgShowUnreadMessage(0, itr.key(), "", 0, 0);
-            _messageManager->sendReadedMessage(messageId.toStdString(), itr.key().realId(), *itr);
+            NavigationMsgManager::sendReadedMessage(messageId.toStdString(), itr.key().realId(), *itr);
         }
-    }).detach();
+    });
 }
 
 void SessionFrm::onUserConfigChanged(const QTalk::Entity::UID& uid)
@@ -1458,16 +1448,21 @@ void SessionFrm::onAppActive() {
     auto index = _pSessionView->currentIndex();
     if(index.isValid())
     {
+        auto chatType = index.data(ITEM_DATATYPE_CHATTYPE).toInt();
+        auto userId = index.data(ITEM_DATATYPE_USERID).toString();
+        auto realJid = index.data(ITEM_DATATYPE_REALJID).toString();
+        UID uid(userId, realJid);
+        _curUserId = uid;
+
+        {
+            _sessionMap[uid]->setData(false, ITEM_DATATYPE_QQQ);
+            _pModel->sort(0);
+        }
         unsigned int count = index.data(ITEM_DATATYPE_UNREADCOUNT).toUInt();
-//        qInfo() << "-------------" << count;
-        if (_messageManager && count > 0) {
-            auto chatType = index.data(ITEM_DATATYPE_CHATTYPE).toInt();
-            auto userId = index.data(ITEM_DATATYPE_USERID).toString();
-            auto realJid = index.data(ITEM_DATATYPE_REALJID).toString();
-            UID uid(userId, realJid);
-            _curUserId = uid;
+        if ( count > 0) {
+
             QString messageId = index.data(ITEM_DATATYPE_LAST_MESSAGE_ID).toString();
-            _messageManager->sendReadedMessage(messageId.toStdString(), realJid.toStdString(),
+            NavigationMsgManager::sendReadedMessage(messageId.toStdString(), realJid.toStdString(),
                                                chatType);
             _sessionMap[uid]->setData(0, ITEM_DATATYPE_UNREADCOUNT);
             _sessionMap[uid]->setData(0, ITEM_DATATYPE_ATCOUNT);
@@ -1511,9 +1506,9 @@ void SessionFrm::onQuitGroupAct(bool) {
         int ret = QtMessageBox::warning(this, tr("警告"), tr("即将退出群聊%1 (%2), 是否继续?").arg(name, xmppId),
                                         QtMessageBox::EM_BUTTON_YES | QtMessageBox::EM_BUTTON_NO);
         if(ret == QtMessageBox::EM_BUTTON_YES) {
-            QtConcurrent::run([this, xmppId, chatType](){
-                if (_messageManager && chatType == QTalk::Enum::GroupChat) {
-                    _messageManager->quitGroupById(xmppId.toStdString());
+            QtConcurrent::run([ xmppId, chatType](){
+                if (chatType == QTalk::Enum::GroupChat) {
+                    NavigationMsgManager::quitGroupById(xmppId.toStdString());
                 }
             });
         }

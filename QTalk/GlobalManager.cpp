@@ -1,4 +1,4 @@
-﻿#include "UIGolbalManager.h"
+﻿#include "GlobalManager.h"
 
 #include <QFile>
 #include <QJsonDocument>
@@ -11,11 +11,8 @@
 #include "../UICom/qconfig/qconfig.h"
 #include "../UICom/StyleDefine.h"
 
-// 下面路径可以根据ConfigDataDir定位目录然后拼接成文件位置
-const QString UIGolbalManager::DEFAULT_PluginManagerPath = ":/QTalk/config/pluginManager.json";
-const QString UIGolbalManager::DEFAULT_PluginPath = "./";
-
-UIGolbalManager *UIGolbalManager::_pInstance = nullptr;
+#define DEFAULT_PluginManagerPath ":/QTalk/config/pluginManager.json"
+#define DEFAULT_PluginPath "./"
 
 #define USER_FOLDER "USER"
 #define FILE_FOLDER "FILE"
@@ -26,23 +23,12 @@ UIGolbalManager *UIGolbalManager::_pInstance = nullptr;
 #define FONT_LEVEL "FONT_LEVEL"
 #define LANGUAGE "LANGUAGE"
 #define CHECK_UPDATER "CHECK_UPDATER"
-#define CO_EDIT "CO_EDIT"
 #define UPDATER_VERSION "UPDATER_VERSION"
 #define SSL "SSL"
 
-UIGolbalManager::~UIGolbalManager() {
-    if (_pluginManager) {
-        delete _pluginManager;
-        _pluginManager = nullptr;
-    }
-}
-
-UIGolbalManager *UIGolbalManager::getUIGolbalManager() {
-    if (_pInstance == nullptr) {
-        _pInstance = new UIGolbalManager;
-
-    }
-    return _pInstance;
+GlobalManager *GlobalManager::instance() {
+    static GlobalManager manager;
+    return &manager;
 }
 
 /**
@@ -50,7 +36,7 @@ UIGolbalManager *UIGolbalManager::getUIGolbalManager() {
   * @参数
   * @date 2018.9.17
   */
-QJsonDocument UIGolbalManager::loadJsonConfig(const QString &path) {
+QJsonDocument GlobalManager::loadJsonConfig(const QString &path) {
     if (path.isEmpty()) {
         return QJsonDocument();
     }
@@ -77,12 +63,8 @@ QJsonDocument UIGolbalManager::loadJsonConfig(const QString &path) {
   * @参数
   * @date 2018.9.17
   */
-QObject *UIGolbalManager::getPluginInstanceQt(const QString &key) const {
-    qInfo() << "GetPluginInstanceQt" << key;
-    if (_pluginManager) {
-        return _pluginManager->GetPluginInstanceQt(key);
-    }
-    return nullptr;
+QObject *GlobalManager::getPluginInstanceQt(const QString &key) {
+    return _pluginManager.GetPluginInstanceQt(key);
 }
 
 /**
@@ -91,11 +73,8 @@ QObject *UIGolbalManager::getPluginInstanceQt(const QString &key) const {
   * @参数
   * @date 2018.9.27
   */
-std::shared_ptr<QMap<QString, QObject *> > UIGolbalManager::getAllPluginInstanceQt() const {
-    if (_pluginManager) {
-        return _pluginManager->GetAllPluginInstanceQt();
-    }
-    return nullptr;
+std::shared_ptr<QMap<QString, QObject *> > GlobalManager::getAllPluginInstanceQt() {
+    return _pluginManager.GetAllPluginInstanceQt();
 }
 
 /**
@@ -103,11 +82,11 @@ std::shared_ptr<QMap<QString, QObject *> > UIGolbalManager::getAllPluginInstance
   * @参数
   * @date 2018.9.17
   */
-void UIGolbalManager::init() {
+void GlobalManager::init() {
     // init setting
     _ConfigDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    std::string userPath, fileSavePath, historyPath, coEdit;
-    int logLevel = QTalk::logger::LEVEL_INVALID;
+    std::string userPath, fileSavePath, historyPath;
+//    int logLevel = QTalk::logger::LEVEL_INVALID;
     int language = 0;
     bool ssl = true;
     _font_level = AppSetting::FONT_LEVEL_NORMAL;
@@ -116,27 +95,33 @@ void UIGolbalManager::init() {
         userPath = _pSystemConfig->getString(USER_FOLDER);
         fileSavePath = _pSystemConfig->getString(FILE_FOLDER);
         historyPath = _pSystemConfig->getString(HISTORYU_FOLDER);
-        logLevel = _pSystemConfig->getInteger(LOG_LEVEL);
+//        logLevel = _pSystemConfig->getInteger(LOG_LEVEL);
         _theme = _pSystemConfig->getInteger(THEME);
         _font = _pSystemConfig->getString(FONT);
         _font_level = _pSystemConfig->getInteger(FONT_LEVEL);
         language = _pSystemConfig->getInteger(LANGUAGE);
-        coEdit = _pSystemConfig->getString(CO_EDIT);
-        if(logLevel == QTalk::logger::LEVEL_INVALID)
-            _pSystemConfig->setInteger(LOG_LEVEL, QTalk::logger::LEVEL_WARING);
-
+//        if(logLevel == QTalk::logger::LEVEL_INVALID)
+//            _pSystemConfig->setInteger(LOG_LEVEL, QTalk::logger::LEVEL_WARING);
+#ifdef _STARTALK
         if(_pSystemConfig->hasKey(CHECK_UPDATER))
             _check_updater = _pSystemConfig->getBool(CHECK_UPDATER);
         else
             _check_updater = true;
+#endif
         _updater_version = _pSystemConfig->getInteger(UPDATER_VERSION);
         if(_pSystemConfig->hasKey(SSL))
             ssl = _pSystemConfig->getBool(SSL);
     }
+    else {
+        error_log("error load sysconf");
+    }
 
-    if(logLevel == QTalk::logger::LEVEL_INVALID || logLevel >= QTalk::logger::LEVEL_WARING)
-        logLevel = QTalk::logger::LEVEL_INFO;
-    QTalk::logger::setLevel(logLevel);
+#ifdef _DEBUG
+    QTalk::logger::setLevel(QTalk::logger::LEVEL_INFO);
+#else
+    QTalk::logger::setLevel(QTalk::logger::LEVEL_INFO);
+#endif
+
     AppSetting::instance().setLanguage(language);
     //
     if(_theme == 0)
@@ -145,12 +130,12 @@ void UIGolbalManager::init() {
     //
     AppSetting::instance().setFont(_font);
 
-    AppSetting::instance().setLogLevel(logLevel);
+//    AppSetting::instance().setLogLevel(logLevel);
     AppSetting::instance().setFontLevel(_font_level);
     AppSetting::instance().with_ssl = ssl;
 
-    if(!coEdit.empty())
-        AppSetting::instance().setCoEdit(coEdit);
+//    if(!coEdit.empty())
+//        AppSetting::instance().setCoEdit(coEdit);
 
     int channel = _pSystemConfig->getInteger("CHANNEL");
     if(0 == channel)
@@ -176,25 +161,23 @@ void UIGolbalManager::init() {
             error_log("init user folder error {0}", fileSavePath);
     }
     // 设置全局路径
-    Platform::instance().setAppdataRoamingPath(_ConfigDataDir.toStdString());
+    PLAT.setAppdataRoamingPath(_ConfigDataDir.toStdString());
     AppSetting::instance().setFileSaveDirectory(fileSavePath);
     //
     if (historyPath.empty())
         historyPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation).toStdString();
-    Platform::instance().setHistoryDir(historyPath);
+    PLAT.setHistoryDir(historyPath);
     // 保存最新配置
     saveSysConfig();
     //
     InitPluginManager();
     //
-    InitStyleManager();
-    //
     initThemeConfig();
 }
 
-void UIGolbalManager::saveSysConfig() {
-    std::string hispath = Platform::instance().getHistoryDir();
-    std::string userpath = Platform::instance().getAppdataRoamingPath();
+void GlobalManager::saveSysConfig() {
+    std::string hispath = PLAT.getHistoryDir();
+    std::string userpath = PLAT.getAppdataRoamingPath();
     std::string filepath = AppSetting::instance().getFileSaveDirectory();
 
 //    int theme = AppSetting::instance().getThemeMode();
@@ -205,12 +188,14 @@ void UIGolbalManager::saveSysConfig() {
         _pSystemConfig->setString(USER_FOLDER, userpath);
         _pSystemConfig->setString(HISTORYU_FOLDER, hispath);
         _pSystemConfig->setInteger("CHANNEL", AppSetting::instance().getTestchannel());
-        _pSystemConfig->setInteger(LOG_LEVEL, AppSetting::instance().getLogLevel());
+//        _pSystemConfig->setInteger(LOG_LEVEL, AppSetting::instance().getLogLevel());
         _pSystemConfig->setInteger(THEME, AppSetting::instance().getThemeMode());
         _pSystemConfig->setInteger(LANGUAGE, AppSetting::instance().getLanguage());
         _pSystemConfig->setInteger(FONT_LEVEL, AppSetting::instance().getFontLevel());
         _pSystemConfig->setString(FONT, font);
+#ifdef _STARTALK
         _pSystemConfig->setBool(CHECK_UPDATER, _check_updater);
+#endif
         _pSystemConfig->saveConfig();
     }
 
@@ -236,38 +221,24 @@ void UIGolbalManager::saveSysConfig() {
   * @参数
   * @date 2018.9.17
   */
-void UIGolbalManager::InitPluginManager() {
-    if (!_pluginManager) {
-        _pluginManager = new PluginManager;
-        QJsonDocument doc = loadJsonConfig(DEFAULT_PluginManagerPath);
-        if (!doc.isNull() && doc.isArray()) {
+void GlobalManager::InitPluginManager() {
+    QJsonDocument doc = loadJsonConfig(DEFAULT_PluginManagerPath);
+    if (!doc.isNull() && doc.isArray()) {
 
-            QVector<QString> arPlugs;
-            auto allPlug  = doc.array();
-            for(const auto& plug : allPlug)
-                arPlugs.push_back(plug.toString());
+        QVector<QString> arPlugs;
+        auto allPlug  = doc.array();
+        for(const auto& plug : allPlug)
+            arPlugs.push_back(plug.toString());
 //#ifdef TSCREEN
-//            arPlugs.push_back("TScreen");
+//       arPlugs.push_back("TScreen");
 //#endif
-            //
-            _pluginManager->setPlugNames(arPlugs);
-        }
-        QString pluginPath = DEFAULT_PluginPath;
-        _pluginManager->setPluginPath(pluginPath);
-        _pluginManager->LoadPluginAllQt();
-        qInfo() << "InitPluginManager done.";
+        //
+        _pluginManager.setPlugNames(arPlugs);
     }
-}
-
-/**
-  * @功能描述 初始化样式文件管理器
-  * @参数
-  * @date 2018.9.17
-  */
-void UIGolbalManager::InitStyleManager() {
-    if (!_pstyleSheetManager) {
-        _pstyleSheetManager = new StyleSheetManager;
-    }
+    QString pluginPath = DEFAULT_PluginPath;
+    _pluginManager.setPluginPath(pluginPath);
+    _pluginManager.LoadPluginAllQt();
+    qInfo() << "InitPluginManager done.";
 }
 
 /**
@@ -275,10 +246,8 @@ void UIGolbalManager::InitStyleManager() {
   * @参数
   * @date 2018.9.17
   */
-void UIGolbalManager::setStyleSheetAll() {
-    if (_pstyleSheetManager) {
-        _pstyleSheetManager->setStyleSheets(_theme, _font);
-    }
+void GlobalManager::setStyleSheetAll() {
+    _pstyleSheetManager.setStyleSheets(_theme, _font);
 }
 
 /**
@@ -286,10 +255,8 @@ void UIGolbalManager::setStyleSheetAll() {
   * @参数
   * @date 2018.9.17
   */
-void UIGolbalManager::setStylesForApp() {
-    if (_pstyleSheetManager) {
-        _pstyleSheetManager->setStylesForApp(_theme, _font);
-    }
+void GlobalManager::setStylesForApp() {
+    _pstyleSheetManager.setStylesForApp(_theme, _font);
 }
 
 /**
@@ -297,30 +264,23 @@ void UIGolbalManager::setStylesForApp() {
   * @参数
   * @date 2018.9.17
   */
-void UIGolbalManager::setStyleSheetForPlugin(const QString& plgName) {
-    if (_pstyleSheetManager) {
-        _pstyleSheetManager->setStyleSheetForPlugin(plgName, _theme);
-    }
+void GlobalManager::setStyleSheetForPlugin(const QString& plgName) {
+    _pstyleSheetManager.setStyleSheetForPlugin(plgName, _theme);
 }
 
-UIGolbalManager::UIGolbalManager() {
-    _pluginManager = nullptr;
-    _pstyleSheetManager = nullptr;
+GlobalManager::GlobalManager() {
     _pSystemConfig = nullptr;
     init();
 }
 
-bool UIGolbalManager::UnloadPluginQt(const QString &key) {
-    if (nullptr != _pluginManager)
-        return _pluginManager->UnloadPluginQt(key);
-
-    return false;
+bool GlobalManager::UnloadPluginQt(const QString &key) {
+    return _pluginManager.UnloadPluginQt(key);
 }
 
 /**
  *
  */
-void UIGolbalManager::initThemeConfig()
+void GlobalManager::initThemeConfig()
 {
     QString configPath = QString(":/style/style%1/data.xml").arg(_theme);
     auto *config = new QTalk::StConfig;

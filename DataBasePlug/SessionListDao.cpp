@@ -5,6 +5,10 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
+#include <time.h>
+#ifdef _WINDOWS
+#include<windows.h>
+#endif
 
 #ifdef TRANSACTION_ON
 #define START_TRANSACTION() sqlite3_exec(db, "begin transaction;", NULL, NULL, NULL)
@@ -15,7 +19,7 @@
 #endif
 
 SessionListDao::SessionListDao(qtalk::sqlite::database *sqlDb) :
-        DaoInterface(sqlDb) {
+        DaoInterface(sqlDb, "IM_SessionList") {
 
 }
 
@@ -42,31 +46,8 @@ bool SessionListDao::creatTable() {
                       "PRIMARY KEY(`XmppId`, `RealJid`) )";
 
     qtalk::sqlite::statement query(*_pSqlDb, sql);
-    bool sqlResult = query.executeStep();
-    if (!sqlResult) {
 
-    }
-    return sqlResult;
-}
-
-/**
- * clearData
- * @return
- */
-bool SessionListDao::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM `IM_SessionList`;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data IM_SessionList error {0}", e.what());
-        return false;
-    }
+    return query.executeStep();
 }
 
 ///**
@@ -129,7 +110,7 @@ bool SessionListDao::clearData() {
 //            query.bind(10, imSessionInfo.LastMessageId);
 //            query.bind(11, imSessionInfo.LastUpdateTime);
 //            query.bind(12, imSessionInfo.MessageState);
-//            bool sqlResult = query.executeStep();
+//             query.executeStep();
 //            query.resetBindings();
 //            if (!sqlResult) {
 ////                _pSqlDb->exec("rollback transaction;");
@@ -146,23 +127,23 @@ bool SessionListDao::clearData() {
 //    }
 //}
 
-/**
-  * @函数名
-  * @功能描述 获取所有最后一次会话信息
-  * @参数
-  * @date 2018.9.21
-  */
-std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > SessionListDao::QueryImSessionInfos() {
-    if (!_pSqlDb) {
-        return nullptr;
-    }
-    //
-    //initSession();
-
-//    updateUnreadCount();
-
-    return reloadSession();
-}
+///**
+//  * @函数名
+//  * @功能描述 获取所有最后一次会话信息
+//  * @参数
+//  * @date 2018.9.21
+//  */
+//std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > SessionListDao::QueryImSessionInfos() {
+//    if (!_pSqlDb) {
+//        return nullptr;
+//    }
+//    //
+//    //initSession();
+//
+////    updateUnreadCount();
+//
+//    return reloadSession();
+//}
 
 std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > SessionListDao::reloadSession() {
     if (!_pSqlDb) {
@@ -172,11 +153,17 @@ std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > Se
     std::string sql = "SELECT a.XmppId, a.RealJid, b.`From` as UserId, a.LastMessageId, b.LastUpdateTime, a.ChatType, a.ExtendedFlag, "
                       "a.UnreadCount, a.MessageState, b.Content, b.Type "
                       "FROM IM_SessionList AS a LEFT JOIN IM_Message AS b "
-                      "ON a.LastMessageId = b.MsgId";
+                      "ON a.LastMessageId = b.MsgId "
+                      "Where b.LastUpdateTime > ? order by b.LastUpdateTime";
 
     qtalk::sqlite::statement query(*_pSqlDb, sql);
 
     try {
+
+        time_t now = time(0);
+        long long lastTime = (now - 100 * 24 * 60 * 60) * 1000;
+        query.bind(1, lastTime);
+
         std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > pImSessionInfos(
                 new std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> >);
         while (query.executeNext()) {
@@ -196,8 +183,9 @@ std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > Se
         }
         return pImSessionInfos;
     }
-    catch (std::exception &e) {
-        throw "SessionListDao::reloadSession error";
+    catch (...) {
+        return nullptr;
+//        throw "SessionListDao::reloadSession error";
     }
 }
 
@@ -215,8 +203,9 @@ void SessionListDao::updateUnreadCount() {
     try {
         query.executeStep();
     }
-    catch (std::exception &e) {
-        throw "updateUnreadCount error";
+    catch (...) {
+//        throw "updateUnreadCount error";
+        return;
     }
 
 }
@@ -457,9 +446,13 @@ void SessionListDao::getRecentSession(std::vector<QTalk::StShareSession> &sessio
                       "FROM IM_SESSIONLIST S "
                       "LEFT JOIN IM_USER U ON (S.XMPPID = U.XMPPID OR S.REALJID = U.UserId)"
                       "LEFT JOIN IM_GROUP G ON S.XMPPID = G.GROUPID "
+                      "Where  S.LastUpdateTime > ? "
                       " order by S.LastUpdateTime desc;";
 
     qtalk::sqlite::statement query(*_pSqlDb, sql);
+    time_t now = time(0);
+    long long lastTime = (now - 100 * 24 * 60 * 60) * 1000;
+    query.bind(1, lastTime);
 
     while (query.executeNext())
     {

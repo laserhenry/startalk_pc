@@ -68,7 +68,7 @@ void VideoPlayWnd::showVideo(const QString& url, int width, int height)
 //		</body> \
 //		</html>").arg(url).arg(height);//.arg(width).arg(height);
 //
-//    QString path = QString::fromStdString(Platform::instance().getAppdataRoamingPath());
+//    QString path = QString::fromStdString(PLAT.getAppdataRoamingPath());
 //    QString videoFilePath = path + "/html/video.html";
 //    QFile codeFile(videoFilePath);
 //    if(codeFile.open(QIODevice::WriteOnly))

@@ -51,7 +51,7 @@ public slots:
 public:
     void onCreatGroupRet(bool ret, const std::string &groupId);
     void addGroupMember(const QString &memberId, const QString &headSrc);
-    void onRecvFriends(const std::vector<QTalk::Entity::IMFriendList>& friends);
+//    void onRecvFriends(const std::vector<QTalk::Entity::IMFriendList>& friends);
     void onRecvGroupList(const std::vector<QTalk::Entity::ImGroupInfo>& groupInfos);
     void updateUserConfig(const std::vector<QTalk::Entity::ImConfig> &arConfigs);
     void updateUserConfig(const std::map<std::string, std::string> &deleteData,
@@ -68,7 +68,7 @@ protected:
     void onBatchAddMember(const QString& ids);
     //
     void initGroupMembers();
-    void initFriends();
+//    void initFriends();
     void initStarUser();
     void initRecentSession();
     void initRecentSessionData();
@@ -85,29 +85,28 @@ protected:
     void onItemDoubleClick(const QString& memberId, const QString& name);
 
 private:
-    SearchWgt *_pSearchWgt;
-    QListView *_pLstWgt;
-    QStandardItemModel* _plstModel;
-    QLabel *_pTipLabel;
-    QLabel *_pTitleLabel;
+    SearchWgt  *_pSearchWgt{};
+    QListView  *_pLstWgt{};
+    QStandardItemModel  *_plstModel{};
+    QLabel  *_pTipLabel{};
+    QLabel  *_pTitleLabel{};
 
-    QFrame *_pGroupNaemFrm;
-    QLineEdit *_pGroupNameEdit;
+    QFrame  *_pGroupNaemFrm{};
+    QLineEdit  *_pGroupNameEdit{};
 
-    QStandardItemModel *_pTreeModel;
-    QTreeView *_pTreeWgt;
-    TreeItemDelegate* _pItemDelegate;
+    QStandardItemModel  *_pTreeModel{};
+    QTreeView  *_pTreeWgt{};
+    TreeItemDelegate  *_pItemDelegate{};
 
-    QPushButton *_batchAddMemberBtn;
-    BatchAddMemberWnd* _batchAddMemberWnd;
+    QPushButton  *_batchAddMemberBtn{};
+    BatchAddMemberWnd  *_batchAddMemberWnd{};
 
 private:
-    GroupManagerMsgManager *_pMsgManager;
-    GroupMsgListener *_pMsgListener;
+    GroupMsgListener  *_pMsgListener{};
 
 private:
     QString _strGroupId;
-    QUInt8 _type;
+    QUInt8 _type{};
     QMap<QString, QString> _mapUserName;
     QMap<QString, QStandardItem *> _mapLstWgtItem;
     QMap<QString, QList<QString>> _mapGroupMembers;
@@ -115,33 +114,34 @@ private:
     QTalk::util::spin_mutex sm;
     std::map<std::string, std::shared_ptr<QTalk::Entity::ImUserInfo>> _structure;
     std::map<std::string, std::set<std::string>> _groupmemebers;
-    std::vector<QTalk::Entity::IMFriendList> _friends;
+//    std::vector<QTalk::Entity::IMFriendList> _friends;
     std::map<std::string, QTalk::Entity::ImGroupInfo> _groupInfos;
     std::set<std::string>            _arStarContact; // 星标联系人
     std::set<std::string>            _arTopUsers;    // 置顶
     std::map<std::string, std::map<int, QStandardItem*>> _mapItems;
 
-    QStandardItem* _pRecentItem;
-    QStandardItem* _pFriendItem;
-    QStandardItem* _pStarItem;
+    QStandardItem  *_pRecentItem{};
+//    QStandardItem  *_pFriendItem{};
+    QStandardItem  *_pStarItem{};
+
     int flags = 1;
     enum data_flag{
-        EM_ALL = 32
+        EM_ALL = 16
     };
 
     enum {
         EM_STRUCTURE = 1,
         EM_GROUPMEMEBER = 2,
-        EM_FRIEND = 4,
-        EM_STAR = 8,
-        EM_RECENT = 16,
+//        EM_FRIEND = 4,
+        EM_STAR = 4,
+        EM_RECENT = 8,
     };
 
 private:
-    QListView *_pSearchView;
-    QStandardItemModel* _pSearchSrcModel;
-    SearchItemSortModel* _pSearchModel;
-    SearchItemDelegate* _pSearchItemDelegate;
+    QListView  *_pSearchView{};
+    QStandardItemModel  *_pSearchSrcModel{};
+    SearchItemSortModel  *_pSearchModel{};
+    SearchItemDelegate  *_pSearchItemDelegate{};
 
     std::vector<QStandardItem*> recentItems;
 };

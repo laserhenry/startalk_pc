@@ -64,6 +64,13 @@
     </message>
 </context>
 <context>
+    <name>AtItemDelegate</name>
+    <message>
+        <source>全体成员</source>
+        <translation>All staff</translation>
+    </message>
+</context>
+<context>
     <name>AtMessageTip</name>
     <message>
         <source>@全体成员</source>
@@ -130,11 +137,11 @@
     </message>
     <message>
         <source>警告</source>
-        <translation>Warning</translation>
+        <translation type="vanished">Warning</translation>
     </message>
     <message>
         <source>获取群信息失败, 请重试!</source>
-        <translation>Failed to get group information, please try again!</translation>
+        <translation type="vanished">Failed to get group information, please try again!</translation>
     </message>
 </context>
 <context>
@@ -452,6 +459,13 @@ the current number:%1</translation>
     </message>
 </context>
 <context>
+    <name>DouTu</name>
+    <message>
+        <source>输入关键词搜索</source>
+        <translation>Enter keyword</translation>
+    </message>
+</context>
+<context>
     <name>DownLoadWgt</name>
     <message>
         <source>打开文件夹</source>
@@ -669,6 +683,10 @@ the current number:%1</translation>
         <source>File (*.%1)</source>
         <translation>File (*.%1)</translation>
     </message>
+    <message>
+        <source>上传失败</source>
+        <translation>Upload failed</translation>
+    </message>
 </context>
 <context>
     <name>GroupCard</name>
@@ -777,7 +795,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>导出群成员</source>
-        <translation>export group members</translation>
+        <translation type="vanished">export group members</translation>
     </message>
     <message>
         <source>提示</source>
@@ -802,6 +820,18 @@ the current number:%1</translation>
     <message>
         <source>成员 %1/ %2</source>
         <translation>Member %1/ %2</translation>
+    </message>
+    <message>
+        <source>提醒</source>
+        <translation>Warning</translation>
+    </message>
+    <message>
+        <source>斗图神器已启动, 重启应用后生效</source>
+        <translation>restart it for the changes to take effect</translation>
+    </message>
+    <message>
+        <source>斗图神器已关闭, 重启应用后生效</source>
+        <translation>restart it for the changes to take effect</translation>
     </message>
 </context>
 <context>
@@ -1026,7 +1056,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>登录超时</source>
-        <translation>Timeout</translation>
+        <translation type="vanished">Timeout</translation>
     </message>
     <message>
         <source>正在打开数据库</source>
@@ -1076,12 +1106,16 @@ the current number:%1</translation>
         <source>正在获取系统消息: </source>
         <translation>getting system message:</translation>
     </message>
+    <message>
+        <source>登录凭证失效</source>
+        <translation>Invalid login certificate</translation>
+    </message>
 </context>
 <context>
     <name>MainPanel</name>
     <message>
         <source>快速建群</source>
-        <translation>Rapid construction of group</translation>
+        <translation type="vanished">Rapid construction of group</translation>
     </message>
     <message>
         <source>友情提示</source>
@@ -1103,6 +1137,14 @@ the current number:%1</translation>
         <source>查看头像</source>
         <translation>Show head</translation>
     </message>
+    <message>
+        <source>创建群聊</source>
+        <translation>Creating group chat</translation>
+    </message>
+    <message>
+        <source>发起投屏</source>
+        <translation>Launch screen projection</translation>
+    </message>
 </context>
 <context>
     <name>MainWindow</name>
@@ -1116,11 +1158,11 @@ the current number:%1</translation>
     </message>
     <message>
         <source>更新提示</source>
-        <translation>Update hints</translation>
+        <translation type="vanished">Update hints</translation>
     </message>
     <message>
         <source>更新器有更新，您可以点击 &lt;a href=%1&gt;%1&lt;/a&gt; 下载更新</source>
-        <translation>Updates are available. You can download updates by clicking &lt;a href=%1&gt;%1&lt;/a&gt;</translation>
+        <translation type="vanished">Updates are available. You can download updates by clicking &lt;a href=%1&gt;%1&lt;/a&gt;</translation>
     </message>
     <message>
         <source>获取历史记录失败, 请重新登录!</source>
@@ -1161,6 +1203,22 @@ the current number:%1</translation>
     <message>
         <source>关于</source>
         <translation>About</translation>
+    </message>
+    <message>
+        <source>升级提醒</source>
+        <translation>Upgrade reminder</translation>
+    </message>
+    <message>
+        <source>主程序有更新，麻烦您及时到官网下载最新版本</source>
+        <translation>The main program has been updated, please download the latest version to the official website in time</translation>
+    </message>
+    <message>
+        <source>警告</source>
+        <translation>Warning</translation>
+    </message>
+    <message>
+        <source>主程序有更新，安装包已经准备完毕，是否立即打开更新？</source>
+        <translation>The main program has an update. The installation package is ready. Do you want to open the update now?</translation>
     </message>
 </context>
 <context>
@@ -1269,6 +1327,14 @@ the current number:%1</translation>
         <source>「 %1 」</source>
         <translation type="vanished">「 %1 」</translation>
     </message>
+    <message>
+        <source>发送即时消息</source>
+        <translation>Send message</translation>
+    </message>
+    <message>
+        <source>资料卡片</source>
+        <translation>Profile</translation>
+    </message>
 </context>
 <context>
     <name>MessagePrompt</name>
@@ -1357,6 +1423,17 @@ the current number:%1</translation>
     </message>
 </context>
 <context>
+    <name>NTMessageBox</name>
+    <message>
+        <source>取消</source>
+        <translation>Cancel</translation>
+    </message>
+    <message>
+        <source>确定</source>
+        <translation>Yes</translation>
+    </message>
+</context>
+<context>
     <name>NavItemDelegate</name>
     <message>
         <source>查看详情</source>
@@ -1413,6 +1490,29 @@ the current number:%1</translation>
     </message>
 </context>
 <context>
+    <name>NavigationBar</name>
+    <message>
+        <source>添加投屏</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>切换扩展屏</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>暂停投屏</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>结束投屏</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>继续投屏</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>NavigationItem</name>
     <message>
         <source>星标联系人</source>
@@ -1440,7 +1540,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>当前网络不可用</source>
-        <translation>Current network unavailability</translation>
+        <translation type="vanished">Current network unavailability</translation>
     </message>
 </context>
 <context>
@@ -1734,7 +1834,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>即将加入群聊%1</source>
-        <translation>Join the group chat soon %1</translation>
+        <translation type="vanished">Join the group chat soon %1</translation>
     </message>
     <message>
         <source>是否使用浏览器打开 %1 ?</source>
@@ -1747,6 +1847,10 @@ the current number:%1</translation>
     <message>
         <source>无法识别二维码</source>
         <translation>Unrecognizable QR code</translation>
+    </message>
+    <message>
+        <source>是否加入群聊%1</source>
+        <translation>Join group chat %1 ?</translation>
     </message>
 </context>
 <context>
@@ -1987,11 +2091,11 @@ or ID</translation>
     </message>
     <message>
         <source>取消免打扰</source>
-        <translation>Cancel Notification  </translation>
+        <translation>Open Notification</translation>
     </message>
     <message>
         <source>消息免打扰</source>
-        <translation>Open Notification</translation>
+        <translation>Cancel Notification</translation>
     </message>
     <message>
         <source>取消星标</source>
@@ -2208,10 +2312,10 @@ or ID</translation>
     </message>
 </context>
 <context>
-    <name>StyleSheetManager</name>
+    <name>StyleManager</name>
     <message>
         <source>方正兰亭黑简体</source>
-        <translation></translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2422,7 +2526,7 @@ or ID</translation>
     </message>
     <message>
         <source>记录INFO日志</source>
-        <translation>Record INFO logs</translation>
+        <translation type="vanished">Record INFO logs</translation>
     </message>
     <message>
         <source>当前版本:</source>
@@ -2561,6 +2665,33 @@ or ID</translation>
     <message>
         <source>暂时没有未读消息</source>
         <translation>No unread messages for now</translation>
+    </message>
+</context>
+<context>
+    <name>TScreenPanel</name>
+    <message>
+        <source>Qunar 无线投屏</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>请输入投影画面中显示的6位投屏码</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>开始投屏</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>投屏启动中, 请稍后重试!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>企业码失效</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>网络异常</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2741,6 +2872,10 @@ or ID</translation>
     <message>
         <source>视频演示</source>
         <translation>Video Demonstration</translation>
+    </message>
+    <message>
+        <source>斗图</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

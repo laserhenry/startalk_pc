@@ -11,25 +11,19 @@ class SearchInfoEvent;
 class TitlebarMsgManager : public Object
 {
 public:
-	TitlebarMsgManager();
-	~TitlebarMsgManager() override;
+	static void getUserCard(const std::string &domain, const std::string &userName, const int &version);
+	static std::string getHeadPath(const std::string& netPath);
+    static void sendSearch(SearchInfoEvent & event);
+	static void saveConfig();
+	static void clearSystemCache();
+	static void changeUserHead(const std::string& headpath);
 
-public:
-	void getUserCard(const std::string &domain, const std::string &userName, const int &version);
+	static void chanegUserStatus(const std::string& status);
+	static void setServiceSeat(int sid,int seat);
 
-	std::string getHeadPath(const std::string& netPath);
-
-    void sendSearch(SearchInfoEvent & event);
-	void saveConfig();
-	void clearSystemCache();
-	void changeUserHead(const std::string& headpath);
-
-	void chanegUserStatus(const std::string& status);
-	void setServiceSeat(int sid,int seat);
-
-    std::string uploadImage(const std::string &localFilePath);
+    static std::string uploadImage(const std::string &localFilePath);
     //
-    void sendPostReq(const std::string &url, const std::string &params,
+    static void sendPostReq(const std::string &url, const std::string &params,
                      std::function<void(int code, const std::string &responseData)> callback);
 };
 

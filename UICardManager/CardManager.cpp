@@ -9,9 +9,8 @@
 #include "../UICom/uicom.h"
 #include "../Platform/Platform.h"
 
-CardManager::CardManager()
-        : _pUserCard(nullptr), _groupCard(nullptr) {
-    _pMsgManager = new UserCardMsgManager;
+CardManager::CardManager() {
+//    _pMsgManager = new UserCardMsgManager;
     _pMsgListener = new UserCardMessageListener(this);
     connect(this, &CardManager::showUserCardSignal, this, &CardManager::showUserCardSlot);
     connect(this, &CardManager::showGroupCardSignal, this, &CardManager::showGroupCardSlot);
@@ -20,7 +19,10 @@ CardManager::CardManager()
     connect(this, &CardManager::sgUpdateGroupMember, this, &CardManager::updateGroupMember);
 }
 
-CardManager::~CardManager() = default;
+CardManager::~CardManager() {
+    if(_pMsgListener)
+        delete _pMsgListener;
+}
 
 void CardManager::shwoUserCard(const QString &userId) {
 
@@ -35,23 +37,17 @@ void CardManager::shwoUserCard(const QString &userId) {
         _pUserCard->close();
     });
     auto ret = QtConcurrent::run([this, userId]() {
-#ifdef _MACOS
-        pthread_setname_np("CardManager::showUserCard");
-#endif
         {
             std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-            if (_pMsgManager) {
-                _imuserSup = std::make_shared<QTalk::Entity::ImUserSupplement>();
-                _userInfo = std::make_shared<QTalk::Entity::ImUserInfo>();
-                _userInfo->XmppId = userId.toStdString();
-                _imuserSup->XmppId = userId.toStdString();
-                _pMsgManager->getUserCard(_imuserSup, _userInfo);
-            }
+            _imuserSup = std::make_shared<QTalk::Entity::ImUserSupplement>();
+            _userInfo = std::make_shared<QTalk::Entity::ImUserInfo>();
+            _userInfo->XmppId = userId.toStdString();
+            _imuserSup->XmppId = userId.toStdString();
+            UserCardMsgManager::getUserCard(_imuserSup, _userInfo);
 
             //
             _user_medal.clear();
-            if(_pMsgManager)
-                _pMsgManager->getUserMedal(userId.toStdString(), _user_medal);
+            UserCardMsgManager::getUserMedal(userId.toStdString(), _user_medal);
         }
 
 //        if (nullptr != _imuserSup && _pMsgManager) {
@@ -80,16 +76,14 @@ void CardManager::showGroupCard(const QString &groupId) {
 
     _groupCard = new GroupCard(this);
     auto ret = QtConcurrent::run([this, groupId](){
-        if (_pMsgManager) {
             //
-            _imGroupSup = std::make_shared<QTalk::Entity::ImGroupInfo>();
-            _imGroupSup->GroupId = groupId.toStdString();
-            _pMsgManager->getGroupMembers(groupId.toStdString());
-            _pMsgManager->getGroupCard(_imGroupSup);
+        _imGroupSup = std::make_shared<QTalk::Entity::ImGroupInfo>();
+        _imGroupSup->GroupId = groupId.toStdString();
+        UserCardMsgManager::getGroupMembers(groupId.toStdString());
+        UserCardMsgManager::getGroupCard(_imGroupSup);
 //            if (_imGroupSup) {
 //                emit showGroupCardSignal();
 //            }
-        }
     });
     // wait data
 //    ret.waitForFinished();
@@ -111,7 +105,7 @@ void CardManager::showUserCardSlot() {
 //        std::lock_guard<QTalk::util::spin_mutex> lock(sm);
         int flags = _arStarContact.contains(usrId);
         flags |= _arBlackList.contains(usrId) << 1;
-        flags |= _arFriends.contains(usrId) << 2;
+//        flags |= _arFriends.contains(usrId) << 2;
         _pUserCard->setFlags(flags);
         _pUserCard->showUserCard(_imuserSup, _userInfo);
         if (_mapMaskNames.contains(usrId)) {
@@ -128,22 +122,16 @@ void CardManager::showUserCardSlot() {
 }
 
 void CardManager::getPhoneNo(const std::string &userId) {
-    std::thread t([this, userId]() {
-#ifdef _MACOS
-        pthread_setname_np("CardManager::getPhoneNo");
-#endif
+    QtConcurrent::run([this, userId]() {
         std::string phoneNo;
-        if (nullptr != _pMsgManager) {
-            std::lock_guard<QTalk::util::spin_mutex> lock(sm);
-            _pMsgManager->getUserPhoneNo(userId, phoneNo);
-        }
+        std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+        UserCardMsgManager::getUserPhoneNo(userId, phoneNo);
 
         if (!phoneNo.empty()) {
             emit gotPhoneNo(userId, phoneNo);
         }
 
     });
-    t.detach();
 }
 
 /**
@@ -215,17 +203,17 @@ void CardManager::updateUserConfig(const std::map<std::string, std::string> &del
     }
 }
 
-/**
- *
- * @param friends
- */
-void CardManager::onRecvFriends(const std::vector<QTalk::Entity::IMFriendList> &friends) {
-    _arFriends.clear();
-
-    for (QTalk::Entity::IMFriendList imfriend : friends) {
-        _arFriends.push_back(imfriend.XmppId);
-    }
-}
+///**
+// *
+// * @param friends
+// */
+//void CardManager::onRecvFriends(const std::vector<QTalk::Entity::IMFriendList> &friends) {
+//    _arFriends.clear();
+//
+//    for (const QTalk::Entity::IMFriendList& imfriend : friends) {
+//        _arFriends.push_back(imfriend.XmppId);
+//    }
+//}
 
 /**
  * 星标联系人
@@ -235,12 +223,10 @@ void CardManager::starUser(const std::string &userId) {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
     bool isStar = _arStarContact.contains(userId);
 
-    std::thread([this, userId, isStar](){
+    QtConcurrent::run([ userId, isStar](){
         QString val = QString::number(isStar ? 0 : 1);
-        if (_pMsgManager) {
-            _pMsgManager->setUserSetting(isStar, "kStarContact", userId, val.toStdString());
-        }
-    }).detach();
+        UserCardMsgManager::setUserSetting(isStar, "kStarContact", userId, val.toStdString());
+    });
 }
 
 /**
@@ -249,12 +235,10 @@ void CardManager::starUser(const std::string &userId) {
 void CardManager::addBlackList(const std::string &userId) {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
     bool isBlack = _arBlackList.contains(userId);
-    std::thread([this, isBlack, userId](){
+    QtConcurrent::run([ isBlack, userId](){
         QString val = QString::number(isBlack ? 0 : 1);
-        if (_pMsgManager) {
-            _pMsgManager->setUserSetting(isBlack, "kBlackList", userId, val.toStdString());
-        }
-    }).detach();
+        UserCardMsgManager::setUserSetting(isBlack, "kBlackList", userId, val.toStdString());
+    });
 }
 
 /**
@@ -293,14 +277,14 @@ void CardManager::updateGroupMember(std::map<std::string, QTalk::StUserCard> use
 
 void CardManager::updateGroupInfo(const QString &groupId, const QString &groupName, const QString &topic,
                                   const QString &desc) {
-    if (_pMsgManager) {
+    QtConcurrent::run([=](){
         std::shared_ptr<QTalk::StGroupInfo> groupinfo(new QTalk::StGroupInfo);
         groupinfo->groupId = groupId.toStdString();
         groupinfo->name = groupName.toStdString();
         groupinfo->desc = desc.toStdString();
         groupinfo->title = topic.toStdString();
-        _pMsgManager->updateGroupInfo(groupinfo);
-    }
+        UserCardMsgManager::updateGroupInfo(groupinfo);
+    });
 }
 
 /**
@@ -308,9 +292,9 @@ void CardManager::updateGroupInfo(const QString &groupId, const QString &groupNa
  * @param groupi
  */
 void CardManager::quitGroup(const QString &groupId) {
-    if (_pMsgManager) {
-        _pMsgManager->quitGroup(groupId.toStdString());
-    }
+    QtConcurrent::run([groupId](){
+        UserCardMsgManager::quitGroup(groupId.toStdString());
+    });
 }
 
 /**
@@ -318,36 +302,25 @@ void CardManager::quitGroup(const QString &groupId) {
  * @param groupId
  */
 void CardManager::destroyGroup(const QString &groupId) {
-    if (_pMsgManager) {
-        _pMsgManager->destroyGroupMsg(groupId.toStdString());
-    }
+    QtConcurrent::run([groupId](){
+        UserCardMsgManager::destroyGroupMsg(groupId.toStdString());
+    });
 }
 
 void CardManager::setUserMaskName(const std::string &userId, const std::string &maskName)
 {
-    std::thread([this, userId, maskName](){
-        if (_pMsgManager) {
-            _pMsgManager->setUserSetting(false, "kMarkupNames", userId, maskName);
-        }
-    }).detach();
+    QtConcurrent::run([ userId, maskName](){
+        UserCardMsgManager::setUserSetting(false, "kMarkupNames", userId, maskName);
+    });
 }
 
 void CardManager::setUserMood(const std::string &mood) {
-
-    if (_pMsgManager) {
-        _pMsgManager->updateMood(mood);
-    }
+    QtConcurrent::run([ =](){
+        UserCardMsgManager::updateMood(mood);
+    });
 }
 
 std::string CardManager::getSourceHead(const std::string& headLink)
 {
-    if (_pMsgManager) {
-        return _pMsgManager->getSourceImage(headLink);
-    }
-    return "";
-}
-
-void CardManager::deleteGroupCard() {
-    if(_groupCard)
-        _groupCard = nullptr;
+    return UserCardMsgManager::getSourceImage(headLink);
 }

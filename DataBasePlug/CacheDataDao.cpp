@@ -23,7 +23,7 @@
 
 
 CacheDataDao::CacheDataDao(qtalk::sqlite::database *sqlDb)
-        : DaoInterface(sqlDb) {
+        : DaoInterface(sqlDb, "IM_Cache_Data") {
 
 }
 
@@ -49,22 +49,6 @@ bool CacheDataDao::creatTable() {
     }
 }
 
-
-bool CacheDataDao::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM `IM_Cache_Data`;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data IM_Cache_Data error {0}", e.what());
-        return false;
-    }
-}
 
 bool CacheDataDao::insertUserId(const std::string& value) {
     if (!_pSqlDb) {

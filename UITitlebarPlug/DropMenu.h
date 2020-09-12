@@ -44,7 +44,7 @@ public:
 
     void setText(const QString& val)
     {
-        auto itFind = std::find_if(items.begin(), items.end(), [this, val](const auto& item){
+        auto itFind = std::find_if(items.begin(), items.end(), [ val](const auto& item){
             return item.second == val;
         });
         if(itFind != items.end())
@@ -100,8 +100,7 @@ class ActionLabel : public QLabel
 Q_OBJECT
 public:
     explicit ActionLabel(QString text, QWidget* parent = nullptr)
-            : QLabel(parent), _isHover(false), _hasTip(false), _hasHover(true)
-            , _checkAble(false), _checked(false), _text(std::move(text)){
+            : QLabel(parent), _text(std::move(text)){
         setContentsMargins(0, 4, 0, 4);
     }
     ~ActionLabel() override = default;
@@ -198,11 +197,11 @@ protected:
     }
 
 private:
-    bool _hasHover;
-    bool _isHover;
-	bool _hasTip;
-	bool _checkAble;
-	bool _checked;
+    bool _hasHover{true};
+    bool _isHover{};
+	bool _hasTip{};
+	bool _checkAble{};
+	bool _checked{};
 	int  _itemIndex{};
 	QString _text;
 };

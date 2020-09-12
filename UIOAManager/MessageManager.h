@@ -12,11 +12,7 @@
 class MessageManager : public Object
 {
 public:
-    MessageManager();
-    ~MessageManager();
-
-public:
-    bool getOAUiData(std::vector<QTalk::StOAUIData>&oAUIData);
+    static bool getOAUiData(std::vector<QTalk::StOAUIData>&oAUIData);
 
 };
 

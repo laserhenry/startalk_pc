@@ -12,6 +12,7 @@ class CUSTOMUISHARED_EXPORT NTMessageBox : public UShadowDialog {
     Q_OBJECT
 public:
     NTMessageBox(QWidget* parent, const QString& message, int buttons);
+    ~NTMessageBox() override ;
 
 public:
     enum
@@ -30,8 +31,6 @@ protected:
 private:
     int _retButton;
     QEventLoop* _evtLoop;
-
-    static NTMessageBox* _box;
 
 private:
     QLabel *mainMessageLabel;

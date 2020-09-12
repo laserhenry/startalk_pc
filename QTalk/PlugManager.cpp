@@ -1,4 +1,4 @@
-﻿#include "pluginmanager.h"
+﻿#include "PlugManager.h"
 #include <QDir>
 #include <QDebug>
 #include <QFileInfo>
@@ -6,17 +6,13 @@
 #include <iostream>
 #include "../QtUtil/Utils/Log.h"
 
-PluginManager::PluginManager(QObject *parent) {
-
-}
-
 /**
   * @函数名
   * @功能描述 加载所有qt插件
   * @参数
   * @date 2018.9.11
   */
-void PluginManager::LoadPluginAllQt() {
+void PlugManager::LoadPluginAllQt() {
     //
     for (const QString& plug : _plugs) {
 #ifdef _MACOS
@@ -58,7 +54,7 @@ void PluginManager::LoadPluginAllQt() {
   * @参数
   * @date 2018.9.11
   */
-bool PluginManager::UnloadPluginQt(const QString &key) {
+bool PlugManager::UnloadPluginQt(const QString &key) {
     QPluginLoader *loader = _pluginRegisterQt.value(key);
     if (nullptr != loader) {
         bool result = loader->unload();
@@ -75,7 +71,7 @@ bool PluginManager::UnloadPluginQt(const QString &key) {
   * @参数
   * @date 2018.9.11
   */
-QObject *PluginManager::GetPluginInstanceQt(const QString &key) {
+QObject *PlugManager::GetPluginInstanceQt(const QString &key) {
 
     if (_pluginRegisterQt.value(key)) {
         QObject *plugin = _pluginRegisterQt.value(key)->instance();
@@ -97,7 +93,7 @@ QObject *PluginManager::GetPluginInstanceQt(const QString &key) {
   * @参数
   * @date 2018.9.27
   */
-std::shared_ptr<QMap<QString, QObject *> > PluginManager::GetAllPluginInstanceQt() const {
+std::shared_ptr<QMap<QString, QObject *> > PlugManager::GetAllPluginInstanceQt() const {
     std::shared_ptr<QMap<QString, QObject *> > plugins(new QMap<QString, QObject *>);
         for (const QString& pluginName : _pluginRegisterQt.keys()) {
             QPluginLoader *pluginloader = _pluginRegisterQt.value(pluginName);
@@ -114,11 +110,11 @@ std::shared_ptr<QMap<QString, QObject *> > PluginManager::GetAllPluginInstanceQt
   * @参数
   * @date 2018.9.27
   */
-void PluginManager::setPluginPath(const QString &path) {
+void PlugManager::setPluginPath(const QString &path) {
     _pluginPath = path;
 }
 
 //
-void PluginManager::setPlugNames(const QVector<QString> &plugs) {
+void PlugManager::setPlugNames(const QVector<QString> &plugs) {
     _plugs = plugs;
 }

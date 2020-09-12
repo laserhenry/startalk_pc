@@ -23,7 +23,7 @@ TipButton::TipButton(QString text, int id, QWidget* parent)
 
     //
     QFontMetricsF qfm(_font);
-    int w = qfm.width(_text);
+    qfm.width(_text);
     setMinimumWidth(qfm.width(_text));
 }
 

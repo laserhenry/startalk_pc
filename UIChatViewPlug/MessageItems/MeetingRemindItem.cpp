@@ -36,12 +36,12 @@ void MeetingRemindItem::loadUrl(const StNetMessageResult& msgInfo) {
         QString linkUrl = jsonObject.value("url").toString();
         QString id = jsonObject.value("params").toObject().value("id").toString();
         linkUrl.append("username=");
-        linkUrl.append(QString::fromStdString(Platform::instance().getSelfUserId()));
+        linkUrl.append(QString::fromStdString(PLAT.getSelfUserId()));
         linkUrl.append("&meeting_id=");
         linkUrl.append(id);
 
         MapCookie cookies;
-        cookies["ckey"] = QString::fromStdString(Platform::instance().getClientAuthKey());
+        cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
         WebService::loadUrl(QUrl(linkUrl), false, cookies);
     }
 }

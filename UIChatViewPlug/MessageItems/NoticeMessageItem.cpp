@@ -39,8 +39,8 @@ void NoticeMessageItem::loadUrl(const StNetMessageResult& msgInfo) {
 //        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
 //        if (userDftBrowser){
             MapCookie cookies;
-            cookies["ckey"] = QString::fromStdString(Platform::instance().getClientAuthKey());
-            std::string qvt = Platform::instance().getQvt();
+            cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
+            std::string qvt = PLAT.getQvt();
             if(!qvt.empty()){
                 cJSON *qvtJson = cJSON_GetObjectItem(cJSON_Parse(qvt.data()),"data");
                 std::string qcookie = cJSON_GetObjectItem(qvtJson,"qcookie")->valuestring;

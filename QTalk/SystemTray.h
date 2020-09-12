@@ -38,13 +38,15 @@ protected:
 private:
     void onTimer();
     void stopTimer();
+    void onHoverTimer();
 
 private:
-    MainWindow*      _pMainWindow;
-    QSystemTrayIcon* _pSysTrayIcon;
-    QTimer*          _timer;
+    MainWindow*      _pMainWindow{};
+    QSystemTrayIcon* _pSysTrayIcon{};
+    QTimer*          _timer{};
 
-    SystemTrayPopWnd *_popWnd;
+    SystemTrayPopWnd *_popWnd{};
+    QMenu            *pSysTrayMenu{};
 
 private:
     unsigned short  _timerCount;

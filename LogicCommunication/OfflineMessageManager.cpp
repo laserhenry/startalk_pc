@@ -70,10 +70,10 @@ bool OfflineMessageManager::updateChatOfflineMessage() {
             }
         }
 
-        if(_pComm && _pComm->_pMsgManager)
+        if(_pComm)
         {
             std::string msg = SFormat("getting user message: {0}", ++index);
-            _pComm->_pMsgManager->sendLoginProcessMessage(msg);
+            CommMsgManager::sendLoginProcessMessage(msg);
         }
     }
 
@@ -91,18 +91,18 @@ void OfflineMessageManager::updateChatMasks()
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
         << "/qtapi/getreadflag.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     std::string strUrl = url.str();
 
 
     cJSON *jsonObject = cJSON_CreateObject();
     cJSON_AddNumberToObject(jsonObject, "time", timeStamp);
-    cJSON_AddStringToObject(jsonObject, "domain", Platform::instance().getSelfDomain().data());
+    cJSON_AddStringToObject(jsonObject, "domain", PLAT.getSelfDomain().data());
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
     cJSON_Delete(jsonObject);
     
@@ -119,7 +119,7 @@ void OfflineMessageManager::updateChatMasks()
 //            }
     bool _ret = false;
     std::map<std::string, int> readFlags;
-    auto callBack = [this, &_ret, &readFlags](int code, const std::string &responseData) {
+    auto callBack = [&_ret, &readFlags](int code, const std::string &responseData) {
 
         info_log("{0}  {1}", code, responseData);
         if (code == 200) {
@@ -209,10 +209,10 @@ bool OfflineMessageManager::updateGroupOfflineMessage() {
             }
         }
 
-        if(_pComm && _pComm->_pMsgManager)
+        if(_pComm)
         {
             std::string msg = SFormat("getting group message: {0}", ++index);
-            _pComm->_pMsgManager->sendLoginProcessMessage(msg);
+            CommMsgManager::sendLoginProcessMessage(msg);
         }
     }
     // 成功才更新时间戳
@@ -260,10 +260,10 @@ bool OfflineMessageManager::updateNoticeOfflineMessage() {
             }
         }
 
-        if(_pComm && _pComm->_pMsgManager)
+        if(_pComm)
         {
             std::string msg = SFormat("getting system message: {0}", ++index);
-            _pComm->_pMsgManager->sendLoginProcessMessage(msg);
+            CommMsgManager::sendLoginProcessMessage(msg);
         }
     }
     // 成功才更新时间戳
@@ -314,7 +314,7 @@ QInt64 OfflineMessageManager::getTimeStamp(QTalk::Enum::ChatType chatType) {
 //    debug_log("getMaxTimeStampByChatType time{0}", timeStamp);
     if (timeStamp <= 0) {
         time_t now = time(0);
-        timeStamp = (now - Platform::instance().getServerDiffTime() - 3600 * 48) * 1000;
+        timeStamp = (now - PLAT.getServerDiffTime() - 3600 * 48) * 1000;
     }
     debug_log("get now time{0}", timeStamp);
 
@@ -371,19 +371,19 @@ void OfflineMessageManager::getOfflineChatMessageJson(long long chatTimestamp, i
 
     std::string httpHost = NavigationManager::instance().getJavaHost();
     std::string method = "/qtapi/gethistory.qunar";
-    std::string params = "server=" + Platform::instance().getSelfDomain()
-                         + "&c=qtalk&u=" + Platform::instance().getSelfUserId()
-                         + "&p=" + Platform::instance().getPlatformStr()
-                         + "&v=" + Platform::instance().getClientVersion();
+    std::string params = "server=" + PLAT.getSelfDomain()
+                         + "&c=qtalk&u=" + PLAT.getSelfUserId()
+                         + "&p=" + PLAT.getPlatformStr()
+                         + "&v=" + PLAT.getClientVersion();
 
-    std::string selfJid = Platform::instance().getSelfUserId();
+    std::string selfJid = PLAT.getSelfUserId();
     std::string url = httpHost + method + "?" + params;
     cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *user = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
+    cJSON *user = cJSON_CreateString(PLAT.getSelfUserId().c_str());
     cJSON_AddItemToObject(jsonObject, "user", user);
-    cJSON *domain = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+    cJSON *domain = cJSON_CreateString(PLAT.getSelfDomain().c_str());
     cJSON_AddItemToObject(jsonObject, "domain", domain);
-    cJSON *host = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
     cJSON_AddItemToObject(jsonObject, "host", host);
     cJSON *time = cJSON_CreateNumber(chatTimestamp);
     cJSON_AddItemToObject(jsonObject, "time", time);
@@ -576,20 +576,20 @@ void OfflineMessageManager::getGroupReadMark(std::map<std::string, QInt64> &read
 
     std::string httpHost = NavigationManager::instance().getJavaHost();
     std::string method = "/qtapi/get_muc_readmark1.qunar";
-    std::string params = "server=" + Platform::instance().getSelfDomain()
-                         + "&c=qtalk&u=" + Platform::instance().getSelfUserId()
-                         + "&p=" + Platform::instance().getPlatformStr()
-                         + "&v=" + Platform::instance().getClientVersion();
+    std::string params = "server=" + PLAT.getSelfDomain()
+                         + "&c=qtalk&u=" + PLAT.getSelfUserId()
+                         + "&p=" + PLAT.getPlatformStr()
+                         + "&v=" + PLAT.getClientVersion();
 
     std::string timeStamp = LogicManager::instance()->getDatabase()->getLoginBeforeGroupReadMarkTime();
     timeStamp = std::to_string(std::strtoll(timeStamp.data(), nullptr, 0));
     //
-    std::string selfJid = Platform::instance().getSelfUserId() + "@" + Platform::instance().getSelfDomain();
+    std::string selfJid = PLAT.getSelfUserId() + "@" + PLAT.getSelfDomain();
     std::string url = httpHost + method + "?" + params;
     cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *user = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
+    cJSON *user = cJSON_CreateString(PLAT.getSelfUserId().c_str());
     cJSON_AddItemToObject(jsonObject, "user", user);
-    cJSON *host = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
     cJSON_AddItemToObject(jsonObject, "host", host);
     cJSON *time = cJSON_CreateString(timeStamp.c_str());
     cJSON_AddItemToObject(jsonObject, "time", time);
@@ -598,7 +598,7 @@ void OfflineMessageManager::getGroupReadMark(std::map<std::string, QInt64> &read
     std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;
 
 
-    auto callback = [this, httpHost, &readMarkList](int code, string responseData) {
+    auto callback = [this, url, &readMarkList](int code, const string& responseData) {
         info_log("{0}  {1}", code, responseData);
         if (code == 200) {
             cJSON *requestData = cJSON_Parse(responseData.c_str());
@@ -624,8 +624,9 @@ void OfflineMessageManager::getGroupReadMark(std::map<std::string, QInt64> &read
                 std::ostringstream os("error code is :");
                 os << ret
                    << ", url is :"
-                   << httpHost;
-                throw std::logic_error(os.str());
+                   << url;
+                error_log(os.str());
+//                throw std::logic_error(os.str());
             }
 
             cJSON_Delete(requestData);
@@ -648,21 +649,21 @@ void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, 
     try {
         std::string httpHost = NavigationManager::instance().getJavaHost();
         std::string method = "/qtapi/getmuchistory.qunar";
-        std::string params = "server=" + Platform::instance().getSelfDomain()
-                             + "&c=qtalk&u=" + Platform::instance().getSelfUserId()
+        std::string params = "server=" + PLAT.getSelfDomain()
+                             + "&c=qtalk&u=" + PLAT.getSelfUserId()
                              //                       + "&k=" + Platform::GetPlatform()->getServerAuthKey()
-                             + "&p=" + Platform::instance().getPlatformStr()
-                             + "&v=" + Platform::instance().getClientVersion();
+                             + "&p=" + PLAT.getPlatformStr()
+                             + "&v=" + PLAT.getClientVersion();
 
-        std::string selfJid = Platform::instance().getSelfUserId() + "@" + Platform::instance().getSelfDomain();
+        std::string selfJid = PLAT.getSelfUserId() + "@" + PLAT.getSelfDomain();
 
         std::string httpUrl = httpHost + method + "?" + params;
         cJSON *jsonObject = cJSON_CreateObject();
-        cJSON *user = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
+        cJSON *user = cJSON_CreateString(PLAT.getSelfUserId().c_str());
         cJSON_AddItemToObject(jsonObject, "user", user);
-        cJSON *domain = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+        cJSON *domain = cJSON_CreateString(PLAT.getSelfDomain().c_str());
         cJSON_AddItemToObject(jsonObject, "domain", domain);
-        cJSON *host = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+        cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
         cJSON_AddItemToObject(jsonObject, "host", host);
         cJSON *time = cJSON_CreateNumber(chatTimestamp);
         cJSON_AddItemToObject(jsonObject, "time", time);
@@ -674,7 +675,7 @@ void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, 
         cJSON_Delete(jsonObject);
 
         auto callback = [this, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
-                (int code, string responseData) {
+                (int code, const string& responseData) {
             info_log("{0}  {1}", code, responseData);
             std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;
             if (code == 200) {
@@ -777,7 +778,8 @@ void OfflineMessageManager::getOfflineGroupMessageJson(long long chatTimestamp, 
                 } else {
                     complete = false;
                     errMsg = cJSON_GetObjectItem(data, "errmsg")->valuestring;
-                    throw std::logic_error(errMsg);
+                    error_log(errMsg);
+                    return;
                 }
 
                 cJSON_Delete(data);
@@ -810,20 +812,20 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
 
     std::string httpHost = NavigationManager::instance().getJavaHost();
     std::string method = "/qtapi/get_system_history.qunar";
-    std::string params = "server=" + Platform::instance().getSelfDomain()
-                         + "&c=qtalk&u=" + Platform::instance().getSelfUserId()
+    std::string params = "server=" + PLAT.getSelfDomain()
+                         + "&c=qtalk&u=" + PLAT.getSelfUserId()
                          //                       + "&k=" + Platform::GetPlatform()->getServerAuthKey()
-                         + "&p=" + Platform::instance().getPlatformStr()
-                         + "&v=" + Platform::instance().getClientVersion();
+                         + "&p=" + PLAT.getPlatformStr()
+                         + "&v=" + PLAT.getClientVersion();
 
-    std::string selfJid = Platform::instance().getSelfUserId() + "@" + Platform::instance().getSelfDomain();
+    std::string selfJid = PLAT.getSelfUserId() + "@" + PLAT.getSelfDomain();
     std::string url = httpHost + method + "?" + params;
     cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *user = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
+    cJSON *user = cJSON_CreateString(PLAT.getSelfUserId().c_str());
     cJSON_AddItemToObject(jsonObject, "user", user);
-    cJSON *domain = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+    cJSON *domain = cJSON_CreateString(PLAT.getSelfDomain().c_str());
     cJSON_AddItemToObject(jsonObject, "domain", domain);
-    cJSON *host = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+    cJSON *host = cJSON_CreateString(PLAT.getSelfDomain().c_str());
     cJSON_AddItemToObject(jsonObject, "host", host);
     cJSON *time = cJSON_CreateNumber(noticeTimestamp);
     cJSON_AddItemToObject(jsonObject, "time", time);
@@ -834,7 +836,7 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
     cJSON_Delete(jsonObject);
 
-    auto callback = [this, noticeTimestamp, count, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
+    auto callback = [this, selfJid, &complete, &errMsg, &outMsgList, &outSessionList]
             (int code, string responseData) {
         info_log("{0}  {1}", code, responseData);
         std::map<std::string, QTalk::Entity::ImSessionInfo> sessionMap;
@@ -856,7 +858,7 @@ void OfflineMessageManager::getOfflineNoticeMessageJson(long long noticeTimestam
                     std::string nickName = safeGetJsonStringValue(item, "nick");
                     int chatType = QTalk::Enum::System;
                     cJSON *message = cJSON_GetObjectItem(item, "message");
-                    std::string xmppId = "SystemMessage@" + Platform::instance().getSelfDomain();
+                    std::string xmppId = "SystemMessage@" + PLAT.getSelfDomain();
                     std::string type = safeGetJsonStringValue(message, "type");
                     const std::string &realJid = xmppId;
                     if (cJSON_HasObjectItem(item, "body")) {
@@ -949,24 +951,24 @@ VectorMessage OfflineMessageManager::getUserMessage(const QInt64 &time, const st
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
         << "/qtapi/getmsgs.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     std::string strUrl = url.str();
 
     QTalk::Entity::JID jid(userId);
     cJSON *jsonObject = cJSON_CreateObject();
 
-    cJSON_AddStringToObject(jsonObject, "from", Platform::instance().getSelfUserId().c_str());
-    cJSON_AddStringToObject(jsonObject, "fhost", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddStringToObject(jsonObject, "from", PLAT.getSelfUserId().c_str());
+    cJSON_AddStringToObject(jsonObject, "fhost", PLAT.getSelfDomain().c_str());
     cJSON_AddStringToObject(jsonObject, "to", jid.username().c_str());
     cJSON_AddStringToObject(jsonObject, "thost", jid.domainname().c_str());
     cJSON_AddStringToObject(jsonObject, "direction", direction.data());
     cJSON_AddNumberToObject(jsonObject, "time", time);
-    cJSON_AddStringToObject(jsonObject, "domain", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddStringToObject(jsonObject, "domain", PLAT.getSelfDomain().c_str());
     cJSON_AddNumberToObject(jsonObject, "num", 20);
     cJSON_AddStringToObject(jsonObject, "f", "t");
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
@@ -984,7 +986,7 @@ VectorMessage OfflineMessageManager::getUserMessage(const QInt64 &time, const st
 
             int ret = cJSON_GetObjectItem(resData, "ret")->valueint;
             if (ret) {
-                std::string selfJid = Platform::instance().getSelfUserId();
+                std::string selfJid = PLAT.getSelfUserId();
 
                 cJSON *data = cJSON_GetObjectItem(resData, "data");
                 int size = cJSON_GetArraySize(data);
@@ -1129,11 +1131,11 @@ VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time,
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
         << "/qtapi/getconsultmsgs.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     std::string strUrl = url.str();
 
@@ -1141,14 +1143,14 @@ VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time,
     QTalk::Entity::JID relId(realJid);
     cJSON *jsonObject = cJSON_CreateObject();
 
-    cJSON_AddStringToObject(jsonObject, "from", Platform::instance().getSelfUserId().c_str());
-    cJSON_AddStringToObject(jsonObject, "fhost", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddStringToObject(jsonObject, "from", PLAT.getSelfUserId().c_str());
+    cJSON_AddStringToObject(jsonObject, "fhost", PLAT.getSelfDomain().c_str());
     cJSON_AddStringToObject(jsonObject, "to", relId.username().c_str());
     cJSON_AddStringToObject(jsonObject, "virtual", jid.username().c_str());
     cJSON_AddStringToObject(jsonObject, "thost", jid.domainname().c_str());
     cJSON_AddStringToObject(jsonObject, "direction", direction.data());
     cJSON_AddNumberToObject(jsonObject, "time", time);
-    cJSON_AddStringToObject(jsonObject, "domain", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddStringToObject(jsonObject, "domain", PLAT.getSelfDomain().c_str());
     cJSON_AddNumberToObject(jsonObject, "num", 20);
     cJSON_AddStringToObject(jsonObject, "f", "t");
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
@@ -1156,7 +1158,7 @@ VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time,
 
     //
     std::vector<QTalk::Entity::ImMessageInfo> msgList;
-    auto callBack = [this, time, userId, &msgList](int code, const std::string &responseData) {
+    auto callBack = [this, userId, &msgList](int code, const std::string &responseData) {
         if (code == 200) {
             cJSON *resData = cJSON_Parse(responseData.c_str());
 
@@ -1166,7 +1168,7 @@ VectorMessage OfflineMessageManager::getConsultServerMessage(const QInt64 &time,
 
             int ret = cJSON_GetObjectItem(resData, "ret")->valueint;
             if (ret) {
-                std::string selfJid = Platform::instance().getSelfUserId();
+                std::string selfJid = PLAT.getSelfUserId();
 
                 cJSON *data = cJSON_GetObjectItem(resData, "data");
                 int size = cJSON_GetArraySize(data);
@@ -1286,11 +1288,11 @@ VectorMessage OfflineMessageManager::getGroupMessage(const QInt64 &time,
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
         << "/qtapi/getmucmsgs.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     std::string strUrl = url.str();
 
@@ -1306,7 +1308,7 @@ VectorMessage OfflineMessageManager::getGroupMessage(const QInt64 &time,
     cJSON_Delete(jsonObject);
     //
     std::vector<QTalk::Entity::ImMessageInfo> msgList;
-    auto callBack = [this, time, userId, &msgList](int code, const std::string &responseData) {
+    auto callBack = [this, userId, &msgList](int code, const std::string &responseData) {
         if (code == 200) {
 
             cJSON *resdata = cJSON_Parse(responseData.c_str());
@@ -1317,7 +1319,7 @@ VectorMessage OfflineMessageManager::getGroupMessage(const QInt64 &time,
 
             int ret = cJSON_GetObjectItem(resdata, "ret")->valueint;
             if (ret) {
-                std::string selfJid = Platform::instance().getSelfXmppId();
+                std::string selfJid = PLAT.getSelfXmppId();
 
                 cJSON *data = cJSON_GetObjectItem(resdata, "data");
                 int size = cJSON_GetArraySize(data);
@@ -1409,24 +1411,24 @@ VectorMessage OfflineMessageManager::getSystemMessage(const QInt64 &time, const 
     std::ostringstream url;
     url << NavigationManager::instance().getJavaHost()
         << "/qtapi/get_system_msgs.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     std::string strUrl = url.str();
 
     QTalk::Entity::JID jid(userId);
     cJSON *jsonObject = cJSON_CreateObject();
 
-    cJSON_AddStringToObject(jsonObject, "from", Platform::instance().getSelfUserId().c_str());
-    cJSON_AddStringToObject(jsonObject, "fhost", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddStringToObject(jsonObject, "from", PLAT.getSelfUserId().c_str());
+    cJSON_AddStringToObject(jsonObject, "fhost", PLAT.getSelfDomain().c_str());
     cJSON_AddStringToObject(jsonObject, "to", jid.username().c_str());
     cJSON_AddStringToObject(jsonObject, "thost", jid.domainname().c_str());
     cJSON_AddStringToObject(jsonObject, "direction", direction.data());
     cJSON_AddNumberToObject(jsonObject, "time", time);
-    cJSON_AddStringToObject(jsonObject, "domain", Platform::instance().getSelfDomain().c_str());
+    cJSON_AddStringToObject(jsonObject, "domain", PLAT.getSelfDomain().c_str());
     cJSON_AddNumberToObject(jsonObject, "num", 20);
     cJSON_AddStringToObject(jsonObject, "f", "t");
     std::string postData = QTalk::JSON::cJSON_to_string(jsonObject);
@@ -1434,7 +1436,7 @@ VectorMessage OfflineMessageManager::getSystemMessage(const QInt64 &time, const 
 
     //
     std::vector<QTalk::Entity::ImMessageInfo> msgList;
-    auto callBack = [this, time, userId, &msgList](int code, const std::string &responseData) {
+    auto callBack = [this, userId, &msgList](int code, const std::string &responseData) {
         if (code == 200) {
             cJSON *resData = cJSON_Parse(responseData.c_str());
 
@@ -1444,7 +1446,7 @@ VectorMessage OfflineMessageManager::getSystemMessage(const QInt64 &time, const 
 
             int ret = cJSON_GetObjectItem(resData, "ret")->valueint;
             if (ret) {
-                std::string selfJid = Platform::instance().getSelfUserId();
+                std::string selfJid = PLAT.getSelfUserId();
 
                 cJSON *data = cJSON_GetObjectItem(resData, "data");
                 int size = cJSON_GetArraySize(data);

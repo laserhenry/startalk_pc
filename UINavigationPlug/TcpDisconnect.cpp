@@ -2,10 +2,10 @@
 #include <QLabel>
 #include <QPixmap>
 #include <QHBoxLayout>
-#include "NavigationMianPanel.h"
+#include "NavigationMainPanel.h"
 
 
-TcpDisconnect::TcpDisconnect(NavigationMianPanel *pMainPanel, QWidget *parent)
+TcpDisconnect::TcpDisconnect(NavigationMainPanel *pMainPanel, QWidget *parent)
         : QFrame(parent), _pMainPanel(pMainPanel) {
     setFrameShape(QFrame::NoFrame);
     setObjectName("TcpDisconnectWgt");

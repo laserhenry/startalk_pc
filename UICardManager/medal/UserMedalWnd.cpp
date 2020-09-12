@@ -211,7 +211,7 @@ void UserMedalWnd::init_medals(const std::set<QTalk::StUserMedal> &user_medals) 
     _pMainWgt->setRowCount(0);
     //
     std::vector<QTalk::Entity::ImMedalList> medals;
-    dbPlatForm::instance().getAllMedals(medals);
+    DB_PLAT.getAllMedals(medals);
     // sort
     std::set<StMedalInfo> sort_medals;
     for(const auto& imMedalList : medals)

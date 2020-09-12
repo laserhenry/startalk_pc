@@ -40,16 +40,16 @@ bool GroupManager::getUserGroupInfo(MapGroupCard &mapGroups) {
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/muc/get_increment_mucs.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     cJSON *jsonObject = cJSON_CreateObject();
-    cJSON *user = cJSON_CreateString(Platform::instance().getSelfUserId().c_str());
+    cJSON *user = cJSON_CreateString(PLAT.getSelfUserId().c_str());
     cJSON_AddItemToObject(jsonObject, "u", user);
-    cJSON *domain = cJSON_CreateString(Platform::instance().getSelfDomain().c_str());
+    cJSON *domain = cJSON_CreateString(PLAT.getSelfDomain().c_str());
     cJSON_AddItemToObject(jsonObject, "d", domain);
     cJSON *ltime = cJSON_CreateNumber(originVersion);
     cJSON_AddItemToObject(jsonObject, "t", ltime);
@@ -157,11 +157,11 @@ bool GroupManager::getGroupCard(const MapGroupCard &groups) {
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/muc/get_muc_vcard.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     cJSON *objs = cJSON_CreateArray();
     auto itObj = groups.cbegin();
@@ -259,11 +259,11 @@ bool GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupIn
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/muc/set_muc_vcard.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     cJSON *objs = cJSON_CreateArray();
     auto itObj = groupInfos.cbegin();
@@ -288,12 +288,12 @@ bool GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupIn
     //
     std::string strUrl = url.str();
     std::vector<Entity::ImGroupInfo> groups;
-    auto callback = [strUrl, &groups](int code, const string &data) {
+    auto callback = [strUrl, &groups](int code, const string &response) {
         if (code == 200) {
 
-            cJSON *resData = cJSON_Parse(data.c_str());
+            cJSON *resData = cJSON_Parse(response.data());
             if (nullptr == resData) {
-                error_log("upateGroupInfo json error {0}", data.data());
+                error_log("upateGroupInfo json error {0}", response);
                 return;
             }
             int ret = JSON::cJSON_SafeGetBoolValue(resData, "ret");
@@ -317,9 +317,9 @@ bool GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupIn
                 }
             }
             cJSON_Delete(resData);
-            info_log("update group info success {0}", data);
+            info_log("update group info success {0}", response);
         } else {
-            info_log("update group info error {0}", data);
+            info_log("update group info error {0}", response);
         }
     };
 
@@ -330,7 +330,7 @@ bool GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupIn
         _pComm->addHttpRequest(req, callback);
         if (!groups.empty()) {
             // 更新ui
-            if (_pComm && _pComm->_pMsgManager) {
+            {
                 auto it = groups.begin();
                 for (; it != groups.end(); it++) {
                     std::shared_ptr<QTalk::StGroupInfo> info(new QTalk::StGroupInfo);
@@ -338,7 +338,7 @@ bool GroupManager::upateGroupInfo(const std::vector<QTalk::StGroupInfo> &groupIn
                     info->name = it->Name;
                     info->desc = it->Introduce;
                     info->title = it->Topic;
-                    _pComm->_pMsgManager->onUpdateGroupInfo(info);
+                    CommMsgManager::onUpdateGroupInfo(info);
                 }
             }
 //            更新群资料需要调接口 否则时间戳不能及时更新
@@ -368,14 +368,14 @@ void GroupManager::getUserIncrementMucVcard()
         std::ostringstream url;
         url << NavigationManager::instance().getHttpHost()
             << "/muc/get_user_increment_muc_vcard.qunar"
-            << "?v=" << Platform::instance().getClientVersion()
-            << "&p=" << Platform::instance().getPlatformStr()
-            << "&u=" << Platform::instance().getSelfUserId()
-            << "&k=" << Platform::instance().getServerAuthKey()
-            << "&d=" << Platform::instance().getSelfDomain();
+            << "?v=" << PLAT.getClientVersion()
+            << "&p=" << PLAT.getPlatformStr()
+            << "&u=" << PLAT.getSelfUserId()
+            << "&k=" << PLAT.getServerAuthKey()
+            << "&d=" << PLAT.getSelfDomain();
 
         cJSON *obj = cJSON_CreateObject();
-        cJSON_AddStringToObject(obj, "userid", Platform::instance().getSelfUserId().data());
+        cJSON_AddStringToObject(obj, "userid", PLAT.getSelfUserId().data());
         cJSON_AddStringToObject(obj, "lastupdtime", std::to_string(maxGroupCardVersion).data());
         std::string postData = JSON::cJSON_to_string(obj);
         cJSON_Delete(obj);

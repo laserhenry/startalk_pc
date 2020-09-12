@@ -6,16 +6,6 @@
 #include "../Message/UselessMessage.h"
 #include "../EventBus/EventBus.h"
 
-MessageManager::MessageManager()
-{
-
-}
-
-MessageManager::~MessageManager()
-{
-
-}
-
 /**
  * 获取Oa
  */

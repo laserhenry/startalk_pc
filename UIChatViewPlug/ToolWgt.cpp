@@ -10,6 +10,7 @@
 #include <QtConcurrent>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSettings>
 #include "InputWgt.h"
 
 #include "../UICom/uicom.h"
@@ -40,7 +41,10 @@ ToolWgt::ToolWgt(InputWgt* pInputWgt, ChatViewItem* chatItem)
 }
 
 
-ToolWgt::~ToolWgt() = default;
+ToolWgt::~ToolWgt()
+{
+    qInfo() << "tool wgt delete";
+}
 
 /**
   * @函数名   initUi
@@ -61,12 +65,13 @@ void ToolWgt::initUi()
     qchatMoreFun = new QchatMoreFun(_pChatItem->getPeerId(), _pChatItem->_chatType);
 #endif
 
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qunar.com", QApplication::applicationName());
 	//
-	_pBtnEmoticon = new QPushButton("", this);
-	_pBtnScreenshot = new QPushButton("", this);
-	_pBtnScreenshotSet = new QPushButton("", this);
-	_pBtnFile = new QPushButton("", this);
-    _pBtnCode = new QPushButton("", this);
+	_pBtnEmoticon = new QPushButton( this);
+	_pBtnScreenshot = new QPushButton( this);
+	_pBtnScreenshotSet = new QPushButton( this);
+	_pBtnFile = new QPushButton( this);
+    _pBtnCode = new QPushButton( this);
     _pBtnMultifunction = new QPushButton(this);
 	//
     _pBtnEmoticon->setFocusPolicy(Qt::NoFocus);
@@ -104,37 +109,37 @@ void ToolWgt::initUi()
     _pBtnCode->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
     _pBtnMultifunction->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
 
-    _pBtnVideo = new QPushButton("", this);
+    _pBtnVideo = new QPushButton( this);
     _pBtnVideo->setFocusPolicy(Qt::NoFocus);
     _pBtnVideo->setObjectName("Video");
     _pBtnVideo->setToolTip(tr("实时视频"));
     _pBtnVideo->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
 
-    _pBtnHistory = new QPushButton("", this);
+    _pBtnHistory = new QPushButton( this);
     _pBtnHistory->setFocusPolicy(Qt::NoFocus);
     _pBtnHistory->setObjectName("History");
     _pBtnHistory->setToolTip(tr("历史消息"));
     _pBtnHistory->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
 
-    _pBtnShock = new QPushButton("", this);
+    _pBtnShock = new QPushButton( this);
     _pBtnShock->setFocusPolicy(Qt::NoFocus);
     _pBtnShock->setObjectName("Shock");
     _pBtnShock->setToolTip(tr("窗口抖动"));
     _pBtnShock->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
 
-    _pBtnCloseService = new QPushButton("",this);
+    _pBtnCloseService = new QPushButton(this);
     _pBtnCloseService->setFocusPolicy(Qt::NoFocus);
     _pBtnCloseService->setObjectName("CloseServer");
     _pBtnCloseService->setToolTip(tr("挂断"));
     _pBtnCloseService->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
 
-    _pBtnTransfer = new QPushButton("",this);
+    _pBtnTransfer = new QPushButton(this);
     _pBtnTransfer->setFocusPolicy(Qt::NoFocus);
     _pBtnTransfer->setObjectName("Transfer");
     _pBtnTransfer->setToolTip(tr("会话转移"));
     _pBtnTransfer->setFixedSize(DEM_BTN_ICON_LEN, DEM_BTN_ICON_LEN);
 
-    _pBtnQuickReply = new QPushButton("",this);
+    _pBtnQuickReply = new QPushButton(this);
     _pBtnQuickReply->setFocusPolicy(Qt::NoFocus);
     _pBtnQuickReply->setObjectName("QuickReply");
     _pBtnQuickReply->setToolTip(tr("快捷回复"));
@@ -172,29 +177,9 @@ void ToolWgt::initUi()
     _pMultiMenu->setAttribute(Qt::WA_TranslucentBackground, true);
     _pMultiMenu->setAttribute(Qt::WA_TranslucentBackground, true);
 
-    auto* actionVote = new QAction(tr("投票"), this);
-    auto* actionTask = new QAction(tr("任务系统"), this);
     auto* scanQRCode = new QAction(tr("扫一扫"), this);
-    auto* actionPrud = new QAction(tr("产品卡片"),this);
-    auto* actionSuggest = new QAction(tr("产品推荐"),this);
-    auto* actionSendWechat = new QAction(tr("推送微信"),this);
-    pActionVideo = new QAction(tr("视频演示"), this);
 
     _pMultiMenu->addAction(scanQRCode);
-#ifndef _STARTALk
-    _pMultiMenu->addAction(actionVote);
-    _pMultiMenu->addAction(actionTask);
-#endif
-
-#ifdef _QCHAT
-    _pMultiMenu->addAction(actionSuggest);
-    if(_pChatItem->_chatType == QTalk::Enum::TwoPersonChat){
-        _pMultiMenu->addAction(actionPrud);
-    } else if(_pChatItem->_chatType == QTalk::Enum::ConsultServer){
-        _pMultiMenu->addAction(actionPrud);
-        _pMultiMenu->addAction(actionSendWechat);
-    }
-#endif
 
     QMenu* menu = nullptr;
 
@@ -205,10 +190,6 @@ void ToolWgt::initUi()
         pAudioAct = new QAction(tr("音频通话"), menu);
         menu->addAction(pVideoAct);
         menu->addAction(pAudioAct);
-        menu->addAction(pActionVideo);
-#ifndef _QCHAT
-        pActionVideo->setVisible(false);
-#endif
 
         connect(pVideoAct, &QAction::triggered, [this](bool){
             std::string peerId = QTalk::Entity::JID(_pChatItem->getPeerId().usrId()).basename();
@@ -221,23 +202,10 @@ void ToolWgt::initUi()
         });
     }
 
+
     connect(scanQRCode, &QAction::triggered, [](bool){
         emit g_pMainPanel->showQRcode();
     });
-
-    connect(actionPrud,&QAction::triggered,[this](){
-        _pSendProductWnd->clear();
-        _pSendProductWnd->showModel();
-    });
-
-    connect(actionSuggest,&QAction::triggered,[this](){
-        if(nullptr != qchatMoreFun){
-            qchatMoreFun->showSuggestProducts();
-        }
-    });
-
-    connect(actionSendWechat,&QAction::triggered,this, &ToolWgt::sendWechat);
-    connect(pActionVideo, &QAction::triggered, this, &ToolWgt::onActShowVideoDemo);
 
 	//_pBtnFile
 	connect(_pBtnFile, &QPushButton::clicked, this, &ToolWgt::onFileBtnClicked);
@@ -276,7 +244,7 @@ void ToolWgt::initUi()
             {
                 g_pMainPanel->sendAudioVideoMessage(_pChatItem->_uid, _pChatItem->_chatType);
                 QString groupId = _pChatItem->_uid.qUsrId();
-                auto info = dbPlatForm::instance().getGroupInfo(groupId.toStdString());
+                auto info = DB_PLAT.getGroupInfo(groupId.toStdString());
                 g_pMainPanel->startGroupTalk(groupId, QString::fromStdString(QTalk::getGroupName(info)));
             }
         }
@@ -290,11 +258,7 @@ void ToolWgt::initUi()
         }
     });
     connect(_pBtnHistory, &QPushButton::clicked, this, &ToolWgt::showSearchWnd);
-    connect(_pBtnMultifunction, &QPushButton::clicked, [this, actionVote, actionTask](){
-        bool isGroup = _pChatItem->_chatType == QTalk::Enum::GroupChat;
-//        bool isConsultServer = false;
-        actionVote->setVisible(isGroup);
-        actionTask->setVisible(isGroup);
+    connect(_pBtnMultifunction, &QPushButton::clicked, [this](){
         _pMultiMenu->exec(QCursor::pos());
     });
 
@@ -306,10 +270,9 @@ void ToolWgt::initUi()
         {
             time = cur_t;
             g_pMainPanel->sendShockMessage(_pChatItem->_uid, _pChatItem->_chatType);
-            emit g_pMainPanel->sgShockWnd();
+//            emit g_pMainPanel->sgShockWnd();
         }
-        else
-        {
+        else {
             LiteMessageBox::failed(tr("抖动太频繁, 待会再试吧!"), 2000);
         }
 
@@ -357,11 +320,11 @@ void ToolWgt::onFileBtnClicked()
 {
     emit g_pMainPanel->sgOperator(tr("发送文件"));
 
-    QString strHistoryFileDir = QString::fromStdString(Platform::instance().getHistoryDir());
+    QString strHistoryFileDir = QString::fromStdString(PLAT.getHistoryDir());
     QString strFilePath = QFileDialog::getOpenFileName(g_pMainPanel, tr("选择需要发送的文件"), strHistoryFileDir);
 	if (!strFilePath.isEmpty() && _pInputWgt)
 	{
-        Platform::instance().setHistoryDir(strFilePath.toStdString());
+        PLAT.setHistoryDir(strFilePath.toStdString());
 		_pInputWgt->dealFile(strFilePath, true);
 	}
 
@@ -406,17 +369,17 @@ void ToolWgt::onpBtnEmoticon()
     emit g_pMainPanel->sgOperator(tr("表情"));
 
 	QPoint pos = QCursor::pos();
-	EmoticonMainWgt::getInstance()->setConversionId(_pChatItem->conversionId());
-    EmoticonMainWgt::getInstance()->setVisible(false);
-    EmoticonMainWgt::getInstance()->setVisible(true);
-	EmoticonMainWgt::getInstance()->move(pos.x() - 60, pos.y() - 300);
-	EmoticonMainWgt::getInstance()->setFocus();
+    EmoticonMainWgt::instance()->setConversionId(_pChatItem->conversionId());
+    EmoticonMainWgt::instance()->setVisible(false);
+    EmoticonMainWgt::instance()->setVisible(true);
+    EmoticonMainWgt::instance()->move(pos.x() - 60, pos.y() - 300);
+    EmoticonMainWgt::instance()->setFocus();
 }
 
 void ToolWgt::openLinkWithCkey(const QUrl& url)
 {
     MapCookie cookies;
-    cookies["q_ckey"] = QString::fromStdString(Platform::instance().getClientAuthKey());
+    cookies["q_ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
     WebService::loadUrl(url, false, cookies);
 }
 
@@ -436,6 +399,12 @@ void ToolWgt::sendQuickReply(const std::string &text) {
     }
 }
 
+void ToolWgt::showSeats(const std::vector<QTalk::Entity::ImTransfer>& transfers) {
+    if(_pSessionTransferWnd){
+        _pSessionTransferWnd->showSeats(transfers);
+    }
+}
+
 void ToolWgt::sessionTransfer(const std::string &newJid, const std::string &reason) {
     if(g_pMainPanel && _pChatItem){
         QTalk::Entity::UID uid = _pChatItem->_uid;
@@ -444,22 +413,15 @@ void ToolWgt::sessionTransfer(const std::string &newJid, const std::string &reas
 }
 
 void ToolWgt::sendWechat() {
-    if(g_pMainPanel && _pChatItem){
-        QTalk::Entity::UID uid = _pChatItem->_uid;
-        ChatMsgManager::sendWechat(uid);
-    }
+    // invalid function for github
 }
 
-void ToolWgt::onActShowVideoDemo()
-{
 
-}
-
-void ToolWgt::switchSession(const QUInt8 &chatType) {
-#ifdef _QCHAT
-    _pBtnQuickReply->setVisible(_pChatItem->_chatType == QTalk::Enum::ConsultServer);
-#else
+void ToolWgt::switchSession(const QUInt8 &) {
     _pBtnQuickReply->setVisible(false);
+
+#if !defined (_STARTALK) && !defined(_QCHAT)
+    _pBtnVideo->setVisible(false);
 #endif
 
     _pBtnCloseService->setVisible(_pChatItem->_chatType == QTalk::Enum::ConsultServer);
@@ -469,9 +431,4 @@ void ToolWgt::switchSession(const QUInt8 &chatType) {
     bool showVideo = _pChatItem->_chatType != QTalk::Enum::GroupChat && _pChatItem->_chatType != QTalk::Enum::System;
     pVideoAct->setVisible(showVideo);
     pAudioAct->setVisible(showVideo);
-#ifndef _QCHAT
-    pActionVideo->setVisible(false);
-#else
-    pActionVideo->setVisible(showVideo);
-#endif
 }

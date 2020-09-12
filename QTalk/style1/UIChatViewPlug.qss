@@ -21,6 +21,14 @@ QPushButton#Emoticon:hover
 	border-image:url(:/chatview/image1/toolBar/Emoticon_hover.png);
 }
 
+QPushButton#GifBtn {
+    border-image:url(:/chatview/image1/toolBar/hot.png);
+}
+
+QPushButton#GifBtn:hover {
+    border-image:url(:/chatview/image1/toolBar/hot_hover.png);
+}
+
 QPushButton#Screenshot
 {
 	border-image:url(:/chatview/image1/toolBar/Screenshot_normal.png);

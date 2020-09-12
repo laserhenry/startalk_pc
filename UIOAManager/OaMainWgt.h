@@ -48,6 +48,9 @@ public:
 private:
     void initUi();
 
+Q_SIGNALS:
+    void sgShowThrowingScreenWnd();
+
 private:
     int _id;
     QString _name;

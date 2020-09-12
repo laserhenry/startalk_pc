@@ -302,7 +302,7 @@ QLabel#MessageBoxSubMessage {
 
 /** LiteMessageBoxFailed **/
 QFrame#LiteMessageBoxFailed {
-   background:rgba(224,68,68,1);
+    background:rgba(59, 63, 68, 1);
    border-radius:4px;
 }
 
@@ -314,7 +314,7 @@ QLabel#LiteMessageBoxText {
 }
 
 QFrame#LiteMessageBoxSuccess {
-    background:rgba(102,199,54,1);
+    background:rgba(59, 63, 68, 1);
     border-radius:4px;
     border:1px solid rgba(167,219,186,1);
 }
@@ -524,3 +524,5 @@ QLabel#SystemTrayEmptyLabel {
 QFrame#wLine {
     background:rgba(237,237,237,1);
 }
+
+QFrame#LiteMessageBoxMainFrm{background:rgba(59, 63, 68, 1); border-radius: 5px;}

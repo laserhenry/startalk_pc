@@ -1,12 +1,12 @@
-**StarTalk PC 2.0 客户端**
+**StarTalk PC 客户端**
 =====
-StarTalk PC 2.0 是基于StarTalk开源服务的Pc客户端, 支持Windows、Linux、Mac三个平台，除了部分平台性质的差别外，UI和功能都一致。
+StarTalk PC 是基于StarTalk开源服务的PC客户端, 支持Windows、Linux、Mac三个平台，除了部分平台性质的差别外，UI和功能都一致。
 
 Release版本下载地址: [StarTalk官网](https://i.startalk.im/home/#/download)
 
 ### 开发环境搭建 
 ___
-依赖的第三方库
+依赖的第三方开源库
 
 名称  | 版本要求 | 下载地址 | 备注
  ---- | ---- | ------ | ---

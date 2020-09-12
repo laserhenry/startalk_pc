@@ -61,10 +61,10 @@ public:
 
 public:
     // 根据文件路径获取文件md5
-    std::string getFileDataMD5(const std::string &filePath);
+    static std::string getFileDataMD5(const std::string &filePath);
 
     // 根据文件内容获取文件md5
-    std::string getFileDataMD5(const std::string *fileData);
+    static std::string getFileDataMD5(const std::string *fileData);
 
     bool writeQvtToFile(const std::string &qvt);
     std::string getQvtFromFile();

@@ -16,7 +16,6 @@ class QuickReplyDao : public DaoInterface{
 public:
     explicit QuickReplyDao(qtalk::sqlite::database *sqlDb);
     bool creatTable() override;
-    bool clearData() override ;
 
 public:
     void batchInsertQuickReply(const std::string &data);

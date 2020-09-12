@@ -143,7 +143,7 @@ void LocalEmoticon::removeLocalEmo()
 				((EmoLstItemWgt*)_pLocalEmoLst->itemWidget(_pLocalEmoLst->item(0)))->setCheckState(true);
 			}
 
-			EmoticonMainWgt::getInstance()->removeLocalEmoticon(pkgId, iconPath);
+            EmoticonMainWgt::instance()->removeLocalEmoticon(pkgId, iconPath);
 		}
 	}
 }

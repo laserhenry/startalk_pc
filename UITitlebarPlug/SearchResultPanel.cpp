@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QVBoxLayout>
 #include <QDebug>
+#include <QtConcurrent>
 #include <QDateTime>
 #include "../Message/ChatMessage.h"
 #include "../QtUtil/Utils/Log.h"
@@ -14,13 +15,7 @@
 
 using namespace QTalk::Search;
 
-SearchResultPanel::SearchResultPanel(TitlebarMsgManager *messageManager, TitlebarMsgListener *messageListener,
-                                     QWidget *parent) :
-        _pMessageManager(messageManager),
-        _pMessageListener(messageListener),
-        _pSearchView(nullptr),
-        _searchThread(nullptr),
-        isGetMore(false),
+SearchResultPanel::SearchResultPanel(QWidget *parent) :
         UShadowDialog(parent, false, false) {
     initPanel();
 #ifndef _WINDOWS
@@ -114,7 +109,6 @@ void SearchResultPanel::initPanel() {
     connect(this, &SearchResultPanel::sgGotSearchResult,
             this, &SearchResultPanel::onGotSearchResult, Qt::QueuedConnection);
 
-//    _pWnLabel->setStyleSheet("font-size:14px; color:rgba(191,191,191,1);");
 #ifdef _MACOS
     macAdjustWindows();
 #endif
@@ -176,13 +170,7 @@ void SearchResultPanel::onSearchStart(const QString &keywords) {
             _searchLength = 30;
             break;
         case REQ_TYPE_GROUP:
-            _searchStart = 0;
-            _searchLength = 10;
-            break;
         case REQ_TYPE_HISTORY:
-            _searchStart = 0;
-            _searchLength = 10;
-            break;
         case REQ_TYPE_FILE:
             _searchStart = 0;
             _searchLength = 10;
@@ -222,19 +210,16 @@ void SearchResultPanel::onSearchStart(const QString &keywords) {
   * @date 2018.11.08
   */
 void SearchResultPanel::onSearchAll() {
-    if (_pMessageManager) {
-        //
-        std::thread([this](){
-            SearchInfoEvent searchInfo;
-            searchInfo.start = _searchStart;
-            searchInfo.length = _searchLength;
-            searchInfo.key = _keywords.toStdString();
-            _action = searchInfo.action = EM_ACTION_USER | EM_ACTION_MUC | EM_ACTION_COMMON_MUC /*| EM_ACTION_HS_SINGLE | EM_ACTION_HS_MUC | EM_ACTION_HS_FILE*/;
-            _pMessageManager->sendSearch(searchInfo);
+    QtConcurrent::run([this](){
+        SearchInfoEvent searchInfo;
+        searchInfo.start = _searchStart;
+        searchInfo.length = _searchLength;
+        searchInfo.key = _keywords.toStdString();
+        _action = searchInfo.action = EM_ACTION_USER | EM_ACTION_MUC | EM_ACTION_COMMON_MUC /*| EM_ACTION_HS_SINGLE | EM_ACTION_HS_MUC | EM_ACTION_HS_FILE*/;
+        TitlebarMsgManager::sendSearch(searchInfo);
 
-            emit sgGotSearchResult(searchInfo.key.data(), searchInfo.searchRet);
-        }).detach();
-    }
+        emit sgGotSearchResult(searchInfo.key.data(), searchInfo.searchRet);
+    });
 }
 
 /**
@@ -244,18 +229,16 @@ void SearchResultPanel::onSearchAll() {
   * @date 2018.11.08
   */
 void SearchResultPanel::onSearchContact() {
-    if (_pMessageManager) {
-        std::thread([this](){
-            SearchInfoEvent searchInfo;
-            searchInfo.start = _searchStart;
-            searchInfo.length = _searchLength;
-            searchInfo.key = _keywords.toStdString();
-            _action = searchInfo.action = EM_ACTION_USER;
-            _pMessageManager->sendSearch(searchInfo);
+    QtConcurrent::run([this](){
+        SearchInfoEvent searchInfo;
+        searchInfo.start = _searchStart;
+        searchInfo.length = _searchLength;
+        searchInfo.key = _keywords.toStdString();
+        _action = searchInfo.action = EM_ACTION_USER;
+        TitlebarMsgManager::sendSearch(searchInfo);
 
-            emit sgGotSearchResult(searchInfo.key.data(), searchInfo.searchRet);
-        }).detach();
-    }
+        emit sgGotSearchResult(searchInfo.key.data(), searchInfo.searchRet);
+    });
 }
 
 /**
@@ -265,50 +248,43 @@ void SearchResultPanel::onSearchContact() {
   * @date 2018.11.08
   */
 void SearchResultPanel::onSearchGroup() {
-    if (_pMessageManager) {
-
-        std::thread([this](){
-            SearchInfoEvent searchInfo;
-            searchInfo.start = _searchStart;
-            searchInfo.length = _searchLength;
-            searchInfo.key = _keywords.toStdString();
-            _action = searchInfo.action = EM_ACTION_MUC | EM_ACTION_COMMON_MUC;
-            _pMessageManager->sendSearch(searchInfo);
-            emit sgGotSearchResult(searchInfo.key.data(), searchInfo.searchRet);
-        }).detach();
-    }
+    QtConcurrent::run([this](){
+        SearchInfoEvent searchInfo;
+        searchInfo.start = _searchStart;
+        searchInfo.length = _searchLength;
+        searchInfo.key = _keywords.toStdString();
+        _action = searchInfo.action = EM_ACTION_MUC | EM_ACTION_COMMON_MUC;
+        TitlebarMsgManager::sendSearch(searchInfo);
+        emit sgGotSearchResult(searchInfo.key.data(), searchInfo.searchRet);
+    });
 }
 
 void SearchResultPanel::onSearchHistory() {
-    if (_pMessageManager) {
-        //
-        std::thread([this](){
-            SearchInfoEvent searchInfo;
-            searchInfo.start = _searchStart;
-            searchInfo.length = _searchLength;
-            searchInfo.key = _keywords.toStdString();
-            _action = searchInfo.action = EM_ACTION_HS_SINGLE | EM_ACTION_HS_MUC;
-            _pMessageManager->sendSearch(searchInfo);
+    //
+    QtConcurrent::run([this](){
+        SearchInfoEvent searchInfo;
+        searchInfo.start = _searchStart;
+        searchInfo.length = _searchLength;
+        searchInfo.key = _keywords.toStdString();
+        _action = searchInfo.action = EM_ACTION_HS_SINGLE | EM_ACTION_HS_MUC;
+        TitlebarMsgManager::sendSearch(searchInfo);
 
-            emit sgGotSearchResult(searchInfo.key.data(), searchInfo.searchRet);
-        }).detach();
-    }
+        emit sgGotSearchResult(searchInfo.key.data(), searchInfo.searchRet);
+    });
 }
 
 void SearchResultPanel::onSearchFile() {
-    if (_pMessageManager) {
-        //
-        std::thread([this](){
-            SearchInfoEvent searchInfo;
-            searchInfo.start = _searchStart;
-            searchInfo.length = _searchLength;
-            searchInfo.key = _keywords.toStdString();
-            _action = searchInfo.action = EM_ACTION_HS_FILE;
-            _pMessageManager->sendSearch(searchInfo);
+    //
+    QtConcurrent::run([this](){
+        SearchInfoEvent searchInfo;
+        searchInfo.start = _searchStart;
+        searchInfo.length = _searchLength;
+        searchInfo.key = _keywords.toStdString();
+        _action = searchInfo.action = EM_ACTION_HS_FILE;
+        TitlebarMsgManager::sendSearch(searchInfo);
 
-            emit sgGotSearchResult(searchInfo.key.data(), searchInfo.searchRet);
-        }).detach();
-    }
+        emit sgGotSearchResult(searchInfo.key.data(), searchInfo.searchRet);
+    });
 }
 
 /**

@@ -18,7 +18,7 @@
 #include <curl/curl.h>
 #include <QtConcurrent>
 #include <QSslSocket>
-#include "UIGolbalManager.h"
+#include "GlobalManager.h"
 #include "../LogicManager/LogicManager.h"
 #include "../Platform/Platform.h"
 #include "../QtUtil/Utils/Log.h"
@@ -36,16 +36,17 @@
 #endif
 #endif
 
-
+extern bool _sys_run {};
 QTalkApp::QTalkApp(int argc, char *argv[])
         : QApplication(argc, argv) {
 
+    _sys_run = true;
     QString strExcutePath = argv[0];
     strExcutePath = QFileInfo(strExcutePath).absolutePath();
-    //strExcutePath = strExcutePath.replace("/", "\\");
 	// 启动日志
 	initLogSys();
 
+    //
 #ifdef _MACOS
     MacApp::initApp();
 #endif
@@ -57,19 +58,19 @@ QTalkApp::QTalkApp(int argc, char *argv[])
 
     curl_global_init(CURL_GLOBAL_ALL);
     // 加载全局单利platform
-    Platform::instance().setMainThreadId();
-    Platform::instance().setExecutePath(strExcutePath.toStdString());
-    Platform::instance().setExecuteName(qApp->applicationName().toStdString());
-    Platform::instance().setProcessId(qApp->applicationPid());
+    PLAT.setMainThreadId();
+    PLAT.setExecutePath(strExcutePath.toStdString());
+    PLAT.setExecuteName(QApplication::applicationName().toStdString());
+    PLAT.setProcessId(QApplication::applicationPid());
     QString systemStr = QSysInfo::prettyProductName();
     QString productType = QSysInfo::productType();
     QString productVersion = QSysInfo::productVersion();
-    Platform::instance().setOSInfo(systemStr.toStdString());
-    Platform::instance().setOSProductType(productType.toStdString());
-    Platform::instance().setOSVersion(productVersion.toStdString());
+    PLAT.setOSInfo(systemStr.toStdString());
+    PLAT.setOSProductType(productType.toStdString());
+    PLAT.setOSVersion(productVersion.toStdString());
 
     // Ui管理单例
-    _pUiManager = UIGolbalManager::getUIGolbalManager();
+    _pUiManager = GlobalManager::instance();
     int language = AppSetting::instance().getLanguage();
     if(QLocale::AnyLanguage == language)
     {
@@ -83,7 +84,7 @@ QTalkApp::QTalkApp(int argc, char *argv[])
             // 加载翻译文件
             static QTranslator wgtQm;
             wgtQm.load(":/QTalk/config/qtalk_en.qm");
-            qApp->installTranslator(&wgtQm);
+            QApplication::installTranslator(&wgtQm);
             break;
         }
         case QLocale::Korean:
@@ -91,11 +92,11 @@ QTalkApp::QTalkApp(int argc, char *argv[])
             //
             static QTranslator qtGloble;
             qtGloble.load(":/QTalk/config/qt_ko.qm");
-            qApp->installTranslator(&qtGloble);
+            QApplication::installTranslator(&qtGloble);
 
             static QTranslator wgtQm;
             wgtQm.load(":/QTalk/config/qtalk_ko.qm");
-            qApp->installTranslator(&wgtQm);
+            QApplication::installTranslator(&wgtQm);
 
             break;
         }
@@ -105,11 +106,11 @@ QTalkApp::QTalkApp(int argc, char *argv[])
             // 加载翻译文件
             static QTranslator qtGloble;
             qtGloble.load(":/QTalk/config/qt_zh_CN.qm");
-            qApp->installTranslator(&qtGloble);
+            QApplication::installTranslator(&qtGloble);
             //
             static QTranslator wgtQm;
             wgtQm.load(":/QTalk/config/widgets_zh_CN.qm");
-            qApp->installTranslator(&wgtQm);
+            QApplication::installTranslator(&wgtQm);
             break;
         }
     }
@@ -132,9 +133,9 @@ QTalkApp::QTalkApp(int argc, char *argv[])
 #endif
 #endif
     // 去除mac默认边框
-#ifdef _MACOS
+//#ifdef _MACOS
     QApplication::setStyle("fusion");
-#endif
+//#endif
     _pMainWnd = new MainWindow;
 #ifdef _MACOS
     // 窗口调整
@@ -144,9 +145,13 @@ QTalkApp::QTalkApp(int argc, char *argv[])
     // 多开
     connect(_pMainWnd, &MainWindow::sgRunNewInstance, [](){
         QStringList params;
-        const QString& cmd = qApp->applicationFilePath();
+        const QString& cmd = QApplication::applicationFilePath();
         QStringList arguments;
+#ifdef _STARTALK
         arguments << "START_BY_STARTER=YES" << "AUTO_LOGIN=OFF";
+#else
+        arguments << "AUTO_LOGIN=OFF";
+#endif
         QProcess::startDetached(cmd, arguments);
     });
 #endif
@@ -170,9 +175,8 @@ QTalkApp::QTalkApp(int argc, char *argv[])
             enableAutoLogin = params["AUTO_LOGIN"] == "ON";
         if(params.contains("MSG"))
             loginMsg = params["MSG"];
-
-#ifndef _DEBUG
-//#ifdef ooo
+#ifndef QT_DEBUG
+#ifdef _STARTALK
 #if defined(_MACOS) || defined(_WINDOWS)
         bool startByStarter = params.contains("START_BY_STARTER");
         if(_pUiManager->_check_updater)
@@ -180,7 +184,7 @@ QTalkApp::QTalkApp(int argc, char *argv[])
             if(!startByStarter && _pUiManager->_updater_version > 0)
             {
 #if defined(_MACOS)
-                QString updater_path = QString("/Applications/%1.app/Contents/MacOS/%1").arg(qApp->applicationName());
+                QString updater_path = QString("/Applications/%1.app/Contents/MacOS/%1").arg(QApplication::applicationName());
                 error_log(updater_path.toStdString());
                 error_log(QApplication::applicationFilePath().toStdString());
                 if(QApplication::applicationFilePath() != updater_path)
@@ -206,75 +210,41 @@ QTalkApp::QTalkApp(int argc, char *argv[])
         }
         else
         {
-//            if(startByStarter)
-//            {
-//                _pUiManager->_check_updater = true;
-//                _pUiManager->saveSysConfig();
-//            }
+            //
         }
+#endif
 #endif
 #endif
     }
 
     _pMainWnd->InitLogin(enableAutoLogin, loginMsg);
     _pMainWnd->initSystemTray();
-	// deal dump file
-//	dealDumpFile();
-
-//    do
-//    {
-//        if(MainWindow::_sys_run)
-//        {
-            exec();
-            //
-//            if(MainWindow::_sys_run)
-//            {
-//                _pMainWnd->wakeUpWindow();
-
-//                int ret = QtMessageBox::question(_pMainWnd, "提醒", "是否立即退出");
-//                if(ret == QtMessageBox::EM_BUTTON_YES)
-//                    MainWindow::_sys_run = false;
-//            }
-//        }
-//
-//    } while (MainWindow::_sys_run);
+    //
+    connect(this, &QApplication::applicationStateChanged, this, &QTalkApp::onApplicationStateChange);
+    // exec
+    exec();
 }
 
 QTalkApp::~QTalkApp() {
+
     EventBus::clearHandle();
-    if (_pLogicManager) {
-        delete _pLogicManager;
-        _pLogicManager = nullptr;
-    }
     if (nullptr != _pMainWnd) {
         delete _pMainWnd;
         _pMainWnd = nullptr;
     }
-    if (nullptr != _pUiManager) {
-        delete _pUiManager;
-        _pUiManager = nullptr;
-    }
-    if (nullptr != _pLogicManager) {
-        delete _pLogicManager;
-        _pLogicManager = nullptr;
-    }
+
     QTalk::logger::exit();
 }
 
-/**
-  * @函数名   QDebug 生成日志
-  * @功能描述
-  * @参数
-  * @author   cc
-  * @date     2018/10/11
-  */
-//QMutex mutex;//日志代码互斥锁
+
 QString strlogPath;
 QString strqLogPath;
 
 void LogMsgOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-    QString log;
+    if(!_sys_run)
+        return;
 
+    QString log;
     QString localMsg(msg);
     localMsg.replace("\"", "");
 
@@ -366,14 +336,14 @@ void QTalkApp::initLogSys() {
 #ifdef _DEBUG
             QTalk::logger::LEVEL_DEBUG
 #else
-            QTalk::logger::LEVEL_INFO
+            QTalk::logger::LEVEL_WARING
 #endif
     );
     //
     qInstallMessageHandler(LogMsgOutput);
     //
-    info_log("系统启动 当前版本号:{0}", Platform::instance().getClientVersion());
-    info_log("supportsSsl {0}", QSslSocket::supportsSsl());
+    info_log("系统启动 当前版本号:{0}", PLAT.getClientVersion());
+//    info_log("supportsSsl {0}", QSslSocket::supportsSsl());
 //    qDebug() << QStringLiteral("系统启动");
 }
 
@@ -398,22 +368,23 @@ bool QTalkApp::notify(QObject *receiver, QEvent *e) {
                         emit _pMainWnd->sgResetOperator();
                 break;
             }
-            case QEvent::ApplicationActivate:
-            {
-                if (nullptr != _pMainWnd) {
-                    _pMainWnd->onAppActive();
-                }
-                break;
-            }
-            case QEvent::ApplicationDeactivate:
-            {
-                if (nullptr != _pMainWnd) {
-                    _pMainWnd->onAppDeactivate();
-                }
-                break;
-            }
-            case QEvent::Timer:
-                break;
+            // qt : This enum has been deprecated
+            // ApplicationStateChange instead
+            // -> applicationStateChanged signal
+//            case QEvent::ApplicationActivate:
+//            {
+//                if (nullptr != _pMainWnd) {
+//                    _pMainWnd->onAppActive();
+//                }
+//                break;
+//            }
+//            case QEvent::ApplicationDeactivate:
+//            {
+//                if (nullptr != _pMainWnd) {
+//                    _pMainWnd->onAppDeactivate();
+//                }
+//                break;
+//            }
             default:
                 break;
         }
@@ -425,21 +396,65 @@ bool QTalkApp::notify(QObject *receiver, QEvent *e) {
         {
             try {
                 qWarning() << "hang hang hang!!! use time:" << t
-                           << " type:" << e->type();
-//                           << " class:" << (receiver ? receiver->metaObject()->className() : "");
+                           << " type:" << e->type() ;
             }
-            catch (const std::exception& e)
-            {
-                error_log(e.what());
+            catch (...) {
+
             }
         }
         return ret;
     }
     catch (const std::bad_alloc &) {
-        return false;
+        qWarning() << "Out of memory";
+        QApplication::exit(-1);
+//        return false;
     }
     catch (const std::exception &e) {
         return false;
+    }
+}
+
+//
+bool QTalkApp::event(QEvent *e) {
+#ifdef Q_OS_MAC
+    if (e->type() == QEvent::FileOpen) {
+        auto* event = dynamic_cast<QFileOpenEvent*>(e);
+        if (!event->url().isEmpty())
+        {
+            QString url = event->url().toString();
+            qInfo() << "recv url scheme" << url;
+        }
+    }
+#endif
+    return QApplication::event(e);
+}
+
+//
+void QTalkApp::onApplicationStateChange(Qt::ApplicationState state) {
+    switch (state)
+    {
+        case Qt::ApplicationSuspended:
+        {
+            qInfo() << "app will be Suspend";
+            break;
+        }
+        case Qt::ApplicationHidden:
+        case Qt::ApplicationInactive:
+        {
+            if (nullptr != _pMainWnd) {
+                _pMainWnd->onAppDeactivate();
+            }
+            break;
+        }
+        case Qt::ApplicationActive:
+        {
+            if (nullptr != _pMainWnd) {
+                _pMainWnd->onAppActive();
+            }
+            break;
+        }
+        default:
+            break;
     }
 }
 
@@ -489,7 +504,7 @@ LONG WINAPI TopLevelFilter(struct _EXCEPTION_POINTERS *pExceptionInfo) {
 
 
 void QTalkApp::initTTF() {
-    std::string appDataPath = Platform::instance().getAppdataRoamingPath();
+    std::string appDataPath = PLAT.getAppdataRoamingPath();
     QString ttfPath = QString("%1/ttf").arg(appDataPath.data());
     {
         QString tmpTTF = QString("%1/%2").arg(ttfPath, "FZLTHJW.TTF");
@@ -504,7 +519,7 @@ void QTalkApp::initTTF() {
             QTemporaryFile* tmpFile = QTemporaryFile::createNativeFile(":/QTalk/ttf/FZLTHJW.TTF");
             tmpFile->copy(tmpTTF);
         }
-        qDebug() << QFontDatabase::addApplicationFont(tmpTTF);
+        QFontDatabase::addApplicationFont(tmpTTF);
     }
 //    {
 //        QString tmpTTF = QString("%1/%2").arg(ttfPath, "FZLTZHJW.TTF");

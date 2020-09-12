@@ -2,6 +2,7 @@
 
 #include <QButtonGroup>
 #include <QMouseEvent>
+#include <QtConcurrent>
 #include "MessageManager.h"
 #include "../Platform/Platform.h"
 #include "../UICom/uicom.h"
@@ -47,19 +48,19 @@ void deleteDir(const QString& path)
 
 
 MainPanel::MainPanel(QWidget *parent) :
-        QFrame(parent),
-        _pCtrlWdt(nullptr),
-        _pSearchResultPanel(nullptr),
-        _pAboutWnd(nullptr),
-        _pSystemSettingWnd(nullptr) {
+        QFrame(parent) {
 
     init();
+    //
     connects();
     getSelfCard();
-
 }
 
-MainPanel::~MainPanel() = default;
+MainPanel::~MainPanel()
+{
+    if(_pMessageListener)
+        delete _pMessageListener;
+}
 
 /**
   * @功能描述 设置工具栏操控面板
@@ -72,15 +73,10 @@ void MainPanel::setCtrlWdt(QWidget *wdt) {
 }
 
 void MainPanel::getSelfCard() {
-    std::thread([this]() {
-#ifdef _MACOS
-        pthread_setname_np("MainPanel::getSelfCard");
-#endif
-        if (_pMessageManager) {
-            _pMessageManager->getUserCard(Platform::instance().getSelfDomain(),
-                                          Platform::instance().getSelfUserId(), 0);
-        }
-    }).detach();
+    QtConcurrent::run( [](){
+        TitlebarMsgManager::getUserCard(PLAT.getSelfDomain(),
+                                      PLAT.getSelfUserId(), 0);
+    });
 }
 
 /**
@@ -91,14 +87,14 @@ void MainPanel::getSelfCard() {
   * @date     2018/09/29
   */
 void MainPanel::recvUserCard(const std::vector<QTalk::StUserCard> &userCards) {
-    std::string strSelfId = Platform::instance().getSelfUserId() + "@" + Platform::instance().getSelfDomain();
+    std::string strSelfId = PLAT.getSelfUserId() + "@" + PLAT.getSelfDomain();
 
     auto itFind = std::find_if(userCards.begin(), userCards.end(), [strSelfId](const QTalk::StUserCard& user) {
         return user.xmppId == strSelfId;
     });
 
-    if (itFind != userCards.end() && _pMessageManager) {
-        std::string headPath = _pMessageManager->getHeadPath(itFind->headerSrc);
+    if (itFind != userCards.end() ) {
+        std::string headPath = TitlebarMsgManager::getHeadPath(itFind->headerSrc);
         if (!headPath.empty() && _userBtn) {
             emit setHeadSignal(QString::fromStdString(itFind->nickName), QString::fromStdString(headPath));
         }
@@ -110,10 +106,12 @@ void MainPanel::recvUserCard(const std::vector<QTalk::StUserCard> &userCards) {
   * @参数
   * @date 2018.9.17
   */
-void MainPanel::mousePressEvent(QMouseEvent *me) {
+void MainPanel::mousePressEvent(QMouseEvent *e) {
 
     _press = true;
     chickPos = QCursor::pos();
+
+    QFrame::mousePressEvent(e);
 }
 
 /**
@@ -121,29 +119,39 @@ void MainPanel::mousePressEvent(QMouseEvent *me) {
   * @参数
   * @date 2018.9.17
   */
-void MainPanel::mouseMoveEvent(QMouseEvent *me) {
+void MainPanel::mouseMoveEvent(QMouseEvent *e) {
     if(_press)
     {
-        if (_pCtrlWdt && _pCtrlWdt->isMaximized()) {
-#ifndef _WINDOWS
-			_pCtrlWdt->setWindowState(_pCtrlWdt->windowState() & ~Qt::MaximumSize);
-			_press = false;
-#endif // !_WINDOWS
-            return;
-        }
-
         QPoint curPos = QCursor::pos();
         QPoint movePos = curPos - chickPos;
+
+        if (_pCtrlWdt && _pCtrlWdt->isMaximized() && curPos != chickPos) {
+            auto geo = _pCtrlWdt->geometry();
+			
+#ifdef Q_OS_WIN
+            _pCtrlWdt->setWindowState(_pCtrlWdt->windowState() & ~Qt::MaximumSize);
+#endif
+            _pCtrlWdt->setGeometry(geo);
+//            _pCtrlWdt->showNormal();
+//			_press = false;
+//            return;
+        }
+
+
         chickPos = curPos;
         if (_pCtrlWdt) {
 			_pCtrlWdt->move(_pCtrlWdt->x() + movePos.x(), _pCtrlWdt->y() + movePos.y());
 		}
     }
+
+    QFrame::mouseMoveEvent(e);
 }
 
-void MainPanel::mouseReleaseEvent(QMouseEvent *m)
+void MainPanel::mouseReleaseEvent(QMouseEvent *e)
 {
     _press = false;
+
+    QFrame::mouseReleaseEvent(e);
 }
 
 /**
@@ -152,10 +160,8 @@ void MainPanel::mouseReleaseEvent(QMouseEvent *m)
   * @date 2018.9.17
   */
 void MainPanel::init() {
-    _pMessageManager = new TitlebarMsgManager;
     _pMessageListener = new TitlebarMsgListener(this);
 
-    adaptiveResolution();
     this->setObjectName("titleMainFrm");
     this->setFixedHeight(_property._mainFrmHeight);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -271,19 +277,24 @@ void MainPanel::init() {
     _closeBtn->setObjectName("closeBtn");
     _restoreBtn->setObjectName("restoreBtn");
 #endif // !_MACOS
-    _pSearchResultPanel = new SearchResultPanel(_pMessageManager, _pMessageListener, this);
+    _pSearchResultPanel = new SearchResultPanel(this);
     //
     _pChangeHeadWnd = new ChangeHeadWnd(this);
 
     //
     _dropMenu = new DropMenu(this);
     _pAboutWnd = new AboutWnd(this);
-    _pSystemSettingWnd = new SystemSettingWnd(_pMessageManager,this);
+    _pSystemSettingWnd = new SystemSettingWnd(this);
 
     _pQuickMenu = new QMenu(this);
     _pQuickMenu->setAttribute(Qt::WA_TranslucentBackground, true);
     auto* creatGroupAct = new QAction(tr("创建群聊"), this);
     _pQuickMenu->addAction(creatGroupAct);
+#ifdef TSCREEN
+    auto* throwing = new QAction(tr("发起投屏"), this);
+    _pQuickMenu->addAction(throwing);
+    connect(throwing, &QAction::triggered, this, &MainPanel::sgShowThrowingScreenWnd);
+#endif
 //    this->setFocusProxy(this);
     //
     connect(_closeBtn, SIGNAL(clicked()), this, SLOT(onCtrlWdtClose()));
@@ -316,18 +327,15 @@ void MainPanel::init() {
     connect(_pSystemSettingWnd, &SystemSettingWnd::sgFeedbackLog, this, &MainPanel::feedbackLog);
 
 	connect(_pSystemSettingWnd, &SystemSettingWnd::saveConfig, [this]() {
-		if (_pMessageManager)
-		{
-            emit sgSaveSysConfig();
-            _pMessageManager->saveConfig();
-		}
+        emit sgSaveSysConfig();
+        TitlebarMsgManager::saveConfig();
 	});
     connect(_pSystemSettingWnd, &SystemSettingWnd::sgClearSystemCache, [this](){
         int ret = QtMessageBox::question(this, tr("友情提示"), tr("是否要清除应用缓存，清除后应用会自动重启？"), QtMessageBox::EM_BUTTON_YES | QtMessageBox::EM_BUTTON_NO);
         if(ret == QtMessageBox::EM_BUTTON_YES)
         {
             // 清除文件夹
-            QString userPath = Platform::instance().getAppdataRoamingUserPath().data();
+            QString userPath = PLAT.getAppdataRoamingUserPath().data();
             // image
             deleteDir(QString("%1/image").arg(userPath));
             // video
@@ -335,13 +343,12 @@ void MainPanel::init() {
             // temp
             deleteDir(QString("%1/temp").arg(userPath));
             //
-            if (_pMessageManager)
-                _pMessageManager->clearSystemCache();
+            TitlebarMsgManager::clearSystemCache();
 
             // 重启应用
             QString program = QApplication::applicationFilePath();
             QProcess::startDetached(program);
-            exit(0);
+            QApplication::exit(0);
         }
     });
 
@@ -349,11 +356,7 @@ void MainPanel::init() {
 
         if(headPath.isEmpty() || headPath == _headPath)
             return;
-
-        if(_pMessageManager)
-        {
-            _pMessageManager->changeUserHead(headPath.toLocal8Bit().toStdString());
-        }
+        TitlebarMsgManager::changeUserHead(headPath.toLocal8Bit().toStdString());
 
     });
 
@@ -372,7 +375,7 @@ void MainPanel::init() {
     });
 
     connect(creatGroupAct, &QAction::triggered, [this](){
-        QString userCard = QString::fromStdString(Platform::instance().getSelfXmppId());
+        QString userCard = QString::fromStdString(PLAT.getSelfXmppId());
         emit creatGroup(userCard);
     });
 
@@ -432,7 +435,7 @@ void MainPanel::connects() {
 
 //    connect(_sessionBtn, &SessionBtn::clicked, this, &MainPanel::sgJumpToNewMessage);
     connect(_dropMenu, &DropMenu::showSelfUserCard, [this]() {
-        QString userCard = QString::fromStdString(Platform::instance().getSelfXmppId());
+        QString userCard = QString::fromStdString(PLAT.getSelfXmppId());
         emit showSelfUserCard(userCard);
     });
     connect(_dropMenu, &DropMenu::sysQuit, this, &MainPanel::systemQuitSignal);
@@ -453,24 +456,9 @@ void MainPanel::onSwitchUserStatus(const QString& status)
 {
 
     _dropMenu->setVisible(false);
-    std::thread([this, status](){
-
-        if(_pMessageManager)
-        {
-            _pMessageManager->chanegUserStatus(status.toStdString());
-        }
-
-    }).detach();
-}
-
-/**
-  * @功能描述  适应分辨率
-  * @参数
-  * @date 2018.9.17
-  */
-void MainPanel::adaptiveResolution() {
-    // 这里需要根据分辨率设置不同属性值
-    // _property;
+    QtConcurrent::run([ status](){
+        TitlebarMsgManager::chanegUserStatus(status.toStdString());
+    });
 }
 
 void MainPanel::showSmall() {
@@ -491,12 +479,8 @@ void MainPanel::showMaxRestore() {
 
 #ifndef _MACOS
         if (_pCtrlWdt->isMaximized()) {
-            _restoreBtn->hide();
-            _maximizeBtn->show();
             _pCtrlWdt->showNormal();
         } else {
-            _restoreBtn->show();
-            _maximizeBtn->hide();
             _pCtrlWdt->showMaximized();
         }
 #else
@@ -519,14 +503,9 @@ void MainPanel::onCtrlWdtClose() {
         _pCtrlWdt->setWindowState(_pCtrlWdt->windowState() & ~Qt::WindowFullScreen);
     else
     {
-        if(_pCtrlWdt->isMaximized())
-        {
-            _pCtrlWdt->setWindowState(_pCtrlWdt->windowState() & ~Qt::WindowMaximized);
-#ifndef _MACOS
-            _restoreBtn->hide();
-            _maximizeBtn->show();
-#endif
-        }
+        //if(_pCtrlWdt->isMaximized()){
+        //    _pCtrlWdt->setWindowState(_pCtrlWdt->windowState() & ~Qt::WindowMaximized);
+        //}
 
         _pCtrlWdt->setVisible(false);
     }
@@ -543,7 +522,10 @@ bool MainPanel::eventFilter(QObject *o, QEvent *e) {
     }
     else if(o == _pCtrlWdt && e->type() == QEvent::WindowStateChange)
     {
-
+#ifndef Q_OS_MAC
+        _maximizeBtn->setVisible(!_pCtrlWdt->isMaximized());
+        _restoreBtn->setVisible(_pCtrlWdt->isMaximized());
+#endif // !Q_OS_MAC
     }
     else if(o == _pSearchResultPanel)
     {
@@ -676,9 +658,6 @@ void MainPanel::mouseDoubleClickEvent(QMouseEvent *e) {
 
     if(_pCtrlWdt)
     {
-		_restoreBtn->setVisible(!_pCtrlWdt->isMaximized());
-		_maximizeBtn->setVisible(_pCtrlWdt->isMaximized());
-
         if(_pCtrlWdt->isMaximized())
             _pCtrlWdt->showNormal();
         else if(_pCtrlWdt->isFullScreen())
@@ -709,7 +688,7 @@ void MainPanel::onChangeHeadRet(bool ret, const std::string &locaHead)
 {
     if(ret)
     {
-        std::string userName = Platform::instance().getSelfName();
+        std::string userName = PLAT.getSelfName();
         emit setHeadSignal(QString::fromStdString(userName), QString::fromStdString(locaHead));
         emit sgOperator(tr("更换头像"));
         //_userBtn->setHead(QString::fromStdString(locaHead), 18, false, true);

@@ -42,7 +42,7 @@ public:
     // delete session
     bool bulkDeleteSessions(const std::vector<std::string> &peerIds) override ;
     // get session
-    std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > QueryImSessionInfos() override ;
+//    std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > QueryImSessionInfos() override ;
     std::shared_ptr<std::vector<std::shared_ptr<QTalk::Entity::ImSessionInfo> > > reloadSession() override ;
     //
     void getRecentSession(std::vector<QTalk::StShareSession> &sessions) override ;
@@ -177,12 +177,12 @@ public://config
 
     bool getAllConfig(std::vector<QTalk::Entity::ImConfig> &configs) override;
 
-public: // friends
-    bool bulkInsertFriends(const std::vector<QTalk::Entity::IMFriendList> &friends) override;
-    bool insertFriend(QTalk::Entity::IMFriendList imfriend) override;
-    bool deleteAllFriends() override;
-    bool deleteFriendByXmppId(const std::string &xmppId) override;
-    bool getAllFriends(std::vector<QTalk::Entity::IMFriendList> &friends) override;
+//public: // friends
+//    bool bulkInsertFriends(const std::vector<QTalk::Entity::IMFriendList> &friends) override;
+//    bool insertFriend(QTalk::Entity::IMFriendList imfriend) override;
+//    bool deleteAllFriends() override;
+//    bool deleteFriendByXmppId(const std::string &xmppId) override;
+//    bool getAllFriends(std::vector<QTalk::Entity::IMFriendList> &friends) override;
 
 public://Im_Cache_Data
     bool insertUserId(std::string value) override;
@@ -212,8 +212,11 @@ public:
     void getMedalUsers(int medalId, std::vector<QTalk::StMedalUser>& metalUsers) override;
     void modifyUserMedalStatus(const std::string& userId, int medalId, int status) override ;
 
+public:
+    void addExceptCpu(double cpu, long long time, const std::string& stack);
+
 private:
-    qtalk::sqlite::database *_dataBass {};
+    qtalk::sqlite::database *_dataBass = nullptr;
     ThreadPool _dbPool;
 };
 

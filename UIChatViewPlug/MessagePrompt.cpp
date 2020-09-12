@@ -97,7 +97,7 @@ void MessagePrompt::initUi()
     if(_msg.ChatType == QTalk::Enum::GroupChat)
     {
         //
-        std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = dbPlatForm::instance().getGroupInfo(jid.basename(), true);
+        std::shared_ptr<QTalk::Entity::ImGroupInfo> groupInfo = DB_PLAT.getGroupInfo(jid.basename(), true);
         QString strHead = "";
         if(nullptr != groupInfo)
         {
@@ -125,7 +125,7 @@ void MessagePrompt::initUi()
     }
     else
     {
-        std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = dbPlatForm::instance().getUserInfo(jid.basename());
+        std::shared_ptr<QTalk::Entity::ImUserInfo> userInfo = DB_PLAT.getUserInfo(jid.basename());
         QString strHead = "";
         if(nullptr != userInfo)
         {

@@ -25,9 +25,6 @@ private:
 //    void loadLibraryDb();
 
 private:
-	static LogicManager* _pLogicManager;
-
-private:
     IDatabasePlug * _dataBase;
     ILogicBase*     _logicBase;
     std::map<std::string, ILogicObject*> _logicPlugs;

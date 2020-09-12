@@ -14,7 +14,6 @@ class CacheDataDao : public DaoInterface
 public:
     explicit CacheDataDao(qtalk::sqlite::database *sqlDb);
     bool creatTable() override;
-    bool clearData() override;
 
 public:
     bool insertUserId(const std::string& value);

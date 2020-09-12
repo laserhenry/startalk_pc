@@ -65,8 +65,8 @@ public:
     :members(std::move(members)), groupId(std::move(groupId)) { }
 
 public:
-    std::string groupId;
     std::vector<std::string> members;
+    std::string groupId;
 
 };
 

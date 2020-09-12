@@ -40,11 +40,23 @@ void QTalkMsgManager::reportDump(const std::string& ip, const std::string& id, c
     EventBus::FireEvent(e);
 }
 
-std::string QTalkMsgManager::checkUpdater(int version) {
+void QTalkMsgManager::checkUpdater(int version) {
     CheckUpdaterEvt e;
     e.version = version;
     EventBus::FireEvent(e);
-    return e.updater_link;
+}
+
+void QTalkMsgManager::reportLogin() {
+    ReportLogin e;
+    EventBus::FireEvent(e);
+}
+
+void QTalkMsgManager::addExceptCpu(double cpu, QInt64 time, const std::string &stack) {
+    ExceptCpuEvt e;
+    e.cpu = cpu;
+    e.stack = stack;
+    e.time = time;
+    EventBus::FireEvent(e);
 }
 
 /*------------------*/
@@ -53,19 +65,12 @@ QTalkMsgListener::QTalkMsgListener(MainWindow* pUiControl)
 {
 	EventBus::AddHandler<LoginSuccessMessage>(*this);
 	EventBus::AddHandler<GetHistoryError>(*this);
-}
-
-QTalkMsgListener::~QTalkMsgListener()
-{
+	EventBus::AddHandler<CheckUpdaterResultEvt>(*this);
 }
 
 //
 void QTalkMsgListener::onEvent(LoginSuccessMessage& e)
 {
-	if (e.getCanceled())
-	{
-		return;
-	}
 	if (nullptr != _pUiControl)
 	{
 		_pUiControl->OnLoginSuccess(e.getSessionId());
@@ -73,8 +78,23 @@ void QTalkMsgListener::onEvent(LoginSuccessMessage& e)
 }
 
 void QTalkMsgListener::onEvent(GetHistoryError &e) {
-    if (nullptr != _pUiControl)
-    {
+    if (nullptr != _pUiControl) {
         _pUiControl->onGetHistoryError();
     }
+}
+
+void QTalkMsgListener::onEvent(CheckUpdaterResultEvt &e) {
+    if (nullptr != _pUiControl) {
+        _pUiControl->onCheckUpdater(e.hasUpdate, e.forceUpdate);
+    }
+}
+
+void QTalkMsgListener::onEvent(GoBackLoginWndEvt &e) {
+    if(_pUiControl)
+        _pUiControl->reLoginWithErr(e.reason);
+}
+
+void QTalkMsgListener::onEvent(SystemQuitEvt &e) {
+    if(_pUiControl)
+        _pUiControl->systemQuitByEvt();
 }

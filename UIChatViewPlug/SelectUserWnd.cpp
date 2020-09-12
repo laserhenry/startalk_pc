@@ -299,14 +299,14 @@ void SelectUserWnd::reset()
     _pBtnGroup->buttonClicked(EM_TYPE_RECENT);
     //
     QPointer<SelectUserWnd> pThis(this);
-    std::thread([pThis](){
+    QT_CONCURRENT_FUNC([pThis](){
         if(g_pMainPanel)
         {
             // recent
             g_pMainPanel->searchLocalSession(EM_TYPE_RECENT, "");
             // group
             std::vector<QTalk::Entity::ImGroupInfo> groups;
-            dbPlatForm::instance().getAllGroup(groups);
+            DB_PLAT.getAllGroup(groups);
 
             if(!pThis) return;
 
@@ -323,7 +323,7 @@ void SelectUserWnd::reset()
                     pThis->groupSessions.push_back(sess);
             }
         }
-    }).detach();
+    });
 }
 
 void SelectUserWnd::onBtnGroupClicked(int tab)

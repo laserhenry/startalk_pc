@@ -10,16 +10,6 @@
 #include "../Message/ChatMessage.h"
 #include "../Message/UserMessage.h"
 
-GroupManagerMsgManager::GroupManagerMsgManager()
-{
-
-}
-
-GroupManagerMsgManager::~GroupManagerMsgManager()
-{
-
-}
-
 void GroupManagerMsgManager::getStructure(std::vector<std::shared_ptr<QTalk::Entity::ImUserInfo>>& structure)
 {
     StructureMessage e(structure);
@@ -64,7 +54,7 @@ GroupMsgListener::GroupMsgListener(UIGroupManager *manager)
 {
 	EventBus::AddHandler<CreatGroupRet>(*this);
 	EventBus::AddHandler<DestroyGroupRet>(*this);
-	EventBus::AddHandler<AllFriends>(*this);
+//	EventBus::AddHandler<AllFriends>(*this);
 	EventBus::AddHandler<AllGroupList>(*this);
 	EventBus::AddHandler<UpdateUserConfigMsg>(*this);
 	EventBus::AddHandler<IncrementConfig>(*this);
@@ -91,13 +81,13 @@ void GroupMsgListener::onEvent(DestroyGroupRet &e)
 
 }
 
-void GroupMsgListener::onEvent(AllFriends &e) {
-    if (e.getCanceled()) return;
-
-    if (_pManager) {
-        _pManager->onRecvFriends(e.friends);
-    }
-}
+//void GroupMsgListener::onEvent(AllFriends &e) {
+//    if (e.getCanceled()) return;
+//
+//    if (_pManager) {
+//        _pManager->onRecvFriends(e.friends);
+//    }
+//}
 
 void GroupMsgListener::onEvent(AllGroupList &e) {
 

@@ -3,22 +3,6 @@
 #include "../EventBus/EventBus.h"
 #include "../Message/ChatMessage.h"
 
-/**
-  * 发送消息类
-  * @author   cc
-  * @date     2018/09/29
-  */
-PictureMsgManager::PictureMsgManager()
-{
-
-}
-
-
-PictureMsgManager::~PictureMsgManager()
-{
-
-}
-
 std::string PictureMsgManager::getSourceImage(const std::string& netPath)
 {
     SourceNetImage e;
@@ -43,18 +27,18 @@ void PictureMsgManager::getNextImgMessages(const std::string& messageId, std::ve
     EventBus::FireEvent(e);
 }
 
-/**
-  * 接收消息类
-  * @author   cc
-  * @date     2018/09/29
-  */
-PictureMsgListener::PictureMsgListener(PictureBrowser *pMainPanel)
-        :_pMainPanel(pMainPanel)
-{
-
-}
-
-PictureMsgListener::~PictureMsgListener()
-{
-
-}
+///**
+//  * 接收消息类
+//  * @author   cc
+//  * @date     2018/09/29
+//  */
+//PictureMsgListener::PictureMsgListener(PictureBrowser *pMainPanel)
+//        :_pMainPanel(pMainPanel)
+//{
+//
+//}
+//
+//PictureMsgListener::~PictureMsgListener()
+//{
+//
+//}

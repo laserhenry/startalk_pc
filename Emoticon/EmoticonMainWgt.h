@@ -41,7 +41,7 @@ private:
     EmoticonMainWgt();
 
 public:
-    static EmoticonMainWgt *getInstance();
+    static EmoticonMainWgt *instance();
 
     ~EmoticonMainWgt() override;
 
@@ -158,7 +158,6 @@ private:
     EmoMsgListener *_pMessageListener;
     EmoticonManager *_pManager;
 
-    static EmoticonMainWgt *_pEmoticonMainWgt;
     QMutex _mutex;
 };
 

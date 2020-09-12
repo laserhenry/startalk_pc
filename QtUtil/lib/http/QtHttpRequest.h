@@ -19,9 +19,7 @@ namespace QTalk {
     class QTALK_UTIL_EXPORT QtHttpRequest : public QTalk::http::HttpRequest {
 
     public:
-        explicit QtHttpRequest(const char *url);
-
-        explicit QtHttpRequest(std::string &url);
+        explicit QtHttpRequest(std::string &url, long timeout = 10L);
 
         ~QtHttpRequest();
 
@@ -46,7 +44,6 @@ namespace QTalk {
 
     private:
         void *_httpCore;
-        std::string _originUrl;
         std::ostringstream _readBuffer;
         std::string buffer;
         curl_slist *_headers;

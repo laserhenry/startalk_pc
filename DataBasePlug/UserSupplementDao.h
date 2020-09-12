@@ -14,7 +14,6 @@ class UserSupplementDao : public DaoInterface
 public:
     explicit UserSupplementDao(qtalk::sqlite::database * sqlDb = nullptr);
     bool creatTable() override;
-    bool clearData() override;
 
 public:
     bool insertOrUpdateUserMood(const std::string& userId, const std::string& userMood, const int& version);

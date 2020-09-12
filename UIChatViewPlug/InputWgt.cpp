@@ -54,7 +54,7 @@ InputWgt::InputWgt(ChatMainWgt *pMainWgt, ChatViewItem *parent)
     this->setFrameShape(QFrame::NoFrame);
     document()->setDocumentMargin(0);
     //setLineWrapMode(QTextEdit::WidgetWidth);
-    setAcceptDrops(true);
+    setAcceptDrops(false);
     // 注册@块
     auto *atBlock = new AtBlock;
     auto *quoteBlock = new QuoteBlock;
@@ -74,7 +74,7 @@ InputWgt::~InputWgt() {
 }
 
 // 发送文件处理
-void sendFile(ChatViewItem *pChatView, const QFileInfo &fileInfo)
+void sendFile(QPointer<ChatViewItem> pChatView, const QFileInfo &fileInfo)
 {
     QInt64 size = fileInfo.size();
     if(0 == size)
@@ -345,18 +345,54 @@ void InputWgt::sendMessage()
             this->setReadOnly(true);
             _isSending = true;
             QPointer<InputWgt> pThis(this);
-            std::thread([pThis](){
-#ifdef _MACOS
-                pthread_setname_np("translate message thread");
-#endif
+            QtConcurrent::run([pThis](){
                 if(pThis)
                 {
                     QString srcText = pThis->translateText();
                     emit pThis->sgTranslated(srcText);
                 }
 
-            }).detach();
+            });
         }
+    }
+}
+
+void InputWgt::dealMimeData(const QMimeData *mimeData) {
+    if(mimeData->hasUrls())
+    {
+        QList<QUrl> urls = mimeData->urls();
+        for (const QUrl &url : urls) {
+            if (url.isLocalFile()) {
+                // 拖拽进来的文件 默认以文件形式发送
+                QString strLocalPath = url.toLocalFile();
+                dealFile(strLocalPath, true);
+            } else {
+                if(mimeData->hasImage())
+                {
+                    QImage image = qvariant_cast<QImage>(mimeData->imageData());
+
+                    if (!image.isNull()) {
+                        QString tmpFilePath = QString("%1/%2.png").arg(PLAT.getTempFilePath().c_str())
+                                .arg(QDateTime::currentMSecsSinceEpoch());
+
+                        QDir dir(PLAT.getTempFilePath().c_str());
+                        if (!dir.exists()) {
+                            dir.mkpath(dir.absolutePath());
+                        }
+
+                        image.save(tmpFilePath);
+                        dealFile(tmpFilePath, false, url.toString());
+                    }
+
+                }
+            }
+        }
+        return;
+    }
+    else if(mimeData->hasText())
+    {
+        qInfo() << mimeData->text();
+        return;
     }
 }
 
@@ -367,28 +403,12 @@ void InputWgt::sendMessage()
   * @author   cc
   * @date     2018/10/16
   */
-void InputWgt::dropEvent(QDropEvent *e) {
-
-    const QMimeData* mimeData = e->mimeData();
-    if(mimeData->hasUrls())
-    {
-        QList<QUrl> urls = e->mimeData()->urls();
-        for (const QUrl &url : urls) {
-            if (url.isLocalFile()) {
-                // 拖拽进来的文件 默认以文件形式发送
-                QString strLocalPath = url.toLocalFile();
-                dealFile(strLocalPath, true);
-            }
-        }
-        return;
-    }
-    else if(mimeData->hasText())
-    {
-        return;
-    }
-
-    return QTextEdit::dropEvent(e);
-}
+//void InputWgt::dropEvent(QDropEvent *e) {
+//
+//    dealMimeData(e->mimeData());
+//    e->accept();
+////    return QTextEdit::dropEvent(e);
+//}
 
 //
 void InputWgt::initUi() {
@@ -454,10 +474,10 @@ void InputWgt::initUi() {
 
         QImage image = QApplication::clipboard()->image();
         if (!image.isNull()) {
-            QString tmpFilePath = QString("%1/%2.png").arg(Platform::instance().getTempFilePath().c_str())
+            QString tmpFilePath = QString("%1/%2.png").arg(PLAT.getTempFilePath().c_str())
                     .arg(QDateTime::currentMSecsSinceEpoch());
 
-            QDir dir(Platform::instance().getTempFilePath().c_str());
+            QDir dir(PLAT.getTempFilePath().c_str());
             if (!dir.exists()) {
                 dir.mkpath(dir.absolutePath());
             }
@@ -497,7 +517,7 @@ void InputWgt::sendText(const QString& srcText)
             _atMessage ? QTalk::Entity::MessageTypeGroupAt : QTalk::Entity::MessageTypeText,
             srcText, messageId);
 
-    std::thread([pThis, uid, chatType, srcText, messageId](){
+    QT_CONCURRENT_FUNC([pThis, uid, chatType, srcText, messageId](){
         std::map<std::string, std::string> mapAt;
         bool success = false;
         QString messageContent = g_pMainPanel->getRealText(srcText, messageId.data(), success, mapAt);
@@ -515,7 +535,7 @@ void InputWgt::sendText(const QString& srcText)
         }
         else
             warn_log("empty message {0}", messageId);
-    }).detach();
+    });
 }
 
 /**
@@ -694,7 +714,7 @@ QString InputWgt::getNetImgPath(const QString &localPath) {
 void InputWgt::onSnapFinish(const QString &id) {
     if (id != _pChatView->conversionId()) return;
 
-    QString localPath = QString("%1/image/temp/").arg(Platform::instance().getAppdataRoamingUserPath().c_str());
+    QString localPath = QString("%1/image/temp/").arg(PLAT.getAppdataRoamingUserPath().c_str());
     QString fileName = localPath + QDateTime::currentDateTime().toString("yyyyMMddhhmmsszzz.png");
     if(!QFile::exists(localPath))
     {
@@ -848,14 +868,14 @@ void InputWgt::insertAt(const int &pos, const QString &name, const QString &Xmpp
     csor.insertText(QString(QChar::ObjectReplacementCharacter), atFromat);
 }
 
-void InputWgt::dragEnterEvent(QDragEnterEvent *e) {
-    e->acceptProposedAction();
-}
-
-void InputWgt::dragMoveEvent(QDragMoveEvent *e) {
-    e->setDropAction(Qt::MoveAction);
-    e->accept();
-}
+//void InputWgt::dragEnterEvent(QDragEnterEvent *e) {
+//    e->acceptProposedAction();
+//}
+//
+//void InputWgt::dragMoveEvent(QDragMoveEvent *e) {
+//    e->setDropAction(Qt::MoveAction);
+//    e->accept();
+//}
 
 void InputWgt::insertQuote(const QString &userName, const QString &src) {
 
@@ -1003,10 +1023,10 @@ void InputWgt:: onPaste() {
     if (mimeData->hasImage()) {
         QImage image = QApplication::clipboard()->image();
         if (!image.isNull()) {
-            QString tmpFilePath = QString("%1/%2.png").arg(Platform::instance().getTempFilePath().c_str())
+            QString tmpFilePath = QString("%1/%2.png").arg(PLAT.getTempFilePath().c_str())
                     .arg(QDateTime::currentMSecsSinceEpoch());
 
-            QDir dir(Platform::instance().getTempFilePath().c_str());
+            QDir dir(PLAT.getTempFilePath().c_str());
             if (!dir.exists()) {
                 dir.mkpath(dir.absolutePath());
             }
@@ -1039,7 +1059,7 @@ void InputWgt:: onPaste() {
                     int ret = QtMessageBox::information(g_pMainPanel, tr("警告"), tr("输入的文本过长，将转换为文件发送!"));
                     if(ret == QtMessageBox::EM_BUTTON_YES)
                     {
-                        QString localPath = QString("%1/temp/").arg(Platform::instance().getAppdataRoamingUserPath().c_str());
+                        QString localPath = QString("%1/temp/").arg(PLAT.getAppdataRoamingUserPath().c_str());
                         QString fileName = localPath + QDateTime::currentDateTime().toString("yyyyMMddhhmmsszzz") + ".txt";
                         QFile file(fileName);
                         if(file.open(QIODevice::WriteOnly))

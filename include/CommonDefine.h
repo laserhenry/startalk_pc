@@ -13,4 +13,6 @@ typedef unsigned long      QULong;
 typedef long long          QInt64;
 typedef unsigned long long QUInt64;
 
+#define UN_USED(x) (void)x;
+
 #endif//_COMMON_DEFINE_H_

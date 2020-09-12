@@ -16,7 +16,6 @@ class UserDao : public DaoInterface{
 public:
     explicit UserDao(qtalk::sqlite::database *sqlDb = nullptr);
     bool creatTable() override;
-    bool clearData() override;
 
 public:
     bool getUserVersion(int &version);

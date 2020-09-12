@@ -194,6 +194,7 @@ namespace QTalk {
     struct HttpRequest {
         std::string url;
         unsigned char method{};
+        long timeout {10L};
         HttpRequestHeader header;
         std::string formFile;
         std::string body;

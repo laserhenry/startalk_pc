@@ -77,7 +77,7 @@ void CodeShowWnd::showCode(const QString& type, const QString& language, const Q
  */
 void CodeShowWnd::initRes()
 {
-    QString userDir = Platform::instance().getAppdataRoamingPath().data();
+    QString userDir = PLAT.getAppdataRoamingPath().data();
     QString destDir = QString("%1/html").arg(userDir);
     QString srcFile = ":/code/html.zip";
     if(!QFile::exists(destDir) && QFile::exists(srcFile))
@@ -98,7 +98,7 @@ void CodeShowWnd::initRes()
 
 void CodeShowWnd::loadCodeFile(const QString &type, const QString &language)
 {
-    QString path = QString::fromStdString(Platform::instance().getAppdataRoamingPath());
+    QString path = QString::fromStdString(PLAT.getAppdataRoamingPath());
 
     auto* o = sender();
     if(nullptr == o)
@@ -149,7 +149,7 @@ void copyFile(const QString& oldPath, const QString& newPath)
     {
         if(!newinfo.exists())
         {
-            QDir dir = QDir(QString::fromStdString(Platform::instance().getAppdataRoamingPath()));
+            QDir dir = QDir(QString::fromStdString(PLAT.getAppdataRoamingPath()));
             dir.mkpath(newPath);
 
             QDir oldDir(oldPath);

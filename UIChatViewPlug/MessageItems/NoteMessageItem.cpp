@@ -139,11 +139,11 @@ void NoteMessageItem::initContentLayout() {
             {
                 iconLabel->setPixmap(defaultPix);
                 QPointer<NoteMessageItem> pThis(this);
-                std::thread([pThis, imgUrl](){
+                QT_CONCURRENT_FUNC([pThis, imgUrl](){
                     std::string downloadFile = ChatMsgManager::getLocalFilePath(imgUrl.toStdString());
                     if(pThis && !downloadFile.empty())
                             emit pThis->sgDownloadedIcon(QString::fromStdString(downloadFile));
-                }).detach();
+                });
             }
         }
 

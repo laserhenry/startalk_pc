@@ -59,7 +59,7 @@ void GroupChatSidebar::updateGroupMember(const GroupMemberMessage& e)
 	for (; it != members.cend(); it++)
 	{
 		//
-		bool isOnline = Platform::instance().isOnline(Entity::JID(it->first).basename());
+		bool isOnline = PLAT.isOnline(Entity::JID(it->first).basename());
 		if (isOnline)
 			onlineUserSize++;
 		auto itFind = std::find(deletedMembers.begin(), deletedMembers.end(), it->first);

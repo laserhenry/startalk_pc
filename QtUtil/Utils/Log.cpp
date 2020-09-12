@@ -24,7 +24,7 @@ namespace QTalk {
 
             time_t t;
             t = time(nullptr);
-			struct tm *local = nullptr;
+            struct tm *local = nullptr;
             local = localtime(&t);
             char buf[128] = {0};
             strftime(buf, 64, "%Y-%m-%d_%H-%M-%S", local);
@@ -77,8 +77,12 @@ namespace QTalk {
             ss << "\nat ThreadID:";
             ss << this_id;
 
-            spdlog::get("LOG")->debug(ss.str());
-            spdlog::get("LOG")->flush();
+            auto logger = spdlog::get("LOG");
+            if(logger)
+            {
+                logger->debug(msg);
+                logger->flush();
+            }
 //            std::cout << " --- LOG_INFO --- " << msg << std::endl;
             return true;
         }
@@ -95,8 +99,12 @@ namespace QTalk {
             ss << "\nat ThreadID:";
             ss << this_id;
 
-            spdlog::get("LOG")->info(ss.str());
-            spdlog::get("LOG")->flush();
+            auto logger = spdlog::get("LOG");
+            if(logger)
+            {
+                logger->info(msg);
+                logger->flush();
+            }
 //            std::cout << " --- LOG_INFO --- " << msg << std::endl;
             return true;
         }
@@ -105,8 +113,12 @@ namespace QTalk {
             if(LEVEL_WARING < _level)
                 return false;
 
-            spdlog::get("LOG")->warn(msg);
-            spdlog::get("LOG")->flush();
+            auto logger = spdlog::get("LOG");
+            if(logger)
+            {
+                logger->warn(msg);
+                logger->flush();
+            }
 //            std::cout << " --- LOG_WARN --- " << msg << std::endl;
             return true;
         }
@@ -116,24 +128,33 @@ namespace QTalk {
             if(LEVEL_ERROR < _level)
                 return false;
 
-            spdlog::get("LOG")->error(msg);
-            spdlog::get("LOG")->flush();
+            auto logger = spdlog::get("LOG");
+            if(logger)
+            {
+                logger->error(msg);
+                logger->flush();
+            }
 
 //             std::cout << " --- LOG_CRIT --- " << msg << std::endl;
             return true;
         }
 
         bool critical(const std::string &msg) {
-
-            spdlog::get("LOG")->critical(msg);
-            spdlog::get("LOG")->flush();
+            auto logger = spdlog::get("LOG");
+            if(logger)
+            {
+                logger->critical(msg);
+                logger->flush();
+            }
 
 //             std::cout << " --- LOG_CRIT --- " << msg << std::endl;
             return true;
         }
 
         void flush() {
-            spdlog::get("LOG")->flush();
+            auto logger = spdlog::get("LOG");
+            if(logger)
+                logger->flush();
         }
 
         void exit() {

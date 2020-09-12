@@ -13,17 +13,13 @@
 class UILoginMsgManager : public Object
 {
 public:
-	UILoginMsgManager();
-	virtual ~UILoginMsgManager();
-
-public:
-	bool SendLoginMessage(const std::string& userName, const std::string& password);
-	bool getNavInfo(const std::string& navAddr);
-    std::string getNavDomain(const std::string& addr);
-	std::map<std::string,std::string> getQchatToken(const std::string &qvt);
-	std::string getQchatQvt();
-	bool saveQvtToDB(const std::string& qvt);
-    void startUpdater(const std::string& users);
+	static bool SendLoginMessage(const std::string& userName, const std::string& password);
+	static bool getNavInfo(const std::string& navAddr);
+    static std::string getNavDomain(const std::string& addr);
+	static std::map<std::string,std::string> getQchatToken(const std::string &qvt);
+	static std::string getQchatQvt();
+	static bool saveQvtToDB(const std::string& qvt);
+    static void startUpdater(const std::string& users);
 };
 
 //

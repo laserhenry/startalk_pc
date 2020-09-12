@@ -211,7 +211,7 @@ void MedalMind::initContentLayout() {
 void MedalMind::mousePressEvent(QMouseEvent *event) {
     if(event->button() == Qt::LeftButton && _contentFrm->geometry().contains(event->pos()))
     {
-        QString userId = Platform::instance().getSelfXmppId().data();
+        QString userId = PLAT.getSelfXmppId().data();
         emit g_pMainPanel->sgShowUserCard(userId);
     }
     QFrame::mousePressEvent(event);

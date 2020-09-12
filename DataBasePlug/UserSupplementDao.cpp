@@ -6,7 +6,7 @@
 #include "../QtUtil/Utils/Log.h"
 
 UserSupplementDao::UserSupplementDao(qtalk::sqlite::database *sqlDb)
-    :DaoInterface(sqlDb)
+    :DaoInterface(sqlDb, "IM_UserSupplement")
 {
 
 }
@@ -31,32 +31,8 @@ bool UserSupplementDao::creatTable()
                       "PRIMARY KEY(`XmppId`) ) ";
 
     qtalk::sqlite::statement query(*_pSqlDb, sql);
-    bool sqlResult = query.executeStep();
-    if (!sqlResult)
-    {
 
-    }
-    return sqlResult;
-}
-
-/**
- * clearData
- * @return
- */
-bool UserSupplementDao::clearData() {
-    if (!_pSqlDb) {
-        return false;
-    }
-
-    std::string sql = "DELETE FROM `IM_UserSupplement`;";
-    try {
-        qtalk::sqlite::statement query(*_pSqlDb, sql);
-        return query.executeStep();
-    }
-    catch (const std::exception &e) {
-        error_log("Clear Data IM_UserSupplement error {0}", e.what());
-        return false;
-    }
+    return query.executeStep();
 }
 
 bool UserSupplementDao::insertOrUpdateUserMood(const std::string &userId, const std::string &userMood, const int &version)

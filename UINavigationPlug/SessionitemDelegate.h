@@ -29,24 +29,20 @@ enum ItemData
     ITEM_DATATYPE_ISTOP,
     ITEM_DATATYPE_UNNOTICE,
     ITEM_DATATYPE_LAST_MESSAGE_ID,
-    ITEM_DATATYPE_DRAFT
+    ITEM_DATATYPE_DRAFT,
+    ITEM_DATATYPE_QQQ
 };
 
 class SessionSortModel : public QSortFilterProxyModel
 {
-public:
-    SessionSortModel(QObject *parent = nullptr);
-    ~SessionSortModel();
-
 protected:
-    virtual bool lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const;
+    bool lessThan(const QModelIndex &source_left, const QModelIndex &source_right) const override;
 };
 
 class SessionitemDelegate : public QStyledItemDelegate
 {
 public:
-    SessionitemDelegate(QWidget* parent);
-    ~SessionitemDelegate();
+    explicit SessionitemDelegate(QWidget* parent);
 
 protected:
     QSize sizeHint(const QStyleOptionViewItem &option,

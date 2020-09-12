@@ -26,11 +26,11 @@ bool OnLineManager::OnGetOnLineUser(const std::set<std::string> &users, bool sen
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/domain/get_user_status.qunar"
-        << "?v=" << Platform::instance().getClientVersion()
-        << "&p=" << Platform::instance().getPlatformStr()
-        << "&u=" << Platform::instance().getSelfUserId()
-        << "&k=" << Platform::instance().getServerAuthKey()
-        << "&d=" << Platform::instance().getSelfDomain();
+        << "?v=" << PLAT.getClientVersion()
+        << "&p=" << PLAT.getPlatformStr()
+        << "&u=" << PLAT.getSelfUserId()
+        << "&k=" << PLAT.getServerAuthKey()
+        << "&d=" << PLAT.getSelfDomain();
 
     std::string postData;
     {
@@ -90,13 +90,14 @@ bool OnLineManager::OnGetOnLineUser(const std::set<std::string> &users, bool sen
         QTalk::HttpRequest req(url.str(), RequestMethod::POST);
         req.body = postData;
         req.header["Content-Type"] = "application/json;";
+        req.timeout = 10L;
         _pComm->addHttpRequest(req, callback, false);
-        if (retSts && _pComm && _pComm->_pMsgManager) {
+        if (retSts) {
 
             if (sendRet && !userStatus.empty())
-                _pComm->_pMsgManager->sendGotUsersStatus(userStatus);
+                CommMsgManager::sendGotUsersStatus(userStatus);
 
-            Platform::instance().loadOnlineData(userStatus);
+            PLAT.loadOnlineData(userStatus);
         }
     }
 

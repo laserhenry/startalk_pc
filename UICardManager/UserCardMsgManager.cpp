@@ -132,7 +132,7 @@ bool UserCardMsgManager::modifyUserMedal(int medalId, bool wear) {
 /***/
 UserCardMessageListener::UserCardMessageListener(CardManager *mainPanel)
         : _pMainPanel(mainPanel) {
-	EventBus::AddHandler<AllFriends>(*this);
+//	EventBus::AddHandler<AllFriends>(*this);
 	EventBus::AddHandler<UpdateUserConfigMsg>(*this);
 	EventBus::AddHandler<UpdateGroupMember>(*this);
 	EventBus::AddHandler<GroupMemberMessage>(*this);
@@ -149,13 +149,13 @@ void UserCardMessageListener::onEvent(UpdateUserConfigMsg &e) {
     }
 }
 
-void UserCardMessageListener::onEvent(AllFriends &e) {
-    if (e.getCanceled()) return;
-
-    if (_pMainPanel) {
-        _pMainPanel->onRecvFriends(e.friends);
-    }
-}
+//void UserCardMessageListener::onEvent(AllFriends &e) {
+//    if (e.getCanceled()) return;
+//
+//    if (_pMainPanel) {
+//        _pMainPanel->onRecvFriends(e.friends);
+//    }
+//}
 
 /**
  *

@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <QRect>
 #include <QTableWidget>
+#include <QtConcurrent>
 #include <QMouseEvent>
 #include <QDesktopWidget>
 #include <QTemporaryFile>
@@ -34,12 +35,10 @@
 #define DEM_EMOTICON_MODEL "[obj type=\"emoticon\" value=\"[%1]\" width=%2 height=%2 ]"
 #define DEM_COLLECTION_MODEL "[obj type=\"image\" value=\"%1\" width=%2 height=%3 ]"
 
-EmoticonMainWgt *EmoticonMainWgt::_pEmoticonMainWgt = nullptr;
-
 EmoticonMainWgt::EmoticonMainWgt()
         : UShadowDialog(nullptr, true), _pManager(nullptr) {
     _pMessageManager = new EmoMsgManager;
-    _pMessageListener = new EmoMsgListener;
+    new EmoMsgListener;
     initUi();
     init();
     initDefaultEmo();
@@ -57,14 +56,15 @@ EmoticonMainWgt::EmoticonMainWgt()
     connect(this, &EmoticonMainWgt::updateConllectionSignal, this, &EmoticonMainWgt::updateCollection);
 }
 
-EmoticonMainWgt *EmoticonMainWgt::getInstance() {
-    if (nullptr == _pEmoticonMainWgt) {
-        _pEmoticonMainWgt = new EmoticonMainWgt;
-    }
-    return _pEmoticonMainWgt;
+EmoticonMainWgt *EmoticonMainWgt::instance() {
+    static EmoticonMainWgt wgt;
+    return &wgt;
 }
 
-EmoticonMainWgt::~EmoticonMainWgt() {
+EmoticonMainWgt::~EmoticonMainWgt()
+{
+    delete _pMessageManager;
+
 }
 
 /**
@@ -118,7 +118,7 @@ QString EmoticonMainWgt::getEmoticonLocalFilePath(const QString &pkgId, const QS
         });
         if(itFind != mapEmo.end())
         {
-            const std::string &strDirPath = Platform::instance().getLocalEmoticonPath(pkgId.toStdString());
+            const std::string &strDirPath = PLAT.getLocalEmoticonPath(pkgId.toStdString());
             realFilePath = QString("%1/%2").arg(strDirPath.c_str()).arg(itFind->fileorg);
         }
     }
@@ -128,7 +128,7 @@ QString EmoticonMainWgt::getEmoticonLocalFilePath(const QString &pkgId, const QS
         fileName.replace("/", "");
         fileName = QString("%1_%2").arg(pkgId, fileName);
         // temp 路径下表情
-        const QString &strDirPath = QString(Platform::instance().getTempEmoticonPath(pkgId.toStdString()).c_str());
+        const QString &strDirPath = QString(PLAT.getTempEmoticonPath(pkgId.toStdString()).c_str());
         if (QDir(strDirPath).exists()) {
             realFilePath = QString("%1/%2").arg(strDirPath, fileName);
             QFileInfoList infoLst = QDir(strDirPath).entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
@@ -152,12 +152,9 @@ QString EmoticonMainWgt::getEmoticonLocalFilePath(const QString &pkgId, const QS
   * @date     2018/10/21
   */
 void EmoticonMainWgt::removeLocalEmoticon(const QString &pkgid, const QString &iconPath) {
-    std::thread t([this, pkgid, iconPath]() {
-        //
-#ifdef _MACOS
-        pthread_setname_np("EmoticonMainWgt::removeLocalEmoticon");
-#endif
-        std::string localEmoDir = Platform::instance().getLocalEmoticonPath(pkgid.toStdString());
+    QtConcurrent::run([this, pkgid, iconPath]() {
+
+        std::string localEmoDir = PLAT.getLocalEmoticonPath(pkgid.toStdString());
         QDir dir(QString(localEmoDir.c_str()));
         if (dir.exists()) {
             dir.removeRecursively();
@@ -167,7 +164,6 @@ void EmoticonMainWgt::removeLocalEmoticon(const QString &pkgid, const QString &i
             emit setTurnPageBtnEnableSignal();
         }
     });
-    t.detach();
 }
 
 /**
@@ -190,23 +186,18 @@ ArStNetEmoticon EmoticonMainWgt::getNetEmoticonInfo() {
   * @date     2018/10/22
   */
 void EmoticonMainWgt::downloadNetEmoticon(const QString &pkgId) {
-    std::thread t([this, pkgId]() {
-#ifdef _MACOS
-        pthread_setname_np("EmoticonMainWgt::downloadNetEmoticon");
-#endif
+    QtConcurrent::run([this, pkgId]() {
         if (_pMessageManager) {
             auto it = std::find_if(_arNetEmoInfo.begin(), _arNetEmoInfo.end(),
                                    [pkgId](std::shared_ptr<StNetEmoticon> stNetEmo) {
                                        return stNetEmo->pkgid == pkgId.toStdString();
                                    });
             if (it != _arNetEmoInfo.end()) {
-                std::string localPath = Platform::instance().getLocalEmoticonPacketPath(pkgId.toStdString());
+                std::string localPath = PLAT.getLocalEmoticonPacketPath(pkgId.toStdString());
                 _pMessageManager->downloadNetEmoticon((*it)->emoFile, localPath, pkgId.toStdString());
             }
         }
     });
-
-    t.detach();
 }
 
 /**
@@ -228,15 +219,12 @@ void EmoticonMainWgt::updateDownloadNetEmotiocnProcess(const std::string &key, d
   * @date     2018/10/22
   */
 void EmoticonMainWgt::installEmoticon(const QString &pkgId) {
-    std::thread t([this, pkgId]() {
-#ifdef _MACOS
-        pthread_setname_np("EmoticonMainWgt::installEmoticon");
-#endif
+    QtConcurrent::run([this, pkgId]() {
         QString pkgPath = QString::fromStdString(
-                Platform::instance().getLocalEmoticonPacketPath(pkgId.toStdString()));
+                PLAT.getLocalEmoticonPacketPath(pkgId.toStdString()));
         while (!QFile::exists(pkgPath)) {}
 
-        QString emoDir = QString("%1/emoticon").arg(Platform::instance().getAppdataRoamingPath().c_str());
+        QString emoDir = QString("%1/emoticon").arg(PLAT.getAppdataRoamingPath().c_str());
         QStringList lstFile = JlCompress::extractDir(pkgPath, emoDir);
 
         int tmpIndex = 0;
@@ -270,8 +258,6 @@ void EmoticonMainWgt::installEmoticon(const QString &pkgId) {
         //
         emit setTurnPageBtnEnableSignal();
     });
-
-    t.detach();
 }
 
 /**
@@ -499,15 +485,11 @@ void EmoticonMainWgt::onSettingBtnClick() {
   * @date     2018/10/21
   */
 void EmoticonMainWgt::getNetEmoticon() {
-    std::thread t([this]() {
-#ifdef _MACOS
-        pthread_setname_np("EmoticonMainWgt::getNetEmoticon");
-#endif
+    QtConcurrent::run([this]() {
         QMutexLocker locker(&_mutex);
         _arNetEmoInfo = _pMessageManager->getNetEmoticon();
         emit sgGotNetEmo();
     });
-    t.detach();
 }
 
 /**
@@ -518,9 +500,9 @@ void EmoticonMainWgt::getNetEmoticon() {
   * @date     2018/10/22
   */
 void EmoticonMainWgt::addLocalEmoticon(const QString &pkgId) {
-    QDir xmlDir(QString(Platform::instance().getLocalEmoticonPath(pkgId.toStdString()).c_str()));
+    QDir xmlDir(QString(PLAT.getLocalEmoticonPath(pkgId.toStdString()).c_str()));
     QFileInfoList xmlLst = xmlDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
-    QDir iconDir(Platform::instance().getEmoticonIconPath().c_str());
+    QDir iconDir(PLAT.getEmoticonIconPath().c_str());
     QFileInfoList fileLst = iconDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
 
     auto xmlFind = std::find_if(xmlLst.begin(), xmlLst.end(), [pkgId](const QFileInfo &info) {
@@ -632,15 +614,12 @@ void EmoticonMainWgt::initLocalEmoticon() {
 }
 
 void EmoticonMainWgt::getLocalEmoticon() {
-    std::thread t([this]() {
-#ifdef _MACOS
-        pthread_setname_np("EmoticonMainWgt::getLocalEmoticon");
-#endif
-        QDir iconDir(Platform::instance().getEmoticonIconPath().c_str());
+    QtConcurrent::run([this]() {
+        QDir iconDir(PLAT.getEmoticonIconPath().c_str());
         QFileInfoList fileLst = iconDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
             for(const QFileInfo& info : fileLst) {
                 QString pkgid = info.baseName();
-                QDir xmlDir(QString(Platform::instance().getLocalEmoticonPath(pkgid.toStdString()).c_str()));
+                QDir xmlDir(QString(PLAT.getLocalEmoticonPath(pkgid.toStdString()).c_str()));
                 QFileInfoList xmlLst = xmlDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
                 auto xmlFind = std::find_if(xmlLst.begin(), xmlLst.end(), [pkgid](const QFileInfo &info) {
                     return info.suffix().toUpper() == "XML";
@@ -659,8 +638,6 @@ void EmoticonMainWgt::getLocalEmoticon() {
 
         emit readLocalEmoticons();
     });
-
-    t.detach();
 }
 
 /**
@@ -736,11 +713,7 @@ void EmoticonMainWgt::mousePressEvent(QMouseEvent *e) {
  */
 void EmoticonMainWgt::updateCollectionConfig(const std::vector<QTalk::Entity::ImConfig> &arConfigs) {
 
-    std::thread t([this, arConfigs]() {
-
-#ifdef _MACOS
-        pthread_setname_np("EmoticonMainWgt::updateCollectionConfig");
-#endif
+    QtConcurrent::run([this, arConfigs]() {
 
         QMutexLocker locker(&_mutex);
 
@@ -783,18 +756,12 @@ void EmoticonMainWgt::updateCollectionConfig(const std::vector<QTalk::Entity::Im
             emit updateConllectionSignal();
         }
     });
-    t.detach();
 }
 
 void EmoticonMainWgt::updateCollectionConfig(const std::map<std::string, std::string> &deleteData,
                                              const std::vector<QTalk::Entity::ImConfig>& arImConfig) {
 
-    std::thread t([this, deleteData, arImConfig]() {
-
-#ifdef _MACOS
-        pthread_setname_np("EmoticonMainWgt::updateCollectionConfig");
-#endif
-
+    QtConcurrent::run([this, deleteData, arImConfig]() {
         QMutexLocker locker(&_mutex);
 
         if(!deleteData.empty())
@@ -846,7 +813,6 @@ void EmoticonMainWgt::updateCollectionConfig(const std::map<std::string, std::st
         }
 
     });
-    t.detach();
 }
 
 /**
