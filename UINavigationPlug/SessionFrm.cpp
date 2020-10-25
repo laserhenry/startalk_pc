@@ -42,8 +42,6 @@ SessionFrm::SessionFrm(NavigationMainPanel *parent) :
     init();
 }
 
-SessionFrm::~SessionFrm() = default;
-
 void SessionFrm::connects() {
 
     connect(_pSessionView, &QListView::pressed,
@@ -171,7 +169,7 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
                         atCount |= 0x00F0;
 
                     item->setData(atCount, ITEM_DATATYPE_ATCOUNT);
-                    item->setData(atCount > 0, ITEM_DATATYPE_QQQ);
+//                    item->setData(atCount > 0, ITEM_DATATYPE_QQQ);
                 }
             } else {
                 // 发送消息已读
@@ -253,6 +251,7 @@ void SessionFrm::onReceiveSession(const ReceiveSession &mess, bool isSend) {
 
         if (!unNotice) {
             _totalUnReadCount++;
+            qInfo() << "update total unread" << _totalUnReadCount << uid.toQString();
             emit _mainPanel->updateTotalUnreadCount(_totalUnReadCount);
         }
     }
@@ -310,7 +309,7 @@ void SessionFrm::onloadSessionData() {
                 const std::string &xmppId = it->first;
                 UID uid(xmppId);
                 auto itFind = std::find_if(pSessions->begin(), pSessions->end(),
-                                           [uid](std::shared_ptr<QTalk::Entity::ImSessionInfo> session) {
+                                           [uid](const std::shared_ptr<QTalk::Entity::ImSessionInfo>& session) {
                                                return session->XmppId == uid.usrId();
                                            });
                 if (itFind == pSessions->end()) {
@@ -491,6 +490,7 @@ void SessionFrm::onloadSessionData() {
     onUpdateOnline(); // 加载完会话后刷新下在线状态
     // sort
     _pModel->sort(0);
+    qInfo() << "update total unread" << _totalUnReadCount << "onloadSessionData";
     emit _mainPanel->updateTotalUnreadCount(_totalUnReadCount);
 }
 
@@ -544,6 +544,7 @@ void SessionFrm::onItemSelectChanged(const QModelIndex &index) {
     bool unNotice = _mapNotice.find(sessionInfo.userId.toStdString()) != _mapNotice.end();
     if (!unNotice) {
         _totalUnReadCount -= count;
+        qInfo() << "update total unread" << _totalUnReadCount << uid.toQString();
         emit _mainPanel->updateTotalUnreadCount(_totalUnReadCount);
         emit _mainPanel->sgShowUnreadMessage(0, uid, "", 0, 0);
     }
@@ -764,6 +765,7 @@ void SessionFrm::initLayout() {
         _pSessionView->setModel(_pModel);
         _pSessionView->setItemDelegate(_pItemDelegate);
         _pSessionView->setDragEnabled(false);
+//        _pSessionView->setAutoScroll(false);
     }
     _pSessionScrollBar = new QScrollBar(Qt::Vertical, this);
     _pSessionScrollBar->setRange(0, 0);
@@ -1054,6 +1056,7 @@ void SessionFrm::onUpdateReadedCount(const QTalk::Entity::UID &uid, const int &c
         bool unNotice = _mapNotice.find(uid.usrId()) != _mapNotice.end();
         if (!unNotice) {
             _totalUnReadCount -= minc;
+            qInfo() << "update total unread" << _totalUnReadCount << uid.toQString();
             emit _mainPanel->updateTotalUnreadCount(_totalUnReadCount);
         }
 
@@ -1132,7 +1135,8 @@ void SessionFrm::onToTopAct(bool) {
     UID uid(peerId, realJid);
     auto itFind = _sessionMap.find(uid);
     if (itFind != _sessionMap.end() && nullptr != *itFind) {
-        NavigationMsgManager::setUserSetting(isTop, "kStickJidDic", uid.toStdString(), val.toStdString());
+        QtConcurrent::run(NavigationMsgManager::setUserSetting, isTop,
+                std::string("kStickJidDic"), uid.toStdString(), val.toStdString());
     }
 }
 
@@ -1159,6 +1163,7 @@ void SessionFrm::onDestroyGroup(const QString &groupId) {
         // 销毁群之后更新未读数
         unsigned int count = (*itFind)->data(ITEM_DATATYPE_UNREADCOUNT).toUInt();
         _totalUnReadCount -= count;
+        qInfo() << "update total unread" << _totalUnReadCount << uid.toQString();
         emit _mainPanel->updateTotalUnreadCount(_totalUnReadCount);
         //
         emit removeSession(uid);
@@ -1184,7 +1189,8 @@ void SessionFrm::onUnNoticeAct(bool) {
     UID uid(peerId, realJid);
     auto itFind = _sessionMap.find(uid);
     if (itFind != _sessionMap.end() && nullptr != *itFind) {
-        NavigationMsgManager::setUserSetting(unNotice, "kNoticeStickJidDic", peerId.toStdString(), val.toStdString());
+        QtConcurrent::run(NavigationMsgManager::setUserSetting, unNotice,
+                std::string("kNoticeStickJidDic"), peerId.toStdString(), val.toStdString());
     }
 }
 
@@ -1212,7 +1218,11 @@ void SessionFrm::onStarAct(bool) {
 
     auto itFind = _sessionMap.find(uid);
     if (itFind != _sessionMap.end() && nullptr != *itFind) {
-        NavigationMsgManager::setUserSetting(isStar, "kStarContact", peerId.toStdString(), val.toStdString());
+        QtConcurrent::run(NavigationMsgManager::setUserSetting,
+                isStar,
+                std::string("kStarContact"),
+                peerId.toStdString(),
+                val.toStdString());
     }
 }
 
@@ -1233,7 +1243,11 @@ void SessionFrm::onBlackAct(bool) {
 
     auto itFind = _sessionMap.find(uid);
     if (itFind != _sessionMap.end() && nullptr != *itFind) {
-        NavigationMsgManager::setUserSetting(isBlack, "kBlackList", peerId.toStdString(), val.toStdString());
+        QtConcurrent::run(&NavigationMsgManager::setUserSetting,
+                isBlack,
+                std::string("kBlackList"),
+                peerId.toStdString(),
+                val.toStdString());
     }
 }
 
@@ -1346,6 +1360,7 @@ void SessionFrm::onClearUnreadAct(bool) {
 
     _totalUnReadCount = 0;
     emit _mainPanel->updateTotalUnreadCount(_totalUnReadCount);
+    qInfo() << "update total unread" << _totalUnReadCount ;
 
     QtConcurrent::run([mapUnreadIds, this]() {
         auto itr = mapUnreadIds.begin();
@@ -1458,7 +1473,7 @@ void SessionFrm::onAppActive() {
             _sessionMap[uid]->setData(false, ITEM_DATATYPE_QQQ);
             _pModel->sort(0);
         }
-        unsigned int count = index.data(ITEM_DATATYPE_UNREADCOUNT).toUInt();
+        int count = index.data(ITEM_DATATYPE_UNREADCOUNT).toUInt();
         if ( count > 0) {
 
             QString messageId = index.data(ITEM_DATATYPE_LAST_MESSAGE_ID).toString();
@@ -1469,6 +1484,9 @@ void SessionFrm::onAppActive() {
             bool unNotice = _mapNotice.find(realJid.toStdString()) != _mapNotice.end();
             if (!unNotice) {
                 _totalUnReadCount -= count;
+
+                qInfo() << "update total unread" << _totalUnReadCount << uid.toQString();
+
                 emit _mainPanel->updateTotalUnreadCount(_totalUnReadCount);
                 emit _mainPanel->sgShowUnreadMessage(0, uid, "", 0, 0);
             }

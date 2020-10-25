@@ -77,7 +77,7 @@ class ChatMsgListener : public EventHandler<R_Message>, public EventHandler<Grou
 					  , public EventHandler<LogReportMessageRet>, public EventHandler<GetUsersOnlineSucessEvent>
 					  , public EventHandler<RecvVideoMessage>, public EventHandler<GroupMemberChangeRet>
 					  , public EventHandler<ChangeHeadRetMessage>, public EventHandler<UpdateMoodRet>
-					  , public EventHandler<FeedBackLogEvt> , public EventHandler<GetSeatListRet>
+					  , public EventHandler<FeedBackLogEvt>
 					  , public EventHandler<IncrementConfig>
 					  , public EventHandler<MStateEvt>
 					  , public EventHandler<WebRtcCommand>
@@ -114,7 +114,6 @@ public:
     void onEvent(GroupMemberChangeRet& e) override;
     void onEvent(UpdateMoodRet& e) override;
     void onEvent(FeedBackLogEvt& e) override;
-    void onEvent(GetSeatListRet& e) override;
     void onEvent(IncrementConfig& e) override;
     void onEvent(WebRtcCommand& e) override;
     void onEvent(UserMedalChangedEvt& e) override;

@@ -194,14 +194,14 @@ void NoticeMessageItem::initContentLayout() {
         vBox->setSpacing(20);
         _contentFrm->setLayout(vBox);
 
-        titleLabel = new QLabel;
+        titleLabel = new QLabel(this);
         titleLabel->setObjectName("titleLab");
         titleLabel->setWordWrap(true);
         titleLabel->setFixedWidth(_contentSize.width() - 20);
         titleLabel->setStyleSheet("QLabel{font-size:14px;color:#212121;}");
         titleLabel->adjustSize();
 
-        contentLabel = new QLabel;
+        contentLabel = new QLabel(this);
         contentLabel->setObjectName("contentLabel");
         contentLabel->setWordWrap(true);
         contentLabel->setFixedWidth(_contentSize.width() - 20);

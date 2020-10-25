@@ -1,6 +1,5 @@
 ﻿#include "NavigationMainPanel.h"
 #include "SessionFrm.h"
-#include "ContactFrm.h"
 #include <QDebug>
 #include <QTimer>
 #include <QtConcurrent>
@@ -25,7 +24,6 @@ NavigationMainPanel::NavigationMainPanel(QWidget *parent) :
         _mainLayout(nullptr),
         _stackWdt(nullptr),
         _pSessionFrm(nullptr),
-        _contactFrm(nullptr),
         _pTcpDisconnect(nullptr)
 //        _pConnToServerTimer(nullptr)
         {
@@ -140,11 +138,6 @@ void NavigationMainPanel::initLayout() {
     if (nullptr == _pSessionFrm) {
         _pSessionFrm = new SessionFrm(this);
         _stackWdt->addWidget(_pSessionFrm);
-    }
-
-    if (nullptr == _contactFrm) {
-        _contactFrm = new ContactFrm;
-        _stackWdt->addWidget(_contactFrm);
     }
 
     _stackWdt->setMinimumWidth(260);

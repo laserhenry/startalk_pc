@@ -61,6 +61,7 @@ void CardManager::shwoUserCard(const QString &userId) {
         QApplication::processEvents(QEventLoop::AllEvents, 100);
     // show user card
     showUserCardSlot();
+
     //
     flag = false;
 }
@@ -117,6 +118,7 @@ void CardManager::showUserCardSlot() {
         _pUserCard->adjustSize();
         _pUserCard->showCenter(false, nullptr);
 		_pUserCard->resize(_pUserCard->width() + 10, _pUserCard->height());
+		QApplication::setActiveWindow(_pUserCard);
         _pUserCard->activateWindow();
     }
 }
@@ -249,6 +251,7 @@ void CardManager::showGroupCardSlot() {
         _groupCard->setData(_imGroupSup);
         _groupCard->adjustSize();
         _groupCard->showCenter(false, nullptr);
+        QApplication::setActiveWindow(_groupCard);
         _groupCard->activateWindow();
     }
 }

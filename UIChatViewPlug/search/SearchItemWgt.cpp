@@ -355,26 +355,11 @@ void SearchCommonTrdItem::mousePressEvent(QMouseEvent *e) {
 
     if(e->button() == Qt::LeftButton && contentFrm->geometry().contains(e->pos()))
     {
-        if(linkUrl.contains("qunar.com"))
-        {
-            if(linkUrl.contains("?"))
-                linkUrl += "&";
-            else
-                linkUrl += "?";
-            //
-            linkUrl = QString("%5username=%1&company=%2&group_id=%3&rk=%4").arg(PLAT.getSelfUserId().data())
-                    .arg("qunar").arg(_xmppId).arg(PLAT.getServerAuthKey().data()).arg(linkUrl);
-        }
-
 //        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
         MapCookie cookies;
         cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
         if (/**userDftBrowser ||**/
-            linkUrl.contains(NavigationManager::instance().getShareUrl().data()) ||
-            linkUrl.contains("tu.qunar.com/vote/vote_list.php") ||
-            linkUrl.contains("tu.qunar.com/vote/cast_vote.php") ||
-            linkUrl.contains("tu.qunar.com/task/task_list.php") ||
-            linkUrl.contains("tu.qunar.com/task/create_task.php"))
+            linkUrl.contains(NavigationManager::instance().getShareUrl().data()))
             WebService::loadUrl(QUrl(linkUrl), false, cookies);
         else
             QDesktopServices::openUrl(QUrl(linkUrl));

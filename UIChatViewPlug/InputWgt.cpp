@@ -764,8 +764,7 @@ void InputWgt::updateGroupMember(const std::map<std::string, QTalk::StUserCard> 
 
     QMutexLocker locker(&_mutex);
 
-    static std::set<std::string> members;
-    std::set<std::string> deletedMembers(members);
+    thread_local std::set<std::string> deletedMembers(members);
     members.clear();
     auto it = member.begin();
     int row = 0;
@@ -1292,4 +1291,15 @@ void InputWgt::inputMethodEvent(QInputMethodEvent *e) {
 //    if(!hasFocus())
 //        e->setCommitString("");
     QTextEdit::inputMethodEvent(e);
+}
+
+//
+void InputWgt::mousePressEvent(QMouseEvent *e) {
+    if(e->buttons().testFlag(Qt::BackButton) ){
+        emit g_pMainPanel->sgShortCutSwitchSession(Qt::Key_Down);
+    }
+    else if(e->buttons().testFlag(Qt::ForwardButton)) {
+        emit g_pMainPanel->sgShortCutSwitchSession(Qt::Key_Up);
+    }
+    QTextEdit::mousePressEvent(e);
 }

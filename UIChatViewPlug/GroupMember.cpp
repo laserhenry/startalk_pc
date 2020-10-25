@@ -377,17 +377,6 @@ void GroupMember::onSearchBtnClick() {
 
         }
     }
-    else if("斗图神器" == strContent)
-    {
-        QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qunar.com", QApplication::applicationName());
-        bool showDoutu = false;
-        if(settings.contains("QT_DOU_TU"))
-            showDoutu = settings.value("QT_DOU_TU").toBool();
-        showDoutu = !showDoutu;
-        settings.setValue("QT_DOU_TU", showDoutu);
-        
-        QtMessageBox::information(g_pMainPanel, tr("提醒"), showDoutu ? tr("斗图神器已启动, 重启应用后生效") : tr("斗图神器已关闭, 重启应用后生效"));
-    }
 }
 
 /**

@@ -41,8 +41,7 @@ protected:
 
 class SessionitemDelegate : public QStyledItemDelegate
 {
-public:
-    explicit SessionitemDelegate(QWidget* parent);
+    using QStyledItemDelegate::QStyledItemDelegate;
 
 protected:
     QSize sizeHint(const QStyleOptionViewItem &option,

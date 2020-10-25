@@ -81,6 +81,7 @@ Q_SIGNALS:
 	void sgRestartWithMessage(const QString&);
     void sgJumtoSession(const StSessionInfo&);
     void sgSystemQuit();
+    void sgShowUpdateClientLabel();
 
 public slots:
 	void InitLogin(bool, const QString& loginMsg);
@@ -103,10 +104,12 @@ private slots:
     void onUserSendMessage();
     void restartWithMessage(const QString& msg);
     void onScreenRemoved(QScreen *screen);
-
-#ifdef _MACOS
+    void onUpdateClient();
+#ifdef Q_OS_MAC
     void onShowMinWnd();
 #endif
+    void onHourTimer();
+
     // QWidget interface
 protected:
 	void closeEvent(QCloseEvent *e) override;
@@ -155,7 +158,6 @@ private:
 	IUIAddressBookPlug *_pAddressBookPlug{};
 	IUIOAManagerPlug *_pOAManagerPlug{};
     QFrame * _mainFrm{};
-    QFrame * _mainBottomFrm{};
     QWidget  *_titleBar{};
     QWidget  *_navigationPanel{};
     QWidget  *_chatViewPanel{};

@@ -457,7 +457,6 @@ ChatMsgListener::ChatMsgListener()
 	EventBus::AddHandler<ChangeHeadRetMessage>(*this);
 	EventBus::AddHandler<UpdateMoodRet>(*this);
 	EventBus::AddHandler<FeedBackLogEvt>(*this);
-	EventBus::AddHandler<GetSeatListRet>(*this);
 	EventBus::AddHandler<IncrementConfig>(*this);
 	EventBus::AddHandler<MStateEvt>(*this);
 	EventBus::AddHandler<WebRtcCommand>(*this);
@@ -775,14 +774,6 @@ void ChatMsgListener::onEvent(FeedBackLogEvt &e)
     {
         g_pMainPanel->packAndSendLog(QString::fromStdString(e.text));
     }
-}
-
-void ChatMsgListener::onEvent(GetSeatListRet &e)
-{
-	if(e.getCanceled()) return;
-	if(g_pMainPanel){
-		g_pMainPanel->setSeatList(e.uid,e.transfers);
-	}
 }
 
 void ChatMsgListener::onEvent(IncrementConfig &e) {

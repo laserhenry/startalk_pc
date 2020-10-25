@@ -144,7 +144,7 @@ void EmojiMessItem::initSendLayout() {
     rightLay->setSpacing(_rightSpacing);
     _contentFrm->setLayout(contentLay);
     if (!_imageLab) {
-        _imageLab = new QLabel;
+        _imageLab = new QLabel(this);
     }
     contentLay->addWidget(_imageLab);
     contentLay->setSpacing(_contentSpacing);
@@ -207,7 +207,7 @@ void EmojiMessItem::initReceiveLayout() {
     _contentFrm->setLayout(contentLay);
 
     if (!_imageLab) {
-        _imageLab = new QLabel;
+        _imageLab = new QLabel(this);
     }
     contentLay->addWidget(_imageLab);
     contentLay->setSpacing(_contentSpacing);

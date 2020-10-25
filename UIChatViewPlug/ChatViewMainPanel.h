@@ -17,7 +17,6 @@
 #include "MessageManager.h"
 #include "NativeChatStruct.h"
 #include "../Message/ChatMessage.h"
-#include "../include/ThreadPool.h"
 #include "../include/im_enum.h"
 #include "../QtUtil/lib/ini/ConfigLoader.h"
 #include "../Message/GroupMessage.h"
@@ -153,7 +152,6 @@ public:
     void searchLocalSession(int type, const std::string& key);
     void forwardMessage(const std::string& messageId);
     void playVoice(const std::string& localFile, VoiceMessageItem* msgItem);
-    void setSeatList(const QTalk::Entity::UID& uid, const std::vector<QTalk::Entity::ImTransfer>& transfers);
     //
     void resendMessage(MessageItemBase* item);
     //
@@ -223,7 +221,7 @@ protected:
 	void initSound();
 	void playSound();
     void onShowVideoWnd(const std::string& caller, const std::string& callee, bool isVideo);
-    void sendAutoPeplyMessage(const std::string& receiver, const std::string& messageId);
+    void sendAutoPeplyMessage(const QTalk::Entity::UID &uid, const std::string& messageId);
 
 public:
     void makeFileLink(const QString& filePath, const QString& fileMd5);
@@ -315,6 +313,10 @@ public:
 
 private:
     QNetworkAccessManager* _netManager{};
+    QThread                _downloadImageThread;
+
+public:
+    inline QThread& downloadImageThread() { return _downloadImageThread; }
 };
 
 #endif // CHATVIEWMIANPANEL_H

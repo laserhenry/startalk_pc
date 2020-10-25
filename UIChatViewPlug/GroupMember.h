@@ -8,7 +8,6 @@
 #include <QMutexLocker>
 #include "../include/CommonDefine.h"
 #include "../include/CommonStrcut.h"
-#include "../include/ThreadPool.h"
 #include "../include/Spinlock.h"
 #include <QStandardItemModel>
 

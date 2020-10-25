@@ -78,6 +78,7 @@ public slots:
     void onSwitchUserStatus(const QString&);
     void onShowAboutWnd();
     void onShowSystemWnd();
+    void onShowUpdateLabel();
 
 protected:
     void mousePressEvent(QMouseEvent *me) override;
@@ -125,14 +126,15 @@ Q_SIGNALS:
     void sgShowMessageRecordWnd(const QString&, const QString&);
     void sgShowFileRecordWnd(const QString&);
     void sgShowThrowingScreenWnd();
+    void sgDoUpdateClient();
 
 private:
     QFrame         * _leftCorFrm{};
     SeachEditPanel * _searchFrm{};
-    QToolButton    * _pQuickBtn{}; // 二维码
-    SessionBtn     * _sessionBtn{}; // 会话
-    QToolButton    * _contactBtn{}; // 联系人
-    QToolButton    * _multifunctionBtn{}; // 多功能
+    QToolButton    * _pQuickBtn{};
+    SessionBtn     * _sessionBtn{};
+    QToolButton    * _contactBtn{};
+    QToolButton    * _multifunctionBtn{};
     HeadPhotoLab   *_userBtn{};
     QFrame         * _maxminFrm{};
     QToolButton    * _minimizeBtn{};

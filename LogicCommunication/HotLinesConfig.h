@@ -29,7 +29,7 @@ public:
 
 public:
     //会话转移
-    void getTransferSeatsList(const QTalk::Entity::UID& uid);
+//    void getTransferSeatsList(const QTalk::Entity::UID& uid);
     void transferCsr(const QTalk::Entity::UID& uid,const std::string& newCsrName,const std::string &reason);
 
 public:

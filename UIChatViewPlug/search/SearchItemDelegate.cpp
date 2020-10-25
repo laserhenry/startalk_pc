@@ -118,14 +118,6 @@ QSize MessageALlDelegate::sizeHint(const QStyleOptionViewItem &option, const QMo
 }
 
 /**/
-FileMessageDelegate::FileMessageDelegate(QWidget* parent)
-        :QStyledItemDelegate(parent)
-{
-
-}
-
-FileMessageDelegate::~FileMessageDelegate() = default;
-
 
 void FileMessageDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
 

@@ -75,11 +75,6 @@ bool SessionSortModel::lessThan(const QModelIndex &source_left, const QModelInde
 }
 
 //
-SessionitemDelegate::SessionitemDelegate(QWidget* parent)
-    :QStyledItemDelegate(parent), _pParentWgt(parent)
-{
-}
-
 QSize SessionitemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     const QSize& size = QStyledItemDelegate::sizeHint(option, index);

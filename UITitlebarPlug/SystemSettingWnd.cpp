@@ -1073,17 +1073,9 @@ void SystemSettingWnd::initVersionInfo(QVBoxLayout* vlayout) {
         std::string build_time = PLAT.get_build_date_time();
         build_time_label->setText(QString("build at: %1").arg(build_time.data()));
 
-        auto *checkUpdateBtn = new QPushButton(tr("检查更新"));
-        checkUpdateBtn->setFixedSize(80,30);
-        checkUpdateBtn->setObjectName("SettingBtn");
-        versionLay->addWidget(checkUpdateBtn);
-
-        versionLay->addItem(new QSpacerItem(1, 1, QSizePolicy::Expanding));
-        checkUpdateBtn->setVisible(false);
-        connect(checkUpdateBtn, &QPushButton::clicked, this, &SystemSettingWnd::sgCheckUpdate);
     }
 
-    QLabel *repairLbl = new QLabel(tr("便捷维护:"), this);
+    auto *repairLbl = new QLabel(tr("便捷维护:"), this);
     vlayout->addWidget(repairLbl);
 
     { // 便捷维护

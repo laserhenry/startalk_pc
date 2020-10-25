@@ -31,7 +31,7 @@ extern ChatViewMainPanel *g_pMainPanel;
 TextMessItem::TextMessItem(const StNetMessageResult &msgInfo,
                            QWidget *parent) :
         MessageItemBase(msgInfo, parent),
-        _textBrowser(Q_NULLPTR){
+        _textBrowser(nullptr){
     _msgs = QVector<StTextMessage>::fromStdVector(msgInfo.text_messages);
     init();
     setMessageContent(false);
@@ -39,9 +39,6 @@ TextMessItem::TextMessItem(const StNetMessageResult &msgInfo,
     connect(_textBrowser, &TextBrowser::anchorClicked, this, &TextMessItem::onAnchorClicked);
     connect(_textBrowser, &TextBrowser::imageClicked, this, &TextMessItem::onImageClicked);
 }
-
-TextMessItem::~TextMessItem() = default;
-
 
 /**
   * @函数名
@@ -150,7 +147,7 @@ void TextMessItem::setMessageContent(bool delMov) {
     f.setFontWordSpacing(0);
     f.setFontLetterSpacing(0);
     _textBrowser->setCurrentCharFormat(f);
-    _textBrowser->setText("");
+    _textBrowser->clear();
     //
     if(delMov)
     {
@@ -240,7 +237,8 @@ void TextMessItem::setMessageContent(bool delMov) {
                     imageFormat.setProperty(imagePropertyPath, msg.content);
                     imageFormat.setProperty(imagePropertyLink, msg.imageLink);
                     imageFormat.setProperty(imagePropertyType, msg.type);
-                    imageFormat.setProperty(imagePropertyIndex, imgIndex++);
+                    if(msg.type == StTextMessage::EM_IMAGE)
+                        imageFormat.setProperty(imagePropertyIndex, imgIndex++);
                     _textBrowser->textCursor().insertImage(imageFormat);
                     _textBrowser->setCurrentCharFormat(f);
                     //
@@ -373,7 +371,7 @@ void TextMessItem::initSendLayout() {
     }
 
     if (nullptr == _textBrowser) {
-        _textBrowser = new TextBrowser(parentWidget());
+        _textBrowser = new TextBrowser(this);
     }
     contentLay->addWidget(_textBrowser);
     contentLay->setSpacing(_contentSpacing);
@@ -429,7 +427,7 @@ void TextMessItem::initReceiveLayout() {
     _contentFrm->setLayout(contentLay);
 
     if (!_textBrowser) {
-        _textBrowser = new TextBrowser;
+        _textBrowser = new TextBrowser(this);
     }
 //    _textBrowser->setFixedWidth(qMin(this->width() - 28 - 30, MAX_CONTENT_WIDTH));//先设置最大宽度 设置文本后适应文本大小
     contentLay->addWidget(_textBrowser);

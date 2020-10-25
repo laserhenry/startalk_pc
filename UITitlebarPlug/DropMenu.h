@@ -217,14 +217,15 @@ public:
     void setName(const QString& name);
     void setHead(const QString& headPath);
     void onSwitchUserStatusRet(const QString& status);
+    void showUpdateLabel();
 
 Q_SIGNALS:
     void showSelfUserCard();
     void sysQuit();
-    void sgCheckUpdate();
     void sgShowAboutWnd();
     void sgShowSystemSetting();
     void sgSwitchUserStatus(const QString& );
+    void sgDoUpdateClient();
 
 private:
     void initUi();
@@ -239,6 +240,7 @@ private:
     ActionLabel* _pSysQuitLabel;
     ActionLabel* _pLogoutLabel;
     ActionLabel* _pAboutLabel;
+    ActionLabel* _pUpdateClient;
 
 private:
     QMenu* _menu;

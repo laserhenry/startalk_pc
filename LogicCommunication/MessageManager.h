@@ -21,7 +21,6 @@
 class CommMsgManager : public Object
 {
 public:
-    static void sendDataBaseOpen();
 //	void sendReconnectResult();
 //	void OnRecvIQMessage(IQMessageEvt& e);
     // 登录失败消息
@@ -61,9 +60,6 @@ public:
 	//
     static void updateMoodRet(const std::string& userId, const std::string& mood);
 
-	//qchat 会话转移
-    static void setSeatList(QTalk::Entity::UID uid,std::vector<QTalk::Entity::ImTransfer> transfers);
-	//
     static void gotIncrementUser(const std::vector<QTalk::Entity::ImUserInfo> &arUserInfo,
 	        const std::vector<std::string> &arDeletes);
 
@@ -76,7 +72,7 @@ public:
 class Communication;
 class CommMsgListener :
         public EventHandler<RetryConnectToServerEvt>
-        , public EventHandler<DataBaseOpenMessage>
+        , public EventHandler<SynSeverDataEvt>
         , public EventHandler<SourceNetImage>
 		, public EventHandler<NetImgEvt>
 		, public EventHandler<HistoryMessage>
@@ -177,7 +173,7 @@ public:
 
 public:
     void onEvent(RetryConnectToServerEvt& e) override;
-    void onEvent(DataBaseOpenMessage& e) override;
+    void onEvent(SynSeverDataEvt& e) override;
     void onEvent(LocalImgEvt &e) override;
     void onEvent(NetImgEvt &e) override;
     void onEvent(HistoryMessage &e) override;

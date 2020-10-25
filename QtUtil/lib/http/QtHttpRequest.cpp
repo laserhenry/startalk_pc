@@ -276,3 +276,11 @@ void QTalk::QtHttpRequest::setProcessCallback(const std::string& key,
     }
 }
 
+void QtHttpRequest::setDownloadSpeed(int speed) {
+    CURL *curl = _httpCore;
+
+    if (curl != nullptr) {
+        curl_easy_setopt (curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t) speed * 1024);
+    }
+}
+

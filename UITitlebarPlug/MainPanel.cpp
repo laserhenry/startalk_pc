@@ -321,8 +321,10 @@ void MainPanel::init() {
 //            _pSystemSettingWnd->showCenter(false, _pCtrlWdt);
             _pSystemSettingWnd->setVisible(false);
             _pSystemSettingWnd->setVisible(true);
+            QApplication::setActiveWindow(this);
         }
     });
+    connect(_dropMenu, &DropMenu::sgDoUpdateClient, this, &MainPanel::sgDoUpdateClient);
     connect(_pSystemSettingWnd, &SystemSettingWnd::sgSetAutoLogin, this, &MainPanel::sgSetAutoLogin);
     connect(_pSystemSettingWnd, &SystemSettingWnd::sgFeedbackLog, this, &MainPanel::feedbackLog);
 
@@ -440,8 +442,6 @@ void MainPanel::connects() {
     });
     connect(_dropMenu, &DropMenu::sysQuit, this, &MainPanel::systemQuitSignal);
 
-    connect(_dropMenu, &DropMenu::sgCheckUpdate, this, &MainPanel::sgCheckUpdate);
-    connect(_pSystemSettingWnd, &SystemSettingWnd::sgCheckUpdate, this, &MainPanel::sgCheckUpdate);
     connect(_pSystemSettingWnd, &SystemSettingWnd::sgUpdateHotKey, this, &MainPanel::sgUpdateHotKey);
     connect(_pSystemSettingWnd, &SystemSettingWnd::msgSoundChanged, this, &MainPanel::msgSoundChanged);
     //
@@ -734,5 +734,12 @@ void MainPanel::onShowSystemWnd() {
     if (nullptr != _pSystemSettingWnd) {
         _pSystemSettingWnd->setVisible(false);
         _pSystemSettingWnd->setVisible(true);
+        QApplication::setActiveWindow(_pSystemSettingWnd);
+    }
+}
+
+void MainPanel::onShowUpdateLabel() {
+    if(_dropMenu) {
+        _dropMenu->showUpdateLabel();
     }
 }

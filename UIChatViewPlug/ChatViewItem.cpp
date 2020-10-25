@@ -30,6 +30,8 @@
 #include "../Platform/dbPlatForm.h"
 #include "MessageAnalysis.h"
 #include "search/LocalSearchMainWgt.h"
+#include "../Platform/Platform.h"
+#include "../QtUtil/Utils/utils.h"
 
 #define DEM_ATALL_STR "@all"
 
@@ -57,7 +59,6 @@ ChatViewItem::ChatViewItem()
     connect(_pToolWgt, &ToolWgt::showSearchWnd, this, &ChatViewItem::onShowSearchWnd);
 
     qRegisterMetaType<std::vector<Entity::ImTransfer>>("std::vector<Entity::ImTransfer>");
-    connect(this,&ChatViewItem::sgShowSeats,_pToolWgt,&ToolWgt::showSeats);
     connect(this, &ChatViewItem::sgDeleteLater, this, &ChatViewItem::deleteLater, Qt::QueuedConnection);
 
     //

@@ -16,10 +16,6 @@
  * 
  */
 
-void CommMsgManager::sendDataBaseOpen() {
-    DataBaseOpenMessage e;
-    EventBus::FireEvent(e);
-}
 
 //
 //void CommMsgManager::sendReconnectResult() {
@@ -280,13 +276,6 @@ void CommMsgManager::updateMoodRet(const std::string& userId, const std::string&
     EventBus::FireEvent(e);
 }
 
-
-
-void CommMsgManager::setSeatList(QTalk::Entity::UID uid,std::vector<QTalk::Entity::ImTransfer> transfers) {
-    GetSeatListRet ret(transfers,uid);
-    EventBus::FireEvent(ret);
-}
-
 void CommMsgManager::sendLoginProcessMessage(const std::string &message) {
     bool status = false;
     LoginProcessMessage e(message, status);
@@ -325,7 +314,7 @@ void CommMsgManager::onCheckUpdate(bool hasUpdate, bool force) {
 CommMsgListener::CommMsgListener(Communication *pComm)
         : _pComm(pComm) {
 	EventBus::AddHandler<RemoveSessionData>(*this);
-	EventBus::AddHandler<DataBaseOpenMessage>(*this);
+	EventBus::AddHandler<SynSeverDataEvt>(*this);
 	EventBus::AddHandler<LocalImgEvt>(*this);
 	EventBus::AddHandler<NetImgEvt>(*this);
 	EventBus::AddHandler<HistoryMessage>(*this);
@@ -428,7 +417,7 @@ CommMsgListener::~CommMsgListener() {
  * @brief onEvent
  * @param e
  */
-void CommMsgListener::onEvent(DataBaseOpenMessage &e) {
+void CommMsgListener::onEvent(SynSeverDataEvt &e) {
 
     if (e.getCanceled()) {
         return;
@@ -817,7 +806,7 @@ void CommMsgListener::onEvent(GetNavAddrInfo &e) {
     if (_pComm) {
         QTalk::StNav nav;
         e.ret = _pComm->getNavInfo(e.navAddr, nav);
-        _pComm->setLoginNav(nav);
+        Communication::setLoginNav(nav);
     }
 }
 

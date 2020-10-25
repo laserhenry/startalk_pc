@@ -43,7 +43,7 @@ UShadowDialog::UShadowDialog(QWidget *parent, bool radius, bool hasBorder) :
 #ifdef _MACOS
     lay->setMargin(0);
 #else
-    lay->setMargin(2);
+    lay->setMargin(_hasBorder ? 2 : 0);
 #endif
     lay->setSpacing(0);
 

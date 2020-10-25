@@ -15,7 +15,6 @@
 #include "../entity/im_transfer.h"
 #include "../include/CommonDefine.h"
 #include "../include/im_enum.h"
-#include "../include/ThreadPool.h"
 #include "NativeChatStruct.h"
 
 #define SYSTEM_XMPPID "SystemMessage"
@@ -48,7 +47,6 @@ public:
 Q_SIGNALS:
     void sgRemoveGroupMember(const std::string&);
     void sgUpdateUserStatus(const QString& sts);
-    void sgShowSeats(std::vector<QTalk::Entity::ImTransfer>);
     void sgDeleteLater();
     //
     void sgShowMessage(StNetMessageResult, int);

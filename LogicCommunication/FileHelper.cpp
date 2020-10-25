@@ -442,7 +442,7 @@ void FileHelper::uploadLogFile(const std::string &filePath,
   */
 void FileHelper::downloadFile(const std::string &uri, const std::string &localPath, bool addCallBack, const std::string& processKey) {
 
-    auto func = [this, uri, localPath, addCallBack, processKey]() {
+    auto func = [ uri, localPath, addCallBack, processKey]() {
 #ifdef _MACOS
         pthread_setname_np("FileHelper::downloadFile");
 #endif
@@ -549,7 +549,7 @@ bool FileHelper::writeFile(const std::string &filePath, const std::string *data)
 #ifdef _WINDOWS
 	std::string nfilePath = QTalk::Utf8ToGbk(filePath.data());
 #else
-	std::string nfilePath(filePath);
+	const std::string& nfilePath(filePath);
 #endif // _WINDOWS
 
     // 创建文件夹

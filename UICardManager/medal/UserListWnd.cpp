@@ -12,12 +12,6 @@
 #include <QScrollBar>
 #include <QFileInfo>
 
-UserItemDelegate::UserItemDelegate(QWidget* parent)
-    :QStyledItemDelegate(parent)
-{
-
-}
-
 QSize UserItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const {
     const QSize& size = QStyledItemDelegate::sizeHint(option, index);
     return {size.width(), 50};

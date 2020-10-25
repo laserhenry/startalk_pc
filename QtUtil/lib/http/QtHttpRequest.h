@@ -42,6 +42,8 @@ namespace QTalk {
         void setProcessCallback(const std::string& key,
                 std::function<void(StProcessParam)> fun) override;
 
+        void setDownloadSpeed(int speed) override ;
+
     private:
         void *_httpCore;
         std::ostringstream _readBuffer;

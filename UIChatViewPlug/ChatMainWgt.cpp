@@ -39,7 +39,12 @@
 #include "MessageItems/HotLineAnswerItem.h"
 #include "ShareMessageFrm.h"
 
+#define SWITCH_SAVE_MESSAGE_NUM 15
+#define SWITCH_DELETE_MESSAGE_MAX_NUM 40
+
 extern ChatViewMainPanel *g_pMainPanel;
+
+/** ChatMainWgt  */
 ChatMainWgt::ChatMainWgt(ChatViewItem *pViewItem)
         : QListView(pViewItem),
         _pViewItem(pViewItem),
@@ -93,7 +98,15 @@ ChatMainWgt::ChatMainWgt(ChatViewItem *pViewItem)
     _pMenu->addAction(revokeAct);
     _pMenu->addSeparator();
     _pMenu->addAction(shareMessageAct);
+    //
+    _downloadTask = new DownloadImageTask;
+    _downloadTask->moveToThread(&g_pMainPanel->downloadImageThread());
 
+    connect(this, &ChatMainWgt::sgDownloadImageOperate, _downloadTask, &DownloadImageTask::downloadImage);
+    connect(_downloadTask, &DownloadImageTask::downloadFinish, this, &ChatMainWgt::onImageDownloaded);
+    connect(this, &ChatMainWgt::sgDownloadEmoOperate, _downloadTask, &DownloadImageTask::downloadEmo);
+
+    //
     setContextMenuPolicy(Qt::CustomContextMenu);
     qRegisterMetaType<std::map<std::string, QInt32> >("std::map<std::string, QInt32 >");
     qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
@@ -139,8 +152,8 @@ ChatMainWgt::~ChatMainWgt()
     _selectItemQueue->clear();
     delete _selectItemQueue;
 
-    _pSrcModel->clear();
-//    QApplication::processEvents();
+    if(_pSrcModel)
+        _pSrcModel->clear();
 };
 
 void ChatMainWgt::connects() {
@@ -159,8 +172,8 @@ void ChatMainWgt::connects() {
     connect(this, &ChatMainWgt::sgSendFailed, this, &ChatMainWgt::onSendMessageFailed);
     connect(this, &ChatMainWgt::sgDownloadFileFailed, this, &ChatMainWgt::onDownloadFileFailed);
     connect(this, &ChatMainWgt::sgUploadFileSuccess, this, &ChatMainWgt::onUploadFileSuccess);
-    connect(this, &ChatMainWgt::updateRevokeSignal, this, &ChatMainWgt::updateRevokeMessage);
-    connect(this, &ChatMainWgt::sgImageDownloaded, this, &ChatMainWgt::onImageDownloaded, Qt::QueuedConnection);
+    connect(this, &ChatMainWgt::updateRevokeSignal, this, &ChatMainWgt::updateRevokeMessage, Qt::QueuedConnection);
+//    connect(this, &ChatMainWgt::sgImageDownloaded, this, &ChatMainWgt::onImageDownloaded, Qt::QueuedConnection);
     connect(this, &ChatMainWgt::customContextMenuRequested, this, &ChatMainWgt::onCustomContextMenuRequested);
     connect(this, &ChatMainWgt::sgDownloadFileSuccess, this, &ChatMainWgt::onDownloadFile);
 
@@ -183,9 +196,9 @@ void ChatMainWgt::connects() {
     QScrollBar *scrolbar = this->verticalScrollBar();
     scrolbar->installEventFilter(this);
     connect(scrolbar, &QScrollBar::valueChanged, this, &ChatMainWgt::onScrollBarChanged);
-    connect(scrolbar, &QScrollBar::rangeChanged, [this](int , int ){
-        emit this->sgJumTo();
-    });
+//    connect(scrolbar, &QScrollBar::rangeChanged, [this](int , int ){
+//        emit this->sgJumTo();
+//    });
     connect(this, &ChatMainWgt::adjustItems, this, &ChatMainWgt::onAdjustItems, Qt::QueuedConnection);
 //    connect(this, &QListView::selectionChanged, this, &ChatMainWgt::onItemSelectionChanged, Qt::QueuedConnection);
     connect(this, &ChatMainWgt::sgSelectItem, this, &ChatMainWgt::onItemChanged, Qt::QueuedConnection);
@@ -343,13 +356,12 @@ ChatMainWgt::onRecvFRileProcess(double speed, double dtotal, double dnow, double
 //
 void ChatMainWgt::showMessageTime(const QString& messageId, const QInt64 &nCurTime) {
 
-    _times.push_back(nCurTime);
-    _times.sort();
-    auto it = std::find(_times.begin(), _times.end(), nCurTime);
+    _times[nCurTime] = messageId;
+    auto it = _times.find(nCurTime);
     if(it != _times.begin())
     {
         it--;
-        if(nCurTime - *it < 60 * 1000)
+        if((nCurTime - it.key()) < 2 * 60 * 1000)
         {
             _times.remove(nCurTime);
             return;
@@ -371,6 +383,10 @@ void ChatMainWgt::showMessageTime(const QString& messageId, const QInt64 &nCurTi
  * @param info
  */
 void ChatMainWgt::onShowMessage(StNetMessageResult info, int jumType) {
+
+    if(!_isLeave) {
+        _request_time = qMin(_request_time, info.time);
+    }
 
     QTalk::Entity::UID uid(info.xmpp_id.section("/", 0, 0), info.real_id.section("/", 0, 0));
     if(uid == _pViewItem->_uid)
@@ -546,6 +562,14 @@ void ChatMainWgt::wheelEvent(QWheelEvent *e) {
                 i++;
             }
         }
+        if(_request_time != time) {
+//            StNetMessageResult info = _jumIndex.data(EM_USER_INFO).value<StNetMessageResult>();
+//            error_log("--- get min message time error {0} -> (his){1}. message info type:{2} id:{3}",
+//                      time , _request_time, info.type, info.msg_id.toStdString());
+            _jumIndex = {};
+            time = _request_time;
+        }
+
         if(_hasnotHistoryMsg)
             g_pMainPanel->getHistoryMsg(time, _pViewItem->_chatType, _pViewItem->getPeerId());
     }
@@ -570,7 +594,7 @@ void ChatMainWgt::onRecvReadState(const std::map<std::string, QInt32> &readState
         if(_mapItem.contains(messageId))
         {
             StNetMessageResult info = _mapItem[messageId]->data(EM_USER_INFO).value<StNetMessageResult>();
-            info.state = it->second;
+            info.read_flag = it->second;
             _mapItem[messageId]->setData(QVariant::fromValue(info), EM_USER_INFO);
         }
 
@@ -586,7 +610,6 @@ void ChatMainWgt::onRecvReadState(const std::map<std::string, QInt32> &readState
 }
 
 void ChatMainWgt::updateRevokeMessage(const QString &fromId, const QString &messageId, const long long& time) {
-    Q_UNUSED(time);
     if (_mapItem.contains(messageId) && !fromId.isEmpty()) {
         QString userName = tr("你");
         if (g_pMainPanel->getSelfUserId() != fromId.toStdString()) {
@@ -597,20 +620,21 @@ void ChatMainWgt::updateRevokeMessage(const QString &fromId, const QString &mess
             }
         }
         auto* item = _mapItem[messageId];
-        StNetMessageResult info = item->data(EM_USER_INFO).value<StNetMessageResult>();
-        _pSrcModel->removeRow(item->index().row());
-        _mapItem.remove(messageId);
-        _mapItemWgt.remove(messageId);
-        if(_mapTimeItem.contains(messageId) && _mapTimeItem[messageId])
-        {
-            _pSrcModel->removeRow(_mapTimeItem[messageId]->index().row());
-            _mapTimeItem.remove(messageId);
+        if(item) {
+            StNetMessageResult info = item->data(EM_USER_INFO).value<StNetMessageResult>();
+            _pSrcModel->removeRow(item->row());
+            _mapItem.remove(messageId);
+            _mapItemWgt.remove(messageId);
+            if(_mapTimeItem.contains(messageId) && _mapTimeItem[messageId])
+            {
+                _pSrcModel->removeRow(_mapTimeItem[messageId]->row());
+                _mapTimeItem.remove(messageId);
+            }
+            QString content = tr("%1撤回了一条消息").arg(fromId == PLAT.getSelfXmppId().data() ?
+                                                  tr("你") : info.user_name);
+
+            emit showTipMessageSignal(messageId, QTalk::Entity::MessageTypeRevoke, content, time); // time error
         }
-
-        QString content = tr("%1撤回了一条消息").arg(fromId == PLAT.getSelfXmppId().data() ?
-                tr("你") : info.user_name);
-
-        emit showTipMessageSignal(messageId, QTalk::Entity::MessageTypeRevoke, content, info.time);
     }
 }
 
@@ -627,11 +651,13 @@ void ChatMainWgt::showTipMessage(const QString& messageId, int type, const QStri
     item->setData(t, EM_USER_MSG_TIME);
     item->setData(_selectEnable, EM_USER_SHOW_SHARE);
     _pSrcModel->appendRow(item);
-
     _mapItem[messageId] = item;
-
+    _pDelegate->dealWidget(_pModel->mapFromSource(item->index()));
+    item->setSizeHint({this->width(), 40});
     _pModel->sort(0);
-    this->scrollToBottom();
+
+    scrollToItem(item);
+//    this->scrollToBottom();
 }
 
 void ChatMainWgt::saveAsImage(const QString &imageLink) {
@@ -938,6 +964,14 @@ void ChatMainWgt::onScrollBarChanged(int val) {
             }
         }
 
+        if(_request_time != time) {
+//            auto msgType = _jumIndex.data(EM_USER_MSG_TYPE).toInt();
+//            error_log("--- get min message time error {0} -> (his){1}. message info type:{2} str:{3}",
+//                    time , _request_time, msgType);
+            _jumIndex = {};
+            time = _request_time;
+        }
+
         if(_hasnotHistoryMsg)
             g_pMainPanel->getHistoryMsg(time, _pViewItem->_chatType, _pViewItem->getPeerId());
 
@@ -1149,13 +1183,7 @@ void ChatMainWgt::onUserMedalChanged(const std::set<std::string> &changedUser) {
  */
 void ChatMainWgt::downloadImage(const QString &msgid, const QString &link, int , int )
 {
-    QPointer<ChatMainWgt> pThis(this);
-    QT_CONCURRENT_FUNC([pThis, link, msgid](){
-        ChatMsgManager::getLocalFilePath(link.toStdString());
-        if(pThis)
-            emit pThis->sgImageDownloaded(msgid, link);
-    });
-
+    emit sgDownloadImageOperate(msgid, link);
 }
 
 void ChatMainWgt::onImageDownloaded(const QString &msgid, const QString &path)
@@ -1228,12 +1256,7 @@ void ChatMainWgt::onImageDownloaded(const QString &msgid, const QString &path)
  */
 void ChatMainWgt::downloadEmoticon(const QString& msgId, const QString& pkgid, const QString& shortCut)
 {
-    QPointer<ChatMainWgt> pThis(this);
-    QT_CONCURRENT_FUNC([pThis, msgId, pkgid, shortCut](){
-        QString localPath = EmoticonMainWgt::instance()->downloadEmoticon(pkgid, shortCut);
-        if(pThis)
-            emit pThis->sgImageDownloaded(msgId, localPath);
-    });
+    emit sgDownloadEmoOperate(msgId, pkgid, shortCut);
 }
 
 void ChatMainWgt::onDisconnected()
@@ -1287,6 +1310,7 @@ void ChatMainWgt::onMState(const QString& msgId, const long long& time) {
         StNetMessageResult info = _mapItem[msgId]->data(EM_USER_INFO).value<StNetMessageResult>();
         info.state = 1;
         info.read_flag = 1;
+        info.time = time;
         _mapItem[msgId]->setData(QVariant::fromValue(info), EM_USER_INFO);
         _mapItem[msgId]->setData(time, EM_USER_MSG_TIME);
 
@@ -1350,15 +1374,15 @@ void ChatMainWgt::jumTo() {
 void ChatMainWgt::showEvent(QShowEvent *e) {
 //    _jumType = EM_JUM_BOTTOM;
     _isLeave = false;
-//    this->setItemDelegate(_pDelegate);
 //    _oldScrollBarVal = 0;
-    {
-        static unsigned char flag = 0;
-        if(++flag % 2)
-            this->resize(this->width() + 1, this->height());
-        else
-            this->resize(this->width() - 1, this->height());
-    }
+//    {
+//        static unsigned char flag = 0;
+//        if(++flag % 2)
+//            this->resize(this->width() + 1, this->height());
+//        else
+//            this->resize(this->width() - 1, this->height());
+//    }
+
     _pNewMessageTipItem->onResetWnd();
     QWidget::showEvent(e);
 }
@@ -1396,38 +1420,58 @@ void ChatMainWgt::freeView() {
 //    this->setItemDelegate(nullptr);
 //    _reset_jumIndex = _pModel->mapToSource(_pModel->index(_pModel->rowCount() - 1, 0));
     _isLeave = true;
-//    _wheelFlag = false;
+    _wheelFlag = false;
 
-//    auto rowCount = _pModel->rowCount();
-//    if(rowCount > 50)
-//    {
-//        for (int i = 0; i < (rowCount - 50); i ++)
-//        {
-//            auto index = _pModel->index(i, 0);
-//
-//            if(index.isValid())
-//            {
-//                StNetMessageResult info = index.data(EM_USER_INFO).value<StNetMessageResult>();
-//                auto srcIndex = _pModel->mapToSource(index);
-//                auto mid = info.msg_id;
-//
-//                if(info.msg_type == QTalk::Entity::MessageTypeTime)
-//                {
-//                    _mapTimeItem.remove(mid);
-//                    _times.remove(info.time);
-//                }
-//                else {
-//                    _mapItemWgt.remove(mid);
-//                    _mapItem.remove(mid);
-//                }
-//
-//                if(srcIndex.isValid()) {
-//                    _pSrcModel->removeRow(srcIndex.row());
-//                }
-//            }
-//        }
-//    }
-//    qInfo() << rowCount << " -->> "<< _pModel->rowCount();
+    _jumIndex = {};
+    _reset_jumIndex = {};
+
+    if(_pSrcModel->rowCount() > SWITCH_SAVE_MESSAGE_NUM) {
+        _hasnotHistoryMsg = true;
+        std::list<qint64> allTimes ;
+
+        for(auto idx = 0; idx < _pSrcModel->rowCount(); idx ++) {
+            auto t = _pSrcModel->index(idx, 0).data(EM_USER_MSG_TIME).toULongLong();
+            allTimes.push_back(t);
+        }
+
+        int delSize = (int)allTimes.size() - SWITCH_SAVE_MESSAGE_NUM;
+        delSize = qMin(SWITCH_DELETE_MESSAGE_MAX_NUM, delSize);
+        auto index = 0;
+        allTimes.sort();
+        while(!allTimes.empty() && index < delSize) {
+            allTimes.erase(allTimes.begin());
+            index++;
+        }
+
+        qint64 minTime = *allTimes.begin();
+        _request_time = minTime;
+        std::vector<QString> delIds;
+        for(auto it : _mapItem) {
+            auto time = it->data(EM_USER_MSG_TIME).toULongLong();
+            StNetMessageResult info = it->data(EM_USER_INFO).value<StNetMessageResult>();
+            if(time < minTime) {
+                delIds.push_back(info.msg_id);
+            }
+        }
+
+        for(const auto& id : delIds) {
+            if (_mapItem.contains(id)) {
+                auto *item = _mapItem[id];
+                _pSrcModel->removeRow(item->row());
+                _mapItem.remove(id);
+            }
+//            _mapItemWgt;
+            _mapItemWgt.remove(id);
+            if(_mapTimeItem.contains(id)) {
+                auto* timeItem = _mapTimeItem[id];
+                _mapTimeItem.remove(id);
+                auto time = timeItem->data(EM_USER_MSG_TIME).toLongLong();
+                if(_times.contains(time))
+                    _times.remove(time);
+                _pSrcModel->removeRow(timeItem->row());
+            }
+        }
+    }
 }
 
 //
@@ -1438,4 +1482,17 @@ void ChatMainWgt::onUploadFileSuccess(const QString & key, const QString & ) {
         if(pFileItem)
             pFileItem->downloadOrUploadSuccess();
     }
+}
+
+/** DownloadImageTask  */
+void DownloadImageTask::downloadImage(const QString &msgId, const QString &link) {
+
+    auto path = ChatMsgManager::getLocalFilePath(link.toStdString());
+    emit downloadFinish(msgId, link);
+}
+
+void DownloadImageTask::downloadEmo(const QString &msgId, const QString &pkgid, const QString &shortCut) {
+
+    auto localPath = EmoticonMainWgt::instance()->downloadEmoticon(pkgid, shortCut);
+    emit downloadFinish(msgId, localPath);
 }

@@ -27,13 +27,9 @@ class SessionitemDelegate;
 class NavigationMainPanel;
 
 class SessionFrm : public QFrame {
-Q_OBJECT
-
+    Q_OBJECT
 public:
-
     explicit SessionFrm(NavigationMainPanel *parent);
-
-    ~SessionFrm() override;
 
 public:
     void jumpToNewMessage();

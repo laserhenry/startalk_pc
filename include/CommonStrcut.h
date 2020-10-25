@@ -201,6 +201,8 @@ namespace QTalk {
         // process callback
         bool addProcessCallback{};
         std::string processCallbackKey;
+        // limit the download speed
+        int speed {-1};
 
 
         explicit HttpRequest(std::string url, unsigned char method = 2)

@@ -14,8 +14,6 @@ find_package(Qt5Concurrent)
 
 #
 set(SOURCE_FILES
-        ContactFrm.cpp
-        ContactFrm.h
         image1.qrc
         MessageManager.cpp
         MessageManager.h

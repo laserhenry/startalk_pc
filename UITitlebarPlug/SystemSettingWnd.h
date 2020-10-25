@@ -55,7 +55,6 @@ public:
 Q_SIGNALS:
     void sgSetAutoLogin(bool);
     void sgFeedbackLog(const QString&);
-    void sgCheckUpdate();
     void sgUpdateHotKey();
 	void saveConfig();
     void sgClearSystemCache();

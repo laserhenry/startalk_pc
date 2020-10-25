@@ -36,7 +36,7 @@
 #endif
 #endif
 
-extern bool _sys_run {};
+extern bool _sys_run {false};
 QTalkApp::QTalkApp(int argc, char *argv[])
         : QApplication(argc, argv) {
 
@@ -141,7 +141,7 @@ QTalkApp::QTalkApp(int argc, char *argv[])
     // 窗口调整
     MacApp::AllowMinimizeForFramelessWindow(_pMainWnd);
     // 获取权限
-    MacApp::checkValidToVisitMicroPhone();
+//    MacApp::checkValidToVisitMicroPhone();
     // 多开
     connect(_pMainWnd, &MainWindow::sgRunNewInstance, [](){
         QStringList params;
@@ -251,7 +251,7 @@ void LogMsgOutput(QtMsgType type, const QMessageLogContext &context, const QStri
     QString localPath(context.file);
     localPath.replace("\\", "/");
 
-    log.append(QString("[time: %1] ").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")));
+    log.append(QString("[%1] ").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")));
 
     switch (type) {
         case QtDebugMsg:
@@ -297,7 +297,7 @@ void LogMsgOutput(QtMsgType type, const QMessageLogContext &context, const QStri
 #endif
 #endif
     //
-    log.append(QString("%2 %1\n").arg(localMsg).arg(context.function));
+    log.append(QString("%1 \n%2(%3) %4\n").arg(localMsg, context.file).arg(context.line).arg(context.function));
 
     QFile file(strqLogPath);
     if (!file.isOpen() && !file.open(QIODevice::ReadWrite | QIODevice::Append)) {
@@ -323,7 +323,7 @@ void QTalkApp::initLogSys() {
     strlogPath = QString("%1/logs/%2/")
             .arg(appdata)
             .arg(curDateTime.toString("yyyy-MM-dd"));
-    strqLogPath = QString("%1/%2_qdebug.log").arg(strlogPath).arg(curDateTime.toString("yyyy-MM-dd hh-mm-dd"));
+    strqLogPath = QString("%1/%2_qt.log").arg(strlogPath).arg(curDateTime.toString("yyyy-MM-dd-hh-mm-dd"));
 
     QDir logDir(strlogPath);
     if (!logDir.exists()) {
@@ -342,9 +342,9 @@ void QTalkApp::initLogSys() {
     //
     qInstallMessageHandler(LogMsgOutput);
     //
-    info_log("系统启动 当前版本号:{0}", PLAT.getClientVersion());
+    info_log("系统启动 当前版本:{0}", PLAT.getClientVersion());
 //    info_log("supportsSsl {0}", QSslSocket::supportsSsl());
-//    qDebug() << QStringLiteral("系统启动");
+    qInfo() << "系统启动 当前版本" << PLAT.getClientNumVerison() << PLAT.get_build_date_time().data();
 }
 
 /**

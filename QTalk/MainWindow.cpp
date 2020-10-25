@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #ifdef _MACOS
     UShadowDialog(parent, true, false)
 #else
-    UShadowDialog(parent, true, true)
+    UShadowDialog(parent, true, false)
 #endif
 {
     //
@@ -85,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     }
     //
-#ifdef _MACOS
+#ifdef Q_OS_MAC
     _pWindowMenuBar = new QMenuBar(nullptr);
     //
     QMenu *toolMenu = _pWindowMenuBar->addMenu(tr("工具"));
@@ -95,6 +95,12 @@ MainWindow::MainWindow(QWidget *parent) :
     toolMenu->addAction(_pFeedBackLog);
     //
     connect(addNew, &QAction::triggered, this, &MainWindow::sgRunNewInstance);
+
+    auto *dockMenu = new QMenu(this);
+    dockMenu->setAsDockMenu();
+    auto* addNewDock = new QAction(tr("程序多开"), dockMenu);
+    dockMenu->addAction(addNewDock);
+    connect(addNewDock, &QAction::triggered, this, &MainWindow::sgRunNewInstance);
 #endif
 //   auto screens = QApplication::screens();
 //   for(auto* sc : screens)
@@ -461,6 +467,9 @@ void MainWindow::connectPlugs()
     qRegisterMetaType<QTalk::StNotificationParam>("QTalk::StNotificationParam");
     connect(_chatViewPanel, SIGNAL(sgShowNotify(const QTalk::StNotificationParam&)),
             _pSysTrayIcon, SLOT(onShowNotify(const QTalk::StNotificationParam&)));
+    //
+    connect(this, SIGNAL(sgShowUpdateClientLabel()), _titleBar, SLOT(onShowUpdateLabel()));
+    connect(_titleBar, SIGNAL(sgDoUpdateClient()), this, SLOT(onUpdateClient()));
     // 自动回复
     connect(_titleBar, SIGNAL(sgAutoReply(bool)), _chatViewPanel, SLOT(setAutoReplyFlag(bool)));
 
@@ -479,32 +488,36 @@ void MainWindow::connectPlugs()
             QTalkMsgManager::sendOnlineState(_login_t, _logout_t, _ipv4Address.toStdString());
         }
     });
-    connect(_pLogTimer, &QTimer::timeout, [this](){
-//        if(_pMessageManager)
-        {
-#if !defined(_STARTALK) && !defined(_QCHAT)
-            if(_loginDate != QDate::currentDate())
-            {
-                //
-                _loginDate = QDate::currentDate();
-                QtConcurrent::run(&QTalkMsgManager::reportLogin);
-            }
-#endif
-
-            if(_operators.empty())
-                return;
-
-            std::vector<QTalk::StActLog> operators(_operators);
-            QTalkMsgManager::sendOperatorStatistics(_ipv4Address.toStdString(), operators);
-            QMutexLocker locker(&_logMutex);
-            _operators.clear();
-        }
-    });
+    connect(_pLogTimer, &QTimer::timeout, this, &MainWindow::onHourTimer);
     //
 #ifdef TSCREEN
     connect(_pOAManager, SIGNAL(sgShowThrowingScreenWnd()), this, SLOT(startTScreen()));
     connect(_titleBar, SIGNAL(sgShowThrowingScreenWnd()), this, SLOT(startTScreen()));
 #endif
+}
+
+//
+void MainWindow::onHourTimer() {
+#if !defined(_STARTALK) && !defined(_QCHAT)
+    if(_loginDate != QDate::currentDate())
+    {
+        //
+        _loginDate = QDate::currentDate();
+        QtConcurrent::run(&QTalkMsgManager::reportLogin);
+    }
+
+#endif
+    // check update
+    if(AppSetting::instance().getNewVersion() <= PLAT.getClientNumVerison()) {
+        checkUpdater();
+    }
+
+    // report
+    if(_operators.empty())
+        return;
+    std::vector<QTalk::StActLog> operators(_operators);
+    QtConcurrent::run(&QTalkMsgManager::sendOperatorStatistics, _ipv4Address.toStdString(), operators);
+    _operators.clear();
 }
 
 #include <QLocalSocket>
@@ -797,6 +810,9 @@ void MainWindow::onCurFunChanged(int index)
 void MainWindow::onAppActive()
 {
     emit sgResetOperator();
+#ifdef Q_OS_MAC
+    MacApp::resetWindow(this);
+#endif
 
     if(_initUi)
     {
@@ -958,17 +974,11 @@ void MainWindow::adjustWndRect() {
     if(!deskRect.contains(thisGeo, true))
     {
 
-        if(thisGeo.width() > deskRect.width())
-        {
-            thisGeo.setWidth(deskRect.width() - 100);
-        }
-        if(thisGeo.height() > deskRect.height())
-        {
-            thisGeo.setHeight(deskRect.height() - 100);
-        }
-        thisGeo.setX(deskRect.x());
-        thisGeo.setY(deskRect.y());
-        setGeometry(thisGeo);
+        auto wndWidth = deskRect.height();
+        auto wndHeight = (int)(deskRect.height() * 0.75);
+        auto wndX = (deskRect.width() - wndWidth) / 2  + deskRect.x();
+        auto wndY = (deskRect.height() - wndHeight) / 2 + deskRect.y();
+        setGeometry(wndX, wndY, wndWidth, wndHeight);
     }
 }
 
@@ -1034,7 +1044,6 @@ QWidget * MainWindow::getActiveWnd() {
     return wakeUpWgt;
 }
 
-#include <QPointer>
 void MainWindow::wakeUpWindow()
 {
     QWidget* wakeUpWgt = getActiveWnd();
@@ -1074,7 +1083,6 @@ void MainWindow::addOperatorLog(const QString &desc)
     QTalk::StActLog log;
     log.desc = desc.toStdString();
     log.operatorTime = QDateTime::currentMSecsSinceEpoch();
-    QMutexLocker locker(&_logMutex);
     _operators.push_back(log);
 }
 
@@ -1122,9 +1130,10 @@ void MainWindow::onUserSendMessage()
 }
 
 void MainWindow::checkUpdater() {
+#ifndef QT_DEBUG
     auto version = GlobalManager::instance()->_updater_version;
     QtConcurrent::run(&QTalkMsgManager::checkUpdater, version);
-
+#endif
 }
 
 //
@@ -1158,6 +1167,9 @@ void MainWindow::onCheckUpdater(bool hasUpdate,  bool force) {
     QFileInfo exec_info(updaterPath);
 
     if(hasUpdate) {
+        static bool hasTip = false;
+        if(hasTip) return;
+        hasTip = true;
         if(exec_info.exists() && exec_info.isFile())
         {
             int btn = QtMessageBox::EM_BUTTON_YES;
@@ -1165,6 +1177,8 @@ void MainWindow::onCheckUpdater(bool hasUpdate,  bool force) {
 
             int _ret = QtMessageBox::question(this, tr("警告"),
                     tr("主程序有更新，安装包已经准备完毕，是否立即打开更新？"), btn);
+            hasTip = false;
+            //
             if(_ret == QtMessageBox::EM_BUTTON_YES)
             {
                 QtConcurrent::run([this, updaterPath](){
@@ -1180,6 +1194,11 @@ void MainWindow::onCheckUpdater(bool hasUpdate,  bool force) {
                     emit systemQuitSignal();
                 });
             }
+            else {
+#ifndef Q_OS_LINUX
+                emit sgShowUpdateClientLabel();
+#endif
+            }
         }
     }
     else if (exec_info.exists()) {
@@ -1188,8 +1207,40 @@ void MainWindow::onCheckUpdater(bool hasUpdate,  bool force) {
 #endif
 }
 
+void MainWindow::onUpdateClient() {
+    int _ret = QtMessageBox::question(this, tr("警告"),
+                                      tr("立即打开客户端更新？"));
+    if(_ret == QtMessageBox::EM_BUTTON_YES)
+    {
+#ifdef Q_OS_LINUX
+    return;
+#else
+        std::ostringstream src;
+        src << PLAT.getAppdataRoamingPath()
+            << "/updater/SetUp."
+#if defined(Q_OS_WIN)
+            << "exe";
+#elif defined(Q_OS_MAC)
+            << "dmg";
+#endif
 
-#ifdef _MACOS
+        QString updaterPath = src.str().data();
+        QtConcurrent::run([this, updaterPath](){
+#if defined(_WINDOWS)
+            QProcess::startDetached(updaterPath, QStringList());
+#elif defined(_MACOS)
+            QStringList params;
+            params << updaterPath;
+            QProcess::execute("open", params);
+#endif
+            emit systemQuitSignal();
+        });
+#endif
+    }
+}
+
+
+#ifdef Q_OS_MAC
 void MainWindow::onShowMinWnd() {
     MacApp::showMinWnd(this);
 }
@@ -1198,10 +1249,19 @@ void MainWindow::onShowMinWnd() {
 #endif
 
 void MainWindow::changeEvent(QEvent *event) {
-	if (event->type() == QEvent::LanguageChange)
-	{
 
+	switch (event->type()) {
+        case QEvent::WindowStateChange :
+        {
+            auto sts = this->windowState();
+            if (sts == Qt::WindowNoState) {
+            }
+            break;
+        }
+        default:
+            break;
 	}
+
 	UShadowDialog::changeEvent(event);
 }
 

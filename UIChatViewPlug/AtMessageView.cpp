@@ -10,6 +10,7 @@
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
+#include <set>
 #include "InputWgt.h"
 #include "../CustomUi/HeadPhotoLab.h"
 #include "../Platform/Platform.h"

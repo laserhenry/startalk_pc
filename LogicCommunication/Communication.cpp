@@ -750,7 +750,7 @@ void Communication::dealBindMsg() {
 
     std::string path = PLAT.getAppdataRoamingUserPath();
     path += "/qtalk.db";
-    _pFileHelper->creatDir(path);
+    FileHelper::creatDir(path);
 
     std::string errorMsg;
     if (!LogicManager::instance()->getDatabase()->OpenDB(path, errorMsg)) {
@@ -767,8 +767,6 @@ void Communication::dealBindMsg() {
     }
     //
     updateTimeStamp();
-    //
-    CommMsgManager::sendDataBaseOpen();
     //
     LogicManager::instance()->getLogicBase()->startAutoReconnectToServer();
 }
@@ -969,6 +967,10 @@ Communication::addHttpRequest(const QTalk::HttpRequest &req,
                             param.ut, param.un, param.speed, param.leftTime);
                     };
                     request.setProcessCallback(req.processCallbackKey, processCallback);
+                }
+                // speed
+                if(req.speed > 0) {
+                    request.setDownloadSpeed(req.speed);
                 }
 
                 // start
@@ -1304,7 +1306,7 @@ void Communication::getQchatTokenByQVT(const std::string &qvt,std::map<std::stri
 //    return userMap;
 }
 
-void Communication::getNewLoginToken(const std::string u, const std::string p,std::map<std::string,std::string> &map) {
+void Communication::getNewLoginToken(const std::string& u, const std::string& p,std::map<std::string,std::string> &map) {
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/nck/qtlogin.qunar";
@@ -1365,7 +1367,7 @@ void Communication::getGroupCardInfo(std::shared_ptr<QTalk::Entity::ImGroupInfo>
 
             if (!group->HeaderSrc.empty()) {
                 std::string localHead = QTalk::GetHeadPathByUrl(group->HeaderSrc);
-                if (!_pFileHelper->fileExist(localHead)) {
+                if (!FileHelper::fileExist(localHead)) {
                     _pFileHelper->downloadFile(group->HeaderSrc, localHead, false);
                 }
             }
@@ -1681,77 +1683,74 @@ void Communication::sendUserOnlineState(const QInt64 &loginTime, const QInt64 &l
  * @param reportTime
  */
 void Communication::sendOperatorStatistics(const std::string &ip, const std::vector<QTalk::StActLog> &operators) {
-    std::thread([this, operators, ip]() {
-#ifdef _MACOS
-        pthread_setname_np("communication sendOperatorStatistics thread");
-#endif
-        std::string uploadLog = NavigationManager::instance().getUploadLog();
-        std::vector<QTalk::StActLog> logs(operators);
-        do {
-            cJSON *obj = cJSON_CreateObject();
-            // user
-            cJSON *user = cJSON_CreateObject();
-            cJSON_AddStringToObject(user, "uid", PLAT.getSelfUserId().data());
-            cJSON_AddStringToObject(user, "domain", PLAT.getSelfDomain().data());
-            cJSON_AddStringToObject(user, "nav", PLAT.getLoginNav().data());
-            cJSON_addJsonObject(obj, "user", user);
-            // device
-            cJSON *device = cJSON_CreateObject();
+    std::string uploadLog = NavigationManager::instance().getUploadLog();
+    if(uploadLog.empty())
+        return;
+
+    std::vector<QTalk::StActLog> logs(operators);
+    do {
+        cJSON *obj = cJSON_CreateObject();
+        // user
+        cJSON *user = cJSON_CreateObject();
+        cJSON_AddStringToObject(user, "uid", PLAT.getSelfUserId().data());
+        cJSON_AddStringToObject(user, "domain", PLAT.getSelfDomain().data());
+        cJSON_AddStringToObject(user, "nav", PLAT.getLoginNav().data());
+        cJSON_addJsonObject(obj, "user", user);
+        // device
+        cJSON *device = cJSON_CreateObject();
 #if defined(_STARTALK)
-            cJSON_AddStringToObject(device, "plat", "starTalk");
+        cJSON_AddStringToObject(device, "plat", "starTalk");
 #else
-            cJSON_AddStringToObject(device, "plat", "qtalk");
+        cJSON_AddStringToObject(device, "plat", "qtalk");
 #endif
-            cJSON_AddStringToObject(device, "os", PLAT.getPlatformStr().data());
-            cJSON_AddNumberToObject(device, "versionCode", PLAT.getClientNumVerison());
-            cJSON_AddStringToObject(device, "versionName", PLAT.getGlobalVersion().data());
+        cJSON_AddStringToObject(device, "os", PLAT.getPlatformStr().data());
+        cJSON_AddNumberToObject(device, "versionCode", PLAT.getClientNumVerison());
+        cJSON_AddStringToObject(device, "versionName", PLAT.getGlobalVersion().data());
 
-            cJSON_AddStringToObject(device, "osModel", PLAT.getOSInfo().data());
-            cJSON_AddStringToObject(device, "osBrand", PLAT.getOSProductType().data());
-            cJSON_AddStringToObject(device, "osVersion", PLAT.getOSVersion().data());
-            cJSON_addJsonObject(obj, "device", device);
-            cJSON *infos = cJSON_CreateArray();
+        cJSON_AddStringToObject(device, "osModel", PLAT.getOSInfo().data());
+        cJSON_AddStringToObject(device, "osBrand", PLAT.getOSProductType().data());
+        cJSON_AddStringToObject(device, "osVersion", PLAT.getOSVersion().data());
+        cJSON_addJsonObject(obj, "device", device);
+        cJSON *infos = cJSON_CreateArray();
 
-            int i = 0;
-            while (i++ <= 100 && !logs.empty()) {
-                const auto &log = logs.back();
-                cJSON *info = cJSON_CreateObject();
-                cJSON_AddNumberToObject(info, "costTime", 0);
-                cJSON_AddStringToObject(info, "describtion", log.desc.data());
-                cJSON_AddBoolToObject(info, "isMainThread", true);
-                cJSON_AddStringToObject(info, "reportTime", std::to_string(log.operatorTime).data());
-                cJSON_AddStringToObject(info, "sql", "[]");
-                cJSON_AddStringToObject(info, "subType", "click");
-                cJSON_AddNumberToObject(info, "threadId", 1);
-                cJSON_AddStringToObject(info, "threadName", "main");
-                cJSON_AddStringToObject(info, "type", "ACT");
+        int i = 0;
+        while (i++ <= 100 && !logs.empty()) {
+            const auto &log = logs.back();
+            cJSON *info = cJSON_CreateObject();
+            cJSON_AddNumberToObject(info, "costTime", 0);
+            cJSON_AddStringToObject(info, "describtion", log.desc.data());
+            cJSON_AddBoolToObject(info, "isMainThread", true);
+            cJSON_AddStringToObject(info, "reportTime", std::to_string(log.operatorTime).data());
+            cJSON_AddStringToObject(info, "sql", "[]");
+            cJSON_AddStringToObject(info, "subType", "click");
+            cJSON_AddNumberToObject(info, "threadId", 1);
+            cJSON_AddStringToObject(info, "threadName", "main");
+            cJSON_AddStringToObject(info, "type", "ACT");
 
-                logs.pop_back();
+            logs.pop_back();
 
-                cJSON_AddItemToArray(infos, info);
+            cJSON_AddItemToArray(infos, info);
+        }
+        cJSON_addJsonObject(obj, "infos", infos);
+
+        std::string postData = QTalk::JSON::cJSON_to_string(obj);
+        cJSON_Delete(obj);
+
+        auto callback = [](int code, std::string responsData) {
+
+            if (code == 200) {
+                debug_log("sendOperatorStatistics success {0}", responsData);
+            } else {
+                error_log("sendOperatorStatistics error {0}", responsData);
             }
-            cJSON_addJsonObject(obj, "infos", infos);
+        };
 
-            std::string postData = QTalk::JSON::cJSON_to_string(obj);
-            cJSON_Delete(obj);
+        HttpRequest req(uploadLog, RequestMethod::POST);
+        req.header["Content-Type"] = "application/json;";
+        req.body = postData;
+        addHttpRequest(req, callback);
 
-            auto callback = [](int code, std::string responsData) {
-
-                if (code == 200) {
-                    debug_log("sendOperatorStatistics success {0}", responsData);
-                } else {
-                    error_log("sendOperatorStatistics error {0}", responsData);
-                }
-            };
-
-            HttpRequest req(uploadLog, RequestMethod::POST);
-            req.header["Content-Type"] = "application/json;";
-            req.body = postData;
-            addHttpRequest(req, callback);
-
-        } while (!logs.empty());
-
-    }).detach();
+    } while (!logs.empty());
 }
 
 /**
@@ -1901,7 +1900,7 @@ void Communication::serverCloseSession(const std::string& username, const std::s
 
 void Communication::getSeatList(const QTalk::Entity::UID& uid) {
     if(_pHotLinesConfig){
-        _pHotLinesConfig->getTransferSeatsList(uid);
+//        _pHotLinesConfig->getTransferSeatsList(uid);
     }
 }
 
@@ -1935,7 +1934,7 @@ void Communication::onUserJoinGroup(const std::string &groupId, const std::strin
     std::shared_ptr<QTalk::StGroupMember> member(new QTalk::StGroupMember);
     member->groupId = groupId;
     //
-    std::string jid = memberId;
+    const std::string& jid = memberId;
     // 自己被拉入群 拉取群资料
     if (jid == PLAT.getSelfXmppId()) {
         MapGroupCard mapGroups;

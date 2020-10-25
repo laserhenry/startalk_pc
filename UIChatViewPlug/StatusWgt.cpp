@@ -16,14 +16,6 @@
 #define DEM_BTN_ICON_LEN  30
 
 extern ChatViewMainPanel *g_pMainPanel;
-StatusLabel::StatusLabel(QWidget* parent)
-	: QLabel(parent),
-	_sts(EM_STS_INVALID)
-{
-
-}
-
-StatusLabel::~StatusLabel() = default;
 
 /**
  *

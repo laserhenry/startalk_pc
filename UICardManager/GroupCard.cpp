@@ -147,7 +147,7 @@ void GroupCard::initUi()
     bodyLay->addWidget(new Line, 5, 0, 1, 4);
     // row 6
     QLabel *memberLabel = new QLabel(tr("群成员"));
-    _pGroupMemberLabel = new QLabel;
+    _pGroupMemberLabel = new QLabel(this);
     LinkButton* showMemberBtn = new LinkButton(tr("查看"));
     bodyLay->addWidget(memberLabel, 6, 0);
     bodyLay->addWidget(_pGroupMemberLabel, 6, 1);

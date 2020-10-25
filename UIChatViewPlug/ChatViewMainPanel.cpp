@@ -79,12 +79,12 @@ ChatViewMainPanel::ChatViewMainPanel(QWidget *parent) :
         QFrame(parent),
         _strSelfId(""),
         _mapItems(200, deleteViewItem)
-    {
-
-    _netManager = new QNetworkAccessManager(this);
-
+{
     g_pMainPanel = this;
     setObjectName("ChatViewMainPanel");
+    _netManager = new QNetworkAccessManager(this);
+    _downloadImageThread.start();
+
     _pCodeShowWnd = new CodeShowWnd(this);
     _pSendCodeWnd = new SendCodeWnd(this);
 //    _pVideoPlayWnd = new VideoPlayWnd(this);
@@ -183,6 +183,9 @@ ChatViewMainPanel::~ChatViewMainPanel() {
         delete msgPrompt;
         msgPrompt = nullptr;
     }
+
+    _downloadImageThread.quit();
+    _downloadImageThread.wait(2000);
 }
 
 /**
@@ -422,7 +425,7 @@ void ChatViewMainPanel::onRecvMessage(R_Message &e, bool isCarbon) {
         }
 
         if(!message.AutoReply && message.ChatType == QTalk::Enum::TwoPersonChat && from.basename() != getSelfUserId())
-            sendAutoPeplyMessage(userId, message.MsgId);
+            sendAutoPeplyMessage(uid, message.MsgId);
 
         if(!_mapItems.contains(uid))
         {
@@ -651,7 +654,6 @@ void ChatViewMainPanel::showUserCard(const QString &userId) {
  * 
  */
 void ChatViewMainPanel::getHistoryMsg(const QInt64 &t, const QUInt8 &chatType, const QTalk::Entity::UID &uid) {
-
     //
     if(PLAT.isMainThread()) {
         //
@@ -665,12 +667,12 @@ void ChatViewMainPanel::getHistoryMsg(const QInt64 &t, const QUInt8 &chatType, c
         return;
     }
 
-    static QString staticReqText;
-    QString reqText = QString("%1_%2").arg(uid.toQString()).arg(t);
-    if(staticReqText == reqText)
-        return;
-    else
-        staticReqText = reqText;
+//    static QString staticReqText;
+//    QString reqText = QString("%1_%2").arg(uid.toQString()).arg(t);
+//    if(staticReqText == reqText)
+//        return;
+//    else
+//        staticReqText = reqText;
 
     if(!_mapItems.contains(uid))
         return;
@@ -733,20 +735,20 @@ void ChatViewMainPanel::getHistoryMsg(const QInt64 &t, const QUInt8 &chatType, c
         if(!it.HeadSrc.empty())
             _mapHeadPath[uid.qReadJid()] = QString::fromStdString(it.HeadSrc);
 
-        switch (it.Type) {
-            case -1: {
-                cJSON *extend = cJSON_Parse(it.ExtendedInfo.c_str());
-                //                msg.messageType = EM_SHOWTYPE_REVOKE;
-                if (cJSON_HasObjectItem(extend, "fromId")) {
-                    char *fromId = cJSON_GetObjectItem(extend, "fromId")->valuestring;
-                    it.XmppId = fromId;
-                }
-                cJSON_Delete(extend);
-                break;
-            }
-            default:
-                break;
-        }
+        //switch (it.Type) {
+        //    case -1: {
+        //        cJSON *extend = cJSON_Parse(it.ExtendedInfo.c_str());
+        //        //                msg.messageType = EM_SHOWTYPE_REVOKE;
+        //        if (cJSON_HasObjectItem(extend, "fromId")) {
+        //            char *fromId = cJSON_GetObjectItem(extend, "fromId")->valuestring;
+        //            it.XmppId = fromId;
+        //        }
+        //        cJSON_Delete(extend);
+        //        break;
+        //    }
+        //    default:
+        //        break;
+        //}
 
         if(it.ChatType == QTalk::Enum::GroupChat /*&& it.UserName.empty()*/)
         {
@@ -1959,7 +1961,7 @@ void ChatViewMainPanel::setAutoReplyFlag(bool flag)
     _autoReply = flag;
 }
 
-void ChatViewMainPanel::sendAutoPeplyMessage(const std::string& receiver, const std::string& messageId) {
+void ChatViewMainPanel::sendAutoPeplyMessage(const QTalk::Entity::UID &uid, const std::string& messageId) {
 
     bool atuoReplyFalg = AppSetting::instance().getAutoReplyEnable();
     if(!atuoReplyFalg)
@@ -1982,19 +1984,20 @@ void ChatViewMainPanel::sendAutoPeplyMessage(const std::string& receiver, const 
         QTalk::Entity::ImMessageInfo message;
         message.ChatType = QTalk::Enum::TwoPersonChat;
         message.MsgId = msgId;
-        message.To = receiver;
-        message.RealJid = receiver;
+        message.To = uid.usrId();
+        message.RealJid = uid.usrId();
         message.From = getSelfUserId();
         message.LastUpdateTime = send_time;
+        message.XmppId = uid.usrId();
         message.Type = QTalk::Entity::MessageTypeText;
         message.Content = QString("[自动回复]: %1").arg(autoReplyMessage.data()).toStdString();
         message.UserName = PLAT.getSelfName();
-        message.AutoReply = false;
+        message.AutoReply = true;
         message.Direction = QTalk::Entity::MessageDirectionSent;
 
         S_Message e;
         e.message = message;
-        e.userId = receiver;
+        e.userId = uid.usrId();
         e.time = send_time;
         e.chatType = QTalk::Enum::TwoPersonChat;
 
@@ -2003,16 +2006,6 @@ void ChatViewMainPanel::sendAutoPeplyMessage(const std::string& receiver, const 
 //        UID uid(receiver);
 //        if(_mapSession.contains(uid))
 //            _pViewItem->showMessage(message, false);
-    }
-}
-
-void ChatViewMainPanel::setSeatList(const QTalk::Entity::UID& uid,
-                                    const std::vector<QTalk::Entity::ImTransfer>& transfers) {
-    if(!_mapItems.contains(uid))
-        return;
-    auto* pViewItem = _mapItems.get(uid);
-    if(pViewItem) {
-        emit _pViewItem->sgShowSeats(transfers);
     }
 }
 
@@ -2992,7 +2985,7 @@ void ChatViewMainPanel::clapSomebody(const QString& groupId, const QString& user
             userName = QTalk::getUserNameNoMask(userInfo);
         else
             userName = userId.toStdString();
-        message.Content = QString("%1 拍了拍 \"%2\"").arg(message.UserName.data()).arg(userName.data()).toStdString();
+        message.Content = tr("%1 拍了拍 \"%2\"").arg(message.UserName.data()).arg(userName.data()).toStdString();
 
         // 发送消息
         e.message = message;
@@ -3050,6 +3043,10 @@ void ChatViewMainPanel::downloadFileWithProcess(const QString &url, const QStrin
     }
     QNetworkRequest req(nUrl);
     req.setRawHeader("keep-alive", "true");
+    if(_netManager->networkAccessible() == QNetworkAccessManager::NotAccessible){
+        qInfo() << "net work NotAccessible";
+        _netManager->setNetworkAccessible(QNetworkAccessManager::Accessible);
+    }
     QNetworkReply* reply = _netManager->get(req);
     reply->ignoreSslErrors();
     qint64 *t = new qint64 ;
@@ -3136,10 +3133,16 @@ void ChatViewMainPanel::dragEnterEvent(QDragEnterEvent *e) {
     if(!_pViewItem) {
         return;
     }
-    e->setDropAction(Qt::CopyAction);
-    e->acceptProposedAction();
-    auto pic = this->grab();
-    showDropWnd(pic, _pViewItem->_name);
+    if( e->mimeData()->hasUrls())
+    {
+        e->setDropAction(Qt::CopyAction);
+        e->acceptProposedAction();
+        auto pic = this->grab();
+        showDropWnd(pic, _pViewItem->_name);
+    }
+    else {
+        e->ignore();
+    }
 }
 
 void ChatViewMainPanel::dragMoveEvent(QDragMoveEvent *e) {
@@ -3149,7 +3152,6 @@ void ChatViewMainPanel::dragMoveEvent(QDragMoveEvent *e) {
 void ChatViewMainPanel::dropEvent(QDropEvent *e) {
     if(_pViewItem)
     {
-
         _pViewItem->_pInputWgt->dealMimeData(e->mimeData());
         e->acceptProposedAction();
         g_pMainPanel->cancelDrop();
@@ -3159,4 +3161,5 @@ void ChatViewMainPanel::dropEvent(QDropEvent *e) {
 
 void ChatViewMainPanel::dragLeaveEvent(QDragLeaveEvent *e) {
     cancelDrop();
+    e->accept();
 }

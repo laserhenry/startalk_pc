@@ -120,7 +120,6 @@ private:
     QVBoxLayout * _mainLayout;
     QStackedWidget * _stackWdt;
     SessionFrm * _pSessionFrm;
-    ContactFrm * _contactFrm;
 	TcpDisconnect*    _pTcpDisconnect;
 //    NavigationMsgManager * _messageManager{};
     NavigationMsgListener * _messageListener{};

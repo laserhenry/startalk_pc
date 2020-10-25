@@ -7,6 +7,8 @@
 
 #include <functional>
 #include <thread>
+#include <mutex>
+#include <memory>
 //#include "ThreadHelper.h"
 #ifdef _WINDOWS
 #include <windows.h>

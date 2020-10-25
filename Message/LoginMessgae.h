@@ -5,7 +5,7 @@
 #include <map>
 #include <utility>
 #include <vector>
-#include "../include/ThreadPool.h"
+#include <memory>
 #include "../EventBus/Event.hpp"
 #include "../entity/IM_Session.h"
 
@@ -56,8 +56,7 @@ private:
     std::string strSessionId;
 };
 
-//数据库打开成功消息
-class DataBaseOpenMessage : public Event {
+class SynSeverDataEvt : public Event {
 
 };
 
