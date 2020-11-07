@@ -197,7 +197,7 @@ void ChatViewItem::initUi() {
   */
 QString ChatViewItem::conversionId() {
     if (_strConversionId.isEmpty()) {
-        _strConversionId = QString::fromStdString(utils::getMessageId());
+        _strConversionId = QString::fromStdString(QTalk::utils::getMessageId().data());
     }
     return _strConversionId;
 }

@@ -34,7 +34,6 @@ void TipMessageItem::openURL(QString url) {
     MapCookie cookies;
     cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
     WebService::loadUrl(QUrl(url), false, cookies);
-
 }
 
 void TipMessageItem::setText(const QString &text)

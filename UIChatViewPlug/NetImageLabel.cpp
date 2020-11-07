@@ -10,6 +10,7 @@
 #include "ChatViewMainPanel.h"
 #include "../UICom/qimage/qimage.h"
 #include "../UICom/StyleDefine.h"
+#include <QPainterPath>
 
 extern ChatViewMainPanel *g_pMainPanel;
 NetImageLabel::NetImageLabel(QString link, QWidget* parent)

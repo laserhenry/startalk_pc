@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QPainter>
 #include <QFile>
+#include <QPainterPath>
 #include <QFileInfo>
 #include "../CustomUi/HeadPhotoLab.h"
 #include "../UICom/qimage/qimage.h"

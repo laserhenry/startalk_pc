@@ -15,8 +15,6 @@ class GroupManager {
 public:
     explicit GroupManager(Communication *pComm);
 
-    ~GroupManager();
-
 public:
     //
     bool getUserGroupInfo(MapGroupCard &groups);

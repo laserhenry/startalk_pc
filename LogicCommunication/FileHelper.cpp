@@ -5,7 +5,7 @@
 #include <functional>
 #include "../Platform/NavigationManager.h"
 #include "../Platform/Platform.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 #include "Communication.h"
 #include "../QtUtil/Utils/Log.h"
 #include "../include/EncodeHelper.h"
@@ -351,8 +351,7 @@ void FileHelper::getNetFileInfo(const std::string &filePath,
 
     if (PLAT.isMainThread()) {
 
-        std::thread t(func);
-        t.detach();
+        std::async(std::launch::async, func);
         return;
     }
 
@@ -394,20 +393,16 @@ void FileHelper::uploadLogFile(const std::string &filePath,
             auto callback = [strUrl, &strNetUrl](int code, const std::string &responseData) {
 
                 if (code == 200) {
-                    cJSON *data = cJSON_Parse(responseData.c_str());
+                    nJson data = Json::parse(responseData);
 
                     if (data == nullptr) {
                         error_log("json paring error");
                         return;
                     }
 
-                    if (cJSON_GetObjectItem(data, "ret")->valueint) {
-                        char *netUrl = cJSON_GetObjectItem(data, "data")->valuestring;
-                        if (netUrl && strlen(netUrl) > 0) {
-                            strNetUrl = netUrl;
-                        }
+                    if (Json::get<bool>(data, "ret")) {
+                        strNetUrl = Json::get<std::string>(data, "data");
                     }
-                    cJSON_Delete(data);
                 }
             };
 
@@ -425,8 +420,7 @@ void FileHelper::uploadLogFile(const std::string &filePath,
 
     if (PLAT.isMainThread()) {
 
-        std::thread t(func);
-        t.detach();
+        std::async(std::launch::async, func);
         return;
     }
 
@@ -475,8 +469,7 @@ void FileHelper::downloadFile(const std::string &uri, const std::string &localPa
     };
 
     if (PLAT.isMainThread()) {
-        std::thread t(func);
-        t.detach();
+        std::async(std::launch::async, func);
         return;
     }
 
@@ -663,20 +656,16 @@ string FileHelper::checkImgFileKey(const std::string &key, QInt64 fileSize, cons
     std::string strUrl = url.str();
     auto callback = [strUrl, &strNetUrl](int code, const std::string &responseData) {
         if (code == 200) {
-            cJSON *data = cJSON_Parse(responseData.c_str());
+            nJson data = Json::parse(responseData);
             if (data == nullptr) {
                 error_log("json paring error");
                 return;
             }
 
-            if (!QTalk::JSON::cJSON_SafeGetBoolValue(data, "ret", false)) {
-                const char *netUrl = QTalk::JSON::cJSON_SafeGetStringValue(data, "data", "");
-                if (netUrl && strlen(netUrl) > 0) {
-                    strNetUrl = netUrl;
-                }
+            if (!Json::get<int>(data, "ret", false)) {
+                strNetUrl = Json::get<std::string >(data, "data");
             }
-            cJSON_Delete(data);
-        } else {
+            } else {
             debug_log("请求失败  url: {0}", strUrl);
         }
     };
@@ -710,29 +699,25 @@ std::string FileHelper::checkFileKey(const std::string &key, QInt64 fileSize, co
 
     std::string strUrl = url.str();
 
-    string strNetUrl = "";
+    string strNetUrl;
     auto callback = [strUrl, &strNetUrl](int code, const std::string &responseData) {
 
         if (code == 200) {
-            cJSON *data = cJSON_Parse(responseData.c_str());
+            nJson data = Json::parse(responseData);
 
             if (data == nullptr) {
                 error_log("json paring error");
                 return;
             }
 
-            if (!cJSON_GetObjectItem(data, "ret")->valueint) {
-                char *netUrl = cJSON_GetObjectItem(data, "data")->valuestring;
-                if (netUrl && strlen(netUrl) > 0) {
-                    strNetUrl = netUrl;
-                    string fileName = QTalk::GetFileNameByUrl(strNetUrl);
-                    strNetUrl += "&file=file/" + fileName;
-                    strNetUrl += "&filename=file/" + fileName;
-                    cJSON_Delete(data);
-                    return;
-                }
+            if (!Json::get<int>(data, "ret")) {
+                strNetUrl = Json::get<std::string>(data, "data");
+                string fileName = QTalk::GetFileNameByUrl(strNetUrl);
+                strNetUrl += "&file=file/" + fileName;
+                strNetUrl += "&filename=file/" + fileName;
+                return;
+
             }
-            cJSON_Delete(data);
         } else {
             debug_log("请求失败  url: {0}", strUrl);
         }
@@ -775,21 +760,16 @@ FileHelper::uploadImg(const std::string &filePath, const std::string &key, QInt6
     auto callback = [ strUrl, &strNetUrl](int code, const std::string &responseData) {
         debug_log("请求结果: data: {0}", responseData);
         if (code == 200) {
-            cJSON *data = cJSON_Parse(responseData.c_str());
+            nJson data = Json::parse(responseData);
 
             if (data == nullptr) {
                 error_log("json paring error");
                 return;
             }
 
-            if (cJSON_GetObjectItem(data, "ret")->valueint) {
-                char *netUrl = cJSON_GetObjectItem(data, "data")->valuestring;
-                if (netUrl && strlen(netUrl) > 0) {
-                    strNetUrl = netUrl;
-                    return;
-                }
+            if (Json::get<int>(data, "ret")) {
+                strNetUrl = Json::get<std::string>(data, "data");
             }
-            cJSON_Delete(data);
         } else {
             debug_log("请求失败  url: {0}", strUrl);
         }
@@ -833,21 +813,18 @@ FileHelper::uploadFile(const std::string &filePath, const std::string &key,
     auto callback = [strUrl, &strNetUrl](int code, const std::string &responseData) {
         debug_log("请求结果: data: {0}", responseData);
         if (code == 200) {
-            cJSON *data = cJSON_Parse(responseData.c_str());
+            nJson data = Json::parse(responseData);
 
             if (data == nullptr) {
                 error_log("json paring error");
                 return;
             }
 
-            if (cJSON_GetObjectItem(data, "ret")->valueint) {
-                char *netUrl = cJSON_GetObjectItem(data, "data")->valuestring;
-                if (netUrl && strlen(netUrl) > 0) {
-                    strNetUrl = netUrl;
-                }
+            if (Json::get<int>(data, "ret")) {
+                strNetUrl = Json::get<std::string>(data, "data");
             }
-            cJSON_Delete(data);
-        } else {
+        }
+        else {
             error_log("请求失败  url:{0}", strUrl);
         }
 
@@ -880,25 +857,24 @@ bool FileHelper::DownloadPubKey() {
         auto callback = [ strUrl, localPubKeyPath, rsaEncodeType, &pubKey](int code,
                                                                                 const std::string &responseData) {
             if (code == 200) {
-                cJSON *data = cJSON_Parse(responseData.c_str());
+                nJson data = Json::parse(responseData);
 
                 if (data == nullptr) {
                     error_log("json paring error");
                     return;
                 }
 
-                if (cJSON_GetObjectItem(data, "ret")->valueint) {
+                if (Json::get<int>(data, "ret")) {
 
-                    cJSON *keys = cJSON_GetObjectItem(data, "data");
+                    nJson keys= Json::get<nJson >(data, "data");
                     if (rsaEncodeType)
-                        pubKey = std::string(cJSON_GetObjectItem(keys, "pub_key_fullkey")->valuestring);
+                        pubKey = Json::get<std::string>(keys, "pub_key_fullkey");
                     else
-                        pubKey = std::string(cJSON_GetObjectItem(keys, "rsa_pub_key_fullkey")->valuestring);
+                        pubKey = Json::get<std::string>(keys, "rsa_pub_key_fullkey");
 
                 }
 
-                cJSON_Delete(data);
-            } else {
+                } else {
                 CommMsgManager::sendLoginErrMessage("公钥文件下载失败");
             }
         };

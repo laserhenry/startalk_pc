@@ -9,6 +9,7 @@
 #include <QMap>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QStyledItemDelegate>
 #include "../Platform/AppSetting.h"
 #include "MessageManager.h"
 
@@ -44,6 +45,14 @@ protected:
     {
 
     }
+};
+
+class ComboBoxDelegate : public QStyledItemDelegate {
+    Q_OBJECT
+public:
+protected:
+    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 };
 
 class SystemSettingWnd  : public UShadowDialog{

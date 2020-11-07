@@ -24,7 +24,7 @@ class ThreadPool {
 public:
 //    explicit ThreadPool(size_t threads = 1, const char *threadName = "QTalk Thread");
 
-    explicit ThreadPool(const char* name);
+    explicit ThreadPool(const std::string& name);
 
     template<class F, class... Args>
     auto enqueue(F &&f, Args &&... args)
@@ -44,12 +44,12 @@ private:
     std::atomic<bool> stop;
 };
 
-inline ThreadPool::ThreadPool(const char* name)
+inline ThreadPool::ThreadPool(const std::string& name)
     : stop(false) {
 
     workers.emplace_back([this, name] {
 #ifdef _MACOS
-        pthread_setname_np(name);
+        pthread_setname_np(name.data());
 #endif
         while(!this->stop) {
 

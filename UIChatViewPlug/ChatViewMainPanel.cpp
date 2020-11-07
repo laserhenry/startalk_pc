@@ -24,7 +24,7 @@
 #include "GroupMember.h"
 #include "GroupTopic.h"
 #include "../Emoticon/EmoticonMainWgt.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 #include "MessagePrompt.h"
 #include "../quazip/JlCompress.h"
 #include "../Platform/dbPlatForm.h"
@@ -45,6 +45,7 @@
 #include "ChatUtil.h"
 #include "MessageItems/FileSendReceiveMessItem.h"
 #include "MessageItems/VideoMessageItem.h"
+#include "../QtUtil/Utils/utils.h"
 
 #ifdef _MACOS
 #include "sound/PlayAudioSound.h"
@@ -315,20 +316,6 @@ void ChatViewMainPanel::onChatUserChanged(const StSessionInfo &info) {
                         QMutexLocker locker(&_mutex);
                         _mapHeadPath[QString::fromStdString(it->From)] = QString::fromStdString(msg.HeadSrc);
                     }
-
-//                    switch (it->Type) {
-//                        case -1: {
-//                            cJSON *extend = cJSON_Parse(it->ExtendedInfo.c_str());
-//                            if (cJSON_HasObjectItem(extend, "fromId")) {
-//                                char *fromId = cJSON_GetObjectItem(extend, "fromId")->valuestring;
-//                                msg.XmppId = fromId;
-//                            }
-//                            cJSON_Delete(extend);
-//                            break;
-//                        }
-//                        default:
-//                            break;
-//                    }
 
                     if(msg.ChatType == QTalk::Enum::GroupChat)
                     {
@@ -737,14 +724,13 @@ void ChatViewMainPanel::getHistoryMsg(const QInt64 &t, const QUInt8 &chatType, c
 
         //switch (it.Type) {
         //    case -1: {
-        //        cJSON *extend = cJSON_Parse(it.ExtendedInfo.c_str());
+        //        nJson extend= Json::parse(it.ExtendedInfo.c_str());
         //        //                msg.messageType = EM_SHOWTYPE_REVOKE;
-        //        if (cJSON_HasObjectItem(extend, "fromId")) {
+        //        if (extend.contains("fromId")) {
         //            char *fromId = cJSON_GetObjectItem(extend, "fromId")->valuestring;
         //            it.XmppId = fromId;
         //        }
-        //        cJSON_Delete(extend);
-        //        break;
+        //        //        break;
         //    }
         //    default:
         //        break;
@@ -1822,13 +1808,11 @@ void ChatViewMainPanel::sendShareMessage(const QString& id, int chatType, const 
     QString linkurl = QString("%1?jdata=%2").arg(NavigationManager::instance().getShareUrl().data())
             .arg(QUrl(shareUrl.toUtf8().toBase64()).toEncoded().data());
 
-    cJSON *obj = cJSON_CreateObject();
-    cJSON_AddStringToObject(obj, "title", title.toUtf8());
-    cJSON_AddStringToObject(obj, "desc", "");
-    cJSON_AddStringToObject(obj, "linkurl", linkurl.toUtf8());
-    std::string extenInfo = QTalk::JSON::cJSON_to_string(obj);
-    cJSON_Delete(obj);
-
+    nJson obj;
+    obj["title"] = title.toUtf8();
+    obj["desc"] = "";
+    obj["linkurl"] = linkurl.toUtf8();
+    std::string extenInfo = obj.dump();
     // 发送消息
     long long send_time =
             QDateTime::currentDateTime().toMSecsSinceEpoch() - PLAT.getServerDiffTime() * 1000;
@@ -2119,7 +2103,7 @@ void ChatViewMainPanel::resendMessage(MessageItemBase* item)
             }
             case QTalk::Entity::MessageTypeFile:
             {
-                cJSON *content = cJSON_Parse(message.extend_info.toUtf8());
+                nJson content= Json::parse(message.extend_info.toUtf8().data());
                 if (nullptr == content) {
                     item->onDisconnected();
                     error_log("{0} message resend failed reason: file not exists", message.msg_id.toStdString());
@@ -2127,9 +2111,7 @@ void ChatViewMainPanel::resendMessage(MessageItemBase* item)
                     break;
                 }
                 //
-                std::string filePath = QTalk::JSON::cJSON_SafeGetStringValue(content, "FilePath");
-                cJSON_Delete(content);
-
+                std::string filePath = Json::get<std::string >(content, "FilePath");
                 QFileInfo info(filePath.data());
                 if(info.exists() && info.isFile())
                 {
@@ -2380,22 +2362,21 @@ void ChatViewMainPanel::sendTextMessage(const QTalk::Entity::UID& uid,
         std::string backupInfo;
         if(!mapAt.empty())
         {
-            cJSON *objs = cJSON_CreateArray();
-            cJSON *obj = cJSON_CreateObject();
-            cJSON_AddNumberToObject(obj, "type", 10001);
-            cJSON *datas = cJSON_CreateArray();
+            nJson objs;
+            nJson obj;
+            obj["type"]=10001;
+            nJson datas ;
             auto it = mapAt.begin();
             for (; it != mapAt.end(); it++) {
-                cJSON *data = cJSON_CreateObject();
-                cJSON_AddStringToObject(data, "jid", it->first.c_str());
-                cJSON_AddStringToObject(data, "text", it->second.c_str());
-                cJSON_AddItemToArray(datas, data);
+                nJson data ;
+                data["jid"] = it->first.c_str();
+                data["text"] = it->second.c_str();
+                datas.push_back(data);
             }
-            cJSON_AddItemToObject(obj, "data", datas);
-            cJSON_AddItemToArray(objs, obj);
-            backupInfo = QTalk::JSON::cJSON_to_string(objs);
-            cJSON_Delete(objs);
-        }
+            obj["data"] = datas;
+            objs.push_back(obj);
+            backupInfo = objs.dump();
+            }
         //
         message.BackupInfo = backupInfo;
         //
@@ -2424,14 +2405,12 @@ ChatViewMainPanel::sendCodeMessage(const QTalk::Entity::UID& uid,
         const std::string& messageId) {
 
     if (g_pMainPanel) {
-        cJSON *obj = cJSON_CreateObject();
-        cJSON_AddStringToObject(obj, "CodeDecode", "");
-        cJSON_AddStringToObject(obj, "CodeType", codeLanguage.data());
-        cJSON_AddStringToObject(obj, "CodeStyle", codeType.data());
-        cJSON_AddStringToObject(obj, "Code", text.data());
-        std::string extenInfo = QTalk::JSON::cJSON_to_string(obj);
-        cJSON_Delete(obj);
-
+        nJson obj;
+        obj["CodeDecode"] =  "";
+        obj["CodeType"] = codeLanguage.data();
+        obj["CodeStyle"] = codeType.data();
+        obj["Code"] = text.data();
+        std::string extenInfo = obj.dump();
         // 发送消息
         long long send_time =
                 QDateTime::currentDateTime().toMSecsSinceEpoch() - PLAT.getServerDiffTime() * 1000;
@@ -2526,14 +2505,13 @@ void ChatViewMainPanel::sendFileMessage(const QTalk::Entity::UID& uid,
         }
 #endif // _WINDOWS
         {
-            cJSON *content = cJSON_CreateObject();
-            cJSON_AddStringToObject(content, "FileName", message.FileName.c_str());
-            cJSON_AddStringToObject(content, "FileSize", message.FileSize.c_str());
-            cJSON_AddStringToObject(content, "FILEMD5", message.FileMd5.c_str());
-            cJSON_AddStringToObject(content, "FilePath", filePath.toStdString().data());
-            message.ExtendedInfo = QTalk::JSON::cJSON_to_string(content);
-            cJSON_Delete(content);
-        }
+            nJson content;
+            content["FileName"] = message.FileName;
+            content["FileSize"] = message.FileSize;
+            content["FILEMD5"] = message.FileMd5;
+            content["FilePath"] = filePath.toStdString().data();
+            message.ExtendedInfo = content.dump();
+            }
         // 创建软链
         g_pMainPanel->makeFileLink(filePath, message.FileMd5.data());
         // 显示消息
@@ -2569,17 +2547,15 @@ void ChatViewMainPanel::sendFileMessage(const QTalk::Entity::UID& uid,
                 if(_pViewItem && _pViewItem->_uid == uid && _pViewItem->_pChatMainWgt)
                     emit _pViewItem->_pChatMainWgt->sgUploadFileSuccess(msgId.data(), url.data());
 
-                cJSON *content = cJSON_CreateObject();
-                cJSON_AddStringToObject(content, "FILEID", message.MsgId.c_str());
-                cJSON_AddStringToObject(content, "FileName", message.FileName.c_str());
-                cJSON_AddStringToObject(content, "FileSize", message.FileSize.c_str());
-                cJSON_AddStringToObject(content, "FILEMD5", message.FileMd5.c_str());
-                cJSON_AddStringToObject(content, "HttpUrl", url.c_str());
-                std::string strContent = QTalk::JSON::cJSON_to_string(content);
+                nJson content;
+                content["FILEID"] = message.MsgId;
+                content["FileName"] = message.FileName;
+                content["FileSize"] = message.FileSize;
+                content["FILEMD5"] = message.FileMd5;
+                content["HttpUrl"] = url;
+                std::string strContent = content.dump();
                 e.message.Content = strContent;
                 e.message.ExtendedInfo = strContent;
-                cJSON_Delete(content);
-
                 emit g_pMainPanel->sgUserSendMessage();
                 ChatMsgManager::sendMessage(e);
             }

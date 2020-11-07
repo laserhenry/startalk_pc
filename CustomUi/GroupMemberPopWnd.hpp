@@ -18,6 +18,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QHeaderView>
+#include <QPainterPath>
 #include "SearchEdit.hpp"
 #include "../include/Line.h"
 #include "customui_global.h"

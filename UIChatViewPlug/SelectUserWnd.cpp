@@ -9,6 +9,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QEvent>
+#include <QPainterPath>
 #include "../include/Line.h"
 #include "ChatViewMainPanel.h"
 #include "../Platform/Platform.h"

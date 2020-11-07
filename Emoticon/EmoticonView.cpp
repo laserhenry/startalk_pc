@@ -5,6 +5,7 @@
 #include "EmoticonView.h"
 #include <QFileInfo>
 #include <QPainter>
+#include <QPainterPath>
 #include "../UICom/qimage/qimage.h"
 #include "../UICom/StyleDefine.h"
 

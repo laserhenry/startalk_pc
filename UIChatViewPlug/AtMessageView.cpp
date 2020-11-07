@@ -11,6 +11,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <set>
+#include <QPainterPath>
 #include "InputWgt.h"
 #include "../CustomUi/HeadPhotoLab.h"
 #include "../Platform/Platform.h"

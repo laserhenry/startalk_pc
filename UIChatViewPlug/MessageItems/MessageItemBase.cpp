@@ -112,7 +112,9 @@ MessageItemBase::MessageItemBase(const StNetMessageResult &msgInfo, QWidget *par
 }
 
 MessageItemBase::~MessageItemBase() {
+#ifdef QT_DEBUG
     std::cout << "delete message item " << _msgInfo.msg_id.toStdString() << " -> " << _msgInfo.body.toStdString() << std::endl;
+#endif
 }
 
 bool MessageItemBase::eventFilter(QObject *o, QEvent *e)

@@ -175,46 +175,6 @@ QTalkApp::QTalkApp(int argc, char *argv[])
             enableAutoLogin = params["AUTO_LOGIN"] == "ON";
         if(params.contains("MSG"))
             loginMsg = params["MSG"];
-#ifndef QT_DEBUG
-#ifdef _STARTALK
-#if defined(_MACOS) || defined(_WINDOWS)
-        bool startByStarter = params.contains("START_BY_STARTER");
-        if(_pUiManager->_check_updater)
-        {
-            if(!startByStarter && _pUiManager->_updater_version > 0)
-            {
-#if defined(_MACOS)
-                QString updater_path = QString("/Applications/%1.app/Contents/MacOS/%1").arg(QApplication::applicationName());
-                error_log(updater_path.toStdString());
-                error_log(QApplication::applicationFilePath().toStdString());
-                if(QApplication::applicationFilePath() != updater_path)
-                {
-                    QProcess::startDetached(updater_path, QStringList());
-                    return;
-                }
-#else
-				auto path = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
-				path = QString("%1/%2/%2.lnk").arg(path).arg(qApp->applicationName());
-				QFileInfo linkFileInfo(path);
-				if (linkFileInfo.exists() && !linkFileInfo.symLinkTarget().isEmpty())
-				{
-					path = linkFileInfo.symLinkTarget();
-					if(QApplication::applicationFilePath() != path)
-                    {
-                        QProcess::startDetached(path, QStringList());
-					    return;
-                    }
-				}
-#endif
-            }
-        }
-        else
-        {
-            //
-        }
-#endif
-#endif
-#endif
     }
 
     _pMainWnd->InitLogin(enableAutoLogin, loginMsg);

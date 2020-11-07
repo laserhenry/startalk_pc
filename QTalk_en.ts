@@ -296,7 +296,7 @@
     <name>ChatViewMainPanel</name>
     <message>
         <source>群 %1 已被销毁</source>
-        <translation>Group %1 has been destroyed</translation>
+        <translation type="vanished">Group %1 has been destroyed</translation>
     </message>
     <message>
         <source>你已被移除群聊 %1</source>
@@ -388,7 +388,23 @@
     </message>
     <message>
         <source>您已退出/被移出群聊 %1</source>
-        <translation>You have quit / been moved out of group chat %1</translation>
+        <translation type="vanished">You have quit / been moved out of group chat %1</translation>
+    </message>
+    <message>
+        <source>群 &quot;%1&quot; 已被销毁</source>
+        <translation>The group &quot;%1&quot; has been destroyed</translation>
+    </message>
+    <message>
+        <source>您已退出/被移出群聊 &quot;%1&quot;</source>
+        <translation>You have exited / removed from group chat &quot;%1&quot;</translation>
+    </message>
+    <message>
+        <source>%1 拍了拍 &quot;%2&quot;</source>
+        <translation>&quot;%1&quot; tickled &quot;%2&quot;</translation>
+    </message>
+    <message>
+        <source>写入文件失败, 您可能没有权限写入该文件目录或者您的磁盘已满</source>
+        <translation>Write file error</translation>
     </message>
 </context>
 <context>
@@ -428,6 +444,13 @@
     </message>
 </context>
 <context>
+    <name>ComboBoxDelegate</name>
+    <message>
+        <source>%1( 中国 China 0123 )</source>
+        <translation>%1( 中国 China 0123 )</translation>
+    </message>
+</context>
+<context>
     <name>CommonTrdInfoItem</name>
     <message>
         <source>查看详情</source>
@@ -462,7 +485,7 @@ the current number:%1</translation>
     <name>DouTu</name>
     <message>
         <source>输入关键词搜索</source>
-        <translation>Enter keyword</translation>
+        <translation type="vanished">Enter keyword</translation>
     </message>
 </context>
 <context>
@@ -553,6 +576,17 @@ the current number:%1</translation>
     <message>
         <source>关于</source>
         <translation>About</translation>
+    </message>
+    <message>
+        <source>更新客户端</source>
+        <translation>Update client</translation>
+    </message>
+</context>
+<context>
+    <name>DropWnd</name>
+    <message>
+        <source>拖动到这里发送给 %1</source>
+        <translation>Drag here to send to %1</translation>
     </message>
 </context>
 <context>
@@ -823,15 +857,15 @@ the current number:%1</translation>
     </message>
     <message>
         <source>提醒</source>
-        <translation>Warning</translation>
+        <translation type="vanished">Warning</translation>
     </message>
     <message>
         <source>斗图神器已启动, 重启应用后生效</source>
-        <translation>restart it for the changes to take effect</translation>
+        <translation type="vanished">restart it for the changes to take effect</translation>
     </message>
     <message>
         <source>斗图神器已关闭, 重启应用后生效</source>
-        <translation>restart it for the changes to take effect</translation>
+        <translation type="vanished">restart it for the changes to take effect</translation>
     </message>
 </context>
 <context>
@@ -1220,6 +1254,10 @@ the current number:%1</translation>
         <source>主程序有更新，安装包已经准备完毕，是否立即打开更新？</source>
         <translation>The main program has an update. The installation package is ready. Do you want to open the update now?</translation>
     </message>
+    <message>
+        <source>立即打开客户端更新？</source>
+        <translation>update now?</translation>
+    </message>
 </context>
 <context>
     <name>MakeQRcode</name>
@@ -1490,29 +1528,6 @@ the current number:%1</translation>
     </message>
 </context>
 <context>
-    <name>NavigationBar</name>
-    <message>
-        <source>添加投屏</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>切换扩展屏</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>暂停投屏</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>结束投屏</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>继续投屏</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>NavigationItem</name>
     <message>
         <source>星标联系人</source>
@@ -1520,7 +1535,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>好友列表</source>
-        <translation>Friends list</translation>
+        <translation type="vanished">Friends list</translation>
     </message>
     <message>
         <source>群组列表</source>
@@ -1594,6 +1609,14 @@ the current number:%1</translation>
     <message>
         <source>已看完最后一张图片!</source>
         <translation>I&apos;ve seen the last picture!</translation>
+    </message>
+    <message>
+        <source>错误</source>
+        <translation>Error</translation>
+    </message>
+    <message>
+        <source>消息解析错误!</source>
+        <translation>error</translation>
     </message>
 </context>
 <context>
@@ -1816,7 +1839,7 @@ the current number:%1</translation>
     <name>QuickReplyWnd</name>
     <message>
         <source>快捷回复</source>
-        <translation>Quick reply</translation>
+        <translation type="vanished">Quick reply</translation>
     </message>
 </context>
 <context>
@@ -2056,15 +2079,15 @@ or ID</translation>
     <name>SendProductWnd</name>
     <message>
         <source>产品卡片JSON：</source>
-        <translation>Product Card JSON:</translation>
+        <translation type="vanished">Product Card JSON:</translation>
     </message>
     <message>
         <source>取消</source>
-        <translation>No</translation>
+        <translation type="vanished">No</translation>
     </message>
     <message>
         <source>确定</source>
-        <translation>Yes</translation>
+        <translation type="vanished">Yes</translation>
     </message>
 </context>
 <context>
@@ -2206,27 +2229,27 @@ or ID</translation>
     <name>SessionTransferWnd</name>
     <message>
         <source>会话转移</source>
-        <translation>Conversational transfer</translation>
+        <translation type="vanished">Conversational transfer</translation>
     </message>
     <message>
         <source>选择要转移的客服</source>
-        <translation>Choosing Customer Service to Transfer</translation>
+        <translation type="vanished">Choosing Customer Service to Transfer</translation>
     </message>
     <message>
         <source>请输入转移原因</source>
-        <translation>Please enter the reason for the transfer</translation>
+        <translation type="vanished">Please enter the reason for the transfer</translation>
     </message>
     <message>
         <source>确定</source>
-        <translation>Yes</translation>
+        <translation type="vanished">Yes</translation>
     </message>
     <message>
         <source>取消</source>
-        <translation>No</translation>
+        <translation type="vanished">No</translation>
     </message>
     <message>
         <source>请选择要转移的客服!</source>
-        <translation>Please choose the customer service to transfer!</translation>
+        <translation type="vanished">Please choose the customer service to transfer!</translation>
     </message>
 </context>
 <context>
@@ -2315,7 +2338,7 @@ or ID</translation>
     <name>StyleManager</name>
     <message>
         <source>方正兰亭黑简体</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -2346,7 +2369,7 @@ or ID</translation>
     </message>
     <message>
         <source>好友验证</source>
-        <translation>Friend verification</translation>
+        <translation type="vanished">Friend verification</translation>
     </message>
     <message>
         <source>皮肤设置</source>
@@ -2414,19 +2437,19 @@ or ID</translation>
     </message>
     <message>
         <source>切换会话时自动销毁旧会话</source>
-        <translation>Automatically destroy old sessions</translation>
+        <translation type="vanished">Automatically destroy old sessions</translation>
     </message>
     <message>
         <source>离开电脑</source>
-        <translation>Leaving the computer</translation>
+        <translation type="vanished">Leaving the computer</translation>
     </message>
     <message>
         <source>分钟 push消息到手机端，并自动回复</source>
-        <translation>Minute push message to mobile phone and automatic reply</translation>
+        <translation type="vanished">Minute push message to mobile phone and automatic reply</translation>
     </message>
     <message>
         <source>预设</source>
-        <translation>Preset</translation>
+        <translation type="vanished">Preset</translation>
     </message>
     <message>
         <source>不在办公室</source>
@@ -2434,11 +2457,11 @@ or ID</translation>
     </message>
     <message>
         <source>目前正忙</source>
-        <translation>Busy at the moment</translation>
+        <translation type="vanished">Busy at the moment</translation>
     </message>
     <message>
         <source>自定义</source>
-        <translation>Custom</translation>
+        <translation type="vanished">Custom</translation>
     </message>
     <message>
         <source>变更文件夹</source>
@@ -2474,23 +2497,23 @@ or ID</translation>
     </message>
     <message>
         <source>权限类型</source>
-        <translation>Permission type</translation>
+        <translation type="vanished">Permission type</translation>
     </message>
     <message>
         <source>全部接受</source>
-        <translation>All accepted</translation>
+        <translation type="vanished">All accepted</translation>
     </message>
     <message>
         <source>问题</source>
-        <translation>problem</translation>
+        <translation type="vanished">problem</translation>
     </message>
     <message>
         <source>答案</source>
-        <translation>Answer</translation>
+        <translation type="vanished">Answer</translation>
     </message>
     <message>
         <source>请输入问题</source>
-        <translation>Please enter questions</translation>
+        <translation type="vanished">Please enter questions</translation>
     </message>
     <message>
         <source>暗黑模式</source>
@@ -2534,7 +2557,7 @@ or ID</translation>
     </message>
     <message>
         <source>检查更新</source>
-        <translation>Check update</translation>
+        <translation type="vanished">Check update</translation>
     </message>
     <message>
         <source>便捷维护:</source>
@@ -2628,6 +2651,34 @@ or ID</translation>
         <source>英文</source>
         <translation type="vanished">English</translation>
     </message>
+    <message>
+        <source>启用自动回复</source>
+        <translation>Enable auto reply</translation>
+    </message>
+    <message>
+        <source>启用自动回复时间段</source>
+        <translation>Enable auto reply time period</translation>
+    </message>
+    <message>
+        <source>至</source>
+        <translation>to</translation>
+    </message>
+    <message>
+        <source> 时</source>
+        <translation>hour</translation>
+    </message>
+    <message>
+        <source>始终自动回复</source>
+        <translation>Always reply automatically</translation>
+    </message>
+    <message>
+        <source>离开电脑超</source>
+        <translation>Leave the computer</translation>
+    </message>
+    <message>
+        <source> 分钟</source>
+        <translation>minute</translation>
+    </message>
 </context>
 <context>
     <name>SystemTray</name>
@@ -2665,33 +2716,6 @@ or ID</translation>
     <message>
         <source>暂时没有未读消息</source>
         <translation>No unread messages for now</translation>
-    </message>
-</context>
-<context>
-    <name>TScreenPanel</name>
-    <message>
-        <source>Qunar 无线投屏</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>请输入投影画面中显示的6位投屏码</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>开始投屏</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>投屏启动中, 请稍后重试!</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>企业码失效</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>网络异常</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2758,6 +2782,10 @@ or ID</translation>
         <source>1:1显示</source>
         <translation>1:1</translation>
     </message>
+    <message>
+        <source>钉</source>
+        <translation>Ding</translation>
+    </message>
 </context>
 <context>
     <name>ToolWgt</name>
@@ -2799,23 +2827,23 @@ or ID</translation>
     </message>
     <message>
         <source>挂断</source>
-        <translation>Hang up</translation>
+        <translation type="vanished">Hang up</translation>
     </message>
     <message>
         <source>会话转移</source>
-        <translation>Conversational transfer</translation>
+        <translation type="vanished">Conversational transfer</translation>
     </message>
     <message>
         <source>快捷回复</source>
-        <translation>Quick reply</translation>
+        <translation type="vanished">Quick reply</translation>
     </message>
     <message>
         <source>投票</source>
-        <translation>vote</translation>
+        <translation type="vanished">vote</translation>
     </message>
     <message>
         <source>任务系统</source>
-        <translation>Mission system</translation>
+        <translation type="vanished">Mission system</translation>
     </message>
     <message>
         <source>扫一扫</source>
@@ -2823,15 +2851,15 @@ or ID</translation>
     </message>
     <message>
         <source>产品卡片</source>
-        <translation>Product Card</translation>
+        <translation type="vanished">Product Card</translation>
     </message>
     <message>
         <source>产品推荐</source>
-        <translation>Product recommendation</translation>
+        <translation type="vanished">Product recommendation</translation>
     </message>
     <message>
         <source>推送微信</source>
-        <translation>Push WeChat</translation>
+        <translation type="vanished">Push WeChat</translation>
     </message>
     <message>
         <source>视频通话</source>
@@ -2855,11 +2883,11 @@ or ID</translation>
     </message>
     <message>
         <source>提示</source>
-        <translation>information</translation>
+        <translation type="vanished">information</translation>
     </message>
     <message>
         <source>您确认结束本次服务吗?</source>
-        <translation>Do you confirm the termination of this service?</translation>
+        <translation type="vanished">Do you confirm the termination of this service?</translation>
     </message>
     <message>
         <source>发送文件</source>
@@ -2871,11 +2899,7 @@ or ID</translation>
     </message>
     <message>
         <source>视频演示</source>
-        <translation>Video Demonstration</translation>
-    </message>
-    <message>
-        <source>斗图</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Video Demonstration</translation>
     </message>
 </context>
 <context>
@@ -2926,7 +2950,7 @@ or ID</translation>
     </message>
     <message>
         <source>从好友选择</source>
-        <translation>Friends</translation>
+        <translation type="vanished">Friends</translation>
     </message>
     <message>
         <source>从星标联系人选择</source>
@@ -2945,7 +2969,7 @@ or ID</translation>
     <name>UserCard</name>
     <message>
         <source>查找并添加好友</source>
-        <translation>Find and add friends</translation>
+        <translation type="vanished">Find and add friends</translation>
     </message>
     <message>
         <source>发送邮件</source>
@@ -2957,7 +2981,7 @@ or ID</translation>
     </message>
     <message>
         <source>添加好友</source>
-        <translation>Add friends</translation>
+        <translation type="vanished">Add friends</translation>
     </message>
     <message>
         <source>星标联系人</source>
@@ -3013,7 +3037,7 @@ or ID</translation>
     </message>
     <message>
         <source>解除好友</source>
-        <translation>Relieving friends</translation>
+        <translation type="vanished">Relieving friends</translation>
     </message>
     <message>
         <source>加入黑名单</source>
@@ -3148,7 +3172,7 @@ or ID</translation>
     </message>
     <message>
         <source>添加好友</source>
-        <translation>Add friends</translation>
+        <translation type="vanished">Add friends</translation>
     </message>
     <message>
         <source>星标联系人</source>
@@ -3208,7 +3232,7 @@ or ID</translation>
     </message>
     <message>
         <source>解除好友</source>
-        <translation>Relieving friends</translation>
+        <translation type="vanished">Relieving friends</translation>
     </message>
     <message>
         <source>加入黑名单</source>

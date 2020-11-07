@@ -8,7 +8,7 @@
 #include <string>
 #include <map>
 #include "../include/CommonDefine.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 #include "../entity/UID.h"
 
 class Communication;

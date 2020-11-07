@@ -28,8 +28,7 @@
 #include "blocks/QuoteBlock.h"
 #include "../CustomUi/LiteMessageBox.h"
 #include "ToolWgt.h"
-#include "../QtUtil/lib/cjson/cJSON.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 #include "../QtUtil/Entity/JID.h"
 #include "../CustomUi/QtMessageBox.h"
 
@@ -953,36 +952,35 @@ void InputWgt:: onPaste() {
     QByteArray userData = mimeData->data("userData");
     if(!userData.isEmpty())
     {
-        cJSON* data = cJSON_Parse(userData);
-        if(data == nullptr)
+        nJson data= Json::parse(userData.data());
+        if(data == nullptr) {
             error_log("userData parse error");
+            return;
+        }
 
-        int itemSize = cJSON_GetArraySize(data);
-
-        for(int i = 0; i < itemSize; i++)
+        for(auto & item : data)
         {
-            cJSON* item = cJSON_GetArrayItem(data, i);
             // type 1  文字 2 图片 ...
-            int type = QTalk::JSON::cJSON_SafeGetIntValue(item, "type");
+            int type = Json::get<int >(item, "type");
             switch (type)
             {
                 case 1:
                 {
-                    std::string content(QTalk::JSON::cJSON_SafeGetStringValue(item, "text"));
+                    std::string content(Json::get<std::string >(item, "text"));
                     textCursor().insertText(QString::fromStdString(content));
                     break;
                 }
                 case 2:
                 {
-                    std::string imagePath(QTalk::JSON::cJSON_SafeGetStringValue(item, "image"));
-                    std::string imageLink(QTalk::JSON::cJSON_SafeGetStringValue(item, "imageLink"));
+                    std::string imagePath(Json::get<std::string >(item, "image"));
+                    std::string imageLink(Json::get<std::string >(item, "imageLink"));
                     dealFile(QString::fromStdString(imagePath), false, QString::fromStdString(imageLink));
                     break;
                 }
                 case 3:
                 {
-                    std::string source(QTalk::JSON::cJSON_SafeGetStringValue(item, "source"));
-                    std::string name(QTalk::JSON::cJSON_SafeGetStringValue(item, "name"));
+                    std::string source(Json::get<std::string >(item, "source"));
+                    std::string name(Json::get<std::string >(item, "name"));
 
                     insertQuote(name.data(), source.data());
                     break;
@@ -992,7 +990,6 @@ void InputWgt:: onPaste() {
             }
         }
 
-        cJSON_Delete(data);
         return;
     }
 
@@ -1095,7 +1092,7 @@ void InputWgt::onCopy()
 {
     //
     QString mimeDataText;
-    cJSON* objs = cJSON_CreateArray();
+    nJson objs;
     auto *mimeData = new QMimeData;
 
     auto cursor = this->textCursor();
@@ -1136,26 +1133,26 @@ void InputWgt::onCopy()
                     QString imagePath = newImageFormat.stringProperty(ImagePath);
                     QString imageLink = newImageFormat.stringProperty(ImageUrl);
 
-                    cJSON* obj = cJSON_CreateObject();
-                    cJSON_AddNumberToObject(obj, "type", 2); // 1  文字 2 图片 ...
-                    cJSON_AddStringToObject(obj, "imageLink", imageLink.toStdString().data());
-                    cJSON_AddStringToObject(obj, "image", imagePath.toStdString().data());
-                    cJSON_AddItemToArray(objs, obj);
+                    nJson obj;
+                    obj["type"] = 2; // 1  文字 2 图片 ...
+                    obj["imageLink"] = imageLink.toStdString().data();
+                    obj["image"] = imagePath.toStdString().data();
+                    objs.push_back(obj);
                 }
             }
             else if (format.isCharFormat())
             {
 
-                cJSON* obj = cJSON_CreateObject();
+                nJson obj;
 
                 if (currentFragment.charFormat().objectType() == atObjectType)
                 {
                     QString strText = format.property(atPropertyText).toString();
                     mimeDataText += strText;
 
-                    cJSON_AddNumberToObject(obj, "type", 1); // 1  文字 2 图片 ...
-                    cJSON_AddStringToObject(obj, "text", strText.toStdString().data());
-                    cJSON_AddItemToArray(objs, obj);
+                    obj["type"] = 1; // 1  文字 2 图片 ...
+                    obj["text"] = strText.toStdString().data();
+                    objs.push_back(obj);
 
                     continue;
                 }
@@ -1167,10 +1164,10 @@ void InputWgt::onCopy()
                     QString content = QString("「 %1: %2 」\n ------------------------- ").arg(name).arg(strText);
                     mimeDataText += content;
 
-                    cJSON_AddNumberToObject(obj, "type", 3); // 1  文字 2 图片 3 引用消息...
-                    cJSON_AddStringToObject(obj, "source", strText.toStdString().data());
-                    cJSON_AddStringToObject(obj, "name", name.toStdString().data());
-                    cJSON_AddItemToArray(objs, obj);
+                    obj["type"] = 3; // 1  文字 2 图片 3 引用消息...
+                    obj["source"] = strText.toStdString().data();
+                    obj["name"] = name.toStdString().data();
+                    objs.push_back(obj);
 
                     continue;
                 }
@@ -1180,26 +1177,26 @@ void InputWgt::onCopy()
                 QString strTmp = currentFragment.text().mid(sp, ep - sp);
                 mimeDataText += strTmp;
 
-                cJSON_AddNumberToObject(obj, "type", 1);
-                cJSON_AddStringToObject(obj, "text", strTmp.toStdString().data());
-                cJSON_AddItemToArray(objs, obj);
+                obj["type"] = 1;;
+                obj["text"] = strTmp.toStdString().data();
+                objs.push_back(obj);
             }
 
         }
 
         if(isSelected )
         {
-            cJSON* obj = cJSON_CreateObject();
-            cJSON_AddNumberToObject(obj, "type", 1);
-            cJSON_AddStringToObject(obj, "text", "\n");
-            cJSON_AddItemToArray(objs, obj);
+            nJson obj;
+            obj["type"] = 1;
+            obj["text"] = "\n";
+            objs.push_back(obj);
             mimeDataText += '\n';
         }
 
         currentBlock = currentBlock.next();
     }
 
-    std::string userData = QTalk::JSON::cJSON_to_string(objs);
+    std::string userData = objs.dump();
     mimeData->setText(mimeDataText);
     mimeData->setData("userData", userData.data());
     QApplication::clipboard()->setMimeData(mimeData);

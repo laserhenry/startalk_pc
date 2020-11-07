@@ -38,21 +38,7 @@ void SystemMessageItem::loadUrl(const StNetMessageResult& msgInfo) {
     if (!jsonDocument.isNull()) {
         QJsonObject jsonObject = jsonDocument.object();
         QString linkUrl = jsonObject.value("operation_url").toString();
-
-        MapCookie cookies;
-        cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
-        std::string qvt = PLAT.getQvt();
-        if(!qvt.empty()){
-            cJSON *qvtJson = cJSON_GetObjectItem(cJSON_Parse(qvt.data()),"data");
-            std::string qcookie = cJSON_GetObjectItem(qvtJson,"qcookie")->valuestring;
-            std::string vcookie = cJSON_GetObjectItem(qvtJson,"vcookie")->valuestring;
-            std::string tcookie = cJSON_GetObjectItem(qvtJson,"tcookie")->valuestring;
-            cJSON_Delete(qvtJson);
-            cookies["_q"] = QString::fromStdString(qcookie);
-            cookies["_v"] = QString::fromStdString(vcookie);
-            cookies["_t"] = QString::fromStdString(tcookie);
-        }
-        WebService::loadUrl(QUrl(linkUrl), false, cookies);
+        WebService::loadUrl(QUrl(linkUrl), false);
     }
 }
 

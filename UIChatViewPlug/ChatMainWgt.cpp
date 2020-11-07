@@ -30,8 +30,8 @@
 #include "../Platform/Platform.h"
 #include "../CustomUi/LiteMessageBox.h"
 #include "../CustomUi/QtMessageBox.h"
-#include "../QtUtil/lib/cjson/cJSON.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
+#include "../QtUtil/Utils/utils.h"
 #include "../UICom/qimage/qimage.h"
 #include "../include/perfcounter.h"
 #include "search/LocalSearchMainWgt.h"
@@ -40,7 +40,7 @@
 #include "ShareMessageFrm.h"
 
 #define SWITCH_SAVE_MESSAGE_NUM 15
-#define SWITCH_DELETE_MESSAGE_MAX_NUM 40
+#define SWITCH_DELETE_MESSAGE_MAX_NUM 20
 
 extern ChatViewMainPanel *g_pMainPanel;
 
@@ -646,6 +646,7 @@ void ChatMainWgt::showTipMessage(const QString& messageId, int type, const QStri
     info.msg_type = type;
     info.time = t;
     info.body = content;
+    info.msg_id = messageId;
     item->setData(QVariant::fromValue(info), EM_USER_INFO);
     item->setData(type, EM_USER_MSG_TYPE);
     item->setData(t, EM_USER_MSG_TIME);
@@ -657,7 +658,6 @@ void ChatMainWgt::showTipMessage(const QString& messageId, int type, const QStri
     _pModel->sort(0);
 
     scrollToItem(item);
-//    this->scrollToBottom();
 }
 
 void ChatMainWgt::saveAsImage(const QString &imageLink) {
@@ -1105,25 +1105,24 @@ void ChatMainWgt::onShareMessage()
 #ifdef _MACOS
         pthread_setname_np("ChatMainWgt onShareMessage thread");
 #endif
-        cJSON* objs = cJSON_CreateArray();
+        nJson objs;
 
         for(const auto& msg : arMsgs)
         {
-            cJSON* obj = cJSON_CreateObject();
-            cJSON_AddNumberToObject(obj, "d", msg.direction);
+            nJson obj;
+            obj["d"] = msg.direction;
             if(msg.extend_info.isEmpty())
-                cJSON_AddStringToObject(obj, "b", msg.body.toStdString().data());
+                obj["b"] = msg.body.toStdString().data();
             else
-                cJSON_AddStringToObject(obj, "b", msg.extend_info.toStdString().data());
-            cJSON_AddStringToObject(obj, "n", QTalk::getUserNameNoMask(msg.from.toStdString()).data());
-            cJSON_AddNumberToObject(obj, "s", msg.time);
-            cJSON_AddNumberToObject(obj, "t", msg.msg_type);
+                obj["b"] = msg.extend_info.toStdString().data();
+            obj["n"] = QTalk::getUserNameNoMask(msg.from.toStdString());
+            obj["s"] = msg.time;
+            obj["t"] = msg.msg_type;
 
-            cJSON_AddItemToArray(objs, obj);
+            objs.push_back(obj);
         }
 
-        std::string jsonMsg = QTalk::JSON::cJSON_to_string(objs);
-        cJSON_Delete(objs);
+        std::string jsonMsg = objs.dump();
         QString jsonFilePath = QString("%1/json_msg").arg(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
         QFile tmpFile(jsonFilePath);
         if(tmpFile.open(QIODevice::WriteOnly))

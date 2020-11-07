@@ -190,7 +190,7 @@ public:
 
 public:
     //新登录获取token
-    void getNewLoginToken(const std::string& u, const std::string& p, std::map<std::string,std::string> &map);
+    void getNewLoginToken(const std::string& u, const std::string& p, std::map<std::string,std::string> &info);
 
 public:
 //    CommMsgManager *_pMsgManager;

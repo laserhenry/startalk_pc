@@ -12,6 +12,7 @@
 #include <QFileInfo>
 #include <QStandardItemModel>
 #include <QPen>
+#include <QPainterPath>
 #include "../Platform/Platform.h"
 #include "../UICom/qimage/qimage.h"
 #include "../Platform/dbPlatForm.h"

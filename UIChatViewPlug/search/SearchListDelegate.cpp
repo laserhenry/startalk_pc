@@ -10,6 +10,7 @@
 #include <QFileInfo>
 #include <QEvent>
 #include <QDebug>
+#include <QPainterPath>
 
 #define HEAD_WIDTH 40
 

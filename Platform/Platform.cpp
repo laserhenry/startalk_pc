@@ -9,10 +9,9 @@
 #include "dbPlatForm.h"
 
 //#include <cctype>
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
-#include "../QtUtil/Utils/Log.h"
 #include "../QtUtil/Entity/JID.h"
 #include <utility>
+#include "../QtUtil/Utils/utils.h"
 
 #ifdef _LINUX
 #include <algorithm>

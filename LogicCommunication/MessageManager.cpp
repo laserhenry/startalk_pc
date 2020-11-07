@@ -1002,9 +1002,10 @@ void CommMsgListener::onEvent(UpdateMoodEvt& e)
     if(nullptr != _pComm && nullptr != _pComm->_pUserManager)
     {
         std::string mood = e.mood;
-        std::thread([this, mood](){
+        auto res = std::async(std::launch::async, [this, mood](){
             _pComm->_pUserManager->UpdateMood(mood);
-        }).detach();
+        });
+        (void)(res);
     }
 }
 

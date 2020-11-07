@@ -11,10 +11,9 @@
 #include <QFile>
 #include <ChatViewMainPanel.h>
 #include "../../CustomUi/HeadPhotoLab.h"
-#include "../../QtUtil/lib/cjson/cJSON.h"
-#include "../../QtUtil/lib/cjson/cJSON_inc.h"
 #include "../../Platform/NavigationManager.h"
 #include "../../Platform/Platform.h"
+#include "../../QtUtil/nJson/nJson.h"
 
 extern ChatViewMainPanel *g_pMainPanel;
 VoiceMessageItem::VoiceMessageItem(const StNetMessageResult &msgInfo, QWidget *parent)
@@ -211,15 +210,15 @@ void VoiceMessageItem::initContentLayout() {
     }
     pixLabel->setAlignment(Qt::AlignVCenter);
     //
-    cJSON* json = cJSON_Parse((_msgInfo.extend_info.isEmpty() ? _msgInfo.body : _msgInfo.extend_info).toUtf8());
+    nJson json= Json::parse((_msgInfo.extend_info.isEmpty() ? _msgInfo.body : _msgInfo.extend_info).toUtf8().data());
     if(nullptr == json) {
         _contentFrm->setFixedWidth(50);
     }
     else
     {
-        std::string _voicePath = QTalk::JSON::cJSON_SafeGetStringValue(json, "HttpUrl");
+        std::string _voicePath = Json::get<std::string >(json, "HttpUrl");
         local_path = _msgInfo.msg_id.toStdString();
-        int seconds = QTalk::JSON::cJSON_SafeGetIntValue(json, "Seconds");
+        int seconds = Json::get<int >(json, "Seconds");
         secondsLabel->setText(QString("%1''").arg(seconds));
         _spaceFrm->setFixedWidth(qMin(seconds * 15, 300));
         _contentFrm->setFixedWidth(qMin(seconds * 15, 300) + 30);
@@ -237,7 +236,6 @@ void VoiceMessageItem::initContentLayout() {
         });
 
     }
-    cJSON_Delete(json);
     _contentFrm->setFixedHeight(40);
     //
     _pTimer = new QTimer(this);

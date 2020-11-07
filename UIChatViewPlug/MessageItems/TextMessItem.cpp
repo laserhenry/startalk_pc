@@ -17,12 +17,11 @@
 #include "../../UICom/qimage/qimage.h"
 #include "../../WebService/WebService.h"
 #include "../../Platform/AppSetting.h"
-#include "../../QtUtil/lib/cjson/cJSON.h"
-#include "../../QtUtil/lib/cjson/cJSON_inc.h"
 #include "../../Platform/Platform.h"
 #include "../ChatUtil.h"
 #include "../../UICom/StyleDefine.h"
 #include "../../UICom/uicom.h"
+#include "../QtUtil/nJson/nJson.h"
 
 #define DEM_LINK_HTML "<a href=\"%1\" style=\"text-decoration:none; color:rgba(%2);\">%3</a>"
 
@@ -470,7 +469,7 @@ void TextMessItem::copyText() {
         //
         auto *mimeData = new QMimeData;
         QString mimeDataText;
-        cJSON* objs = cJSON_CreateArray();
+        nJson objs;
         if(cursor.hasSelection())
         {
             int start = cursor.selectionStart();
@@ -498,10 +497,10 @@ void TextMessItem::copyText() {
                         QString data = it->content.mid(s - index, qMin(end, maxS) - s);
                         mimeDataText.append(data);
 
-                        cJSON* obj = cJSON_CreateObject();
-                        cJSON_AddStringToObject(obj, "text", data.toStdString().data());
-                        cJSON_AddNumberToObject(obj, "type", 1); // 1  文字 2 图片 ...
-                        cJSON_AddItemToArray(objs, obj);
+                        nJson obj;
+                        obj["text"] = data.toStdString().data();
+                        obj["type"] = 1; // 1  文字 2 图片 ...
+                        objs.push_back(obj);
 
                         index = maxS;
                         break;
@@ -516,11 +515,11 @@ void TextMessItem::copyText() {
                         }
                         mimeDataText.append(tr(" [图片] "));
                         // todo send message image link
-                        cJSON* obj = cJSON_CreateObject();
-                        cJSON_AddNumberToObject(obj, "type", 2); // 1  文字 2 图片 ...
-                        cJSON_AddStringToObject(obj, "imageLink", it->imageLink.toStdString().data());
-                        cJSON_AddStringToObject(obj, "image", it->content.toStdString().data());
-                        cJSON_AddItemToArray(objs, obj);
+                        nJson obj;
+                        obj["type"] = 2; // 1  文字 2 图片 ...
+                        obj["imageLink"] = it->imageLink.toStdString().data();
+                        obj["image"] = it->content.toStdString().data();
+                        objs.push_back(obj);
 
                         break;
                     }
@@ -548,17 +547,16 @@ void TextMessItem::copyText() {
                 {
                     mimeData->setImageData(pixmap.toImage());
 
-                    cJSON* obj = cJSON_CreateObject();
-                    cJSON_AddNumberToObject(obj, "type", 2); // 1  文字 2 图片 ...
-                    cJSON_AddStringToObject(obj, "imageLink", link.toStdString().data());
-                    cJSON_AddStringToObject(obj, "image", imagePath.toStdString().data());
-                    cJSON_AddItemToArray(objs, obj);
+                    nJson obj;
+                    obj["type"] = 2; // 1  文字 2 图片 ...
+                    obj["imageLink"] = link.toStdString().data();
+                    obj["image"] = imagePath.toStdString().data();
+                    objs.push_back(obj);
 
-                    std::string userData = QTalk::JSON::cJSON_to_string(objs);
+                    std::string userData = objs.dump();
                     mimeData->setData("userData", userData.data());
 
                     QApplication::clipboard()->setMimeData(mimeData);
-                    cJSON_Delete(objs);
                     return;
                 }
             }
@@ -572,10 +570,10 @@ void TextMessItem::copyText() {
                     case StTextMessage::EM_ATMSG:
                         {
                             mimeDataText.append(msg.content);
-                            cJSON* obj = cJSON_CreateObject();
-                            cJSON_AddNumberToObject(obj, "type", 1); // 1  文字 2 图片 ...
-                            cJSON_AddStringToObject(obj, "text", msg.content.toStdString().data());
-                            cJSON_AddItemToArray(objs, obj);
+                            nJson obj;
+                            obj["type"] = 1; // 1  文字 2 图片 ...
+                            obj["text"] = msg.content.toStdString().data();
+                            objs.push_back(obj);
 
                             break;
                         }
@@ -584,11 +582,11 @@ void TextMessItem::copyText() {
                     {
                         mimeDataText.append(tr(" [图片] "));
 
-                        cJSON* obj = cJSON_CreateObject();
-                        cJSON_AddNumberToObject(obj, "type", 2); // 1  文字 2 图片 ...
-                        cJSON_AddStringToObject(obj, "imageLink", msg.imageLink.toStdString().data());
-                        cJSON_AddStringToObject(obj, "image", msg.content.toStdString().data());
-                        cJSON_AddItemToArray(objs, obj);
+                        nJson obj;
+                        obj["type"] = 2; // 1  文字 2 图片 ...
+                        obj["imageLink"] = msg.imageLink.toStdString().data();
+                        obj["image"] = msg.content.toStdString().data();
+                        objs.push_back(obj);
 
                         break;
                     }
@@ -598,8 +596,7 @@ void TextMessItem::copyText() {
             }
         }
 
-        std::string userData = QTalk::JSON::cJSON_to_string(objs);
-        cJSON_Delete(objs);
+        std::string userData = objs.dump();
         if(mimeDataText == tr(" [图片] ") && _msgs.size() == 1 && !_msgs[0].content.isEmpty())
         {
             std::string tmpImgPath = _msgs[0].content.toStdString();

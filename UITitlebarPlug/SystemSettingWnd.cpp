@@ -37,6 +37,29 @@
 #include <QFontDatabase>
 #include <QDebug>
 #include <QSettings>
+#include <QPainter>
+#include <QFontMetrics>
+
+void ComboBoxDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+//    QStyledItemDelegate::paint(painter, option, index);
+
+    painter->save();
+    painter->setRenderHint(QPainter::TextAntialiasing);
+
+    QRect rect = option.rect;
+
+    auto text = index.data(Qt::DisplayRole).toString();
+    painter->setFont(QFont(text));
+    painter->drawText(rect, tr("%1( 中国 China 0123 )").arg(text));
+    painter->restore();
+    painter->drawLine(rect.x(), rect.y(), rect.width(), rect.y());
+}
+
+QSize ComboBoxDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const  {
+    auto text = index.data(Qt::DisplayRole).toString();
+    QFontMetrics fm((QFont(text)));
+    return {200, fm.height() + 8};
+}
 
 SystemSettingWnd::SystemSettingWnd(QWidget *parent)
         : UShadowDialog(parent, true){
@@ -413,11 +436,11 @@ void SystemSettingWnd::initSession(QVBoxLayout* vlayout) {
     sendMessageLabel->setFixedWidth(100);
     //
     auto *showMood = new SettingCheckBox(tr("群会话显示签名"), AppSetting::instance().getShowMoodFlag(), this);
-    auto *autoDeleteSession = new SettingCheckBox(tr("切换会话时自动销毁旧会话"), AppSetting::instance().getAutoDeleteSession(), this);
+//    auto *autoDeleteSession = new SettingCheckBox(tr("切换会话时自动销毁旧会话"), AppSetting::instance().getAutoDeleteSession(), this);
     //
     vlayout->addLayout(sendMessageLay);
     vlayout->addWidget(showMood);
-    vlayout->addWidget(autoDeleteSession);
+//    vlayout->addWidget(autoDeleteSession);
     showMood->setVisible(false);
     vlayout->addItem(new QSpacerItem(10, 10, QSizePolicy::Minimum, QSizePolicy::Expanding));
     vlayout->addWidget(new Line(Qt::Horizontal, this));
@@ -435,11 +458,11 @@ void SystemSettingWnd::initSession(QVBoxLayout* vlayout) {
         bool isOk = state==Qt::Checked;
         AppSetting::instance().setShowMoodFlag(isOk);
     });
-
-    connect(autoDeleteSession, &QCheckBox::stateChanged,[](int state){
-        bool isOk = state==Qt::Checked;
-        AppSetting::instance().setAutoDeleteSession(isOk);
-    });
+//
+//    connect(autoDeleteSession, &QCheckBox::stateChanged,[](int state){
+//        bool isOk = state==Qt::Checked;
+//        AppSetting::instance().setAutoDeleteSession(isOk);
+//    });
 }
 
 /**
@@ -844,6 +867,7 @@ void SystemSettingWnd::initFontSetting(QVBoxLayout* vlayout) {
     auto* fontLabel = new QLabel(tr("字体选择"), this);
     auto* fontCombox = new NoSlidingHandoverComboBox(this);
     fontCombox->addItems(families);
+//    fontCombox->setItemDelegate(new ComboBoxDelegate);
     //
     std::string sysFont = AppSetting::instance().getFont();
     if(sysFont.empty())

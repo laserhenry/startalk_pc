@@ -12,11 +12,10 @@
 #include "UserManager.h"
 #include "GroupManager.h"
 #include "../QtUtil/Utils/utils.h"
-#include "../QtUtil/lib/cjson/cJSON_inc.h"
+#include "../QtUtil/nJson/nJson.h"
 #include "../Message/GroupMessage.h"
 #include "../QtUtil/Utils/Log.h"
 #include "OnLineManager.h"
-#include "../QtUtil/lib/cjson/cJSON.h"
 #include "../include/CommonStrcut.h"
 #include "SearchManager.h"
 #include "UserConfig.h"
@@ -44,7 +43,6 @@
 #define LOGIN_TYPE_NEW_PASSWORD "newpassword"
 
 using namespace QTalk;
-using namespace QTalk::JSON;
 
 Communication::Communication()
         : _port(0) {
@@ -59,7 +57,11 @@ Communication::Communication()
     _pUserConfig = new UserConfig(this);
     _pHotLinesConfig = new HotLinesConfig(this);
     for (int i = 0; i < _threadPoolCount; ++i) {
-        _httpPool.push_back(new ThreadPool(SFormat("Communication's http pool {0}", i).c_str()));
+        auto name = SFormat("Communication's http pool {0}", i);
+        auto * item = new ThreadPool(name);
+
+        info_log("{0} -> {1}", item, name);
+        _httpPool.push_back(item);
     }
 
 
@@ -133,9 +135,9 @@ bool Communication::OnLogin(const std::string& userName, const std::string& pass
 {
     if(PLAT.isMainThread())
     {
-        std::thread([this, userName, password](){
+        std::async(std::launch::async, [this, userName, password](){
             OnLogin(userName, password);
-        }).detach();
+        });
         return true;
     }
 
@@ -167,14 +169,13 @@ bool Communication::OnLogin(const std::string& userName, const std::string& pass
         if(!u.empty() && !p.empty()){
             // 设置当前登录的userid
             PLAT.setSelfUserId(u);
-            cJSON *nauth = cJSON_CreateObject();
-            cJSON *gObj = cJSON_CreateObject();
-            cJSON_AddStringToObject(gObj, "u", userName.c_str());
-            cJSON_AddStringToObject(gObj, "p", p.c_str());
-            cJSON_AddStringToObject(gObj, "mk", QTalk::utils::getMessageId().data());
-            cJSON_AddItemToObject(nauth,"nauth",gObj);
-            std::string pp = QTalk::JSON::cJSON_to_string(nauth);
-            cJSON_Delete(nauth);
+            nJson nauth;
+            nJson gObj;
+            gObj["u"] = userName;
+            gObj["p"] = p;
+            gObj[ "mk"] = QTalk::utils::getMessageId();
+            nauth["nauth"] = gObj;
+            std::string pp = nauth.dump();
             AsyncConnect(u + "@" + domain, pp, host, port);
         } else {
             CommMsgManager::sendLoginErrMessage("获取token失败!");
@@ -254,76 +255,75 @@ bool Communication::getNavInfo(const std::string &navAddr, QTalk::StNav &nav) {
     auto func = [url, &ret, &nav](int code, const std::string &resData) {
 
         if (code == 200) {
-            cJSON *data = cJSON_Parse(resData.data());
+            nJson data = Json::parse(resData);
             if (nullptr == data) {
                 error_log("nav data parse error");
                 return;
             }
 
-            nav.version = cJSON_SafeGetLonglongValue(data, "version", 0);
+            nav.version = Json::get<long long>(data, "version", 0);
             // base address
-            cJSON *baseAddress = cJSON_GetObjectItem(data, "baseaddess");
-            nav.xmppHost = cJSON_SafeGetStringValue(baseAddress, "xmpp");
-            nav.domain = cJSON_SafeGetStringValue(baseAddress, "domain");
-            nav.protobufPcPort = cJSON_SafeGetIntValue(baseAddress, "protobufPcPort");
-            nav.apiurl = cJSON_SafeGetStringValue(baseAddress, "apiurl");
-            nav.javaurl = cJSON_SafeGetStringValue(baseAddress, "javaurl");
-            nav.httpurl = cJSON_SafeGetStringValue(baseAddress, "httpurl");
-            nav.pubkey = cJSON_SafeGetStringValue(baseAddress, "pubkey");
-            nav.fileurl = cJSON_SafeGetStringValue(baseAddress, "fileurl");
-            nav.mobileurl = cJSON_SafeGetStringValue(baseAddress, "mobileurl");
-            nav.leaderUrl = cJSON_SafeGetStringValue(baseAddress, "leaderurl");
-            nav.shareUrl = cJSON_SafeGetStringValue(baseAddress, "shareurl");
-            nav.videoUrl = cJSON_SafeGetStringValue(baseAddress, "videourl");
-            nav.videoConference = cJSON_SafeGetStringValue(baseAddress, "videoConference");
+            nJson baseAddress= Json::get<nJson >(data, "baseaddess");
+            nav.xmppHost = Json::get<std::string >(baseAddress, "xmpp");
+            nav.domain = Json::get<std::string >(baseAddress, "domain");
+            nav.protobufPcPort = Json::get<int >(baseAddress, "protobufPcPort");
+            nav.apiurl = Json::get<std::string >(baseAddress, "apiurl");
+            nav.javaurl = Json::get<std::string >(baseAddress, "javaurl");
+            nav.httpurl = Json::get<std::string >(baseAddress, "httpurl");
+            nav.pubkey = Json::get<std::string >(baseAddress, "pubkey");
+            nav.fileurl = Json::get<std::string >(baseAddress, "fileurl");
+            nav.mobileurl = Json::get<std::string >(baseAddress, "mobileurl");
+            nav.leaderUrl = Json::get<std::string >(baseAddress, "leaderurl");
+            nav.shareUrl = Json::get<std::string >(baseAddress, "shareurl");
+            nav.videoUrl = Json::get<std::string >(baseAddress, "videourl");
+            nav.videoConference = Json::get<std::string >(baseAddress, "videoConference");
 
             //imcofig
-            if (cJSON_HasObjectItem(data, "imConfig")) {
-                cJSON *imcofig = cJSON_GetObjectItem(data, "imConfig");
-                nav.rsaEncodeType = cJSON_SafeGetIntValue(imcofig, "RsaEncodeType");
-                nav.uploadLog = cJSON_SafeGetStringValue(imcofig, "uploadLog");
-                nav.mailSuffix = cJSON_SafeGetStringValue(imcofig, "mail");
-                nav.foundConfigUrl = cJSON_SafeGetStringValue(imcofig, "foundConfigUrl");
+            if (data.contains("imConfig")) {
+                nJson imcofig= Json::get<nJson >(data, "imConfig");
+                nav.rsaEncodeType = Json::get<int >(imcofig, "RsaEncodeType");
+                nav.uploadLog = Json::get<std::string >(imcofig, "uploadLog");
+                nav.mailSuffix = Json::get<std::string >(imcofig, "mail");
+                nav.foundConfigUrl = Json::get<std::string >(imcofig, "foundConfigUrl");
             }
 
             // ops
-            if (cJSON_HasObjectItem(data, "ops")) {
-                cJSON *ops = cJSON_GetObjectItem(data, "ops");
-                nav.opsHost = cJSON_SafeGetStringValue(ops, "host");
+            if (data.contains("ops")) {
+                nJson ops= Json::get<nJson >(data, "ops");
+                nav.opsHost = Json::get<std::string >(ops, "host");
             }
 
             // ability
-            if (cJSON_HasObjectItem(data, "ability")) {
-                cJSON *ability = cJSON_GetObjectItem(data, "ability");
-                nav.qCloudHost = cJSON_SafeGetStringValue(ability, "qCloudHost");
-                nav.searchUrl = cJSON_SafeGetStringValue(ability, "new_searchurl");
-                nav.showmsgstat = cJSON_SafeGetBoolValue(ability,"showmsgstat", false);
-                nav.qcGrabOrder =  cJSON_SafeGetStringValue(ability, "qcGrabOrder");
+            if (data.contains("ability")) {
+                nJson ability= Json::get<nJson >(data, "ability");
+                nav.qCloudHost = Json::get<std::string >(ability, "qCloudHost");
+                nav.searchUrl = Json::get<std::string >(ability, "new_searchurl");
+                nav.showmsgstat = Json::get<bool >(ability,"showmsgstat", false);
+                nav.qcGrabOrder =  Json::get<std::string >(ability, "qcGrabOrder");
             }
             //qcadmin
-            if(cJSON_HasObjectItem(data,"qcadmin")){
-                cJSON *qcadmin = cJSON_GetObjectItem(data, "qcadmin");
-                nav.qcadminHost = cJSON_SafeGetStringValue(qcadmin, "host");
+            if(data.contains("qcadmin")){
+                nJson qcadmin= Json::get<nJson >(data, "qcadmin");
+                nav.qcadminHost = Json::get<std::string >(qcadmin, "host");
             }
             //Login
-            if(cJSON_HasObjectItem(data,"Login")){
-                cJSON *login = cJSON_GetObjectItem(data, "Login");
-                if(cJSON_HasObjectItem(login,"loginType")){
-                    nav.loginType = cJSON_SafeGetStringValue(login, "loginType");
+            if(data.contains("Login")){
+                nJson login= Json::get<nJson >(data, "Login");
+                if(login.contains("loginType")){
+                    nav.loginType = Json::get<std::string >(login, "loginType");
                 }
             }
             // client
-            if(cJSON_HasObjectItem(data, "client"))
+            if(data.contains("client"))
             {
-                cJSON *login = cJSON_GetObjectItem(data, "client");
-                if(cJSON_HasObjectItem(login,"rollback")){
-                    nav.rollback = cJSON_SafeGetBoolValue(login, "rollback");
+                nJson login= Json::get<nJson >(data, "client");
+                if(login.contains("rollback")){
+                    nav.rollback = Json::get<bool >(login, "rollback");
                 }
             }
             ret = true;
 
-            cJSON_Delete(data);
-        }
+            }
     };
 
     try {
@@ -695,13 +695,13 @@ void Communication::batchUpdateHead(const std::vector<std::string> &arXmppids) {
             }
         }
 
-        std::thread([this, params]() {
+        std::async(std::launch::async,[this, params]() {
             std::vector<QTalk::StUserCard> arUserInfo;
             _pUserManager->getUserCard(params, arUserInfo);
 
             downloadUserHeadByStUserCard(arUserInfo);
             CommMsgManager::sendDownloadHeadSuccess();
-        }).detach();
+        });
     }
 }
 
@@ -814,7 +814,7 @@ void Communication::getNetEmoticon(GetNetEmoticon &e) {
 
     auto callback = [&e](int code, const std::string &responseData) {
         if (code == 200) {
-            cJSON *msgList = cJSON_Parse(responseData.c_str());
+            nJson msgList= Json::parse(responseData);
 
             if (msgList == nullptr) {
                 error_log("json paring error");
@@ -822,21 +822,19 @@ void Communication::getNetEmoticon(GetNetEmoticon &e) {
             }
 
             ArStNetEmoticon netEm0os;
-            cJSON* item = nullptr;
-            cJSON_ArrayForEach(item, msgList) {
+            for(auto &item : msgList) {
                 std::shared_ptr<StNetEmoticon> emo(new StNetEmoticon);
-                emo->pkgid = JSON::cJSON_SafeGetStringValue(item, "pkgid");
-                emo->emoName = JSON::cJSON_SafeGetStringValue(item, "name");
-                emo->emoFile = JSON::cJSON_SafeGetStringValue(item, "file");
-                emo->desc = JSON::cJSON_SafeGetStringValue(item, "desc");
-                emo->iconPath = JSON::cJSON_SafeGetStringValue(item, "thumb");
-                emo->filesize = JSON::cJSON_SafeGetIntValue(item, "file_size");
-                emo->md5 = JSON::cJSON_SafeGetStringValue(item, "md5");
+                emo->pkgid = Json::get<std::string >(item, "pkgid");
+                emo->emoName = Json::get<std::string >(item, "name");
+                emo->emoFile = Json::get<std::string >(item, "file");
+                emo->desc = Json::get<std::string >(item, "desc");
+                emo->iconPath = Json::get<std::string >(item, "thumb");
+                emo->filesize = Json::get<int >(item, "file_size");
+                emo->md5 = Json::get<std::string >(item, "md5");
 
                 netEm0os.push_back(emo);
             }
 
-            cJSON_Delete(msgList);
             e.arEmoInfo = netEm0os;
         } else {
 
@@ -863,9 +861,9 @@ void Communication::getStructure(std::vector<std::shared_ptr<QTalk::Entity::ImUs
 void Communication::onInviteGroupMembers(const std::string &groupId) {
     if(PLAT.isMainThread())
     {
-        std::thread([this, groupId](){
+        std::async(std::launch::async,[this, groupId](){
             onInviteGroupMembers(groupId);
-        }).detach();
+        });
         return;
     }
     getGroupMemberById(groupId);
@@ -1102,57 +1100,49 @@ bool Communication::geiOaUiData(std::vector<QTalk::StOAUIData> &arOAUIData) {
     std::ostringstream url;
     url << NavigationManager::instance().getFoundConfigUrl();
 
-    cJSON *gObj = cJSON_CreateObject();
-    cJSON_AddStringToObject(gObj, "qtalk", PLAT.getSelfUserId().c_str());
-    cJSON_AddStringToObject(gObj, "platform", "PC");
-    cJSON_AddNumberToObject(gObj, "version", PLAT.getClientNumVerison());
-    std::string postData = QTalk::JSON::cJSON_to_string(gObj);
-    cJSON_Delete(gObj);
-
+    nJson gObj;
+    gObj["qtalk"] = PLAT.getSelfUserId().c_str();
+    gObj["platform"] = "PC";
+    gObj["version"] = PLAT.getClientNumVerison();
+    std::string postData = gObj.dump();
     //
     std::vector<std::string> arIcons;
     //
     auto callback = [&arOAUIData, &ret, &arIcons](int code, const std::string &responseData) {
         if (code == 200) {
 
-            cJSON *retDta = cJSON_Parse(responseData.c_str());
+            nJson retDta= Json::parse(responseData);
 
             if (nullptr == retDta) {
                 error_log("json 解析失败");
                 return;
             }
 
-            int errCode = JSON::cJSON_SafeGetIntValue(retDta, "errorCode");
+            int errCode = Json::get<int >(retDta, "errorCode");
             //
             if (errCode == 0) {
-                cJSON *data = cJSON_GetObjectItem(retDta, "data");
-                int groupSize = cJSON_GetArraySize(data);
+                nJson data = Json::get<nJson >(retDta, "data");
 
-                int i = 0;
-                for (; i < groupSize; i++) {
+                for (auto & groupItem : data) {
                     QTalk::StOAUIData stOAData;
-                    cJSON *groupItem = cJSON_GetArrayItem(data, i);
-                    stOAData.groupId = JSON::cJSON_SafeGetIntValue(groupItem, "groupId");
-                    stOAData.groupName = JSON::cJSON_SafeGetStringValue(groupItem, "groupName");
-                    stOAData.groupIcon = JSON::cJSON_SafeGetStringValue(groupItem, "groupIcon");
+                    stOAData.groupId = Json::get<int >(groupItem, "groupId");
+                    stOAData.groupName = Json::get<std::string >(groupItem, "groupName");
+                    stOAData.groupIcon = Json::get<std::string >(groupItem, "groupIcon");
                     //
                     arIcons.push_back(stOAData.groupIcon);
                     //
-                    cJSON *memberItems = cJSON_GetObjectItem(groupItem, "members");
-                    int memberSize = cJSON_GetArraySize(memberItems);
-                    int j = 0;
-                    for (; j < memberSize; j++) {
-                        cJSON *memItem = cJSON_GetArrayItem(memberItems, j);
+                    nJson memberItems= Json::get<nJson >(groupItem, "members");
+                    for (auto & memItem : memberItems) {
                         QTalk::StOAUIData::StMember member;
 
-                        member.memberId = JSON::cJSON_SafeGetIntValue(memItem, "memberId");
-                        if(cJSON_HasObjectItem(memItem, "actionType"))
-                            member.action_type = JSON::cJSON_SafeGetIntValue(memItem, "actionType");
-                        if(cJSON_HasObjectItem(memItem, "nativeAction"))
-                            member.native_action_type = JSON::cJSON_SafeGetIntValue(memItem, "nativeAction");
-                        member.memberName = JSON::cJSON_SafeGetStringValue(memItem, "memberName");
-                        member.memberAction = JSON::cJSON_SafeGetStringValue(memItem, "memberAction");
-                        member.memberIcon = JSON::cJSON_SafeGetStringValue(memItem, "memberIcon");
+                        member.memberId = Json::get<int >(memItem, "memberId");
+                        if(memItem.contains("actionType"))
+                            member.action_type = Json::get<int >(memItem, "actionType");
+                        if(memItem.contains("nativeAction"))
+                            member.native_action_type = Json::get<int >(memItem, "nativeAction");
+                        member.memberName = Json::get<std::string >(memItem, "memberName");
+                        member.memberAction = Json::get<std::string >(memItem, "memberAction");
+                        member.memberIcon = Json::get<std::string >(memItem, "memberIcon");
                         //
                         arIcons.push_back(member.memberIcon);
                         stOAData.members.push_back(member);
@@ -1163,10 +1153,9 @@ bool Communication::geiOaUiData(std::vector<QTalk::StOAUIData> &arOAUIData) {
 
                 ret = true;
             } else {
-                if (cJSON_HasObjectItem(retDta, "errorMsg"))
-                    error_log(cJSON_GetObjectItem(retDta, "errorMsg")->valuestring);
+                if (retDta.contains("errorMsg"))
+                    error_log(Json::get<std::string>(retDta, "errorMsg"));
             }
-            cJSON_Delete(retDta);
         } else {
             warn_log("获取oa数据 请求失败");
         }
@@ -1209,31 +1198,27 @@ std::string Communication::getQchatQvt(const std::string &userName, const std::s
     auto callback = [&qvtStr](int code, const std::string &responseData) {
         if (code == 200) {
 
-            cJSON *retDta = cJSON_Parse(responseData.c_str());
+            nJson retDta= Json::parse(responseData);
 
             if (nullptr == retDta) {
                 error_log("json 解析失败");
-                cJSON_Delete(retDta);
                 return;
             }
 
-            int errCode = cJSON_GetObjectItem(retDta, "errcode")->valueint;
+            int errCode = Json::get<int>(retDta, "errcode");
             if(errCode == 200){
-                cJSON *array = cJSON_GetObjectItem(retDta,"data");
-                cJSON *QVTJson = cJSON_GetArrayItem(array,0);
-                std::string qcookie = cJSON_GetObjectItem(QVTJson,"qcookie")->valuestring;
-                std::string vcookie = cJSON_GetObjectItem(QVTJson,"vcookie")->valuestring;
-                std::string tcookie = cJSON_GetObjectItem(QVTJson,"tcookie")->valuestring;
-                cJSON_Delete(retDta);
-
-                cJSON* obj = cJSON_CreateObject();
-                cJSON* data = cJSON_AddObjectToObject(obj,"data");
-                cJSON_AddStringToObject(data, "qcookie", qcookie.c_str());
-                cJSON_AddStringToObject(data, "vcookie", vcookie.c_str());
-                cJSON_AddStringToObject(data, "tcookie", tcookie.c_str());
-                qvtStr = QTalk::JSON::cJSON_to_string(obj);
+                nJson array= Json::get<nJson >(retDta,"data");
+                nJson QVTJson= Json::convert<nJson>(array[0]);
+                std::string qcookie = Json::get<std::string>(QVTJson,"qcookie");
+                std::string vcookie = Json::get<std::string>(QVTJson,"vcookie");
+                std::string tcookie = Json::get<std::string>(QVTJson,"tcookie");
+                nJson obj;
+                nJson &data= obj["data"];
+                data["qcookie"] = qcookie;
+                data["vcookie"] = vcookie;
+                data["tcookie"] = tcookie;
+                qvtStr = obj.dump();
                 PLAT.setQvt(qvtStr);
-                cJSON_Delete(obj);
             }
         }
     };
@@ -1255,33 +1240,29 @@ void Communication::getQchatTokenByQVT(const std::string &qvt,std::map<std::stri
     url <<  NavigationManager::instance().getApiUrl()
         << "/http_gettk";
     auto uuid = utils::getMessageId();
-    cJSON *gObj = cJSON_CreateObject();
-    cJSON_AddStringToObject(gObj, "macCode", uuid.data());
-    cJSON_AddStringToObject(gObj, "plat", "pc");
-    std::string postData = QTalk::JSON::cJSON_to_string(gObj);
-    cJSON_Delete(gObj);
-
+    nJson gObj;
+    gObj["macCode"] = uuid;
+    gObj["plat"] = "pc";
+    std::string postData = gObj.dump();
     auto callback = [&userMap, uuid](int code, const std::string &responseData) {
         if (code == 200) {
 
-            cJSON *retDta = cJSON_Parse(responseData.c_str());
+            nJson retDta= Json::parse(responseData);
             if (nullptr == retDta) {
                 error_log("json 解析失败");
-                cJSON_Delete(retDta);
                 return;
             }
-            int errCode = cJSON_GetObjectItem(retDta, "errcode")->valueint;
+            int errCode = Json::get<int>(retDta, "errcode");
             if(errCode == 0){
-                cJSON *data = cJSON_GetObjectItem(retDta,"data");
-                std::string userName = cJSON_GetObjectItem(data,"username")->valuestring;
-                std::string token = cJSON_GetObjectItem(data,"token")->valuestring;
+                nJson data = Json::get<nJson >(retDta,"data");
+                std::string userName = Json::get<std::string>(data,"username");
+                std::string token = Json::get<std::string>(data,"token");
                 std::string password = "{\"token\":{\"plat\":\"pc\", \"macCode\":\""+ uuid + "\", \"token\":\""+ token + "\"}}";
                 userMap["name"] = userName;
                 userMap["password"] = password;
             } else{
-                error_log(cJSON_GetObjectItem(retDta, "errmsg")->valuestring);
+                error_log(Json::get<std::string>(retDta, "errmsg"));
             }
-            cJSON_Delete(retDta);
         }
     };
 
@@ -1289,13 +1270,12 @@ void Communication::getQchatTokenByQVT(const std::string &qvt,std::map<std::stri
     if(qvt.empty()){
         return;
     }
-    cJSON *qvtJson = cJSON_GetObjectItem(cJSON_Parse(qvt.data()),"data");
+    nJson qvtJson= Json::get<nJson >(Json::parse(qvt),"data");
     if(nullptr == qvtJson)
         return;
-    std::string qcookie = cJSON_GetObjectItem(qvtJson,"qcookie")->valuestring;
-    std::string vcookie = cJSON_GetObjectItem(qvtJson,"vcookie")->valuestring;
-    std::string tcookie = cJSON_GetObjectItem(qvtJson,"tcookie")->valuestring;
-    cJSON_Delete(qvtJson);
+    std::string qcookie = Json::get<std::string>(qvtJson,"qcookie");
+    std::string vcookie = Json::get<std::string>(qvtJson,"vcookie");
+    std::string tcookie = Json::get<std::string>(qvtJson,"tcookie");
     std::string requestHeaders = std::string("_q=") + qcookie + ";_v=" + vcookie + ";_t=" + tcookie;
     req.header["Content-Type"] = "application/json;";
     req.header["Cookie"] = requestHeaders;
@@ -1306,39 +1286,35 @@ void Communication::getQchatTokenByQVT(const std::string &qvt,std::map<std::stri
 //    return userMap;
 }
 
-void Communication::getNewLoginToken(const std::string& u, const std::string& p,std::map<std::string,std::string> &map) {
+//
+void Communication::getNewLoginToken(const std::string& u, const std::string& p,std::map<std::string,std::string> &info) {
     std::ostringstream url;
     url << NavigationManager::instance().getHttpHost()
         << "/nck/qtlogin.qunar";
     std::string plaint = LogicManager::instance()->getLogicBase()->normalRsaEncrypt(p);
-    cJSON *gObj = cJSON_CreateObject();
-    cJSON_AddStringToObject(gObj, "u", u.c_str());
-    cJSON_AddStringToObject(gObj, "p", plaint.c_str());
-    cJSON_AddStringToObject(gObj, "h", NavigationManager::instance().getDomain().c_str());
-    cJSON_AddStringToObject(gObj, "mk", utils::getMessageId().data());
-    std::string postData = QTalk::JSON::cJSON_to_string(gObj);
-    cJSON_Delete(gObj);
-
-    auto callback = [&map](int code, const std::string &responseData) {
+    nJson gObj;
+    gObj["u"] = u;
+    gObj["p"] = plaint;
+    gObj["h"] = NavigationManager::instance().getDomain();
+    gObj["mk"] = utils::getMessageId();
+    std::string postData = gObj.dump();
+    auto callback = [&info](int code, const std::string &responseData) {
         if (code == 200) {
 
-            cJSON *retDta = cJSON_Parse(responseData.c_str());
+            nJson retDta= Json::parse(responseData);
             if (nullptr == retDta) {
-                error_log("json 解析失败");
-                cJSON_Delete(retDta);
                 return;
             }
-            int errCode = cJSON_GetObjectItem(retDta, "errcode")->valueint;
+            int errCode = Json::get<int >(retDta, "errcode");
             if(errCode == 0){
-                cJSON *data = cJSON_GetObjectItem(retDta,"data");
-                std::string u = cJSON_GetObjectItem(data,"u")->valuestring;
-                std::string t = cJSON_GetObjectItem(data,"t")->valuestring;
-                map["u"] = u;
-                map["t"] = t;
+                nJson data = Json::get<nJson>(retDta,"data");
+                std::string u = Json::get<std::string>(data,"u");
+                std::string t = Json::get<std::string>(data,"t");
+                info["u"] = u;
+                info["t"] = t;
             } else{
-                error_log(cJSON_GetObjectItem(retDta, "errmsg")->valuestring);
+                error_log(Json::get<std::string>(retDta, "errmsg"));
             }
-            cJSON_Delete(retDta);
         }
     };
 
@@ -1480,17 +1456,17 @@ void Communication::reportDump(const std::string&ip, const std::string& id, cons
             // report
 #if !defined (_STARTALK) && !defined (_QCHAT)
             {
-                cJSON *obj = cJSON_CreateObject();
-                cJSON_AddStringToObject(obj, "symbolFileId", id.data());
-                cJSON_AddStringToObject(obj, "resource", PLAT.getClientVersion().data());
-                cJSON_AddStringToObject(obj, "platform", PLAT.getPlatformStr().data());
-                cJSON_AddStringToObject(obj, "dumpFileUrl", url.data());
-                cJSON_AddStringToObject(obj, "uploadUser", PLAT.getSelfXmppId().data());
-                cJSON_AddStringToObject(obj, "uploadIp", ip.data());
-                cJSON_AddNumberToObject(obj, "dumpTime", crashTime);
-                cJSON_AddStringToObject(obj, "exec", PLAT.getExecuteName().data());
+                nJson obj;
+                obj["symbolFileId"] = id;
+                obj["resource"] = PLAT.getClientVersion();
+                obj["platform"] = PLAT.getPlatformStr();
+                obj["dumpFileUrl"] = url;
+                obj["uploadUser"] = PLAT.getSelfXmppId();
+                obj["uploadIp"] = ip;
+                obj["dumpTime"] = crashTime;
+                obj["exec"] = PLAT.getExecuteName();
 
-                auto postBody = QTalk::JSON::cJSON_to_string(obj);
+                auto postBody = obj.dump();
                 auto reportUrl = NavigationManager::instance().getHttpHost() + "/qtalkDump/upload_dump_file.qunar";
                 HttpRequest req(reportUrl, RequestMethod::POST);
                 req.header["Content-Type"] = "application/json;";
@@ -1610,7 +1586,7 @@ void Communication::removeSession(const string &peerId) {
  * @param head
  */
 void Communication::changeUserHead(const string &head) {
-    std::thread([this, head]() {
+    std::async(std::launch::async, [this, head]() {
 #ifdef _MACOS
         pthread_setname_np("communication changeUserHead thread");
 #endif
@@ -1627,7 +1603,7 @@ void Communication::changeUserHead(const string &head) {
             CommMsgManager::changeHeadRetMessage(ret, localHead);
         }
 
-    }).detach();
+    });
 }
 
 /**
@@ -1636,7 +1612,7 @@ void Communication::changeUserHead(const string &head) {
  * @param logoutTime
  */
 void Communication::sendUserOnlineState(const QInt64 &loginTime, const QInt64 &logoutTime, const std::string &ip) {
-    std::thread([this, loginTime, logoutTime, ip]() {
+    std::async(std::launch::async, [this, loginTime, logoutTime, ip]() {
 #ifdef _MACOS
         pthread_setname_np("communication sendUserOnlineState thread");
 #endif
@@ -1649,18 +1625,16 @@ void Communication::sendUserOnlineState(const QInt64 &loginTime, const QInt64 &l
             << "&k=" << PLAT.getServerAuthKey()
             << "&d=" << PLAT.getSelfDomain();
 
-        cJSON *obj = cJSON_CreateObject();
-        cJSON_AddStringToObject(obj, "username", PLAT.getSelfUserId().data());
-        cJSON_AddStringToObject(obj, "host", PLAT.getSelfDomain().data());
-        cJSON_AddStringToObject(obj, "resource", PLAT.getSelfResource().data());
-        cJSON_AddStringToObject(obj, "platform", PLAT.getPlatformStr().data());
-        cJSON_AddStringToObject(obj, "login_time", std::to_string(loginTime).data());
-        cJSON_AddStringToObject(obj, "logout_at", std::to_string(logoutTime).data());
-        cJSON_AddStringToObject(obj, "ip", ip.data());
-        std::string postData = QTalk::JSON::cJSON_to_string(obj);
-        cJSON_Delete(obj);
-
-        auto callback = [](int code, std::string responsData) {
+        nJson obj;
+        obj["username"] = PLAT.getSelfUserId();
+        obj["host"] = PLAT.getSelfDomain();
+        obj["resource"] = PLAT.getSelfResource();
+        obj["platform"] = PLAT.getPlatformStr();
+        obj["login_time"] = std::to_string(loginTime);
+        obj["logout_at"] = std::to_string(logoutTime);
+        obj["ip"] = ip;
+        std::string postData = obj.dump();
+        auto callback = [](int code, const std::string& responsData) {
 
             if (code == 200) {
                 debug_log("sendUserOnlineState success {0}", responsData);
@@ -1673,7 +1647,7 @@ void Communication::sendUserOnlineState(const QInt64 &loginTime, const QInt64 &l
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
         addHttpRequest(req, callback);
-    }).detach();
+    });
 }
 
 /**
@@ -1689,54 +1663,52 @@ void Communication::sendOperatorStatistics(const std::string &ip, const std::vec
 
     std::vector<QTalk::StActLog> logs(operators);
     do {
-        cJSON *obj = cJSON_CreateObject();
+        nJson obj;
         // user
-        cJSON *user = cJSON_CreateObject();
-        cJSON_AddStringToObject(user, "uid", PLAT.getSelfUserId().data());
-        cJSON_AddStringToObject(user, "domain", PLAT.getSelfDomain().data());
-        cJSON_AddStringToObject(user, "nav", PLAT.getLoginNav().data());
-        cJSON_addJsonObject(obj, "user", user);
+        nJson user;
+        user["uid"] = PLAT.getSelfUserId();
+        user["domain"] = PLAT.getSelfDomain();
+        user["nav"] = PLAT.getLoginNav();
+        obj["user"] = user;
         // device
-        cJSON *device = cJSON_CreateObject();
+        nJson device;
 #if defined(_STARTALK)
-        cJSON_AddStringToObject(device, "plat", "starTalk");
+        device["plat"] = "starTalk";
 #else
-        cJSON_AddStringToObject(device, "plat", "qtalk");
+        device["plat"] = "qtalk";
 #endif
-        cJSON_AddStringToObject(device, "os", PLAT.getPlatformStr().data());
-        cJSON_AddNumberToObject(device, "versionCode", PLAT.getClientNumVerison());
-        cJSON_AddStringToObject(device, "versionName", PLAT.getGlobalVersion().data());
+        device["os"] = PLAT.getPlatformStr();
+        device["versionCode"] = PLAT.getClientNumVerison();
+        device["versionName"] = PLAT.getGlobalVersion();
 
-        cJSON_AddStringToObject(device, "osModel", PLAT.getOSInfo().data());
-        cJSON_AddStringToObject(device, "osBrand", PLAT.getOSProductType().data());
-        cJSON_AddStringToObject(device, "osVersion", PLAT.getOSVersion().data());
-        cJSON_addJsonObject(obj, "device", device);
-        cJSON *infos = cJSON_CreateArray();
+        device["osModel"] = PLAT.getOSInfo();
+        device["osBrand"] = PLAT.getOSProductType();
+        device["osVersion"] = PLAT.getOSVersion();
+        obj["device"] = device;
+        nJson infos;
 
         int i = 0;
         while (i++ <= 100 && !logs.empty()) {
             const auto &log = logs.back();
-            cJSON *info = cJSON_CreateObject();
-            cJSON_AddNumberToObject(info, "costTime", 0);
-            cJSON_AddStringToObject(info, "describtion", log.desc.data());
-            cJSON_AddBoolToObject(info, "isMainThread", true);
-            cJSON_AddStringToObject(info, "reportTime", std::to_string(log.operatorTime).data());
-            cJSON_AddStringToObject(info, "sql", "[]");
-            cJSON_AddStringToObject(info, "subType", "click");
-            cJSON_AddNumberToObject(info, "threadId", 1);
-            cJSON_AddStringToObject(info, "threadName", "main");
-            cJSON_AddStringToObject(info, "type", "ACT");
+            nJson info;
+            info["describtion"] = log.desc;
+            info["costTime"] = 0;
+            info["isMainThread"] = true;
+            info["reportTime"] = std::to_string(log.operatorTime);
+            info["sql"] = "[]";
+            info["threadId"] = 1;
+            info["subType"] = "click";
+            info["threadName"] = "main";
+            info["type"] = "ACT";
 
             logs.pop_back();
 
-            cJSON_AddItemToArray(infos, info);
+            infos.push_back(info);
         }
-        cJSON_addJsonObject(obj, "infos", infos);
+        obj["infos"] = infos;
 
-        std::string postData = QTalk::JSON::cJSON_to_string(obj);
-        cJSON_Delete(obj);
-
-        auto callback = [](int code, std::string responsData) {
+        std::string postData = obj.dump();
+        auto callback = [](int code, const std::string& responsData) {
 
             if (code == 200) {
                 debug_log("sendOperatorStatistics success {0}", responsData);
@@ -1759,7 +1731,7 @@ void Communication::sendOperatorStatistics(const std::string &ip, const std::vec
  */
 void Communication::getUserCard(std::shared_ptr<QTalk::Entity::ImUserInfo> &info) {
     if (info && _pUserManager) {
-        QTalk::Entity::JID jid(info->XmppId.data());
+        QTalk::Entity::JID jid(info->XmppId);
         UserCardParam params;
         params[jid.domainname()][jid.username()] = 0;
 
@@ -1996,10 +1968,9 @@ void Communication::getMedalList()
     std::string strVer;
     LogicManager::instance()->getDatabase()->getConfig("MEDAL_LIST", "VERSION", strVer);
     auto version = atoi(strVer.data());
-    cJSON* obj = cJSON_CreateObject();
-    cJSON_AddNumberToObject(obj, "version", version);
-    std::string postData = cJSON_to_string(obj);
-    cJSON_Delete(obj);
+    nJson obj;
+    obj["version"] = version;
+    std::string postData = obj.dump();
     //
     std::vector<QTalk::Entity::ImMedalList> medalList;
     std::set<std::string> imgs;
@@ -2008,7 +1979,7 @@ void Communication::getMedalList()
 
         if(resData.empty())
             return;
-        cJSON* json = cJSON_Parse(resData.data());
+        nJson json= Json::parse(resData);
         if(nullptr == json)
         {
             error_log("json Parse error {0}", resData);
@@ -2016,26 +1987,25 @@ void Communication::getMedalList()
         }
         if(code == 200) {
             //
-            cJSON_bool ret = JSON::cJSON_SafeGetBoolValue(json, "ret");
+            bool ret = Json::get<bool>(json, "ret");
             if(ret)
             {
-                cJSON* data = cJSON_GetObjectItem(json, "data");
-                newVersion = JSON::cJSON_SafeGetIntValue(data, "version");
+                nJson data= Json::get<nJson >(json, "data");
+                newVersion = Json::get<int >(data, "version");
                 //
-                cJSON* list = cJSON_GetObjectItem(data, "medalList");
-                cJSON* temp = nullptr;
-                cJSON_ArrayForEach(temp, list){
+                nJson list= Json::get<nJson >(data, "medalList");
+                for(auto &temp : list){
                     QTalk::Entity::ImMedalList medal;
-                    medal.medalId = JSON::cJSON_SafeGetIntValue(temp, "id");
-                    medal.medalName = JSON::cJSON_SafeGetStringValue(temp, "medalName");
-                    medal.obtainCondition = JSON::cJSON_SafeGetStringValue(temp, "obtainCondition");
-                    medal.status = JSON::cJSON_SafeGetIntValue(temp, "status");
+                    medal.medalId = Json::get<int >(temp, "id");
+                    medal.medalName = Json::get<std::string >(temp, "medalName");
+                    medal.obtainCondition = Json::get<std::string >(temp, "obtainCondition");
+                    medal.status = Json::get<int >(temp, "status");
 
-                    cJSON* icon = cJSON_GetObjectItem(temp, "icon");
-                    medal.smallIcon = JSON::cJSON_SafeGetStringValue(icon, "small");
-                    medal.bigLightIcon = JSON::cJSON_SafeGetStringValue(icon, "bigLight");
-//                    medal.bigGrayIcon = JSON::cJSON_SafeGetStringValue(icon, "bigGray");
-                    medal.bigLockIcon = JSON::cJSON_SafeGetStringValue(icon, "bigLock");
+                    nJson icon= Json::get<nJson >(temp, "icon");
+                    medal.smallIcon = Json::get<std::string >(icon, "small");
+                    medal.bigLightIcon = Json::get<std::string >(icon, "bigLight");
+//                    medal.bigGrayIcon = Json::get<std::string >(icon, "bigGray");
+                    medal.bigLockIcon = Json::get<std::string >(icon, "bigLock");
 
                     medalList.push_back(medal);
 
@@ -2046,7 +2016,7 @@ void Communication::getMedalList()
             }
             else
             {
-                std::string errorMsg = JSON::cJSON_SafeGetStringValue(json, "errmsg");
+                std::string errorMsg = Json::get<std::string >(json, "errmsg");
                 error_log("getMedalList error {0}", errorMsg);
             }
         }
@@ -2054,8 +2024,7 @@ void Communication::getMedalList()
         {
 
         }
-        cJSON_Delete(json);
-    };
+        };
 
     QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
     req.header["Content-Type"] = "application/json;";
@@ -2097,12 +2066,11 @@ void Communication::getUserMedal(bool presence) {
     std::string strVer;
     LogicManager::instance()->getDatabase()->getConfig("USER_MEDAL", "VERSION", strVer);
     auto version = atoi(strVer.data());
-    cJSON* obj = cJSON_CreateObject();
-    cJSON_AddNumberToObject(obj, "version", version);
-//    cJSON_AddStringToObject(obj, "userId", PLAT.getSelfUserId().data());
-//    cJSON_AddStringToObject(obj, "host", PLAT.getSelfDomain().data());
-    std::string postData = cJSON_to_string(obj);
-    cJSON_Delete(obj);
+    nJson obj;
+    obj["version"] = version;
+//    obj["userId"] = PLAT.getSelfUserId();
+//    obj["host"] = PLAT.getSelfDomain();
+    std::string postData = obj.dump();
     //
     std::vector<QTalk::Entity::ImUserStatusMedal> userMedals;
     int newVersion = 0;
@@ -2110,7 +2078,7 @@ void Communication::getUserMedal(bool presence) {
 
         if(resData.empty())
             return;
-        cJSON* json = cJSON_Parse(resData.data());
+        nJson json= Json::parse(resData);
         if(nullptr == json)
         {
             error_log("json Parse error {0}", resData);
@@ -2118,28 +2086,27 @@ void Communication::getUserMedal(bool presence) {
         }
         if(code == 200) {
             //
-            cJSON_bool ret = JSON::cJSON_SafeGetBoolValue(json, "ret");
+            bool ret = Json::get<bool>(json, "ret");
             if(ret)
             {
-                cJSON* data = cJSON_GetObjectItem(json, "data");
-                newVersion = JSON::cJSON_SafeGetIntValue(data, "version");
+                nJson data= Json::get<nJson >(json, "data");
+                newVersion = Json::get<int >(data, "version");
                 //
-                cJSON* list = cJSON_GetObjectItem(data, "userMedals");
-                cJSON* temp = nullptr;
-                cJSON_ArrayForEach(temp, list){
+                nJson list= Json::get<nJson >(data, "userMedals");
+                for(auto &temp : list){
                     QTalk::Entity::ImUserStatusMedal medal;
-                    medal.medalId = JSON::cJSON_SafeGetIntValue(temp, "medalId");
-                    medal.userId = JSON::cJSON_SafeGetStringValue(temp, "userId");
-                    medal.host = JSON::cJSON_SafeGetStringValue(temp, "host");
-                    medal.medalStatus = JSON::cJSON_SafeGetIntValue(temp, "medalStatus");
-                    medal.mappingVersion = JSON::cJSON_SafeGetIntValue(temp, "mappingVersion");
-                    medal.updateTime = JSON::cJSON_SafeGetLonglongValue(temp, "updateTime");
+                    medal.medalId = Json::get<int >(temp, "medalId");
+                    medal.userId = Json::get<std::string >(temp, "userId");
+                    medal.host = Json::get<std::string >(temp, "host");
+                    medal.medalStatus = Json::get<int >(temp, "medalStatus");
+                    medal.mappingVersion = Json::get<int >(temp, "mappingVersion");
+                    medal.updateTime = Json::get<long long>(temp, "updateTime");
                     userMedals.push_back(medal);
                 };
             }
             else
             {
-                std::string errorMsg = JSON::cJSON_SafeGetStringValue(json, "errmsg");
+                std::string errorMsg = Json::get<std::string >(json, "errmsg");
                 error_log("getMedalList error {0}", errorMsg);
             }
         }
@@ -2147,7 +2114,6 @@ void Communication::getUserMedal(bool presence) {
         {
 
         }
-        cJSON_Delete(json);
     };
 
     QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
@@ -2188,39 +2154,30 @@ bool Communication::modifyUserMedalStatus(int medalId, bool wear) {
         << "/medal/userMedalStatusModify.qunar";
     std::string strUrl = url.str();
     //
-    cJSON* obj = cJSON_CreateObject();
-    cJSON_AddNumberToObject(obj, "medalStatus", wear ? 3 : 1);
-    cJSON_AddStringToObject(obj, "userId", PLAT.getSelfUserId().data());
-    cJSON_AddStringToObject(obj, "host", PLAT.getSelfDomain().data());
-    cJSON_AddNumberToObject(obj, "medalId", medalId);
-    std::string postData = cJSON_to_string(obj);
-    cJSON_Delete(obj);
+    nJson obj;
+    obj["medalStatus"] = wear ? 3 : 1;
+    obj["userId"] = PLAT.getSelfUserId();
+    obj["host"] = PLAT.getSelfDomain();
+    obj["medalId"] = medalId;
+    std::string postData = obj.dump();
     //
     bool ret = false;
     auto call_back = [ &ret](int code, const std::string& resData){
 
         if(resData.empty())
             return;
-        cJSON* json = cJSON_Parse(resData.data());
+        nJson json= Json::parse(resData);
         if(nullptr == json)
         {
             error_log("json Parse error {0}", resData);
             return;
         }
-        if(code == 200) {
-            //
-            ret = JSON::cJSON_SafeGetBoolValue(json, "ret");
-            if(!ret)
-            {
-                std::string errorMsg = JSON::cJSON_SafeGetStringValue(json, "errmsg");
-                error_log("userMedalStatusModify error {0}", errorMsg);
-            }
-        }
-        else
+        ret = Json::get<bool>(json, "ret");
+        if(code != 200 || !ret)
         {
-
+            std::string errorMsg = Json::get<std::string >(json, "errmsg");
+            error_log("userMedalStatusModify error {0}", errorMsg);
         }
-        cJSON_Delete(json);
     };
 
     QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);
@@ -2240,15 +2197,14 @@ void Communication::reportLogin() {
     //
     std::ostringstream sId;
     sId << GLOBAL_INTERNAL_VERSION << "_" << build_time();
-    cJSON *obj = cJSON_CreateObject();
-    cJSON_AddStringToObject(obj, "symbolFileId", sId.str().data());
-    cJSON_AddStringToObject(obj, "resource", PLAT.getClientVersion().data());
-    cJSON_AddStringToObject(obj, "platform", PLAT.getPlatformStr().data());
-    cJSON_AddStringToObject(obj, "username", PLAT.getSelfUserId().data());
-    cJSON_AddStringToObject(obj, "exec", PLAT.getExecuteName().data());
-    cJSON_AddNumberToObject(obj, "loginTime", now * 1000);
-    std::string postData = cJSON_to_string(obj);
-    cJSON_Delete(obj);
+    nJson obj;
+    obj["symbolFileId"] = sId.str();
+    obj["resource"] = PLAT.getClientVersion();
+    obj["platform"] = PLAT.getPlatformStr();
+    obj["username"] = PLAT.getSelfUserId();
+    obj["exec"] = PLAT.getExecuteName();
+    obj["loginTime"] = now * 1000;
+    std::string postData = obj.dump();
     //
     {
         std::ostringstream url;
@@ -2261,25 +2217,18 @@ void Communication::reportLogin() {
 
             if(resData.empty())
                 return;
-            cJSON* json = cJSON_Parse(resData.data());
+            nJson json= Json::parse(resData);
             if(nullptr == json)
             {
                 error_log("json Parse error {0}", resData);
                 return;
             }
-            if(code == 200) {
-                //
-                ret = JSON::cJSON_SafeGetBoolValue(json, "ret");
-                if(!ret)
-                {
-                    std::string errorMsg = JSON::cJSON_SafeGetStringValue(json, "errmsg");
-                    error_log("userMedalStatusModify error {0}", errorMsg);
-                }
-            }
-            else {
 
+            ret = Json::get<bool>(json, "ret");
+            if(code != 200 || !ret) {
+                std::string errorMsg = Json::get<std::string >(json, "errmsg");
+                error_log("userMedalStatusModify error {0}", errorMsg);
             }
-            cJSON_Delete(json);
         };
 
         QTalk::HttpRequest req(strUrl, QTalk::RequestMethod::POST);

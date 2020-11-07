@@ -20,7 +20,6 @@
 #include "../../UICom/qimage/qimage.h"
 #include "../../CustomUi/LiteMessageBox.h"
 #include "../../QtUtil/Utils/Log.h"
-#include "../../QtUtil/lib/MacHelper.h"
 #include "../../QtUtil/Utils/utils.h"
 #include <math.h>
 

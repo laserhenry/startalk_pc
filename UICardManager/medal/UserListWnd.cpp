@@ -10,6 +10,7 @@
 #include <QPainter>
 #include <QToolButton>
 #include <QScrollBar>
+#include <QPainterPath>
 #include <QFileInfo>
 
 QSize UserItemDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const {
