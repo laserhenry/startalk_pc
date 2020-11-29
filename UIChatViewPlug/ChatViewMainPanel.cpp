@@ -116,12 +116,6 @@ ChatViewMainPanel::ChatViewMainPanel(QWidget *parent) :
 //    _pLoadingLabel->movie()->start();
 //    _pStackedLayout->addWidget(_pLoadingLabel);
     //
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qunar.com", QApplication::applicationName());
-    bool showDoutu = false;
-    if(settings.contains("QT_DOU_TU"))
-        showDoutu = settings.value("QT_DOU_TU").toBool();
-
-    //
     _pAudioVideoManager = new AudioVideoManager;
     connect(_pAudioVideoManager, &AudioVideoManager::sgSendSignal, this, &ChatViewMainPanel::onSendSignal);
     connect(_pAudioVideoManager, &AudioVideoManager::sgClose2AudioVideo,
@@ -1587,7 +1581,7 @@ void ChatViewMainPanel::playVoice(const std::string &localFile, VoiceMessageItem
 #ifndef _WINDOWS
     if (_pVoicePlayer)
     {
-        if (_pVoicePlayer->state() != QMediaPlayer::PlayingState)
+        if (_pVoicePlayer->state() == QMediaPlayer::PlayingState)
             _pVoicePlayer->stop();
 
         _pVoicePlayer->setMedia(QUrl::fromLocalFile(localFile.data()));
@@ -1598,7 +1592,7 @@ void ChatViewMainPanel::playVoice(const std::string &localFile, VoiceMessageItem
             {
                 msgItem->stopVoice();
             }
-            });
+        });
     }
 #else
     play(localFile.data(), msgItem);
@@ -3062,13 +3056,20 @@ void ChatViewMainPanel::downloadFileWithProcess(const QString &url, const QStrin
     });
 
     connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(onHttpError(QNetworkReply::NetworkError)));
-
+    connect(reply, SIGNAL(sslErrors(const QList<QSslError>&)), this, SLOT(onSSLError(const QList<QSslError>&)));
+    //
     connect(reply, &QNetworkReply::finished, [wgtPointer, reply, file, t, last, path, key](){
         auto data = reply->readAll();
         file->write(data);
         file->flush();
         file->close();
-        file->rename(path);
+        bool success = (reply->error() == QNetworkReply::NoError);
+        if(!success) {
+            file->remove();
+            qCritical() << "download eee error";
+        } else {
+            file->rename(path);
+        }
         file->deleteLater();
         delete t;
         delete last;
@@ -3076,12 +3077,14 @@ void ChatViewMainPanel::downloadFileWithProcess(const QString &url, const QStrin
         if(wgtPointer && !wgtPointer.isNull())
         {
             auto fileItem = qobject_cast<FileSendReceiveMessItem*>(wgtPointer.data());
-            if(fileItem)
-                fileItem->downloadOrUploadSuccess();
+            if(fileItem) {
+                success ? fileItem->downloadOrUploadSuccess() : fileItem->onDownloadFailed();
+            }
             else {
                 auto videoItem = qobject_cast<VideoMessageItem*>(wgtPointer.data());
-                if(videoItem)
-                    videoItem->downloadSuccess();
+                if(videoItem && success) {
+                     videoItem->downloadSuccess();
+                }
             }
         }
     });
@@ -3090,6 +3093,10 @@ void ChatViewMainPanel::downloadFileWithProcess(const QString &url, const QStrin
 
 void ChatViewMainPanel::onHttpError(QNetworkReply::NetworkError err) {
     qInfo() << err;
+}
+
+void ChatViewMainPanel::onSSLError(const QList<QSslError>& errors) {
+    qInfo() << errors;
 }
 
 //

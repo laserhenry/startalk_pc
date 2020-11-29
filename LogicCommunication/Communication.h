@@ -38,7 +38,7 @@ public:
 
 public:
     bool OnLogin(const std::string& userName, const std::string& password);
-    void
+    bool
     AsyncConnect(const std::string &userName, const std::string &password, const std::string &host, int port);
 
     bool tryConnectToServer();

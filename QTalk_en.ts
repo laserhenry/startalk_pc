@@ -478,7 +478,7 @@
     <message>
         <source>群成员超过50人, 当前人数: %1</source>
         <translation>More than 50 members of the group
-the current number:%1</translation>
+                the current number:%1</translation>
     </message>
 </context>
 <context>
@@ -578,8 +578,8 @@ the current number:%1</translation>
         <translation>About</translation>
     </message>
     <message>
-        <source>更新客户端</source>
-        <translation>Update client</translation>
+        <source>检查更新</source>
+        <translation>Check update</translation>
     </message>
 </context>
 <context>
@@ -789,13 +789,18 @@ the current number:%1</translation>
         <translation>Destroy group</translation>
     </message>
     <message>
-        <source>%1 即将打开您的默认邮箱客户端 
-</source>
-        <translation>%1 about to open your default mailbox client </translation>
+        <source>%1 即将打开您的默认邮箱客户端
+            </source>
+        <translation type="vanished">%1 about to open your default mailbox client </translation>
     </message>
     <message>
         <source>此操作可能导致邮箱客户端崩溃( 取决于邮件客户端和群发人数 )</source>
         <translation>This operation may cause the mailbox client to crash</translation>
+    </message>
+    <message>
+        <source>%1 即将打开您的默认邮箱客户端 
+</source>
+        <translation>%1 will open your default mailbox client</translation>
     </message>
 </context>
 <context>
@@ -859,14 +864,6 @@ the current number:%1</translation>
         <source>提醒</source>
         <translation type="vanished">Warning</translation>
     </message>
-    <message>
-        <source>斗图神器已启动, 重启应用后生效</source>
-        <translation type="vanished">restart it for the changes to take effect</translation>
-    </message>
-    <message>
-        <source>斗图神器已关闭, 重启应用后生效</source>
-        <translation type="vanished">restart it for the changes to take effect</translation>
-    </message>
 </context>
 <context>
     <name>GroupMemberPopWnd</name>
@@ -892,10 +889,18 @@ the current number:%1</translation>
     <message>
         <source>
 
+                暂无公告</source>
+        <translation type="vanished">
+
+                No Group Notice</translation>
+    </message>
+    <message>
+        <source>
+
               暂无公告</source>
         <translation>
 
-              No Group Notice</translation>
+                No Group Notice</translation>
     </message>
 </context>
 <context>
@@ -994,7 +999,7 @@ the current number:%1</translation>
     <name>LoginPanel</name>
     <message>
         <source>QTalk测试版本 不代表最终品质</source>
-        <translation>The test version of QTalk does not represent the final quality</translation>
+        <translation type="vanished">The test version of QTalk does not represent the final quality</translation>
     </message>
     <message>
         <source>提示</source>
@@ -1248,15 +1253,15 @@ the current number:%1</translation>
     </message>
     <message>
         <source>警告</source>
-        <translation>Warning</translation>
+        <translation type="vanished">Warning</translation>
     </message>
     <message>
         <source>主程序有更新，安装包已经准备完毕，是否立即打开更新？</source>
-        <translation>The main program has an update. The installation package is ready. Do you want to open the update now?</translation>
+        <translation type="vanished">The main program has an update. The installation package is ready. Do you want to open the update now?</translation>
     </message>
     <message>
         <source>立即打开客户端更新？</source>
-        <translation>update now?</translation>
+        <translation type="vanished">update now?</translation>
     </message>
 </context>
 <context>
@@ -1528,6 +1533,29 @@ the current number:%1</translation>
     </message>
 </context>
 <context>
+    <name>NavigationBar</name>
+    <message>
+        <source>添加投屏</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>切换扩展屏</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>暂停投屏</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>结束投屏</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>继续投屏</source>
+        <translation></translation>
+    </message>
+</context>
+<context>
     <name>NavigationItem</name>
     <message>
         <source>星标联系人</source>
@@ -1670,7 +1698,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>共找到&lt;span style=&apos;color:rgba(0,202,190,1)&apos;&gt; %1 &lt;/span&gt;条相关消息</source>
-        <translation>Find 3 &lt;span style=&apos;color:rgba(0,202,190,1)&apos;&gt; %1 &lt;/span&gt; related news</translation>
+        <translation>Find &lt;span style=&apos;color:rgba(0,202,190,1)&apos;&gt; %1 &lt;/span&gt; related news</translation>
     </message>
     <message>
         <source>[文件]</source>
@@ -1780,6 +1808,17 @@ the current number:%1</translation>
     </message>
 </context>
 <context>
+    <name>QmlView</name>
+    <message>
+        <source>警告</source>
+        <translation>Warning</translation>
+    </message>
+    <message>
+        <source>窗口加载失败</source>
+        <translation>Window load failed</translation>
+    </message>
+</context>
+<context>
     <name>QtMessageBox</name>
     <message>
         <source>取消</source>
@@ -1787,7 +1826,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>暂不更新</source>
-        <translation>Not updated</translation>
+        <translation>Later</translation>
     </message>
     <message>
         <source>确定</source>
@@ -1839,7 +1878,7 @@ the current number:%1</translation>
     <name>QuickReplyWnd</name>
     <message>
         <source>快捷回复</source>
-        <translation type="vanished">Quick reply</translation>
+        <translation>Quick reply</translation>
     </message>
 </context>
 <context>
@@ -1857,7 +1896,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>即将加入群聊%1</source>
-        <translation type="vanished">Join the group chat soon %1</translation>
+        <translation type="vanished">Join the group chat %1 ?</translation>
     </message>
     <message>
         <source>是否使用浏览器打开 %1 ?</source>
@@ -1974,7 +2013,7 @@ the current number:%1</translation>
     </message>
     <message>
         <source>联系人</source>
-        <translation>Contacts</translation>
+        <translation>Contact</translation>
     </message>
     <message>
         <source>群聊</source>
@@ -1982,18 +2021,23 @@ the current number:%1</translation>
     </message>
     <message>
         <source>聊天记录</source>
-        <translation>Chat record</translation>
+        <translation>Record</translation>
+    </message>
+    <message>
+        <source>搜索联系人、群聊、共同群聊，
+                支持关键词、ID搜索</source>
+        <translation type="vanished">Search Contacts Group Chats \nAllows Searching by Keywords \nor ID</translation>
+    </message>
+    <message>
+        <source>文件</source>
+        <translation>File</translation>
     </message>
     <message>
         <source>搜索联系人、群聊、共同群聊，
  支持关键词、ID搜索</source>
         <translation>Search Contacts Group Chats
-Allows Searching by Keywords
-or ID</translation>
-    </message>
-    <message>
-        <source>文件</source>
-        <translation>File</translation>
+                Allows Searching by Keywords
+                or ID</translation>
     </message>
 </context>
 <context>
@@ -2079,15 +2123,15 @@ or ID</translation>
     <name>SendProductWnd</name>
     <message>
         <source>产品卡片JSON：</source>
-        <translation type="vanished">Product Card JSON:</translation>
+        <translation>Product Card JSON:</translation>
     </message>
     <message>
         <source>取消</source>
-        <translation type="vanished">No</translation>
+        <translation>No</translation>
     </message>
     <message>
         <source>确定</source>
-        <translation type="vanished">Yes</translation>
+        <translation>Yes</translation>
     </message>
 </context>
 <context>
@@ -2229,27 +2273,27 @@ or ID</translation>
     <name>SessionTransferWnd</name>
     <message>
         <source>会话转移</source>
-        <translation type="vanished">Conversational transfer</translation>
+        <translation>Conversational transfer</translation>
     </message>
     <message>
         <source>选择要转移的客服</source>
-        <translation type="vanished">Choosing Customer Service to Transfer</translation>
+        <translation>Choosing Customer Service to Transfer</translation>
     </message>
     <message>
         <source>请输入转移原因</source>
-        <translation type="vanished">Please enter the reason for the transfer</translation>
+        <translation>Please enter the reason for the transfer</translation>
     </message>
     <message>
         <source>确定</source>
-        <translation type="vanished">Yes</translation>
+        <translation>Yes</translation>
     </message>
     <message>
         <source>取消</source>
-        <translation type="vanished">No</translation>
+        <translation>No</translation>
     </message>
     <message>
         <source>请选择要转移的客服!</source>
-        <translation type="vanished">Please choose the customer service to transfer!</translation>
+        <translation>Please choose the customer service to transfer!</translation>
     </message>
 </context>
 <context>
@@ -2434,18 +2478,6 @@ or ID</translation>
     <message>
         <source>群会话显示签名</source>
         <translation>Group display signature</translation>
-    </message>
-    <message>
-        <source>切换会话时自动销毁旧会话</source>
-        <translation type="vanished">Automatically destroy old sessions</translation>
-    </message>
-    <message>
-        <source>离开电脑</source>
-        <translation type="vanished">Leaving the computer</translation>
-    </message>
-    <message>
-        <source>分钟 push消息到手机端，并自动回复</source>
-        <translation type="vanished">Minute push message to mobile phone and automatic reply</translation>
     </message>
     <message>
         <source>预设</source>
@@ -2719,6 +2751,33 @@ or ID</translation>
     </message>
 </context>
 <context>
+    <name>TScreenPanel</name>
+    <message>
+        <source>Qunar 无线投屏</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>请输入投影画面中显示的6位投屏码</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>开始投屏</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>投屏启动中, 请稍后重试!</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>企业码失效</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>网络异常</source>
+        <translation></translation>
+    </message>
+</context>
+<context>
     <name>TcpDisconnect</name>
     <message>
         <source>当前网络不可用</source>
@@ -2827,15 +2886,15 @@ or ID</translation>
     </message>
     <message>
         <source>挂断</source>
-        <translation type="vanished">Hang up</translation>
+        <translation>Hang up</translation>
     </message>
     <message>
         <source>会话转移</source>
-        <translation type="vanished">Conversational transfer</translation>
+        <translation>Conversational transfer</translation>
     </message>
     <message>
         <source>快捷回复</source>
-        <translation type="vanished">Quick reply</translation>
+        <translation>Quick reply</translation>
     </message>
     <message>
         <source>投票</source>
@@ -2863,19 +2922,19 @@ or ID</translation>
     </message>
     <message>
         <source>视频通话</source>
-        <translation>Video call</translation>
+        <translation type="vanished">Video call</translation>
     </message>
     <message>
         <source>音频通话</source>
-        <translation>Voice call</translation>
+        <translation type="vanished">Voice call</translation>
     </message>
     <message>
         <source>提醒</source>
-        <translation>Warning</translation>
+        <translation type="vanished">Warning</translation>
     </message>
     <message>
         <source>暂不支持此功能!</source>
-        <translation>This feature is not supported yet!</translation>
+        <translation type="vanished">This feature is not supported yet!</translation>
     </message>
     <message>
         <source>抖动太频繁, 待会再试吧!</source>
@@ -2883,11 +2942,11 @@ or ID</translation>
     </message>
     <message>
         <source>提示</source>
-        <translation type="vanished">information</translation>
+        <translation>information</translation>
     </message>
     <message>
         <source>您确认结束本次服务吗?</source>
-        <translation type="vanished">Do you confirm the termination of this service?</translation>
+        <translation>Do you confirm the termination of this service?</translation>
     </message>
     <message>
         <source>发送文件</source>
@@ -3157,6 +3216,49 @@ or ID</translation>
     </message>
 </context>
 <context>
+    <name>updateClient</name>
+    <message>
+        <source>软件更新</source>
+        <translation>Software Update</translation>
+    </message>
+    <message>
+        <source>正在检查更新.</source>
+        <translation>Checking for updates.</translation>
+    </message>
+    <message>
+        <source>立即更新</source>
+        <translation>Update</translation>
+    </message>
+    <message>
+        <source>暂无可用更新.</source>
+        <translation>No updates available</translation>
+    </message>
+    <message>
+        <source>s 后打开更新.</source>
+        <translation>s later. open update client</translation>
+    </message>
+    <message>
+        <source>新版本 </source>
+        <translation>New version </translation>
+    </message>
+    <message>
+        <source> 可用</source>
+        <translation> available</translation>
+    </message>
+    <message>
+        <source>继续</source>
+        <translation>Start</translation>
+    </message>
+    <message>
+        <source>暂停</source>
+        <translation>Pause</translation>
+    </message>
+    <message>
+        <source>安装包校验失败</source>
+        <translation>update package check failed</translation>
+    </message>
+</context>
+<context>
     <name>user_card</name>
     <message>
         <source>这个人很懒，什么都没留下</source>
@@ -3197,10 +3299,6 @@ or ID</translation>
     <message>
         <source>员工 ID</source>
         <translation>Employee ID</translation>
-    </message>
-    <message>
-        <source>ATalk ID</source>
-        <translation type="vanished">ATalk ID</translation>
     </message>
     <message>
         <source>StarTalk ID</source>

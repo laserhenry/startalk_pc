@@ -99,7 +99,7 @@ void TitleFrm::initUi()
 
     topLayout->addWidget(_pTurnBeforeBtn);
     topLayout->addWidget(_pTurnNextBtn);
-    //topLayout->addWidget(new Line());
+    //topLayout->addWidget(new Line(this));
     topLayout->addWidget(_pEnlargeBtn);
     topLayout->addWidget(_pNarrowBtn);
     topLayout->addWidget(_pOne2OneBtn);

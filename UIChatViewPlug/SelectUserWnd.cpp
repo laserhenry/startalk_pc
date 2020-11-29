@@ -249,7 +249,7 @@ void SelectUserWnd::initUi()
     lay->setSpacing(0);
     lay->addWidget(titleFrm, 0);
     lay->addWidget(searchFrm, 0);
-    lay->addWidget(new Line(), 0);
+    lay->addWidget(new Line(this), 0);
     lay->addWidget(btnFrm, 0);
     lay->addWidget(bodyFrm, 1);
     lay->addWidget(bottomFrm, 0);

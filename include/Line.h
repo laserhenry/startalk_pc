@@ -25,6 +25,10 @@ public:
 //        }
 //        this->setStyleSheet("background:rgba(238,238,238,1);");
 //    }
+    explicit Line( QWidget* parent = nullptr)
+        : Line(Qt::Horizontal, parent) {
+
+    }
 
     explicit Line(Qt::Orientation direction = Qt::Horizontal, QWidget* parent = nullptr)
             : QFrame(parent)

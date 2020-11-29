@@ -109,9 +109,9 @@ Q_SIGNALS:
     void clicked();
 
 public:
-	inline void setTip()
+	inline void setTip(bool visible)
 	{
-		_hasTip = true;
+		_hasTip = visible;
 	}
 
 	void setHasHover(bool hasHover) {
@@ -217,7 +217,7 @@ public:
     void setName(const QString& name);
     void setHead(const QString& headPath);
     void onSwitchUserStatusRet(const QString& status);
-    void showUpdateLabel();
+    void setTipVisible(bool);
 
 Q_SIGNALS:
     void showSelfUserCard();

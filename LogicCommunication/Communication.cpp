@@ -133,14 +133,6 @@ Communication::~Communication() {
  */
 bool Communication::OnLogin(const std::string& userName, const std::string& password)
 {
-    if(PLAT.isMainThread())
-    {
-        std::async(std::launch::async, [this, userName, password](){
-            OnLogin(userName, password);
-        });
-        return true;
-    }
-
     // 设置当前登录的userid
     PLAT.setSelfUserId(userName);
     // 下载公钥
@@ -176,16 +168,22 @@ bool Communication::OnLogin(const std::string& userName, const std::string& pass
             gObj[ "mk"] = QTalk::utils::getMessageId();
             nauth["nauth"] = gObj;
             std::string pp = nauth.dump();
-            AsyncConnect(u + "@" + domain, pp, host, port);
+            if(!AsyncConnect(u + "@" + domain, pp, host, port)) {
+                CommMsgManager::sendLoginErrMessage("连接服务器失败!");
+                return false;
+            }
         } else {
-            CommMsgManager::sendLoginErrMessage("获取token失败!");
+            CommMsgManager::sendLoginErrMessage("账户验证失败!");
             return false;
         }
     } else{
         std::string loginName = userName + "@" + domain;
 
 #ifndef _QCHAT
-        AsyncConnect(loginName, password, host, port);
+        if(!AsyncConnect(loginName, password, host, port)) {
+            CommMsgManager::sendLoginErrMessage("连接服务器失败!");
+            return false;
+        }
 #else
         std::string plaint = LogicManager::instance()->getLogicBase()->chatRsaEncrypt(password);
         std::string qvt = getQchatQvt(userName, plaint);
@@ -207,7 +205,7 @@ bool Communication::OnLogin(const std::string& userName, const std::string& pass
 }
 
 //
-void Communication::AsyncConnect(const std::string &userName, const std::string &password, const std::string &host,
+bool Communication::AsyncConnect(const std::string &userName, const std::string &password, const std::string &host,
                                  int port) {
     info_log("start login: user:{0}, password length:{1}, host:{2}, port:{3}", userName, password.length(), host, port);
     _userName = userName;
@@ -215,7 +213,7 @@ void Communication::AsyncConnect(const std::string &userName, const std::string 
     _host = host;
     _port = port;
 
-    tryConnectToServer();
+    return tryConnectToServer();
 }
 
 //
@@ -695,13 +693,13 @@ void Communication::batchUpdateHead(const std::vector<std::string> &arXmppids) {
             }
         }
 
-        std::async(std::launch::async,[this, params]() {
+        std::thread([this, params]() {
             std::vector<QTalk::StUserCard> arUserInfo;
             _pUserManager->getUserCard(params, arUserInfo);
 
             downloadUserHeadByStUserCard(arUserInfo);
             CommMsgManager::sendDownloadHeadSuccess();
-        });
+        }).detach();
     }
 }
 
@@ -861,9 +859,9 @@ void Communication::getStructure(std::vector<std::shared_ptr<QTalk::Entity::ImUs
 void Communication::onInviteGroupMembers(const std::string &groupId) {
     if(PLAT.isMainThread())
     {
-        std::async(std::launch::async,[this, groupId](){
+        std::thread([this, groupId](){
             onInviteGroupMembers(groupId);
-        });
+        }).detach();
         return;
     }
     getGroupMemberById(groupId);
@@ -1586,7 +1584,7 @@ void Communication::removeSession(const string &peerId) {
  * @param head
  */
 void Communication::changeUserHead(const string &head) {
-    std::async(std::launch::async, [this, head]() {
+    std::thread([this, head]() {
 #ifdef _MACOS
         pthread_setname_np("communication changeUserHead thread");
 #endif
@@ -1603,7 +1601,7 @@ void Communication::changeUserHead(const string &head) {
             CommMsgManager::changeHeadRetMessage(ret, localHead);
         }
 
-    });
+    }).detach();
 }
 
 /**
@@ -1612,7 +1610,7 @@ void Communication::changeUserHead(const string &head) {
  * @param logoutTime
  */
 void Communication::sendUserOnlineState(const QInt64 &loginTime, const QInt64 &logoutTime, const std::string &ip) {
-    std::async(std::launch::async, [this, loginTime, logoutTime, ip]() {
+    std::thread([this, loginTime, logoutTime, ip]() {
 #ifdef _MACOS
         pthread_setname_np("communication sendUserOnlineState thread");
 #endif
@@ -1647,7 +1645,7 @@ void Communication::sendUserOnlineState(const QInt64 &loginTime, const QInt64 &l
         req.header["Content-Type"] = "application/json;";
         req.body = postData;
         addHttpRequest(req, callback);
-    });
+    }).detach();
 }
 
 /**

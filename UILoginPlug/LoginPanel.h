@@ -52,6 +52,7 @@ Q_SIGNALS:
     void sgSynDataSuccess();
     void AuthFailedSignal(const QString& msg);
     void systemQuitSignal();
+    void sgSetTip(const QString&);
 
 protected:
     void init();
@@ -115,9 +116,6 @@ private:
     QFrame  *_pAuthFailedSpaceFrm{};
     QLabel  *_pStsLabel{};
     QPushButton  *_cancelLoginBtn{};
-
-private:
-    QLabel  *_pWebLogin{};
 
 private:
     QString            _strConfPath;

@@ -410,6 +410,7 @@ class CheckUpdaterResultEvt : public Event
 public:
     bool hasUpdate {};
     bool forceUpdate{};
+    std::string link;
 };
 
 class LogReportMessageRet : public Event

@@ -159,8 +159,6 @@ set(SOURCE_FILES
         ChatMainSoreModel.cpp ChatMainSoreModel.h
         DropWnd.cpp DropWnd.h)
 
-include_directories(douTu/c-gumbo)
-
 set(LIBRARY_OUTPUT_PATH ../bin)
 set(CMAKE_DEBUG_POSTFIX "d")
 

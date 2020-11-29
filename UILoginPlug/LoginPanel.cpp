@@ -15,6 +15,8 @@
 #include <QNetworkConfigurationManager>
 #include <QTcpSocket>
 #include <QtConcurrent>
+#include <QJsonDocument>
+#include <QJsonArray>
 #include "../CustomUi/UShadowEffect.h"
 #include "../UICom/uicom.h"
 #include "../QtUtil/lib/ini/ConfigLoader.h"
@@ -24,6 +26,7 @@
 #include "../CustomUi/QtMessageBox.h"
 #include "../Platform/AppSetting.h"
 #include "../Platform/NavigationManager.h"
+#include "../include/Line.h"
 
 #ifdef _WINDOWS
 #include <windows.h>
@@ -51,8 +54,7 @@ LoginPanel::LoginPanel(QWidget *parent) :
     setContentsMargins(10, 10, 10, 10);
     init();
 
-    UICom::getInstance()->setAcltiveMainWnd(this);
-
+//    UICom::getInstance()->setAcltiveMainWnd(this);
 }
 
 LoginPanel::~LoginPanel() {
@@ -127,17 +129,6 @@ void LoginPanel::init() {
  */
 void LoginPanel::initLayout() {
 
-    // load tips xml
-    qsrand(QTime(0, 0, 0).secsTo(QTime::currentTime()));
-
-    QTalk::StConfig config;
-    QTalk::qConfig::loadConfig(":/login/tips.xml", false, &config);
-    QVector<QString> tips;
-    for (QTalk::StConfig *tmpConf : config.children) {
-        QString tip = tmpConf->tagVal;
-        if (!tip.isEmpty())
-            tips.push_back(tip);
-    }
     _pNavManager = new NavManager(this);
     //
     this->setObjectName("loginMainPanel");
@@ -232,13 +223,8 @@ void LoginPanel::initLayout() {
 
     auto *verLayout = new QHBoxLayout;
 
-    // 其他文案
-    QString tip = tr("QTalk测试版本 不代表最终品质");
-    if (!tips.empty()) {
-        int tipIdex = qrand() % tips.size();
-        tip = tips[tipIdex];
-    }
-    QLabel *waLabel = new QLabel(tip, this);
+    //
+    auto *waLabel = new QLabel(this);
     waLabel->setObjectName("wenanLabel");
     waLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     waLabel->setContentsMargins(15, 3, 0, 10);
@@ -260,6 +246,33 @@ void LoginPanel::initLayout() {
             QProcess::startDetached(program, arguments);
             QApplication::exit(0);
         }
+    });
+
+    connect(this, &LoginPanel::sgSetTip, waLabel, &QLabel::setText);
+    QtConcurrent::run([this](){
+        qsrand(QTime(0, 0, 0).secsTo(QTime::currentTime()));
+        QVector<QString> tips;
+        QFile tipF(":/login/tips.json");
+        QByteArray data;
+        if(tipF.open(QIODevice::ReadOnly)) {
+            data = tipF.readAll();
+            tipF.close();
+        }
+
+        QJsonDocument document = QJsonDocument::fromJson(data);
+        if(!document.isNull() && document.isArray()) {
+            auto array = document.array();
+            for(const auto &o : array) {
+                tips.push_back(o.toString());
+            }
+        }
+        QString tip;
+        if (!tips.empty()) {
+            int tipIdex = qrand() % tips.size();
+            tip = tips[tipIdex];
+        }
+
+        emit sgSetTip(tip);
     });
 }
 
@@ -358,27 +371,6 @@ void LoginPanel::closeEvent(QCloseEvent *e) {
 }
 
 bool LoginPanel::eventFilter(QObject *o, QEvent *e) {
-
-    if (o == _pWebLogin) {
-        if (e->type() == QEvent::Enter) {
-            setCursor(Qt::PointingHandCursor);
-        } else if (e->type() == QEvent::Leave) {
-            setCursor(Qt::ArrowCursor);
-        } else if (e->type() == QEvent::MouseButtonPress) {
-            // web 登录时先获取一次导航
-            std::string nav = _pNavManager->getDefaultNavUrl().toStdString();
-            if(nav.empty())
-                emit AuthFailedSignal(tr("导航不能为空!"));
-
-            bool ret = UILoginMsgManager::getNavInfo(nav);
-            if (!ret)
-                emit AuthFailedSignal(tr("导航获取失败, 请检查网络连接!"));
-#ifdef _QCHAT
-            else
-                QWebLogin::load(this);
-#endif
-        }
-    }
     return QDialog::eventFilter(o, e);
 }
 
@@ -507,7 +499,7 @@ void LoginPanel::initloginWnd() {
     _userNameFrm->setObjectName("userNameFrm");
     _userNameFrm->setFixedSize(220, 35);
     userpasslay->addWidget(_userNameFrm);
-    userpasslay->addWidget(new Line);
+    userpasslay->addWidget(new Line(this));
     auto *userNamelay = new QHBoxLayout(_userNameFrm);
     userNamelay->setMargin(0);
     userNamelay->setSpacing(0);
@@ -521,7 +513,7 @@ void LoginPanel::initloginWnd() {
     _passworldFrm->setObjectName("passworldFrm");
     _passworldFrm->setFixedSize(220, 35);
     userpasslay->addWidget(_passworldFrm);
-    userpasslay->addWidget(new Line);
+    userpasslay->addWidget(new Line(this));
     auto *passworldlay = new QHBoxLayout(_passworldFrm);
     passworldlay->setMargin(0);
     passworldlay->setSpacing(0);
@@ -530,20 +522,18 @@ void LoginPanel::initloginWnd() {
     _passworldEdt->setPlaceholderText(tr("请输入密码"));
     _passworldEdt->setObjectName("passworldEdt");
     _passworldEdt->setEchoMode(QLineEdit::Password);
+
+    auto *passwordBtn = new QToolButton(this);
+    passwordBtn->setObjectName("PasswordBtn");
+    passwordBtn->setCheckable(true);
+    passwordBtn->setFixedSize(20, 20);
     passworldlay->addWidget(_passworldEdt);
-    _loginBtn = new QPushButton;
+    passworldlay->addWidget(passwordBtn);
+
+    _loginBtn = new QPushButton(this);
     _loginBtn->setObjectName("loginBtn");
     _loginBtn->setFixedSize(30, 30);
     passworldlay->addWidget(_loginBtn);
-
-#ifdef _QCHAT
-    _pWebLogin = new QLabel(this);
-    _pWebLogin->setText("<a style='color:#00CABE;' href='aa'>web登录</a>");
-    _pWebLogin->setContentsMargins(0,10,0,0);
-    _pWebLogin->installEventFilter(this);
-
-    userpasslay->addWidget(_pWebLogin);;
-#endif
 
     _settingBtn = new QPushButton(this);
     _settingBtn->setObjectName("settingBtn");
@@ -599,6 +589,10 @@ void LoginPanel::initloginWnd() {
         _settingFrm->setVisible(!checked);
     });
     _settingBtn->click();
+    //
+    connect(passwordBtn, &QToolButton::clicked, [this](bool checked){
+        _passworldEdt->setEchoMode(checked ? QLineEdit::Normal : QLineEdit::Password);
+    });
 }
 
 /**
@@ -805,11 +799,10 @@ void LoginPanel::onLoginBtnClicked()
     }
     // login
     _pStsLabel->setText(tr("正在验证账户信息"));
-    ret = UILoginMsgManager::SendLoginMessage(strName.toStdString(), strPassword.toStdString());
-    if (!ret) {
-//            emit AuthFailedSignal(tr("账户或密码错误!"));
-        return;
-    }
+
+    QtConcurrent::run([strName, strPassword](){
+        UILoginMsgManager::SendLoginMessage(strName.toStdString(), strPassword.toStdString());
+    });
 }
 
 /**
@@ -929,6 +922,7 @@ void LoginPanel::loginSuccess()
     if (_pDefaultConfig && _rememberPassBtn->isChecked()) {
         _pDefaultConfig->setAttribute(CONFIG_KEY_SAVEPASSWORD, true);
         _pDefaultConfig->setAttribute(CONFIG_KEY_AUTOLOGIN, _autoLoginBtn->isChecked());
+        QTalk::qConfig::saveConfig(_strConfPath, true, _pStLoginConfig);
     }
 }
 

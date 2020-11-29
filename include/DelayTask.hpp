@@ -9,12 +9,6 @@
 #include <thread>
 #include <mutex>
 #include <memory>
-//#include "ThreadHelper.h"
-#ifdef _WINDOWS
-#include <windows.h>
-#else
-#include <unistd.h>
-#endif
 
 /**
  * 延时任务
@@ -54,14 +48,10 @@ public:
             std::lock_guard<std::mutex> lock(_mutex);
             _run = false;
         }
-#ifdef _WINDOWS
-        Sleep(1000);
-#else
-        struct timespec tim {};
-        tim.tv_sec = 1;
-        tim.tv_nsec = 0;
-        nanosleep(&tim, nullptr);
-#endif // _WINDOWS
+
+        const std::chrono::milliseconds ms(1000);
+        std::this_thread::sleep_for(ms);
+
         delete _thread;
         _thread = nullptr;
     }
@@ -113,14 +103,8 @@ protected:
 
                 }
 
-#ifdef _WINDOWS
-                Sleep(1000);
-#else
-                struct timespec tim {};
-                tim.tv_sec = 1;
-                tim.tv_nsec = 0;
-                nanosleep(&tim, nullptr);
-#endif // _WINDOWS
+                const std::chrono::milliseconds ms(1000);
+                std::this_thread::sleep_for(ms);
             }
         });
         _thread->detach();

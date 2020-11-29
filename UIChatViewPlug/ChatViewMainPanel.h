@@ -243,6 +243,7 @@ public:
 
 private slots:
     void onHttpError(QNetworkReply::NetworkError err);
+    void onSSLError(const QList<QSslError>& errors);
 
 public:
     GIFManager*       gifManager;

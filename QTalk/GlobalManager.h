@@ -1,13 +1,12 @@
 ﻿#ifndef GLOBAL_MANAGER_H
 #define GLOBAL_MANAGER_H
 
-#include "../UICom/Config/configobject.h"
 #include "PlugManager.h"
 #include "StyleManager.h"
 #include "../QtUtil/lib/ini/ConfigLoader.h"
 #include "../Platform/AppSetting.h"
 
-class GlobalManager : public ConfigObject
+class GlobalManager : public QObject
 {
     Q_OBJECT
 public:
@@ -46,9 +45,6 @@ private:
     int _font_level{};
 
 public:
-#ifdef _STARTALK
-    bool _check_updater = true;
-#endif
     int  _updater_version = 0;
 };
 

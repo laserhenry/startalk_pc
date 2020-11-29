@@ -21,7 +21,7 @@ namespace Json {
     }
 
     template<typename T>
-    inline T get(const nJson &obj, const std::string& key, const T& defaultVal = T()) {
+    inline T get(const nJson &obj, const std::string& key, const T& defaultVal = {}) {
         T res = defaultVal;
         try {
             if(obj.contains(key)) {
@@ -34,7 +34,7 @@ namespace Json {
     }
 
     template<typename T>
-    inline T convert(const nJson &obj, const T& defaultVal = T()) {
+    inline T convert(const nJson &obj, const T& defaultVal = {}) {
         T res = defaultVal;
         try { res = obj.get<T>(); } catch (const nJson::exception& e) {
             std::cerr << "json convert error. source: " << obj.dump() << "\n error:" << e.what() << std::endl;

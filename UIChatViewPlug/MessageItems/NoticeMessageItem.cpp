@@ -35,7 +35,25 @@ void NoticeMessageItem::loadUrl(const StNetMessageResult& msgInfo) {
     if (!jsonDocument.isNull()) {
         QJsonObject jsonObject = jsonDocument.object();
         QString linkUrl = jsonObject.value("linkurl").toString();
-        WebService::loadUrl(QUrl(linkUrl), false);
+
+//        bool userDftBrowser = AppSetting::instance().getOpenLinkWithAppBrowser();
+//        if (userDftBrowser){
+            MapCookie cookies;
+            cookies["ckey"] = QString::fromStdString(PLAT.getClientAuthKey());
+            std::string qvt = PLAT.getQvt();
+            if(!qvt.empty()){
+                nJson qvtJson= Json::get<nJson>(Json::parse(qvt),"data");
+                std::string qcookie = Json::get<std::string>(qvtJson,"qcookie");
+                std::string vcookie = Json::get<std::string>(qvtJson,"vcookie");
+                std::string tcookie = Json::get<std::string>(qvtJson,"tcookie");
+                cookies["_q"] = QString::fromStdString(qcookie);
+                cookies["_v"] = QString::fromStdString(vcookie);
+                cookies["_t"] = QString::fromStdString(tcookie);
+            }
+            WebService::loadUrl(QUrl(linkUrl), false, cookies);
+//        }
+//        else
+//        QDesktopServices::openUrl(QUrl(linkUrl));
     }
 }
 

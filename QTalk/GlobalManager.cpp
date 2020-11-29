@@ -84,16 +84,19 @@ std::shared_ptr<QMap<QString, QObject *> > GlobalManager::getAllPluginInstanceQt
   */
 void GlobalManager::init() {
     // init setting
-    _ConfigDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    std::string userPath, fileSavePath, historyPath;
+    auto tempAppDatePath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation).toLocal8Bit();
+    auto tempDownloadPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation).toLocal8Bit();
+    _ConfigDataDir = tempAppDatePath;
+    QString fileSavePath = tempDownloadPath;
+    std::string userPath, historyPath;
 //    int logLevel = QTalk::logger::LEVEL_INVALID;
     int language = 0;
     bool ssl = true;
     _font_level = AppSetting::FONT_LEVEL_NORMAL;
-    _pSystemConfig = new QTalk::ConfigLoader(_ConfigDataDir.toLocal8Bit() + "/sysconfig");
+    _pSystemConfig = new QTalk::ConfigLoader((_ConfigDataDir.toStdString() + "/sysconfig").data());
     if (_pSystemConfig->reload()) {
         userPath = _pSystemConfig->getString(USER_FOLDER);
-        fileSavePath = _pSystemConfig->getString(FILE_FOLDER);
+        fileSavePath = _pSystemConfig->getString(FILE_FOLDER).data();
         historyPath = _pSystemConfig->getString(HISTORYU_FOLDER);
 //        logLevel = _pSystemConfig->getInteger(LOG_LEVEL);
         _theme = _pSystemConfig->getInteger(THEME);
@@ -102,12 +105,6 @@ void GlobalManager::init() {
         language = _pSystemConfig->getInteger(LANGUAGE);
 //        if(logLevel == QTalk::logger::LEVEL_INVALID)
 //            _pSystemConfig->setInteger(LOG_LEVEL, QTalk::logger::LEVEL_WARING);
-#ifdef _STARTALK
-        if(_pSystemConfig->hasKey(CHECK_UPDATER))
-            _check_updater = _pSystemConfig->getBool(CHECK_UPDATER);
-        else
-            _check_updater = true;
-#endif
         _updater_version = _pSystemConfig->getInteger(UPDATER_VERSION);
         if(_pSystemConfig->hasKey(SSL))
             ssl = _pSystemConfig->getBool(SSL);
@@ -144,25 +141,36 @@ void GlobalManager::init() {
 
     if (!userPath.empty())
         _ConfigDataDir = QString::fromStdString(userPath);
-    if (fileSavePath.empty())
-        fileSavePath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation).toStdString();
+    if (fileSavePath.isEmpty())
+        fileSavePath = tempDownloadPath;
 
     // 创建文件夹
     QDir dir(_ConfigDataDir);
     if (!dir.exists()) {
         bool isOK = dir.mkpath(_ConfigDataDir);//创建多级目录
-        if (!isOK)
+        if (!isOK) {
             error_log("init user folder error {0}", userPath);
+            _ConfigDataDir = tempAppDatePath;
+        }
     }
-    dir = QDir(QString::fromStdString(fileSavePath));
+    else if (!QFileInfo(_ConfigDataDir).permission(QFileDevice::WriteUser)) {
+        _ConfigDataDir = tempAppDatePath;
+    }
+
+    dir = QDir(fileSavePath);
     if (!dir.exists()) {
-        bool isOK = dir.mkpath(QString::fromStdString(fileSavePath));//创建多级目录
-        if (!isOK)
-            error_log("init user folder error {0}", fileSavePath);
+        bool isOK = dir.mkpath(fileSavePath);//创建多级目录
+        if (!isOK) {
+            error_log("init file folder error {0}", fileSavePath.toStdString());
+            fileSavePath = tempDownloadPath;
+        }
+    }
+    else if (!QFileInfo(fileSavePath).permission(QFileDevice::WriteUser)) {
+        fileSavePath = tempDownloadPath;
     }
     // 设置全局路径
     PLAT.setAppdataRoamingPath(_ConfigDataDir.toStdString());
-    AppSetting::instance().setFileSaveDirectory(fileSavePath);
+    AppSetting::instance().setFileSaveDirectory(fileSavePath.toStdString());
     //
     if (historyPath.empty())
         historyPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation).toStdString();
@@ -193,9 +201,6 @@ void GlobalManager::saveSysConfig() {
         _pSystemConfig->setInteger(LANGUAGE, AppSetting::instance().getLanguage());
         _pSystemConfig->setInteger(FONT_LEVEL, AppSetting::instance().getFontLevel());
         _pSystemConfig->setString(FONT, font);
-#ifdef _STARTALK
-        _pSystemConfig->setBool(CHECK_UPDATER, _check_updater);
-#endif
         _pSystemConfig->saveConfig();
     }
 
@@ -229,9 +234,6 @@ void GlobalManager::InitPluginManager() {
         auto allPlug  = doc.array();
         for(const auto& plug : allPlug)
             arPlugs.push_back(plug.toString());
-//#ifdef TSCREEN
-//       arPlugs.push_back("TScreen");
-//#endif
         //
         _pluginManager.setPlugNames(arPlugs);
     }

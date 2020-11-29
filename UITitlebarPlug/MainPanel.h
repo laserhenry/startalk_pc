@@ -78,7 +78,7 @@ public slots:
     void onSwitchUserStatus(const QString&);
     void onShowAboutWnd();
     void onShowSystemWnd();
-    void onShowUpdateLabel();
+    void onShowUpdateLabel(bool visible);
 
 protected:
     void mousePressEvent(QMouseEvent *me) override;
@@ -135,7 +135,7 @@ private:
     SessionBtn     * _sessionBtn{};
     QToolButton    * _contactBtn{};
     QToolButton    * _multifunctionBtn{};
-    HeadPhotoLab   *_userBtn{};
+    HeadPhotoLab   *_userHeadBtn{};
     QFrame         * _maxminFrm{};
     QToolButton    * _minimizeBtn{};
     QToolButton    * _maximizeBtn{};

@@ -571,7 +571,7 @@ void FileSendReceiveMessItem::initReceiveContentButtomFrmLayout() {
     contentButtomFrmHlay->addWidget(_contentButtomFrmOPenFileBtn);
 
     if (!_contentButtomFrmMenuBtn) {
-        _contentButtomFrmMenuBtn = new QToolButton;
+        _contentButtomFrmMenuBtn = new QToolButton(this);
     }
     _contentButtomFrmMenuBtn->setObjectName("contentButtomFrmMenuBtn");
     _contentButtomFrmMenuBtn->setFixedSize(_btnSzie);
@@ -733,6 +733,7 @@ void FileSendReceiveMessItem::downLoadFile()
 //        file.close();
 //    }
     //下载文件
+    qLocalFilePath.replace(",", "，"); // windows explorer , error
     localPath = qLocalFilePath.toStdString();
 //    sendDownLoadFile(localPath, netPath);
     sendNDownLoadFile(netPath, qLocalFilePath);
@@ -908,10 +909,17 @@ void FileSendReceiveMessItem::onUploadFailed() {
 
 void FileSendReceiveMessItem::onDownloadFailed() {
     isDownLoad = false;
-    _contentButtomFrmDownLoadBtn->show();
-    _contentButtomFrmMenuBtn->show();
-    _contentButtomFrmProgressBar->hide();
-    _contentButtomFrmOPenFileBtn->hide();
+    if (QTalk::Entity::MessageDirectionReceive == _msgInfo.direction) {
+        _contentButtomFrmDownLoadBtn->show();
+        _contentButtomFrmMenuBtn->show();
+        _contentButtomFrmProgressBar->hide();
+        _contentButtomFrmOPenFileBtn->hide();
+    }
+    else if (QTalk::Entity::MessageDirectionSent == _msgInfo.direction) {
+        _contentButtomFrmProgressBar->hide();
+        _contentButtomFrmOPenFileBtn->show();
+        _contentButtomFrmMessLab->setText(tr("上传成功"));
+    }
 }
 
 void FileSendReceiveMessItem::downloadOrUploadSuccess() {

@@ -85,7 +85,7 @@ void ChangeHeadWnd::initUi()
     lay->setSpacing(0);
     lay->addWidget(topFrm, 0);
     lay->addWidget(bodyFrm, 1);
-    lay->addWidget(new Line(), 0);
+    lay->addWidget(new Line(this), 0);
     lay->addWidget(_bottomFrm, 0);
 
     connect(closeBtn, &QToolButton::clicked, [this](){setVisible(false);});

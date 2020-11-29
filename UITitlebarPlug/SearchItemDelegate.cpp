@@ -15,17 +15,6 @@
 
 #define HEAD_WIDTH 40
 
-SearchItemDelegate::SearchItemDelegate(QAbstractItemView *parent) :
-        QStyledItemDelegate(parent)
-{
-
-}
-
-SearchItemDelegate::~SearchItemDelegate()
-{
-
-}
-
 /**
   * @函数名
   * @功能描述

@@ -285,9 +285,9 @@ void UserManager::getUserFullInfo(std::shared_ptr<QTalk::Entity::ImUserSupplemen
     // 刷新显示mood
     std::string mood = userInfo->Mood;
     std::string id = userInfo->XmppId;
-    std::async(std::launch::async, [ id, mood](){
+    std::thread([ id, mood](){
         CommMsgManager::updateMoodRet(id, mood);
-    });
+    }).detach();
 }
 
 // leader and userno

@@ -12,7 +12,7 @@ set(SOURCE_FILES
         NavigationManager.h
         Platform.cpp
         Platform.h
-        platform_global.h dbPlatForm.cpp dbPlatForm.h AppSetting.cpp AppSetting.h)
+        platform_global.h dbPlatForm.cpp dbPlatForm.h AppSetting.cpp AppSetting.h dllMain.cpp)
 
 if (APPLE)
     ADD_DEFINITIONS(-D_MACOS)

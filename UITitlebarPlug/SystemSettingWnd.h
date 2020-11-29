@@ -45,6 +45,15 @@ protected:
     {
 
     }
+
+    void showPopup() override  {
+        QComboBox::showPopup();
+        QWidget *popup = this->findChild<QFrame *>();
+        if(popup) {
+            popup->setMaximumHeight(300);
+            popup->move(parentWidget()->mapToGlobal(this->geometry().bottomLeft()));
+        }
+    }
 };
 
 class ComboBoxDelegate : public QStyledItemDelegate {

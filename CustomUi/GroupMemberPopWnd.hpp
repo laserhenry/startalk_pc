@@ -209,7 +209,7 @@ public:
         _pSrcModel->setColumnCount(2);
         //
         mainLay->addWidget(_pSearchEdit);
-        mainLay->addWidget(new Line);
+        mainLay->addWidget(new Line(this));
         mainLay->addWidget(_pMemberView);
         //
         auto * Lay = new QVBoxLayout(_pCenternWgt);

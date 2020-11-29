@@ -16,8 +16,6 @@ class ToolWgt : public QFrame
 {
 	Q_OBJECT
 
-
-
 public:
 	ToolWgt(InputWgt* pInputWgt, ChatViewItem* chatItem);
 	~ToolWgt() override;
@@ -27,11 +25,9 @@ private:
     void onFileBtnClicked();
     void onBtnScreenshot();
 	void onpBtnEmoticon();
-	void openLinkWithCkey(const QUrl& url);
 	void sendJsonPrud(const QString &products);
 	void sendQuickReply(const std::string& text);
 	void sessionTransfer(const std::string& newJid,const std::string& reason);
-	void onBtnHotClicked();
 
 public:
     void switchSession(const int &i);
@@ -56,9 +52,6 @@ private:
 	QAction*     _pScreenShotHideWnd{};
 
 	QMenu* _pMultiMenu{};
-
-	QAction* pVideoAct{};
-    QAction* pAudioAct{};
 };
 
 #endif//_TOOLWGT_H_

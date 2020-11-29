@@ -65,7 +65,7 @@ public:
 
     static void onUserMadelChanged(const std::vector<QTalk::Entity::ImUserStatusMedal>& userMedals);
 	//
-	static void onCheckUpdate(bool hasUpdate, bool force);
+	static void onCheckUpdate(const std::string &link, bool force);
 };
 
 // 

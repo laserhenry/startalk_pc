@@ -351,7 +351,7 @@ void FileHelper::getNetFileInfo(const std::string &filePath,
 
     if (PLAT.isMainThread()) {
 
-        std::async(std::launch::async, func);
+        std::thread(func).detach();
         return;
     }
 
@@ -420,7 +420,7 @@ void FileHelper::uploadLogFile(const std::string &filePath,
 
     if (PLAT.isMainThread()) {
 
-        std::async(std::launch::async, func);
+        std::thread(func).detach();
         return;
     }
 
@@ -469,7 +469,7 @@ void FileHelper::downloadFile(const std::string &uri, const std::string &localPa
     };
 
     if (PLAT.isMainThread()) {
-        std::async(std::launch::async, func);
+        std::thread(func).detach();
         return;
     }
 

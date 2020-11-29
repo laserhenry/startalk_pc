@@ -361,7 +361,7 @@ void GroupMember::onSearchBtnClick() {
 
                 for(const auto &memberId : _mapMemberItem.keys())
                 {
-                    data.append(memberId.data());
+                    data.append(QString(memberId.data()).section("@", 0, 0));
                     data.append("; \n");
                 }
 

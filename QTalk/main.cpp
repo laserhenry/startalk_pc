@@ -14,6 +14,8 @@
 #include <client/linux/handler/exception_handler.h>
 #else
 #include <client/mac/handler/exception_handler.h>
+#include <QProcess>
+
 #endif
 
 #if defined(_WINDOWS)
@@ -42,7 +44,9 @@ int main(int argc, char *argv[]) {
     }
     unsigned short pid = QCoreApplication::applicationPid();
     qputenv("QTWEBENGINE_REMOTE_DEBUGGING", std::to_string(pid).data());
+#ifndef QT_DEBUG
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#endif
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
     // high dpi
     //QApplication::setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
@@ -96,7 +100,6 @@ int main(int argc, char *argv[]) {
             nullptr);
 #endif
 #endif
-
     QTalkApp a(argc, argv);
 
     return 0;

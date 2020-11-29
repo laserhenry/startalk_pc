@@ -95,7 +95,7 @@ void MainPanel::recvUserCard(const std::vector<QTalk::StUserCard> &userCards) {
 
     if (itFind != userCards.end() ) {
         std::string headPath = TitlebarMsgManager::getHeadPath(itFind->headerSrc);
-        if (!headPath.empty() && _userBtn) {
+        if (!headPath.empty() && _userHeadBtn) {
             emit setHeadSignal(QString::fromStdString(itFind->nickName), QString::fromStdString(headPath));
         }
     }
@@ -257,16 +257,16 @@ void MainPanel::init() {
     _hbox->addItem(new QSpacerItem(100, 1, QSizePolicy::Fixed));
 #endif
 
-    _userBtn = new HeadPhotoLab;
-    _userBtn->setObjectName("userBtn");
+    _userHeadBtn = new HeadPhotoLab(this);
+    _userHeadBtn->setObjectName("userBtn");
 #ifdef _STARTALK
     QString defaultHead(":/QTalk/image1/StarTalk_defaultHead.png");
 #else
     QString defaultHead(":/QTalk/image1/headPortrait.png");
 #endif
-    _userBtn->setHead(defaultHead, 18, false, false);
-    _userBtn->installEventFilter(this);
-    _hbox->addWidget(_userBtn);
+    _userHeadBtn->setHead(defaultHead, 18, false, false);
+    _userHeadBtn->installEventFilter(this);
+    _hbox->addWidget(_userHeadBtn);
     _hbox->addItem(new QSpacerItem(15, 1, QSizePolicy::Fixed, QSizePolicy::Fixed));
 
 #ifndef _MACOS
@@ -512,9 +512,9 @@ void MainPanel::onCtrlWdtClose() {
 }
 
 bool MainPanel::eventFilter(QObject *o, QEvent *e) {
-    if (o == _userBtn && e->type() == QEvent::MouseButtonPress) {
+    if (o == _userHeadBtn && e->type() == QEvent::MouseButtonPress) {
         if (_dropMenu) {
-            QPoint pos = _userBtn->geometry().bottomLeft();
+            QPoint pos = _userHeadBtn->geometry().bottomLeft();
             auto x = qMin(pos.x() - _dropMenu->width() / 2, this->geometry().right() - _dropMenu->width() - 15);
             _dropMenu->move(mapToGlobal(QPoint(x, this->geometry().bottom())));
             _dropMenu->show();
@@ -674,7 +674,7 @@ void MainPanel::mouseDoubleClickEvent(QMouseEvent *e) {
  */
 void MainPanel::setNewHead(const QString &userName, const QString &newHeadPath) {
     _headPath = newHeadPath;
-    _userBtn->setHead(newHeadPath, 18, false, true);
+    _userHeadBtn->setHead(newHeadPath, 18, false, true);
     _dropMenu->setName(userName);
     _dropMenu->setHead(newHeadPath);
 }
@@ -738,8 +738,12 @@ void MainPanel::onShowSystemWnd() {
     }
 }
 
-void MainPanel::onShowUpdateLabel() {
+void MainPanel::onShowUpdateLabel(bool visible) {
     if(_dropMenu) {
-        _dropMenu->showUpdateLabel();
+        _dropMenu->setTipVisible(visible);
+    }
+
+    if(_userHeadBtn) {
+        _userHeadBtn->setTip(visible);
     }
 }

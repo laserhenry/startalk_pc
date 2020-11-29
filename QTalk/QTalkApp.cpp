@@ -176,11 +176,11 @@ QTalkApp::QTalkApp(int argc, char *argv[])
         if(params.contains("MSG"))
             loginMsg = params["MSG"];
     }
-
     _pMainWnd->InitLogin(enableAutoLogin, loginMsg);
     _pMainWnd->initSystemTray();
     //
     connect(this, &QApplication::applicationStateChanged, this, &QTalkApp::onApplicationStateChange);
+
     // exec
     exec();
 }
@@ -381,8 +381,12 @@ bool QTalkApp::event(QEvent *e) {
         auto* event = dynamic_cast<QFileOpenEvent*>(e);
         if (!event->url().isEmpty())
         {
-            QString url = event->url().toString();
-            qInfo() << "recv url scheme" << url;
+            auto url = event->url();
+            QUrlQuery query(url.query());
+            auto id = query.queryItemValue("id");
+            auto name = query.queryItemValue("name");
+            qInfo() << "recv url scheme" << url << id;
+            e->ignore();
         }
     }
 #endif

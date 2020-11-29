@@ -301,10 +301,11 @@ void CommMsgManager::onUserMadelChanged(const std::vector<QTalk::Entity::ImUserS
     EventBus::FireEvent(e);
 }
 
-void CommMsgManager::onCheckUpdate(bool hasUpdate, bool force) {
+void CommMsgManager::onCheckUpdate(const std::string &link, bool force) {
     CheckUpdaterResultEvt e;
-    e.hasUpdate = hasUpdate;
+    e.hasUpdate = !link.empty();
     e.forceUpdate = force;
+    e.link = link;
     EventBus::FireEvent(e);
 }
 
@@ -1002,10 +1003,9 @@ void CommMsgListener::onEvent(UpdateMoodEvt& e)
     if(nullptr != _pComm && nullptr != _pComm->_pUserManager)
     {
         std::string mood = e.mood;
-        auto res = std::async(std::launch::async, [this, mood](){
+        std::thread([this, mood](){
             _pComm->_pUserManager->UpdateMood(mood);
-        });
-        (void)(res);
+        }).detach();
     }
 }
 
