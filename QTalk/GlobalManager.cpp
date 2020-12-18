@@ -83,17 +83,18 @@ std::shared_ptr<QMap<QString, QObject *> > GlobalManager::getAllPluginInstanceQt
   * @date 2018.9.17
   */
 void GlobalManager::init() {
-    // init setting
+     // init setting
     auto tempAppDatePath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation).toLocal8Bit();
     auto tempDownloadPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation).toLocal8Bit();
-    _ConfigDataDir = tempAppDatePath;
+    _ConfigDataDir = QString::fromLocal8Bit(tempAppDatePath);
     QString fileSavePath = tempDownloadPath;
     std::string userPath, historyPath;
 //    int logLevel = QTalk::logger::LEVEL_INVALID;
     int language = 0;
     bool ssl = true;
     _font_level = AppSetting::FONT_LEVEL_NORMAL;
-    _pSystemConfig = new QTalk::ConfigLoader((_ConfigDataDir.toStdString() + "/sysconfig").data());
+
+    _pSystemConfig = new QTalk::ConfigLoader((std::string(tempAppDatePath.data()) + "/sysconfig").data());
     if (_pSystemConfig->reload()) {
         userPath = _pSystemConfig->getString(USER_FOLDER);
         fileSavePath = _pSystemConfig->getString(FILE_FOLDER).data();
@@ -131,9 +132,6 @@ void GlobalManager::init() {
     AppSetting::instance().setFontLevel(_font_level);
     AppSetting::instance().with_ssl = ssl;
 
-//    if(!coEdit.empty())
-//        AppSetting::instance().setCoEdit(coEdit);
-
     int channel = _pSystemConfig->getInteger("CHANNEL");
     if(0 == channel)
         channel = 1; // product
@@ -142,7 +140,7 @@ void GlobalManager::init() {
     if (!userPath.empty())
         _ConfigDataDir = QString::fromStdString(userPath);
     if (fileSavePath.isEmpty())
-        fileSavePath = tempDownloadPath;
+        fileSavePath = QString::fromLocal8Bit(tempDownloadPath);
 
     // 创建文件夹
     QDir dir(_ConfigDataDir);
@@ -150,11 +148,11 @@ void GlobalManager::init() {
         bool isOK = dir.mkpath(_ConfigDataDir);//创建多级目录
         if (!isOK) {
             error_log("init user folder error {0}", userPath);
-            _ConfigDataDir = tempAppDatePath;
+            _ConfigDataDir = QString::fromLocal8Bit(tempAppDatePath);
         }
     }
     else if (!QFileInfo(_ConfigDataDir).permission(QFileDevice::WriteUser)) {
-        _ConfigDataDir = tempAppDatePath;
+        _ConfigDataDir = QString::fromLocal8Bit(tempAppDatePath);
     }
 
     dir = QDir(fileSavePath);
