@@ -226,14 +226,9 @@ void VoiceMessageItem::initContentLayout() {
         local_path = PLAT.getAppdataRoamingUserPath() + "/voice/" + local_path + ".amr";
         //
         QPointer<VoiceMessageItem> pThis(this);
-        QT_CONCURRENT_FUNC([pThis, _voicePath](){
-            if(g_pMainPanel)
-            {
-                if(pThis) {
-                    ChatMsgManager::sendDownLoadFile(pThis->local_path, _voicePath, pThis->_msgInfo.msg_id.toStdString());
-                }
-            }
-        });
+        std::thread([pThis, _voicePath](){
+            ChatMsgManager::sendDownLoadFile(pThis->local_path, _voicePath, pThis->_msgInfo.msg_id.toStdString());
+        }).detach();
 
     }
     _contentFrm->setFixedHeight(40);

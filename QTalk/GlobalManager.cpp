@@ -83,10 +83,10 @@ std::shared_ptr<QMap<QString, QObject *> > GlobalManager::getAllPluginInstanceQt
   * @date 2018.9.17
   */
 void GlobalManager::init() {
-     // init setting
+    // init setting
     auto tempAppDatePath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation).toLocal8Bit();
     auto tempDownloadPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation).toLocal8Bit();
-    _ConfigDataDir = QString::fromLocal8Bit(tempAppDatePath);
+	QString configDataDir = QString::fromLocal8Bit(tempAppDatePath);
     QString fileSavePath = tempDownloadPath;
     std::string userPath, historyPath;
 //    int logLevel = QTalk::logger::LEVEL_INVALID;
@@ -138,21 +138,21 @@ void GlobalManager::init() {
     AppSetting::instance().setTestchannel(channel);
 
     if (!userPath.empty())
-        _ConfigDataDir = QString::fromStdString(userPath);
+	    configDataDir = QString::fromStdString(userPath);
     if (fileSavePath.isEmpty())
         fileSavePath = QString::fromLocal8Bit(tempDownloadPath);
 
     // 创建文件夹
-    QDir dir(_ConfigDataDir);
+    QDir dir(configDataDir);
     if (!dir.exists()) {
-        bool isOK = dir.mkpath(_ConfigDataDir);//创建多级目录
+        bool isOK = dir.mkpath(configDataDir);//创建多级目录
         if (!isOK) {
             error_log("init user folder error {0}", userPath);
-            _ConfigDataDir = QString::fromLocal8Bit(tempAppDatePath);
+	        configDataDir = QString::fromLocal8Bit(tempAppDatePath);
         }
     }
-    else if (!QFileInfo(_ConfigDataDir).permission(QFileDevice::WriteUser)) {
-        _ConfigDataDir = QString::fromLocal8Bit(tempAppDatePath);
+    else if (!QFileInfo(configDataDir).permission(QFileDevice::WriteUser)) {
+	    configDataDir = QString::fromLocal8Bit(tempAppDatePath);
     }
 
     dir = QDir(fileSavePath);
@@ -167,7 +167,7 @@ void GlobalManager::init() {
         fileSavePath = tempDownloadPath;
     }
     // 设置全局路径
-    PLAT.setAppdataRoamingPath(_ConfigDataDir.toStdString());
+    PLAT.setAppdataRoamingPath(configDataDir.toStdString());
     AppSetting::instance().setFileSaveDirectory(fileSavePath.toStdString());
     //
     if (historyPath.empty())

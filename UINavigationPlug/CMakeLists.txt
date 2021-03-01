@@ -18,12 +18,8 @@ set(SOURCE_FILES
         MessageManager.cpp
         MessageManager.h
         navigation.json
-        NavigationMainPanel.cpp
-        NavigationMainPanel.h
         SessionFrm.cpp
         SessionFrm.h
-        SessionItemFrm.cpp
-        SessionItemFrm.h
         TcpDisconnect.cpp
         TcpDisconnect.h
         UINavigationPlug.cpp

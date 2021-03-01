@@ -19,7 +19,7 @@ static const char* mainQml = "qrc:/qml/main.qml";
 QmlView::QmlView() {
     setFixedSize(484, 336);
 //#ifdef _WINDOWS
-    Qt::WindowFlags flags = Qt::Dialog | Qt::WindowContextHelpButtonHint
+    Qt::WindowFlags flags = Qt::Dialog 
                             | Qt::X11BypassWindowManagerHint | Qt::WindowStaysOnTopHint
                             | Qt::WindowFullscreenButtonHint | Qt::WindowCloseButtonHint | Qt::WindowTitleHint;
     setWindowFlags(flags);

@@ -126,7 +126,7 @@ void NoteMessageItem::initContentLayout() {
 
         connect(this, &NoteMessageItem::sgDownloadedIcon, this, &NoteMessageItem::setIcon, Qt::QueuedConnection);
         QString placeHolder = ":/chatview/image1/defaultShareIcon.png";
-        QPixmap defaultPix = QTalk::qimage::loadImage(placeHolder, true, true, 80, 40);
+        QPixmap defaultPix = QTalk::qimage::loadImage(placeHolder, false, true, 80, 40);
         if (imgUrl.isEmpty()) {
             iconLabel->setPixmap(defaultPix);
         } else {

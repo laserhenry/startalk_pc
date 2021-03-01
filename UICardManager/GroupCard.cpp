@@ -271,18 +271,7 @@ void GroupCard::initUi()
         }
     });
 
-    connect(_pDestroyGroupBtn, &QPushButton::clicked, [this](){
-        int ret = QtMessageBox::warning(this, tr("警告"), tr("群即将被销毁, 是否继续?"), QtMessageBox::EM_BUTTON_YES | QtMessageBox::EM_BUTTON_NO);
-        if(ret == QtMessageBox::EM_BUTTON_YES)
-        {
-            if(_pCardManager)
-            {
-                _pCardManager->destroyGroup(_strGroupId);
-                _moded = false;
-                this->close();
-            }
-        }
-    });
+    connect(_pDestroyGroupBtn, &QPushButton::clicked, this, &GroupCard::onDestroyGroupGroupCard);
     connect(_pSendMailBtn, &QPushButton::clicked, this, &GroupCard::onSendMail);
 }
 
@@ -521,4 +510,18 @@ void GroupCard::onSendMail() {
         QDesktopServices::openUrl(QUrl(mailUrl));
     }
     this->close();
+}
+
+
+void GroupCard::onDestroyGroupGroupCard() {
+	int ret = QtMessageBox::warning(this, tr("警告"), tr("群即将被销毁, 是否继续?"), QtMessageBox::EM_BUTTON_YES | QtMessageBox::EM_BUTTON_NO);
+	if(ret == QtMessageBox::EM_BUTTON_YES)
+	{
+		if(_pCardManager)
+		{
+			_pCardManager->destroyGroup(_strGroupId);
+			_moded = false;
+			this->close();
+		}
+	}
 }

@@ -635,20 +635,54 @@ QString InputWgt::translateText() {
                     strText = strText.replace(0xa0, 0x20);
                     strText = strText.replace(0xc2a0, 0x20);
 
-                    QRegExp regExp(
-                            "(((ftp|https?)://|www.)[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z0-9]{1,4})"
-                            "([^ ^\"^\\<^\\>^\\'^\\;^\\；^\\，^\\。^\\《^\\》^\\￥"
-                            "^\\[^\\]^\\r^\\n]*))");
 
-                    auto pos = 0, oldPos = 0;
-                    while ((pos = regExp.indexIn(strTmp, pos)) != -1) {
-                        QString url = regExp.cap(0);
-                        addJsonItem(array, Type_Text, strTmp.mid(oldPos, pos - oldPos));
-                        addJsonItem(array, Type_Url, url);
-                        oldPos = pos + regExp.matchedLength();
-                        pos += regExp.matchedLength();
-                    }
-                    addJsonItem(array, Type_Text, strTmp.mid(oldPos));
+	                auto analysisLinkMessage = [](const QString &text, QJsonArray& array)
+	                {
+		                if (!text.isEmpty()) {
+			                QRegExp regExp("(((ftp|https?)://|www.)[a-zA-Z0-9\\.\\-]+\\.([a-zA-Z0-9]{1,4})"
+			                               "([^ ^\"^\\<^\\>^\\'^\\;^\\；^\\，^\\。^\\《^\\》^\\￥"
+			                               "^\\[^\\]^\\r^\\n]*))");
+
+			                auto pos = 0, oldPos = 0;
+			                while ((pos = regExp.indexIn(text, pos)) != -1) {
+				                QString url = regExp.cap(0);
+				                addJsonItem(array, Type_Text, text.mid(oldPos, pos - oldPos));
+				                addJsonItem(array, Type_Url, url);
+				                oldPos = pos + regExp.matchedLength();
+				                pos += regExp.matchedLength();
+			                }
+			                addJsonItem(array, Type_Text, text.mid(oldPos));
+		                }
+	                };
+
+                    auto analysisObjMessage = [analysisLinkMessage](const QString& content, QJsonArray& array){
+	                    QRegExp regExp("\\[obj type=[\\\\]?\"([^\"]*)[\\\\]?\" value=[\\\\]?\"([^\"]*)[\\\\]?\"(.*)\\]");
+	                    regExp.setMinimal(true);
+
+	                    int pos = 0;
+	                    int prePos = 0;
+	                    while ((pos = regExp.indexIn(content, pos)) != -1) {
+		                    QString text = content.mid(prePos, pos - prePos);
+		                    if (!text.isEmpty())
+			                    analysisLinkMessage(text, array);
+
+		                    QString item = regExp.cap(0);
+		                    QString type = regExp.cap(1);
+		                    QString val = regExp.cap(2);
+
+		                    addJsonItem(array, Type_Text, item);
+		                    //
+		                    pos += regExp.matchedLength();
+		                    prePos = pos;
+	                    }
+
+	                    QString lastStr = content.mid(prePos);
+	                    if (!lastStr.isEmpty())
+		                    analysisLinkMessage(lastStr, array);
+	                };
+
+                    // call
+	                analysisObjMessage(strText, array);
                 }
             }
 
@@ -839,8 +873,6 @@ void InputWgt::hideEvent(QHideEvent *e) {
 }
 
 void InputWgt::focusOutEvent(QFocusEvent *e) {
-
-
     QTextEdit::focusOutEvent(e);
 }
 
@@ -1292,10 +1324,11 @@ void InputWgt::inputMethodEvent(QInputMethodEvent *e) {
 
 //
 void InputWgt::mousePressEvent(QMouseEvent *e) {
-    if(e->buttons().testFlag(Qt::BackButton) ){
+	if(e->buttons().testFlag(Qt::LeftButton) ) {
+		this->setFocus();
+	} else if(e->buttons().testFlag(Qt::BackButton) ){
         emit g_pMainPanel->sgShortCutSwitchSession(Qt::Key_Down);
-    }
-    else if(e->buttons().testFlag(Qt::ForwardButton)) {
+    } else if(e->buttons().testFlag(Qt::ForwardButton)) {
         emit g_pMainPanel->sgShortCutSwitchSession(Qt::Key_Up);
     }
     QTextEdit::mousePressEvent(e);

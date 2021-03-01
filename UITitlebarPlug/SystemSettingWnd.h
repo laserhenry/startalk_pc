@@ -90,17 +90,15 @@ private:
     void initSetting(int type);
 
 private:
-    void initMsgNotify(QVBoxLayout* itemLay); //消息通知UI
-    void initHotCut(QVBoxLayout* itemLay); //热键设置
-    void initSession(QVBoxLayout* itemLay); //会话设置
-    void initAutoReply(QVBoxLayout* itemLay); //自动回复
-    void initFolder(QVBoxLayout* itemLay); //文件目录
-//    void initFriendAuthority(QVBoxLayout* itemLay); //好友权限
-    void initFontSetting(QVBoxLayout* itemLay); //字体设置
-    void initOtherSetting(QVBoxLayout* itemLay); //其他设置
-    void initVersionInfo(QVBoxLayout* itemLay); //版本信息
-    void initFeedback(QVBoxLayout* itemLay); //意见反馈
-    void initSeat(QVBoxLayout* itemLay);//Qchat坐席状态设置
+    void initMsgNotify(QVBoxLayout* itemLay);
+    void initHotCut(QVBoxLayout* itemLay);
+    void initSession(QVBoxLayout* itemLay);
+    void initAutoReply(QVBoxLayout* itemLay);
+    void initFolder(QVBoxLayout* itemLay);
+    void initFontSetting(QVBoxLayout* itemLay);
+    void initOtherSetting(QVBoxLayout* itemLay);
+    void initVersionInfo(QVBoxLayout* itemLay);
+    void initFeedback(QVBoxLayout* itemLay);
 
 private:
     SKRecorder* addSortCutItem(const QString& text, const QKeySequence& keys, QVBoxLayout* layout,std::function<void(const QKeySequence& keys)> callback);
@@ -138,10 +136,6 @@ private:
         EM_SETTING_AUTOREPLY,
         EM_SETTING_SESSION,
         EM_SETTING_FOLDER,
-
-#ifdef _QCHAT
-        EM_SETTING_SEAT,
-#endif
         EM_SETTING_FONT,
         EM_SETTING_OTHERSETTING,
         EM_SETTING_VERSION,

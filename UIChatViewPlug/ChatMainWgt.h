@@ -125,7 +125,7 @@ Q_SIGNALS:
     void sgSendFailed(const QString& msgId);
     void sgDownloadFileFailed(const QString& msgId);
     void sgGotMState(const QString& msgId, const long long& time);
-    void sgEnableScroll();
+//    void sgEnableScroll();
 
 private:
     void downloadImage(const QString& msgId, const QString& link, int width, int height);

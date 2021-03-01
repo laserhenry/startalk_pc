@@ -219,15 +219,6 @@ void SystemSettingWnd::initSetting(int type)
             initFeedback(vlayout);
             break;
         }
-#ifdef _QCHAT
-        case EM_SETTING_SEAT:
-        {
-            text = tr("服务状态");
-            objName = "seatInfoLbl";
-            initSeat(vlayout);
-            break;
-        }
-#endif
         default:
             return;
     }
@@ -984,7 +975,7 @@ void SystemSettingWnd::initOtherSetting(QVBoxLayout* vlayout) {
     auto *showSendMessageWnd = new SettingCheckBox(tr("显示发送按钮"), AppSetting::instance().getShowSendMessageBtnFlag(), this);
     vlayout->addWidget(showSendMessageWnd);
 
-    auto *testChannel = new SettingCheckBox(tr("内测通道"), AppSetting::instance().getTestchannel() - 1, this);
+    auto *testChannel = new SettingCheckBox(tr("加入内测"), AppSetting::instance().getTestchannel() - 1, this);
     vlayout->addWidget(testChannel);
 
 //    auto *logLevel = new SettingCheckBox(tr("记录INFO日志"), false, this);
@@ -1173,54 +1164,6 @@ void SystemSettingWnd::initFeedback(QVBoxLayout* vlayout) {
 
 
     vlayout->addItem(new QSpacerItem(10, 10, QSizePolicy::Fixed, QSizePolicy::Expanding));
-}
-
-void SystemSettingWnd::initSeat(QVBoxLayout *vlayout) {
-//    QFrame *seatFrame = new QFrame(this);
-//    vlayout->addWidget(seatFrame);
-//
-//    auto *vSeatLay = new QVBoxLayout(seatFrame);
-//    vSeatLay->setMargin(0);
-
-    std::string seats = PLAT.getSeats();
-    if(!seats.empty()){
-        QJsonDocument jsonDocument = QJsonDocument::fromJson(seats.data());
-        if (!jsonDocument.isNull()){
-            QJsonObject jsonObject = jsonDocument.object();
-            QJsonArray datas = jsonObject.value("data").toArray();
-            for(int i = 0;i<datas.size();i++){
-                QJsonObject seat = datas.at(i).toObject();
-
-                auto* title = new QLabel(this);
-                title->setText(tr("店铺名：") + seat.value("sname").toString());
-
-                vlayout->addWidget(title);
-
-                int sid = seat.value("sid").toInt() * 10;
-
-                auto* group = new QButtonGroup(vlayout);
-                auto* radioButton1 = new SettingCheckBox(tr("标准模式 (在线时才接收咨询，默认)"));
-                auto* radioButton2 = new SettingCheckBox(tr("超人模式 (不在线也接受咨询)"));
-                auto* radioButton3 = new SettingCheckBox(tr("勿扰模式 (在线也不接收咨询)"));
-                group->addButton(radioButton1,sid + 0);
-                group->addButton(radioButton2,sid + 4);
-                group->addButton(radioButton3,sid + 1);
-                vlayout->addWidget(radioButton1);
-                vlayout->addWidget(radioButton2);
-                vlayout->addWidget(radioButton3);
-
-                int st = seat.value("st").toInt(0);
-                if(st == 4){
-                    radioButton2->setChecked(true);
-                } else if(st == 1){
-                    radioButton3->setChecked(true);
-                } else{
-                    radioButton1->setChecked(true);
-                }
-                connect(group, SIGNAL(buttonToggled(int,bool)), this, SLOT(operatingModeButtonsToggled(int,bool)));
-            }
-        }
-    }
 }
 
 void SystemSettingWnd::operatingModeButtonsToggled(int id, bool status)

@@ -62,6 +62,7 @@ public:
     static void sendWebRtcCommand(int msgType, const std::string& json, const std::string& id);
     static void getUserMedal(const std::string& xmppId, std::set<QTalk::StUserMedal>& medal);
     static void sendSearch(SearchInfoEvent &event);
+    static void updateGroupTopic(const std::string& groupId, const std::string& groupTopic);
 };
 
 // 消息接收

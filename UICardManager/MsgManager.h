@@ -2,8 +2,8 @@
 // Created by cc on 18-11-6.
 //
 
-#ifndef QTALK_V2_USERCARDMSGMANAGER_H
-#define QTALK_V2_USERCARDMSGMANAGER_H
+#ifndef QTALK_V2_MSGMANAGER_H
+#define QTALK_V2_MSGMANAGER_H
 
 #include "../EventBus/Object.hpp"
 #include "../Message/UserMessage.h"
@@ -61,4 +61,4 @@ private:
 
 
 					};
-#endif //QTALK_V2_USERCARDMSGMANAGER_H
+#endif //QTALK_V2_MSGMANAGER_H

@@ -6,16 +6,18 @@
 #define QTALK_V2_UCBUTTON_H
 
 #include <QFrame>
+#include "customui_global.h"
 
 /**
 * @description: UCButton
 * @author: cc
 * @create: 2019-07-10 14:22
 **/
-class UCButton : public QFrame{
+class CUSTOMUISHARED_EXPORT UCButton : public QFrame
+{
     Q_OBJECT
 public:
-    explicit UCButton(QString  text, QWidget* parent = nullptr);
+    explicit UCButton(QString  text, QWidget *parent = nullptr);
     ~UCButton() override = default;
 
 public:
@@ -26,7 +28,7 @@ Q_SIGNALS:
 
 protected:
     void paintEvent(QPaintEvent *) override ;
-    bool event(QEvent* e) override ;
+    bool event(QEvent *e) override ;
 
 private:
     QString _content;
@@ -34,25 +36,25 @@ private:
     QFont   _font;
 };
 
-class UCButtonGroup : public QObject
+class CUSTOMUISHARED_EXPORT UCButtonGroup : public QObject
 {
     Q_OBJECT
 public:
-    explicit UCButtonGroup(QObject* parent = nullptr);
+    explicit UCButtonGroup(QObject *parent = nullptr);
     ~UCButtonGroup() override = default;
 
 Q_SIGNALS:
     void clicked(int);
 
 public:
-    void addButton(UCButton*, int);
-    UCButton* button(int index);
+    void addButton(UCButton *, int);
+    UCButton *button(int index);
     void setCheck(int);
 
 private:
     void onButtonClicked();
 
 private:
-    std::map<UCButton*, int> _mapBtns;
+    std::map<UCButton *, int> _mapBtns;
 };
 #endif //QTALK_V2_UCBUTTON_H

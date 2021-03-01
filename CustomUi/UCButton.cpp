@@ -10,7 +10,7 @@
 #include <QPainter>
 
 UCButton::UCButton(QString text, QWidget *parent)
-    :QFrame(parent), _content(std::move(text)), _isCheck(false)
+    : QFrame(parent), _content(std::move(text)), _isCheck(false)
 {
     setFixedHeight(30);
     //
@@ -18,21 +18,22 @@ UCButton::UCButton(QString text, QWidget *parent)
     _font.setPixelSize(14);
 }
 
-void UCButton::paintEvent(QPaintEvent *e) {
-
+void UCButton::paintEvent(QPaintEvent *e)
+{
     QPainter painter(this);
     const QRect &rect = contentsRect();
     painter.setFont(_font);
+
 //    painter.fillRect(rect, QColor(255, 255, 255));
     if(_isCheck)
     {
         painter.setPen(QColor(0, 202, 190));
         QFontMetricsF contentF(_font);
-        qreal fw = contentF.width(_content);
+//        qreal fw = contentF.width(_content);
         int w = 16;
         painter.setBrush(QColor(0, 202, 190));
         painter.drawRoundedRect((rect.width() - w) / 2, rect.bottom() - 6,
-                w, 3, 1, 2);
+                                w, 3, 1, 2);
     }
     else
         painter.setPen(QTalk::StyleDefine::instance().getNavNameFontColor());
@@ -41,13 +42,14 @@ void UCButton::paintEvent(QPaintEvent *e) {
     QFrame::paintEvent(e);
 }
 
-void UCButton::setCheckState(bool check) {
+void UCButton::setCheckState(bool check)
+{
     _isCheck = check;
-	repaint();
+    repaint();
 }
 
-bool UCButton::event(QEvent* e) {
-
+bool UCButton::event(QEvent *e)
+{
     if(e->type() == QEvent::MouseButtonPress)
         emit clicked();
 
@@ -55,36 +57,40 @@ bool UCButton::event(QEvent* e) {
 }
 
 /**/
-UCButtonGroup::UCButtonGroup(QObject* parent)
-    :QObject(parent)
+UCButtonGroup::UCButtonGroup(QObject *parent)
+    : QObject(parent)
 {
-
 }
 
-void UCButtonGroup::addButton(UCButton *btn, int id) {
+void UCButtonGroup::addButton(UCButton *btn, int id)
+{
     _mapBtns[btn] = id;
     connect(btn, &UCButton::clicked, this, &UCButtonGroup::onButtonClicked);
 }
 
-void UCButtonGroup::onButtonClicked() {
-    auto *btn = qobject_cast<UCButton*>(sender());
+void UCButtonGroup::onButtonClicked()
+{
+    auto *btn = qobject_cast<UCButton *>(sender());
     auto itFind = _mapBtns.find(btn);
+
     if(btn && itFind != _mapBtns.end())
     {
         emit clicked(itFind->second);
+
         //
-        for(const auto& it : _mapBtns)
-        {
+        for(const auto &it : _mapBtns)
             it.first->setCheckState(it.first == btn);
-        }
     }
 }
 
-UCButton* UCButtonGroup::button(int index) {
-    UCButton* btn = nullptr;
-    auto itFind = std::find_if(_mapBtns.begin(), _mapBtns.end(), [index](const std::pair<UCButton*, int>& tmp){
+UCButton *UCButtonGroup::button(int index)
+{
+    UCButton *btn = nullptr;
+    auto itFind = std::find_if(_mapBtns.begin(), _mapBtns.end(), [index](const std::pair<UCButton *, int> &tmp)
+    {
         return index == tmp.second;
     });
+
     if(itFind != _mapBtns.end())
         btn = itFind->first;
 
@@ -93,8 +99,6 @@ UCButton* UCButtonGroup::button(int index) {
 
 void UCButtonGroup::setCheck(int index)
 {
-    for(const auto& it : _mapBtns)
-    {
+    for(const auto &it : _mapBtns)
         it.first->setCheckState(it.second == index);
-    }
 }

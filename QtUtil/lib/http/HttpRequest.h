@@ -60,6 +60,8 @@ namespace QTalk {
              */
             virtual void setDownloadSpeed(int speed) = 0;
 
+            virtual void enableProxy() = 0;
+
         protected:
             std::string _originUrl;
         };

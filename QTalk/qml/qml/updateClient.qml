@@ -11,7 +11,6 @@ Rectangle {
     property string newVersion: ""
     property string downloadLink: ""
     property string packageMd5: ""
-    property string serverRoot: ""
 
     Rectangle {
         id: title
@@ -339,10 +338,11 @@ Rectangle {
 
     Connections {
         target: $QmlEngine
-        onCheckUpdate : doCheckUpdate();
+        onCheckUpdate : doCheckUpdate()
     }
 
     Component.onCompleted: {
+//        loadConf()
         doCheckUpdate()
     }
 
@@ -461,25 +461,25 @@ Rectangle {
         xmlhttp.send(null);
     }
 
-    function loadConf() {
-        let url = "http://chaocc.wang/resource/" + $QmlEngine.getExecuteName() + "/conf.json";
-        var xmlhttp = new XMLHttpRequest();
-        if(xmlhttp === null) {
-            return;
-        }
-        xmlhttp.onreadystatechange = function() {
-            if(xmlhttp.readyState === 4 && xmlhttp.status === 200) {
-                console.log(xmlhttp.responseText)
-                var res = JSON.parse(xmlhttp.responseText);
-                if(res['ret']) {
-                    var data = res['data']
-                    serverRoot = data['checkUrl']
-                }
-            }else{
+//    function loadConf() {
+//        let url = "http://chaocc.wang/resource/" + $QmlEngine.getExecuteName() + "/conf.json";
+//        var xmlhttp = new XMLHttpRequest();
+//        if(xmlhttp === null) {
+//            return;
+//        }
+//        xmlhttp.onreadystatechange = function() {
+//            if(xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+//                console.log(xmlhttp.responseText)
+//                var res = JSON.parse(xmlhttp.responseText);
+//                if(res['ret']) {
+//                    var data = res['data']
 
-            }
-        }
-        xmlhttp.open("GET", url, false);
-        xmlhttp.send(null);
-    }
+//                }
+//            }else{
+
+//            }
+//        }
+//        xmlhttp.open("GET", url, false);
+//        xmlhttp.send(null);
+//    }
 }

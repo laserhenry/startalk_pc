@@ -157,7 +157,9 @@ set(SOURCE_FILES
         ChatViewItem.cpp ChatViewItem.h
         ChatMainDelegate.cpp ChatMainDelegate.h
         ChatMainSoreModel.cpp ChatMainSoreModel.h
-        DropWnd.cpp DropWnd.h)
+        DropWnd.cpp DropWnd.h
+        GroupTopicEditor.cpp
+        GroupTopicEditor.h)
 
 set(LIBRARY_OUTPUT_PATH ../bin)
 set(CMAKE_DEBUG_POSTFIX "d")

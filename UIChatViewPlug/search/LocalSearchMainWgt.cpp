@@ -201,7 +201,7 @@ void LocalSearchMainWgt::initUi()
         _calendarWgt->setVisible(false);
     });
     connect(this, &LocalSearchMainWgt::sgUpdateName, this, &LocalSearchMainWgt::onSetName, Qt::QueuedConnection);
-    connect(this, &LocalSearchMainWgt::sgInitStyle, this, &LocalSearchMainWgt::initStyle, Qt::QueuedConnection);
+//    connect(this, &LocalSearchMainWgt::sgInitStyle, this, &LocalSearchMainWgt::initStyle, Qt::QueuedConnection);
 }
 
 //

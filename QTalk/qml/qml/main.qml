@@ -6,6 +6,8 @@ Rectangle {
     id: root
     width: 484; height:336
 
+    property string serverRoot: ""
+
     Loader {
         id: _loader
         anchors.fill: parent
@@ -23,10 +25,10 @@ Rectangle {
         }
         xmlhttp.onreadystatechange = function() {
             if(xmlhttp.readyState === 4 && xmlhttp.status === 200) {
-                console.log(xmlhttp.responseText)
                 var res = JSON.parse(xmlhttp.responseText);
                 if(res['ret']) {
                     var data = res['data']
+                    serverRoot = data['checkUrl']
                     var mode = data['qmlMode']
                     if (mode === 1) {
                         _loader.source = data['updateClient']

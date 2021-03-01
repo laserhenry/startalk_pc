@@ -25,7 +25,7 @@
 #include "../Platform/dbPlatForm.h"
 #include "../include/ModButton.h"
 #include "../Platform/NavigationManager.h"
-#include "UserCardMsgManager.h"
+#include "MsgManager.h"
 #include "../CustomUi/QtMessageBox.h"
 #include "../CustomUi/LiteMessageBox.h"
 

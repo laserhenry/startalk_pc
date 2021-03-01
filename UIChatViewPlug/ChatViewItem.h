@@ -53,7 +53,7 @@ Q_SIGNALS:
     void sgLoadingMovie(bool show);
 
 public:
-    QTalk::Entity::UID getPeerId();
+    QTalk::Entity::UID getPeerId() const;
     QString conversionId();
     void onRecvAddGroupMember(const std::string& memberId, const std::string& nick, int affiliation);
     void onRecvRemoveGroupMember(const std::string& memberId);

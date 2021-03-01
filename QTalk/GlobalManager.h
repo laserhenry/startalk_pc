@@ -34,7 +34,6 @@ Q_SIGNALS:
     void sgMousePressGlobalPos(const QPoint & pos);
 
 private:
-    QString            _ConfigDataDir;
     PlugManager        _pluginManager;
     StyleManager       _pstyleSheetManager;
 

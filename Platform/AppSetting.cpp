@@ -17,7 +17,7 @@ AppSetting::AppSetting()
         , _leaveCheckEnable(false)
 //        , _leaveMinute(5)
 //        , _autoReplyPreset(true)
-        , _autoReplyMsg("不在办公室")
+        , _autoReplyMsg("")
         , _themeMode(1)
         , _fontLevel(FONT_LEVEL_NORMAL)
         , _autoStartUp(false)            // 开机自启动
@@ -397,6 +397,17 @@ int AppSetting::getNewVersion() {
     std::lock_guard<QTalk::util::spin_mutex> lock(sm);
     return _newVersion ;
 }
+
+void AppSetting::setEnableProxy(bool enable) {
+    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+    _enableProxy = enable ;
+}
+
+bool AppSetting::enableProxy() {
+    std::lock_guard<QTalk::util::spin_mutex> lock(sm);
+    return _enableProxy ;
+}
+
 
 //std::string AppSetting::getCoEdit() {
 //    std::lock_guard<QTalk::util::spin_mutex> lock(sm);

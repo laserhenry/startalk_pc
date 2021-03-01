@@ -63,7 +63,7 @@ void SearchListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &op
                 icon = ":/QTalk/image1/headPortrait.png";
 #endif
             }
-            QPixmap pixmap = QTalk::qimage::loadImage(icon, true, true, HEAD_WIDTH * dpi);
+            QPixmap pixmap = QTalk::qimage::loadImage(icon, false, true, HEAD_WIDTH * dpi);
             QPainterPath path;
             painter->setBrush(QColor(240, 240, 240, 200));
             painter->drawEllipse(headRect);

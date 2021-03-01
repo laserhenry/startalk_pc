@@ -671,9 +671,9 @@ void FileSendReceiveMessItem::judgeFileIsUpLoad() {
   * @author cc
   * @date 2018.10.22
   */
-void FileSendReceiveMessItem::sendDownLoadFile(const std::string &strLocalPath, const std::string &strUri) {
-    ChatMsgManager::sendDownLoadFile(strLocalPath, strUri, _msgInfo.msg_id.toStdString());
-}
+//void FileSendReceiveMessItem::sendDownLoadFile(const std::string &strLocalPath, const std::string &strUri) {
+//    ChatMsgManager::sendDownLoadFile(strLocalPath, strUri, _msgInfo.msg_id.toStdString());
+//}
 
 void FileSendReceiveMessItem::sendNDownLoadFile(const QString &strUri, const QString &strLocalPath) {
     g_pMainPanel->downloadFileWithProcess(strUri, strLocalPath, _msgInfo.msg_id, this);

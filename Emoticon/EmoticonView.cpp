@@ -102,7 +102,7 @@ void EmoticonView::setImagePath(const QString &imgPath)
         }
     }
 
-    QPixmap img = QTalk::qimage::loadImage(_imagePath, true);
+    QPixmap img = QTalk::qimage::loadImage(_imagePath, false);
     _width = qMin((int)img.height(), (int)img.width());
     _width = qMin(100, _width);
 

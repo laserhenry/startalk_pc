@@ -15,7 +15,7 @@ if (APPLE)
             HotKey/qhotkey_mac.cpp
             MacApp.h
             MacApp.mm)
-    link_libraries(/System/Library/Frameworks/Carbon.framework/Carbon)
+    link_libraries("-framework Carbon")
     link_libraries("-framework AppKit")
     link_libraries("-framework AVFoundation")
 

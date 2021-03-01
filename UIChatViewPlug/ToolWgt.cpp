@@ -56,9 +56,6 @@ ToolWgt::~ToolWgt()
 void ToolWgt::initUi()
 {
 	this->setObjectName("ToolWgt");
-#ifdef _QCHAT
-    qchatMoreFun = new QchatMoreFun(_pChatItem->getPeerId(), _pChatItem->_chatType);
-#endif
 	//
 	_pBtnEmoticon = new QPushButton( this);
 	_pBtnScreenshot = new QPushButton( this);
@@ -136,7 +133,7 @@ void ToolWgt::initUi()
     layout->addWidget(_pBtnCode);
     layout->addWidget(_pBtnHistory);
     layout->addWidget(_pBtnShock);
-
+	_pBtnVideo->setVisible(false);
     auto* rightLayout = new QHBoxLayout;
     layout->addLayout(rightLayout,1);
 

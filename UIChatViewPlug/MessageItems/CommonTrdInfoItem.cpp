@@ -318,7 +318,7 @@ void CommonTrdInfoItem::initContentLayout() {
         connect(this, &CommonTrdInfoItem::sgDownloadedIcon, this, &CommonTrdInfoItem::setIcon, Qt::QueuedConnection);
         QString imgUrl = jsonObject.value("img").toString();
         QString placeHolder = ":/chatview/image1/defaultShareIcon.png";
-        QPixmap defaultPix = QTalk::qimage::loadImage(placeHolder, true, true, 40, 40);
+        QPixmap defaultPix = QTalk::qimage::loadImage(placeHolder, false, true, 40, 40);
         if (imgUrl.isEmpty()) {
             _iconLab->setPixmap(defaultPix);
         } else {

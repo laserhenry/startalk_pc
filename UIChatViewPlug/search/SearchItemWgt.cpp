@@ -253,7 +253,7 @@ SearchFileITem::SearchFileITem(const StNetMessageResult &info, QWidget *parent)
 
     auto* iconLabel = new QLabel(this);
     iconLabel->setFixedSize(36, 36);
-    QPixmap pixmap = QTalk::qimage::loadImage(info.file_info.fileIcon, true, true, 36);
+    QPixmap pixmap = QTalk::qimage::loadImage(info.file_info.fileIcon, false, true, 36);
     iconLabel->setPixmap(pixmap);
 
     auto* fileNameLabel = new QLabel(info.file_info.fileName, this);
@@ -459,7 +459,7 @@ SearchAudioVideoItem::SearchAudioVideoItem(const StNetMessageResult& info, QWidg
     contentLay->addWidget(pIconLabel, 0);
     contentLay->addWidget(contentLab, 1);
 
-    QPixmap icon = QTalk::qimage::loadImage(":/chatview/image1/messageItem/AudioVideo.png", true);
+    QPixmap icon = QTalk::qimage::loadImage(":/chatview/image1/messageItem/AudioVideo.png", false);
     icon = icon.scaled(25, 25, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     pIconLabel->setPixmap(icon);
     contentLab->adjustSize();

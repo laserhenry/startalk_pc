@@ -116,7 +116,7 @@ void HeadPhotoLab::paintEvent(QPaintEvent *e)
         if(_showDot) {
             painter.setPen(Qt::NoPen);
             painter.setBrush(QBrush(Qt::red));
-            painter.drawEllipse( 0, 0, 7, 7);
+            painter.drawEllipse( 0, _radius * 2 - 7, 7, 7);
         }
     }
     //

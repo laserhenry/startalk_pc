@@ -44,6 +44,8 @@ namespace QTalk {
 
         void setDownloadSpeed(int speed) override ;
 
+        void enableProxy() override;
+
     private:
         void *_httpCore;
         std::ostringstream _readBuffer;

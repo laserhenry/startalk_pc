@@ -26,8 +26,7 @@ class GroupMember : public QFrame
 {
 	Q_OBJECT
 public:
-    explicit GroupMember(QWidget *parent = nullptr);
-	~GroupMember() override;
+    explicit GroupMember(QString& groupId, QWidget *parent = nullptr);
 
 Q_SIGNALS:
 	void addMemberSignal(const std::string& xmppid, const std::string& userName,
@@ -56,7 +55,6 @@ public:
 
 public:
     void clearData();
-    void setGroupId(const std::string &groupId);
 
 protected:
 	void initUi();
@@ -71,7 +69,7 @@ private:
 	QMap<std::string, QStandardItem*> _mapMemberItem;
 	bool _selfIsCreator;
 	bool _selfIsAdmin;
-	std::string _groupId;
+	QString &_groupId;
 
 private:
     QListView*    _pMemberList;

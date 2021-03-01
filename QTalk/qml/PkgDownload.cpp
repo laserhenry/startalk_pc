@@ -40,6 +40,11 @@ void PkgDownload::start() {
                 .arg(PLAT.getAppdataRoamingPath().data()).arg(QTalk::utils::getFileSuffix(_url.toStdString()).data());
     }
 
+    QFileInfo setupFileInfo(_pkgPath);
+    if(!QFile::exists(setupFileInfo.absolutePath())) {
+    	QDir(setupFileInfo.absolutePath()).mkpath(setupFileInfo.absolutePath());
+    }
+
     _pFile = new QFile(_pkgPath);
     if(!_pFile->open(QIODevice::WriteOnly)) {
         emit error("write file error. ");

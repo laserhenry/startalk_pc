@@ -241,7 +241,7 @@ void EmojiMessItem::setImage() {
     } else {
         QString suffix = QTalk::qimage::getRealImageSuffix(_imagePath).toUpper();
         if ("GIF" == suffix) {
-            QPixmap image = QTalk::qimage::loadImage(_imagePath, true);
+            QPixmap image = QTalk::qimage::loadImage(_imagePath, false);
             if (image.isNull()) {
                 _imagePath = "";
                 setImage();
@@ -255,7 +255,7 @@ void EmojiMessItem::setImage() {
 //            _imageLab->setMovie(_movie);
             _imageLab->setFixedSize(_size.toSize());
         } else {
-            QPixmap pixmap = QTalk::qimage::loadImage(_imagePath, true);
+            QPixmap pixmap = QTalk::qimage::loadImage(_imagePath, false);
             if (pixmap.isNull()) {
                 _imagePath = "";
                 setImage();

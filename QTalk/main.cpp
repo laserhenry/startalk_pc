@@ -1,5 +1,4 @@
-﻿#include "QTalkApp.h"
-#include <iostream>
+﻿#include <iostream>
 #include <QSettings>
 #include <QTextCodec>
 #include <QDateTime>
@@ -15,8 +14,8 @@
 #else
 #include <client/mac/handler/exception_handler.h>
 #include <QProcess>
-
 #endif
+#include "QTalkApp.h"
 
 #if defined(_WINDOWS)
 bool minidumpCB(const wchar_t *dump_path, const wchar_t *id, void *context, EXCEPTION_POINTERS *exinfo, MDRawAssertionInfo *assertion, bool succeeded) {
@@ -70,13 +69,7 @@ int main(int argc, char *argv[]) {
 
     QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation).toLocal8Bit();
 #ifndef _DEBUG
-#if defined(_STARTALK)
     QString dumpLocation = QString("%1/StarTalk/logs/%2").arg(appData, id);
-#elif defined(_QCHAT)
-    QString dumpLocation = QString("%1/QChat/logs/%2").arg(appData, id);
-#else
-    QString dumpLocation = QString("%1/QTalk/logs/%2").arg(appData, id);
-#endif
 
     // mkdir
     if (!QFile::exists(dumpLocation))

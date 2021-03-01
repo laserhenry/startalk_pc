@@ -2,7 +2,9 @@
 // Created by cc on 18-11-6.
 //
 
-#include "UserCardMsgManager.h"
+#include "MsgManager.h"
+
+#include <utility>
 #include "../EventBus/EventBus.h"
 #include "CardManager.h"
 #include "../QtUtil/Utils/Log.h"
@@ -71,7 +73,7 @@ void UserCardMsgManager::getGroupMembers(const std::string &groupId) {
 
 void UserCardMsgManager::updateGroupInfo(std::shared_ptr<QTalk::StGroupInfo> groupinfo) {
     UpdateGroupInfoMsg e;
-    e.groupinfo = groupinfo;
+    e.groupinfo = std::move(groupinfo);
     EventBus::FireEvent(e);
 }
 

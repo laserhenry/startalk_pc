@@ -38,7 +38,7 @@ void NetImageLabel::paintEvent(QPaintEvent *event) {
     QRect rect = this->contentsRect();
 
     auto load_default_image = [rect, &painter](){
-        auto image = QTalk::qimage::loadImage(":/chatview/image1/default.png", true);
+        auto image = QTalk::qimage::loadImage(":/chatview/image1/default.png", false);
         painter.drawPixmap(rect, image);
     };
 
