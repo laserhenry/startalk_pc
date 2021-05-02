@@ -5,3 +5,6 @@ This directory are files for SWP 2.0 (Startalk wire protoco 2.0), SWP 2.0 based 
 # Usage
 
 You need to compile the source as a library to use it.
+
+# Directories
+
